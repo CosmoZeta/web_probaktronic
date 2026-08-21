@@ -119,7 +119,7 @@ function updateActiveNavLink() {
   
   navLinks.forEach(link => {
     const href = link.getAttribute('href');
-    if (href === currentPath) {
+    if (href === currentPath || (currentPath === 'bobinas.html' && href === 'sensores-actuadores.html')) {
       navLinks.forEach(l => l.classList.remove('active'));
       link.classList.add('active');
     }
@@ -199,7 +199,8 @@ function initCurrentPageFeatures() {
   function filterVehicles(brand, searchText) {
     vehicleCards.forEach(card => {
       const cardBrand = card.dataset.brand;
-      const cardTitle = card.querySelector('.vehicle-model').textContent.toLowerCase();
+      const vehicleModelEl = card.querySelector('.vehicle-model');
+      const cardTitle = vehicleModelEl ? vehicleModelEl.textContent.toLowerCase() : '';
       const matchesBrand = (brand === 'all' || cardBrand === brand);
       const matchesSearch = cardTitle.includes(searchText);
 
@@ -224,7 +225,8 @@ function initCurrentPageFeatures() {
     item.addEventListener('click', () => {
       componentItems.forEach(i => i.classList.remove('active'));
       item.classList.add('active');
-      const componentName = item.querySelector('strong').textContent;
+      const strongEl = item.querySelector('strong');
+      const componentName = strongEl ? strongEl.textContent : 'Componente';
       showGlobalToast(`Componente enfocado: ${componentName}`);
     });
   });
@@ -257,7 +259,8 @@ function initCurrentPageFeatures() {
       const cards = productGridContainer.querySelectorAll('.product-card');
       
       cards.forEach(card => {
-        const code = card.querySelector('.product-code').textContent.toLowerCase();
+        const codeEl = card.querySelector('.product-code');
+        const code = codeEl ? codeEl.textContent.toLowerCase() : '';
         card.style.display = code.includes(query) ? 'flex' : 'none';
       });
     });

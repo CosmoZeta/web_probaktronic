@@ -147,23 +147,6 @@
   <script src="js/global.js"></script>
   <!-- Firebase Direct Firestore Connector -->
   <script src="js/firebase-catalog.js"></script>
-
-  <script>
-    // Live Search Filter
-    const searchInput = document.getElementById('catalogSearchInput');
-    const productGridContainer = document.getElementById('productGridContainer');
-    
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase().trim();
-        const cards = productGridContainer.querySelectorAll('.product-card');
-        
-        cards.forEach(card => {
-          const code = card.querySelector('.product-code').textContent.toLowerCase();
-          card.style.display = code.includes(query) ? 'flex' : 'none';
-        });
-      });
-    }
-  </script>
 </body>
 </html>
+

@@ -1,5 +1,5 @@
 /* Global Unified Master Stylesheet for Probaktronic Dashboard */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Oswald:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Oswald:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap');
 
 :root {
   --sidebar-width: 220px;
@@ -963,3 +963,64 @@ html.sidebar-expanded-init .sidebar .nav-link-item {
     height: auto;
   }
 }
+
+/* Utility Classes */
+.font-rajdhani {
+  font-family: 'Rajdhani', 'Oswald', sans-serif;
+}
+
+.btn-brand {
+  background-color: var(--brand-red);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.btn-brand:hover {
+  background-color: var(--brand-red-hover);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .sidebar {
+    width: var(--sidebar-collapsed-width);
+  }
+
+  .sidebar .sidebar-logo-costado,
+  .sidebar .nav-link-item span,
+  .sidebar .btn-sidebar-minimize span {
+    display: none;
+  }
+
+  .sidebar .sidebar-logo-solo {
+    display: block;
+  }
+
+  .main-content {
+    margin-left: var(--sidebar-collapsed-width);
+  }
+
+  .top-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .dark-status-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+

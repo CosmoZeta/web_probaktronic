@@ -104,11 +104,11 @@
         </div>
       </header>
 
-      <!-- Component Cards Grid (8 Cards) -->
+      <!-- Component Cards Grid (8 Fully Clickable Cards - No Button) -->
       <section class="row g-4 mb-4">
-        <!-- 1. Bobinas -->
+        <!-- 1. Bobinas (Clickable Card) -->
         <div class="col-md-3 col-sm-6">
-          <div class="sensor-card">
+          <a href="bobinas.html" class="sensor-card">
             <div class="d-flex justify-content-between align-items-start">
               <div class="sensor-icon-box">
                 <i class="bi bi-lightning-charge-fill"></i>
@@ -116,14 +116,13 @@
               <span class="badge bg-danger">Probar Pulso</span>
             </div>
             <h3 class="sensor-title">Bobinas</h3>
-            <p class="sensor-desc">Pruebas de pulsos de encendido, señal de transistor de potencia e intensidad de chispa.</p>
-            <button class="btn btn-outline-danger btn-sm w-100 mt-auto" onclick="showGlobalToast('Iniciando prueba de Bobinas...')">Diagnosticar</button>
-          </div>
+            <p class="sensor-desc mb-0">Pruebas de pulsos de encendido, señal de transistor de potencia e intensidad de chispa.</p>
+          </a>
         </div>
 
         <!-- 2. Distribuidor -->
         <div class="col-md-3 col-sm-6">
-          <div class="sensor-card">
+          <div class="sensor-card" onclick="showGlobalToast('Iniciando diagnóstico de Distribuidor...')">
             <div class="d-flex justify-content-between align-items-start">
               <div class="sensor-icon-box">
                 <i class="bi bi-gear-wide-connected"></i>
@@ -131,14 +130,13 @@
               <span class="badge bg-success">Señal OK</span>
             </div>
             <h3 class="sensor-title">Distribuidor</h3>
-            <p class="sensor-desc">Verificación de captador magnético, sensor de efecto Hall y tiempo de encendido.</p>
-            <button class="btn btn-outline-danger btn-sm w-100 mt-auto" onclick="showGlobalToast('Verificando Distribuidor...')">Diagnosticar</button>
+            <p class="sensor-desc mb-0">Verificación de captador magnético, sensor de efecto Hall y tiempo de encendido.</p>
           </div>
         </div>
 
         <!-- 3. IAC -->
         <div class="col-md-3 col-sm-6">
-          <div class="sensor-card">
+          <div class="sensor-card" onclick="showGlobalToast('Iniciando diagnóstico de válvula IAC...')">
             <div class="d-flex justify-content-between align-items-start">
               <div class="sensor-icon-box">
                 <i class="bi bi-sliders"></i>
@@ -146,14 +144,13 @@
               <span class="badge bg-success">Motor a Pasos</span>
             </div>
             <h3 class="sensor-title">IAC</h3>
-            <p class="sensor-desc">Control de marcha mínima, prueba de bobinas de avance/retroceso y señal PWM.</p>
-            <button class="btn btn-outline-danger btn-sm w-100 mt-auto" onclick="showGlobalToast('Probando válvula IAC...')">Diagnosticar</button>
+            <p class="sensor-desc mb-0">Control de marcha mínima, prueba de bobinas de avance/retroceso y señal PWM.</p>
           </div>
         </div>
 
         <!-- 4. Pedal -->
         <div class="col-md-3 col-sm-6">
-          <div class="sensor-card">
+          <div class="sensor-card" onclick="showGlobalToast('Iniciando diagnóstico de Pedal electrónico...')">
             <div class="d-flex justify-content-between align-items-start">
               <div class="sensor-icon-box">
                 <i class="bi bi-speedometer"></i>
@@ -161,14 +158,13 @@
               <span class="badge bg-success">APP 1 / APP 2</span>
             </div>
             <h3 class="sensor-title">Pedal</h3>
-            <p class="sensor-desc">Calibración y lectura en vivo de los potenciómetros duales del pedal de acelerador.</p>
-            <button class="btn btn-outline-danger btn-sm w-100 mt-auto" onclick="showGlobalToast('Midiendo respuesta de Pedal...')">Diagnosticar</button>
+            <p class="sensor-desc mb-0">Calibración y lectura en vivo de los potenciómetros duales del pedal de acelerador.</p>
           </div>
         </div>
 
         <!-- 5. Sensor Giro -->
         <div class="col-md-3 col-sm-6">
-          <div class="sensor-card">
+          <div class="sensor-card" onclick="showGlobalToast('Iniciando calibración de Sensor de Giro (SAS)...')">
             <div class="d-flex justify-content-between align-items-start">
               <div class="sensor-icon-box">
                 <i class="bi bi-compass-fill"></i>
@@ -176,14 +172,13 @@
               <span class="badge bg-primary">Calibración SAS</span>
             </div>
             <h3 class="sensor-title">Sensor Giro</h3>
-            <p class="sensor-desc">Sensor de ángulo de dirección y velocidad angular para control de estabilidad (ESP).</p>
-            <button class="btn btn-outline-danger btn-sm w-100 mt-auto" onclick="showGlobalToast('Leyendo Sensor de Giro...')">Diagnosticar</button>
+            <p class="sensor-desc mb-0">Sensor de ángulo de dirección y velocidad angular para control de estabilidad (ESP).</p>
           </div>
         </div>
 
         <!-- 6. Oxigeno -->
         <div class="col-md-3 col-sm-6">
-          <div class="sensor-card">
+          <div class="sensor-card" onclick="showGlobalToast('Iniciando análisis de Sonda de Oxígeno (Lambda)...')">
             <div class="d-flex justify-content-between align-items-start">
               <div class="sensor-icon-box">
                 <i class="bi bi-activity"></i>
@@ -191,14 +186,13 @@
               <span class="badge bg-success">Lambda LSU</span>
             </div>
             <h3 class="sensor-title">Oxígeno</h3>
-            <p class="sensor-desc">Medición de tiempo de respuesta de sonda Lambda de banda angosta y banda ancha.</p>
-            <button class="btn btn-outline-danger btn-sm w-100 mt-auto" onclick="showGlobalToast('Analizando Sonda de Oxígeno...')">Diagnosticar</button>
+            <p class="sensor-desc mb-0">Medición de tiempo de respuesta de sonda Lambda de banda angosta y banda ancha.</p>
           </div>
         </div>
 
         <!-- 7. Obturador -->
         <div class="col-md-3 col-sm-6">
-          <div class="sensor-card">
+          <div class="sensor-card" onclick="showGlobalToast('Iniciando prueba de mariposa de Obturador...')">
             <div class="d-flex justify-content-between align-items-start">
               <div class="sensor-icon-box">
                 <i class="bi bi-circle-half"></i>
@@ -206,14 +200,13 @@
               <span class="badge bg-danger">Motor DC TPS</span>
             </div>
             <h3 class="sensor-title">Obturador</h3>
-            <p class="sensor-desc">Pruebas de mariposa electrónica, alineación TPS 1/2 y actuador de apertura de aire.</p>
-            <button class="btn btn-outline-danger btn-sm w-100 mt-auto" onclick="showGlobalToast('Probando mariposa de Obturador...')">Diagnosticar</button>
+            <p class="sensor-desc mb-0">Pruebas de mariposa electrónica, alineación TPS 1/2 y actuador de apertura de aire.</p>
           </div>
         </div>
 
         <!-- 8. Módulos -->
         <div class="col-md-3 col-sm-6">
-          <div class="sensor-card">
+          <div class="sensor-card" onclick="showGlobalToast('Iniciando diagnóstico de Módulos de Potencia...')">
             <div class="d-flex justify-content-between align-items-start">
               <div class="sensor-icon-box">
                 <i class="bi bi-cpu-fill"></i>
@@ -221,8 +214,7 @@
               <span class="badge bg-dark">Drivers IGBT</span>
             </div>
             <h3 class="sensor-title">Módulos</h3>
-            <p class="sensor-desc">Diagnóstico de módulos de encendido, transistores de potencia y drivers de inyección.</p>
-            <button class="btn btn-outline-danger btn-sm w-100 mt-auto" onclick="showGlobalToast('Verificando Módulos de Potencia...')">Diagnosticar</button>
+            <p class="sensor-desc mb-0">Diagnóstico de módulos de encendido, transistores de potencia y drivers de inyección.</p>
           </div>
         </div>
       </section>
