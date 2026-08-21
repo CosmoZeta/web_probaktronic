@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Probaktronic - Catálogo de Vehículos</title>
+  
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link href="css/global.css" rel="stylesheet">
+  <link href="css/vehiculos.css" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="bg-watermark"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="d-flex flex-column align-items-center w-100">
+        <a href="index.html" class="sidebar-brand" title="Probaktronic">
+          <img src="logo_probaktronic_solo.png" alt="Probaktronic" class="sidebar-logo-img">
+        </a>
+
+        <nav class="sidebar-nav">
+          <a href="index.html" class="nav-item-btn" title="Página Principal">
+            <i class="bi bi-grid-fill"></i>
+          </a>
+          <a href="vehiculos.html" class="nav-item-btn active" title="Catálogo de Vehículos">
+            <i class="bi bi-car-front-fill"></i>
+          </a>
+          <a href="diagramas-3d.html" class="nav-item-btn" title="Diagramas 3D">
+            <i class="bi bi-box-seam"></i>
+          </a>
+          <a href="galeria-medios.html" class="nav-item-btn" title="Galería y Medios">
+            <i class="bi bi-file-earmark-medical"></i>
+          </a>
+          <a href="#" class="nav-item-btn" title="Configuración">
+            <i class="bi bi-gear-fill"></i>
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="nav-item-btn text-warning" id="btnLogin" data-bs-toggle="modal" data-bs-target="#loginModal" title="Iniciar Sesión">
+          <i class="bi bi-person-circle"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Container -->
+    <main class="main-content">
+      <header class="top-header">
+        <h1 class="page-title">CATÁLOGO DE VEHÍCULOS</h1>
+        <img src="logo_probaktronic_costado.png" alt="Probaktronic" class="header-logo-costado">
+      </header>
+
+      <!-- Search & Filters -->
+      <section class="mb-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+              <input type="text" id="vehicleSearchInput" class="form-control border-start-0 ps-0" placeholder="Buscar vehículo por marca, modelo o motor...">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Brand Filter Chips -->
+      <div class="brand-filter-bar">
+        <button class="brand-chip active" data-brand="all">Todas las Marcas</button>
+        <button class="brand-chip" data-brand="audi">Audi</button>
+        <button class="brand-chip" data-brand="bmw">BMW</button>
+        <button class="brand-chip" data-brand="chevrolet">Chevrolet</button>
+        <button class="brand-chip" data-brand="ford">Ford</button>
+        <button class="brand-chip" data-brand="toyota">Toyota</button>
+        <button class="brand-chip" data-brand="volkswagen">Volkswagen</button>
+      </div>
+
+      <!-- Vehicle Grid -->
+      <section class="vehicle-grid">
+        <div class="vehicle-card" data-brand="audi">
+          <div class="vehicle-card-img">
+            <svg viewBox="0 0 200 100" fill="none">
+              <rect x="20" y="30" width="160" height="50" rx="8" stroke="#D32F2F" stroke-width="2"/>
+              <circle cx="50" cy="80" r="14" fill="#1C232B"/>
+              <circle cx="150" cy="80" r="14" fill="#1C232B"/>
+            </svg>
+          </div>
+          <div class="vehicle-card-body">
+            <span class="vehicle-brand">Audi</span>
+            <h3 class="vehicle-model">Audi A4 2.0 TFSI</h3>
+            <ul class="vehicle-spec-list">
+              <li><span>ECU:</span> <strong>Bosch MED17.1.1</strong></li>
+              <li><span>Año:</span> <strong>2018 - 2022</strong></li>
+            </ul>
+            <a href="diagramas-3d.html" class="btn btn-brand btn-sm w-100 mt-3">Ver Diagrama 3D</a>
+          </div>
+        </div>
+
+        <div class="vehicle-card" data-brand="bmw">
+          <div class="vehicle-card-img">
+            <svg viewBox="0 0 200 100" fill="none">
+              <rect x="20" y="30" width="160" height="50" rx="8" stroke="#1C232B" stroke-width="2"/>
+              <circle cx="50" cy="80" r="14" fill="#1C232B"/>
+              <circle cx="150" cy="80" r="14" fill="#1C232B"/>
+            </svg>
+          </div>
+          <div class="vehicle-card-body">
+            <span class="vehicle-brand">BMW</span>
+            <h3 class="vehicle-model">BMW Series 3 320i</h3>
+            <ul class="vehicle-spec-list">
+              <li><span>ECU:</span> <strong>Bosch MEVD17.2.3</strong></li>
+              <li><span>Año:</span> <strong>2019 - 2023</strong></li>
+            </ul>
+            <a href="diagramas-3d.html" class="btn btn-brand btn-sm w-100 mt-3">Ver Diagrama 3D</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- System Info Bar -->
+      <footer class="info-section">
+        <h3 class="info-title">INFO</h3>
+        <div class="info-grid">
+          <div class="info-item"><span class="info-label">Software version</span><span class="info-value">8.11.0.0</span></div>
+          <div class="info-item"><span class="info-label">Firmware version</span><span class="info-value">8.10.0.0</span></div>
+          <div class="info-item"><span class="info-label">Firmware date</span><span class="info-value">06 Aug 2026 16:35</span></div>
+          <div class="info-item"><span class="info-label">Firmware info</span><span class="info-value">(C) PROBAKTRONIC</span></div>
+          <div class="info-item"><span class="info-label">USB port</span><span class="info-value">COM6</span></div>
+          <div class="info-item"><span class="info-label">Serial number</span><span class="info-value">65D48B6C35E2B2E7</span></div>
+          <div class="info-item"><span class="info-label">Hardware version</span><span class="info-value">1</span></div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/global.js"></script>
+  <script src="js/vehiculos.js"></script>
+</body>
+</html>

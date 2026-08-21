@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Probaktronic - Diagramas Automotrices 3D</title>
+  
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link href="css/global.css" rel="stylesheet">
+  <link href="css/diagramas.css" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="bg-watermark"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="d-flex flex-column align-items-center w-100">
+        <a href="index.html" class="sidebar-brand" title="Probaktronic">
+          <img src="logo_probaktronic_solo.png" alt="Probaktronic" class="sidebar-logo-img">
+        </a>
+
+        <nav class="sidebar-nav">
+          <a href="index.html" class="nav-item-btn" title="Página Principal">
+            <i class="bi bi-grid-fill"></i>
+          </a>
+          <a href="vehiculos.html" class="nav-item-btn" title="Catálogo de Vehículos">
+            <i class="bi bi-car-front-fill"></i>
+          </a>
+          <a href="diagramas-3d.html" class="nav-item-btn active" title="Diagramas 3D">
+            <i class="bi bi-box-seam"></i>
+          </a>
+          <a href="galeria-medios.html" class="nav-item-btn" title="Galería y Medios">
+            <i class="bi bi-file-earmark-medical"></i>
+          </a>
+          <a href="#" class="nav-item-btn" title="Configuración">
+            <i class="bi bi-gear-fill"></i>
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="nav-item-btn text-warning" id="btnLogin" data-bs-toggle="modal" data-bs-target="#loginModal" title="Iniciar Sesión">
+          <i class="bi bi-person-circle"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Container -->
+    <main class="main-content">
+      <header class="top-header">
+        <h1 class="page-title">DIAGRAMAS AUTOMOTRICES 3D</h1>
+        <img src="logo_probaktronic_costado.png" alt="Probaktronic" class="header-logo-costado">
+      </header>
+
+      <!-- 3D Viewer Layout -->
+      <section class="viewer-layout">
+        <div class="viewport-container" id="3dViewport">
+          <div class="viewer-toolbar">
+            <button class="viewer-tool-btn active" title="Rotar 3D"><i class="bi bi-arrow-repeat"></i></button>
+            <button class="viewer-tool-btn" title="Zoom In"><i class="bi bi-zoom-in"></i></button>
+            <button class="viewer-tool-btn" title="Vista Despiece"><i class="bi bi-bounding-box"></i></button>
+            <button class="viewer-tool-btn" title="Medir Pinout"><i class="bi bi-diagram-3"></i></button>
+          </div>
+
+          <div class="text-center text-white p-4">
+            <svg class="mb-3" width="220" height="180" viewBox="0 0 320 180" fill="none">
+              <polygon points="160,20 280,80 160,140 40,80" stroke="#D32F2F" stroke-width="2.5" fill="rgba(211,47,47,0.1)"/>
+              <line x1="40" y1="80" x2="40" y2="130" stroke="#8C96A3" stroke-width="2"/>
+              <line x1="280" y1="80" x2="280" y2="130" stroke="#8C96A3" stroke-width="2"/>
+              <line x1="160" y1="140" x2="160" y2="170" stroke="#D32F2F" stroke-width="2.5"/>
+            </svg>
+            <h4 class="fw-bold text-uppercase font-rajdhani">Visor 3D Interactivo</h4>
+            <p class="text-secondary small max-w-400 mx-auto">
+              Soporte para modelos <code>.gltf</code>, <code>.glb</code> y <code>.obj</code>
+            </p>
+          </div>
+        </div>
+
+        <div class="model-sidebar">
+          <h4 class="font-rajdhani fw-bold fs-5 mb-2">Componentes 3D</h4>
+          <ul class="component-list">
+            <li class="component-item active">
+              <div>
+                <strong>Unidad ECU Principal</strong>
+                <div class="small text-muted">Bosch MED17.1.1</div>
+              </div>
+              <i class="bi bi-eye-fill text-danger"></i>
+            </li>
+            <li class="component-item">
+              <div>
+                <strong>Conector A (Pinout 94-Pinos)</strong>
+                <div class="small text-muted">Esquema activo</div>
+              </div>
+              <i class="bi bi-eye-fill text-secondary"></i>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- System Info Bar -->
+      <footer class="info-section">
+        <h3 class="info-title">INFO</h3>
+        <div class="info-grid">
+          <div class="info-item"><span class="info-label">Software version</span><span class="info-value">8.11.0.0</span></div>
+          <div class="info-item"><span class="info-label">Firmware version</span><span class="info-value">8.10.0.0</span></div>
+          <div class="info-item"><span class="info-label">Firmware date</span><span class="info-value">06 Aug 2026 16:35</span></div>
+          <div class="info-item"><span class="info-label">Firmware info</span><span class="info-value">(C) PROBAKTRONIC</span></div>
+          <div class="info-item"><span class="info-label">USB port</span><span class="info-value">COM6</span></div>
+          <div class="info-item"><span class="info-label">Serial number</span><span class="info-value">65D48B6C35E2B2E7</span></div>
+          <div class="info-item"><span class="info-label">Hardware version</span><span class="info-value">1</span></div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/global.js"></script>
+  <script src="js/diagramas-3d.js"></script>
+</body>
+</html>
