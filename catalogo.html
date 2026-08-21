@@ -11,6 +11,59 @@
   
   <!-- Stylesheets -->
   <link href="css/global.css" rel="stylesheet">
+  
+  <style>
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+    
+    .product-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      height: 220px;
+    }
+    
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+      border-color: rgba(211, 47, 47, 0.3);
+    }
+
+    .product-img-container {
+      height: 120px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+    }
+
+    .product-img-container img {
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .product-code {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
 
@@ -81,9 +134,9 @@
     <main class="main-content">
       <header class="top-header-bar">
         <div>
-          <div class="header-greeting">BIBLIOTECA TÉCNICA</div>
-          <h1 class="page-title">CATÁLOGO DE PIEZAS Y COMPONENTES</h1>
-          <div class="page-subtitle">Explorador general de ecus, módulos, arneses y componentes automotrices</div>
+          <div class="header-greeting">BIBLIOTECA TÉCNICA Y REPUESTOS</div>
+          <h1 class="page-title">CATÁLOGO DE COMPONENTES</h1>
+          <div class="page-subtitle">Explorador general de integrados, transistores, mosfets y repuestos electrónicos</div>
         </div>
 
         <div class="user-profile-section">
@@ -98,37 +151,60 @@
         </div>
       </header>
 
-      <!-- Content Grid -->
-      <section class="row g-4 mb-4">
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
-            <i class="bi bi-cpu fs-1 text-danger mb-2"></i>
-            <h5 class="fw-bold font-rajdhani">Unidades de Control (ECU / TCU)</h5>
-            <p class="text-muted small">Familias Bosch, Continental, Delphi, Denso, Magneti Marelli.</p>
-            <button class="btn btn-brand btn-sm">Explorar ECUs</button>
-          </div>
+      <!-- Search Bar -->
+      <section class="mb-4">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0 rounded-start-5 ps-4"><i class="bi bi-search text-muted fs-5"></i></span>
+          <input type="text" id="catalogSearchInput" class="form-control border-start-0 rounded-end-5 py-3 ps-0 shadow-sm" placeholder="Buscar componentes o repuestos...">
         </div>
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
-            <i class="bi bi-diagram-3 fs-1 text-danger mb-2"></i>
-            <h5 class="fw-bold font-rajdhani">Conectores y Pinouts</h5>
-            <p class="text-muted small">Mapas de pines de conectores principales y mazo de cables.</p>
-            <button class="btn btn-brand btn-sm">Ver Pinouts</button>
+      </section>
+
+      <!-- Product Cards Grid (Starts Empty for Firebase Data Load) -->
+      <section class="product-grid mb-5" id="productGridContainer">
+        <!-- Loading Spinner State -->
+        <div class="w-100 text-center py-5 grid-column-all" id="loadingState">
+          <div class="spinner-border text-danger" role="status">
+            <span class="visually-hidden">Cargando...</span>
           </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
-            <i class="bi bi-tools fs-1 text-danger mb-2"></i>
-            <h5 class="fw-bold font-rajdhani">Módulos de Diagnóstico</h5>
-            <p class="text-muted small">Programadores de banco, bootloader y adaptadores USB OBD.</p>
-            <button class="btn btn-brand btn-sm">Ver Módulos</button>
-          </div>
+          <p class="text-muted mt-2 small">Conectando con Firebase para cargar productos...</p>
         </div>
       </section>
     </main>
   </div>
 
+  <!-- Firebase Web SDK Compat Libraries -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- App JS -->
   <script src="js/global.js"></script>
+  <!-- Firebase Catalog Connection -->
+  <script src="js/firebase-catalog.js"></script>
+
+  <script>
+    // Live Search Filter
+    const searchInput = document.getElementById('catalogSearchInput');
+    const productGridContainer = document.getElementById('productGridContainer');
+    
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const cards = productGridContainer.querySelectorAll('.product-card');
+        
+        cards.forEach(card => {
+          const code = card.querySelector('.product-code').textContent.toLowerCase();
+          if (code.includes(query)) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    }
+  </script>
 </body>
 </html>
