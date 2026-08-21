@@ -810,7 +810,8 @@ html.sidebar-expanded-init .sidebar .nav-link-item {
 /* ==========================================================================
    SENSORES Y ACTUADORES CARDS
    ========================================================================== */
-.sensor-card {
+.sensor-card,
+a.sensor-card {
   background: #FFFFFF;
   border-radius: 14px;
   border: 1px solid var(--border-color);
@@ -820,12 +821,21 @@ html.sidebar-expanded-init .sidebar .nav-link-item {
   height: 100%;
   display: flex;
   flex-direction: column;
+  text-decoration: none !important;
+  color: inherit !important;
 }
 
-.sensor-card:hover {
+.sensor-card *,
+a.sensor-card * {
+  text-decoration: none !important;
+}
+
+.sensor-card:hover,
+a.sensor-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
   border-color: rgba(211, 47, 47, 0.3);
+  text-decoration: none !important;
 }
 
 .sensor-icon-box {
@@ -841,22 +851,27 @@ html.sidebar-expanded-init .sidebar .nav-link-item {
   margin-bottom: 16px;
 }
 
-.sensor-title {
+.sensor-title,
+a.sensor-card .sensor-title {
   font-family: 'Oswald', 'Inter', sans-serif;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   text-transform: uppercase;
   margin-bottom: 8px;
+  text-decoration: none !important;
 }
 
-.sensor-desc {
+.sensor-desc,
+a.sensor-card .sensor-desc {
   font-size: 0.82rem;
-  color: var(--text-muted);
+  color: var(--text-muted) !important;
   line-height: 1.45;
   margin-bottom: 16px;
   flex: 1;
+  text-decoration: none !important;
 }
+
 
 /* ==========================================================================
    CATÁLOGO DE COMPONENTES & CENTERED 0-100 LOADER
