@@ -1,11 +1,11 @@
-// Global JavaScript for Probaktronic Platform
+// Global JavaScript for Probaktronic Dashboard Platform
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Probaktronic Global System Loaded.');
+  console.log('Probaktronic Dashboard System Loaded.');
 
-  // Set current page as active in sidebar
+  // Highlight active link in sidebar navigation
   const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-  const navLinks = document.querySelectorAll('.sidebar-nav .nav-item-btn');
+  const navLinks = document.querySelectorAll('.sidebar-nav .nav-link-item');
   
   navLinks.forEach(link => {
     const href = link.getAttribute('href');
@@ -15,7 +15,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Update current date dynamically in status bar
+  // Handle Sidebar Minimizing / Expanding Toggle & Logo Switching
+  const btnMinimize = document.querySelector('.btn-sidebar-minimize');
+  const sidebar = document.querySelector('.sidebar');
+  
+  if (btnMinimize && sidebar) {
+    btnMinimize.addEventListener('click', () => {
+      sidebar.classList.toggle('minimized');
+      const isMinimized = sidebar.classList.contains('minimized');
+      
+      // Toggle Chevron Icon & Tooltip
+      const icon = btnMinimize.querySelector('i');
+      if (icon) {
+        if (isMinimized) {
+          icon.className = 'bi bi-chevron-double-right';
+          btnMinimize.setAttribute('title', 'Expandir menú');
+        } else {
+          icon.className = 'bi bi-chevron-double-left';
+          btnMinimize.setAttribute('title', 'Minimizar menú');
+        }
+      }
+    });
+  }
+
+  // Update current date dynamically in bottom status bar
   const dateEl = document.getElementById('firmwareDateValue');
   if (dateEl) {
     const now = new Date();
@@ -36,12 +59,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.hide();
       }
 
+      // Update User Profile Name in Header
+      const userNameEl = document.querySelector('.user-name');
+      if (userNameEl) {
+        userNameEl.textContent = username;
+      }
+
       showGlobalToast(`Sesión iniciada con éxito como: ${username}`);
     });
   }
 });
 
-// Toast Notification Helper
+// Helper Toast Notification System
 function showGlobalToast(message) {
   let toastContainer = document.getElementById('toastContainer');
   if (!toastContainer) {
@@ -54,10 +83,10 @@ function showGlobalToast(message) {
 
   const toastId = 'toast-' + Date.now();
   const toastHtml = `
-    <div id="${toastId}" class="toast align-items-center text-bg-dark border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+    <div id="${toastId}" class="toast align-items-center text-bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
       <div class="d-flex">
         <div class="toast-body d-flex align-items-center gap-2">
-          <i class="bi bi-info-circle-fill text-danger"></i>
+          <i class="bi bi-info-circle-fill text-danger fs-5"></i>
           <span>${message}</span>
         </div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>

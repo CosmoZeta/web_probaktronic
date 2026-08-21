@@ -16,46 +16,87 @@
 <body>
 
   <div class="app-container">
-    <div class="bg-watermark"></div>
+    <svg class="bg-circuit-watermark" viewBox="0 0 800 600" fill="none">
+      <path d="M 300 0 L 450 150 L 700 150 L 800 250" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 4"/>
+    </svg>
 
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
-      <div class="d-flex flex-column align-items-center w-100">
-        <a href="index.html" class="sidebar-brand" title="Probaktronic">
-          <img src="logo_probaktronic_solo.png" alt="Probaktronic" class="sidebar-logo-img">
-        </a>
+      <div class="d-flex flex-column w-100">
+        <div class="sidebar-brand-container">
+          <a href="index.html" class="sidebar-brand" title="Probaktronic">
+            <img src="logo_probaktronic_costado.png" alt="Probaktronic" class="sidebar-logo-costado">
+            <img src="logo_probaktronic_solo.png" alt="Probaktronic" class="sidebar-logo-solo">
+          </a>
+        </div>
 
         <nav class="sidebar-nav">
-          <a href="index.html" class="nav-item-btn" title="Página Principal">
-            <i class="bi bi-grid-fill"></i>
+          <a href="index.html" class="nav-link-item" title="Página Principal">
+            <i class="bi bi-house-door-fill"></i>
+            <span>Página Principal</span>
           </a>
-          <a href="vehiculos.html" class="nav-item-btn" title="Catálogo de Vehículos">
+          <a href="vehiculos.html" class="nav-link-item" title="Vehículos">
             <i class="bi bi-car-front-fill"></i>
+            <span>Vehículos</span>
           </a>
-          <a href="diagramas-3d.html" class="nav-item-btn active" title="Diagramas 3D">
-            <i class="bi bi-box-seam"></i>
+          <a href="diagramas-3d.html" class="nav-link-item active" title="Diagramas 3D">
+            <i class="bi bi-box-seam-fill"></i>
+            <span>Diagramas 3D</span>
           </a>
-          <a href="galeria-medios.html" class="nav-item-btn" title="Galería y Medios">
-            <i class="bi bi-file-earmark-medical"></i>
+          <a href="galeria-medios.html" class="nav-link-item" title="Galería & Medios">
+            <i class="bi bi-grid-fill"></i>
+            <span>Galería & Medios</span>
           </a>
-          <a href="#" class="nav-item-btn" title="Configuración">
-            <i class="bi bi-gear-fill"></i>
+          <a href="sensores-actuadores.html" class="nav-link-item" title="Sensores y Actuadores">
+            <i class="bi bi-cpu-fill"></i>
+            <span class="two-lines">Sensores y<br>Actuadores</span>
           </a>
+          <a href="catalogo.html" class="nav-link-item" title="Catálogo">
+            <i class="bi bi-journal-text"></i>
+            <span>Catálogo</span>
+          </a>
+          <a href="dashboard.html" class="nav-link-item" title="Dashboard">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+
+          <div class="sidebar-divider"></div>
+
+          <a href="#" class="nav-link-item" title="Configuración"><i class="bi bi-gear-fill"></i><span>Configuración</span></a>
+          <a href="#" class="nav-link-item" title="Actualizaciones"><i class="bi bi-arrow-repeat"></i><span>Actualizaciones</span></a>
+          <a href="#" class="nav-link-item" title="Herramientas"><i class="bi bi-tools"></i><span>Herramientas</span></a>
+          <a href="#" class="nav-link-item" title="Soporte"><i class="bi bi-headset"></i><span>Soporte</span></a>
         </nav>
       </div>
 
+      <!-- Minimize Button Present Always -->
       <div class="sidebar-footer">
-        <button class="nav-item-btn text-warning" id="btnLogin" data-bs-toggle="modal" data-bs-target="#loginModal" title="Iniciar Sesión">
-          <i class="bi bi-person-circle"></i>
+        <button class="btn-sidebar-minimize" title="Minimizar menú">
+          <i class="bi bi-chevron-double-left"></i>
+          <span>Minimizar</span>
         </button>
       </div>
     </aside>
 
-    <!-- Main Content Container -->
+    <!-- Main Content Area -->
     <main class="main-content">
-      <header class="top-header">
-        <h1 class="page-title">DIAGRAMAS AUTOMOTRICES 3D</h1>
-        <img src="logo_probaktronic_costado.png" alt="Probaktronic" class="header-logo-costado">
+      <header class="top-header-bar">
+        <div>
+          <div class="header-greeting">VISOR ESTRUCTURAL 3D</div>
+          <h1 class="page-title">DIAGRAMAS 3D</h1>
+          <div class="page-subtitle">Visor interactivo de componentes 3D, despiece y esquemas de pines de la ECU</div>
+        </div>
+
+        <div class="user-profile-section">
+          <button class="notification-bell-btn"><i class="bi bi-bell-fill"></i></button>
+          <div class="user-profile-card">
+            <div class="user-avatar"><i class="bi bi-person-fill"></i></div>
+            <div class="user-info">
+              <span class="user-name">Técnico Admin</span>
+              <span class="user-role">Administrador</span>
+            </div>
+          </div>
+        </div>
       </header>
 
       <!-- 3D Viewer Layout -->
@@ -65,20 +106,13 @@
             <button class="viewer-tool-btn active" title="Rotar 3D"><i class="bi bi-arrow-repeat"></i></button>
             <button class="viewer-tool-btn" title="Zoom In"><i class="bi bi-zoom-in"></i></button>
             <button class="viewer-tool-btn" title="Vista Despiece"><i class="bi bi-bounding-box"></i></button>
-            <button class="viewer-tool-btn" title="Medir Pinout"><i class="bi bi-diagram-3"></i></button>
           </div>
 
           <div class="text-center text-white p-4">
             <svg class="mb-3" width="220" height="180" viewBox="0 0 320 180" fill="none">
               <polygon points="160,20 280,80 160,140 40,80" stroke="#D32F2F" stroke-width="2.5" fill="rgba(211,47,47,0.1)"/>
-              <line x1="40" y1="80" x2="40" y2="130" stroke="#8C96A3" stroke-width="2"/>
-              <line x1="280" y1="80" x2="280" y2="130" stroke="#8C96A3" stroke-width="2"/>
-              <line x1="160" y1="140" x2="160" y2="170" stroke="#D32F2F" stroke-width="2.5"/>
             </svg>
             <h4 class="fw-bold text-uppercase font-rajdhani">Visor 3D Interactivo</h4>
-            <p class="text-secondary small max-w-400 mx-auto">
-              Soporte para modelos <code>.gltf</code>, <code>.glb</code> y <code>.obj</code>
-            </p>
           </div>
         </div>
 
@@ -90,32 +124,10 @@
                 <strong>Unidad ECU Principal</strong>
                 <div class="small text-muted">Bosch MED17.1.1</div>
               </div>
-              <i class="bi bi-eye-fill text-danger"></i>
-            </li>
-            <li class="component-item">
-              <div>
-                <strong>Conector A (Pinout 94-Pinos)</strong>
-                <div class="small text-muted">Esquema activo</div>
-              </div>
-              <i class="bi bi-eye-fill text-secondary"></i>
             </li>
           </ul>
         </div>
       </section>
-
-      <!-- System Info Bar -->
-      <footer class="info-section">
-        <h3 class="info-title">INFO</h3>
-        <div class="info-grid">
-          <div class="info-item"><span class="info-label">Software version</span><span class="info-value">8.11.0.0</span></div>
-          <div class="info-item"><span class="info-label">Firmware version</span><span class="info-value">8.10.0.0</span></div>
-          <div class="info-item"><span class="info-label">Firmware date</span><span class="info-value">06 Aug 2026 16:35</span></div>
-          <div class="info-item"><span class="info-label">Firmware info</span><span class="info-value">(C) PROBAKTRONIC</span></div>
-          <div class="info-item"><span class="info-label">USB port</span><span class="info-value">COM6</span></div>
-          <div class="info-item"><span class="info-label">Serial number</span><span class="info-value">65D48B6C35E2B2E7</span></div>
-          <div class="info-item"><span class="info-label">Hardware version</span><span class="info-value">1</span></div>
-        </div>
-      </footer>
     </main>
   </div>
 
