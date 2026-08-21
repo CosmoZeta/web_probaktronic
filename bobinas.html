@@ -212,10 +212,14 @@
     }
 
     /* Protected Diagram Image Styling */
+    /* Protected Diagram Image Styling with Hover Zoom */
     .protected-image-wrapper {
       position: relative;
       display: inline-block;
       max-width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+      cursor: zoom-in;
       user-select: none;
       -webkit-user-select: none;
     }
@@ -230,6 +234,9 @@
       pointer-events: none;
       user-select: none;
       -webkit-user-drag: none;
+      transition: transform 0.12s cubic-bezier(0.165, 0.84, 0.44, 1);
+      transform-origin: center center;
+      will-change: transform;
     }
 
     .security-shield-overlay {
@@ -240,7 +247,7 @@
       height: 100%;
       background: transparent;
       z-index: 10;
-      cursor: default;
+      cursor: zoom-in;
       user-select: none;
       -webkit-user-drag: none;
     }
@@ -431,13 +438,13 @@
             <div class="col-md-6">
               <div class="card p-3 bg-light border-0">
                 <span class="small fw-bold text-muted">PINOUT Y SEÑAL</span>
-                <span class="fw-bold">Pin 1: +12V Batería | Pin 2: Tierra Chasis | Pin 3: Pulso ECU</span>
+                <span class="fw-bold" id="diagramPinoutText">Pin 1: +12V Batería | Pin 2: Tierra Chasis | Pin 3: Pulso ECU</span>
               </div>
             </div>
             <div class="col-md-6">
               <div class="card p-3 bg-light border-0">
                 <span class="small fw-bold text-muted">PROCEDIMIENTO</span>
-                <span class="fw-bold">Medir señal PWM con osciloscopio o punta lógica Probaktronic</span>
+                <span class="fw-bold" id="diagramProcedureText">Medir señal PWM con osciloscopio o punta lógica Probaktronic</span>
               </div>
             </div>
           </div>

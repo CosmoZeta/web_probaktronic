@@ -2,6 +2,10 @@
 // Conexión Robusta con Cloud Firestore y Firebase Storage con Pantalla de Carga 0-100%
 
 const localBrandLogoMap = {
+  'audi': 'imagenes svg/ico_logo_audi.svg',
+  'bmw': 'imagenes svg/ico_logo_bmw.svg',
+  'byd': 'imagenes svg/ico_logo_byd.svg',
+  'chevrolet': 'imagenes svg/ico_logo_chevrolet.png',
   'citroen': 'imagenes svg/ico_logo_citroen.svg',
   'dacia': 'imagenes svg/ico_logo_dacia.svg',
   'daihatsu': 'imagenes svg/ico_logo_daihatsu.svg',
@@ -41,13 +45,78 @@ const localBrandLogoMap = {
   'zotye': 'imagenes svg/ico_logo_zotye.svg'
 };
 
+const localCarPhotoMap = {
+  // Audi
+  'audi a3': 'imagenes autos/ic_car_audia3.JPG',
+  'audi.a3': 'imagenes autos/ic_car_audia3.JPG',
+  'a3': 'imagenes autos/ic_car_audia3.JPG',
+  'audi a4': 'imagenes autos/ic_car_audi_a4.JPG',
+  'audi.a4': 'imagenes autos/ic_car_audi_a4.JPG',
+  'a4': 'imagenes autos/ic_car_audi_a4.JPG',
+  'audi q7': 'imagenes autos/ic_car_audi_q7.JPG',
+  'q7': 'imagenes autos/ic_car_audi_q7.JPG',
+  'audi tt': 'imagenes autos/ic_car_audi_tt.JPG',
+  'tt': 'imagenes autos/ic_car_audi_tt.JPG',
+  'tiguan': 'imagenes autos/ic_car_audi_tiguan.JPG',
+  
+  // BMW
+  'bmw 118': 'imagenes autos/ic_car_bmw_118_2007.JPG',
+  '118': 'imagenes autos/ic_car_bmw_118_2007.JPG',
+  '118i': 'imagenes autos/ic_car_bmw_118_2007.JPG',
+  
+  // Chevrolet
+  'captiva': 'imagenes autos/ic_car_chevrolet_captiva_2011.JPG',
+  'chevy': 'imagenes autos/ic_car_chevrolet_chevy.JPG',
+  'colorado': 'imagenes autos/ic_car_chevrolet_colorado_2006.JPG',
+  'sail': 'imagenes autos/ic_car_chevrolet_sail_2010.JPG',
+  'trailblazer': 'imagenes autos/ic_car_chevrolet_trailblazer_2002.JPG',
+  
+  // Citroen
+  'berlingo': 'imagenes autos/ic_car_Citroen_Berlingo_2015.JPG',
+  'c3 aircross': 'imagenes autos/ic_car_citroen_c3_aircross.JPG',
+  'c3 mk3': 'imagenes autos/ic_car_Citroen_Citroen_C3_mk3.JPG',
+  'c3': 'imagenes autos/ic_car_Citroen_Citroen_C3_tercera_generacion.JPG',
+  'cactus': 'imagenes autos/ic_car_citroen_cactus.JPG',
+  'picasso': 'imagenes autos/ic_car_citroen_picasso.JPG',
+  'saxo': 'imagenes autos/ic_car_citroen_saxo.JPG',
+  'xsara': 'imagenes autos/ic_car_citroen_xsara.JPG',
+  
+  // Dacia
+  'duster': 'imagenes autos/ic_car_dacia_duster.JPG',
+  'lodgy': 'imagenes autos/ic_car_dacia_lodgy.JPG',
+  
+  // Daihatsu
+  'copen': 'imagenes autos/ic_car_daihatsu_copen.JPG',
+  'materia': 'imagenes autos/ic_car_daihatsu_materia.JPG',
+  'sirion': 'imagenes autos/ic_car_daihatsu_sirion.JPG',
+  'terios': 'imagenes autos/ic_car_daihatsu_terios.JPG',
+  
+  // Fiat
+  'brava': 'imagenes autos/ic_car_fiat_brava.JPG',
+  'coupe': 'imagenes autos/ic_car_fiat_coupe.JPG',
+  'doblo': 'imagenes autos/ic_car_fiat_doblo.JPG',
+  'marea': 'imagenes autos/ic_car_fiat_marea.JPG'
+};
+
+function getVehicleCarPhotoUrl(brandName, modelName, docId) {
+  const query = (brandName + ' ' + modelName + ' ' + docId).toLowerCase();
+  for (const key of Object.keys(localCarPhotoMap)) {
+    if (query.includes(key)) {
+      return localCarPhotoMap[key];
+    }
+  }
+  return null;
+}
+
 let currentSelectedBrandId = null;
 let currentSelectedBrandName = null;
 window.currentModelsDataStore = {};
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initBobinasModule);
+} else {
   initBobinasModule();
-});
+}
 
 function initBobinasModule() {
   const searchInput = document.getElementById('brandSearchInput');
@@ -97,6 +166,33 @@ function initBobinasModule() {
       tab.classList.add('active');
     });
   });
+
+  // Smart Top-Left Back Button Handler (Hierarchical Step-by-Step Navigation)
+  const btnBackView = document.getElementById('btnBackView');
+  if (btnBackView) {
+    btnBackView.addEventListener('click', (e) => {
+      const brandsView = document.getElementById('brandsViewContainer');
+      const modelsView = document.getElementById('modelsViewContainer');
+      const diagramView = document.getElementById('diagramViewContainer');
+
+      // 1. If currently in Diagram Viewer (View 3), go back to Models List (View 2)
+      if (diagramView && !diagramView.classList.contains('d-none')) {
+        e.preventDefault();
+        showModelsView();
+        return;
+      }
+
+      // 2. If currently in Models List (View 2), go back to Brands Grid (View 1)
+      if (modelsView && !modelsView.classList.contains('d-none')) {
+        e.preventDefault();
+        showBrandsView();
+        return;
+      }
+
+      // 3. If currently in Brands Grid (View 1), allow normal navigation back to sensores-actuadores.html
+    });
+  }
+
 
   // Query Firestore collection 'bobinas'
   loadFirestoreBobinas(brandGrid);
@@ -246,9 +342,17 @@ window.openBrandModels = function(brandDocId, brandName, logoSrc) {
 
               console.log(`[Firestore Model] ${docId}:`, data);
 
+              const carPhotoUrl = getVehicleCarPhotoUrl(brandName, modelName, docId);
+              const carPhotoHtml = carPhotoUrl ? `
+                <div class="model-car-photo-box mb-3 p-1 text-center bg-white rounded border" style="height: 110px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                  <img src="${carPhotoUrl}" alt="${modelName}" style="max-height: 100%; max-width: 100%; object-fit: contain; border-radius: 4px;">
+                </div>
+              ` : '';
+
               const card = document.createElement('div');
               card.className = 'model-item-card';
               card.innerHTML = `
+                ${carPhotoHtml}
                 <div>
                   <span class="badge bg-danger mb-2">Bobina COP / DIS</span>
                   <h5 class="fw-bold fs-6 mb-1 text-dark">${docId}</h5>
@@ -299,6 +403,16 @@ window.openDiagramViewer = async function(docId) {
   if (titleEl) titleEl.textContent = `${currentSelectedBrandName} - ${modelTitle}`;
   if (motorEl) motorEl.textContent = `Código de Motor / Parte: ${motorCode}`;
 
+  // Dynamically update Pinout and Procedure from Firestore fields (or fallback)
+  const pinoutEl = document.getElementById('diagramPinoutText');
+  const procedureEl = document.getElementById('diagramProcedureText');
+
+  const customPinout = data.pinout || data.senial || data.pinoutSenial || data.pins || 'Pin 1: +12V Batería | Pin 2: Tierra Chasis | Pin 3: Pulso ECU';
+  const customProcedure = data.procedimiento || data.descripcion || data.procedimientoDiagnostico || data.notas || 'Medir señal PWM con osciloscopio o punta lógica Probaktronic';
+
+  if (pinoutEl) pinoutEl.textContent = customPinout;
+  if (procedureEl) procedureEl.textContent = customProcedure;
+
   if (!imgContainer) return;
 
   // Show Centered 0-100% Loader Card for Diagram Image
@@ -344,15 +458,91 @@ window.openDiagramViewer = async function(docId) {
     }
   }
 
-  // Render Image directly with Protection (No contextmenu, no drag, no button)
+  // Render Image directly with Protection + Multi-level Click & Hover Zoom System
   loader.finish(() => {
     imgContainer.innerHTML = `
-      <div class="protected-image-wrapper position-relative text-center w-100" oncontextmenu="return false;" ondragstart="return false;">
-        <img src="${finalImageUrl}" alt="${modelTitle}" class="diagram-viewer-modal-img unselectable-image" referrerpolicy="no-referrer"
+      <div class="protected-image-wrapper position-relative text-center w-100" id="zoomWrapper" oncontextmenu="return false;" ondragstart="return false;">
+        <span class="badge bg-dark opacity-75 position-absolute top-0 end-0 m-2" id="zoomLevelBadge" style="z-index: 15; pointer-events: none; font-size: 0.75rem;">Sutil Hover (1.35x) • Clic para +Zoom</span>
+        <img src="${finalImageUrl}" alt="${modelTitle}" id="zoomImage" class="diagram-viewer-modal-img unselectable-image" referrerpolicy="no-referrer"
              oncontextmenu="return false;" ondragstart="return false;" draggable="false">
-        <div class="security-shield-overlay" oncontextmenu="return false;" ondragstart="return false;"></div>
+        <div class="security-shield-overlay" id="zoomShield" oncontextmenu="return false;" ondragstart="return false;"></div>
       </div>
     `;
+
+    // Multi-level Zoom System:
+    // State 0 = Slight Hover (1.35x)
+    // State 1 = 1st Click (Medium 2.0x)
+    // State 2 = 2nd Click (Max 3.0x)
+    // State 3 = 3rd Click (Reset 1.0x)
+    let zoomLevelState = 0; // 0 = default hover mode, 1 = med, 2 = high
+
+    const shield = document.getElementById('zoomShield');
+    const img = document.getElementById('zoomImage');
+    const wrapper = document.getElementById('zoomWrapper');
+    const badge = document.getElementById('zoomLevelBadge');
+
+    if (shield && img && wrapper) {
+      // Mouse move tracks cursor position dynamically
+      shield.addEventListener('mousemove', (e) => {
+        const rect = wrapper.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        img.style.transformOrigin = `${x}% ${y}%`;
+
+        if (zoomLevelState === 0) {
+          img.style.transform = 'scale(1.35)'; // Slight hover zoom
+        } else if (zoomLevelState === 1) {
+          img.style.transform = 'scale(2.0)'; // 1st click medium zoom
+        } else if (zoomLevelState === 2) {
+          img.style.transform = 'scale(3.0)'; // 2nd click max zoom
+        }
+      });
+
+      // Sequential Click handler (1st click -> 2.0x, 2nd click -> 3.0x, 3rd click -> Reset)
+      shield.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        zoomLevelState = (zoomLevelState + 1) % 3; // Cycles: 0 -> 1 -> 2 -> 0
+
+        const rect = wrapper.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        img.style.transformOrigin = `${x}% ${y}%`;
+
+        if (zoomLevelState === 0) {
+          img.style.transform = 'scale(1.35)';
+          if (badge) {
+            badge.textContent = 'Zoom Normal • Clic para +Zoom';
+            badge.className = 'badge bg-dark opacity-75 position-absolute top-0 end-0 m-2';
+          }
+        } else if (zoomLevelState === 1) {
+          img.style.transform = 'scale(2.0)';
+          if (badge) {
+            badge.textContent = 'Zoom Medio (2.0x) • Clic para Máximo';
+            badge.className = 'badge bg-danger position-absolute top-0 end-0 m-2';
+          }
+        } else if (zoomLevelState === 2) {
+          img.style.transform = 'scale(3.0)';
+          if (badge) {
+            badge.textContent = 'Zoom Máximo (3.0x) • Clic para Reiniciar';
+            badge.className = 'badge bg-danger position-absolute top-0 end-0 m-2';
+          }
+        }
+      });
+
+      // Mouse leave resets to normal 1.0x
+      shield.addEventListener('mouseleave', () => {
+        zoomLevelState = 0;
+        img.style.transformOrigin = 'center center';
+        img.style.transform = 'scale(1)';
+        if (badge) {
+          badge.textContent = 'Sutil Hover (1.35x) • Clic para +Zoom';
+          badge.className = 'badge bg-dark opacity-75 position-absolute top-0 end-0 m-2';
+        }
+      });
+    }
   });
 };
 

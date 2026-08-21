@@ -11,58 +11,29 @@ document.addEventListener('DOMContentLoaded', () => {
   let isHovered = sessionStorage.getItem('sidebar_hovered') === 'true';
 
   if (sidebar) {
-    if (!isManualLocked && isHovered) {
-      sidebar.classList.remove('minimized');
-      document.documentElement.classList.add('sidebar-expanded-init');
-      updateSidebarToggleUI(false);
-    } else if (isManualLocked) {
+    // Restore user preference state (Fixed state, no hover auto-expansion)
+    if (isManualLocked) {
       sidebar.classList.add('minimized');
-      document.documentElement.classList.remove('sidebar-expanded-init');
       updateSidebarToggleUI(true);
     } else {
-      sidebar.classList.add('minimized');
-      document.documentElement.classList.remove('sidebar-expanded-init');
-      updateSidebarToggleUI(true);
+      sidebar.classList.remove('minimized');
+      updateSidebarToggleUI(false);
     }
 
-    // Expand on Mouse Enter (Hover)
-    sidebar.addEventListener('mouseenter', () => {
-      if (!isManualLocked) {
-        sidebar.classList.remove('minimized');
-        document.documentElement.classList.add('sidebar-expanded-init');
-        sessionStorage.setItem('sidebar_hovered', 'true');
-        updateSidebarToggleUI(false);
-      }
-    });
-
-    // Collapse ONLY on Mouse Leave (When user moves pointer outside sidebar)
-    sidebar.addEventListener('mouseleave', () => {
-      if (!isManualLocked) {
-        sidebar.classList.add('minimized');
-        document.documentElement.classList.remove('sidebar-expanded-init');
-        sessionStorage.setItem('sidebar_hovered', 'false');
-        updateSidebarToggleUI(true);
-      }
-    });
-
-    // Handle Manual Click Toggle
+    // Handle Manual Click Toggle Only
     if (btnMinimize) {
       btnMinimize.addEventListener('click', (e) => {
         e.stopPropagation();
         
-        isManualLocked = !isManualLocked;
-        sessionStorage.setItem('sidebar_locked', isManualLocked ? 'true' : 'false');
-
-        if (isManualLocked) {
-          sidebar.classList.add('minimized');
-          document.documentElement.classList.remove('sidebar-expanded-init');
-          sessionStorage.setItem('sidebar_hovered', 'false');
-          updateSidebarToggleUI(true);
-        } else {
+        const isCurrentlyMinimized = sidebar.classList.contains('minimized');
+        if (isCurrentlyMinimized) {
           sidebar.classList.remove('minimized');
-          document.documentElement.classList.add('sidebar-expanded-init');
-          sessionStorage.setItem('sidebar_hovered', 'true');
+          sessionStorage.setItem('sidebar_locked', 'false');
           updateSidebarToggleUI(false);
+        } else {
+          sidebar.classList.add('minimized');
+          sessionStorage.setItem('sidebar_locked', 'true');
+          updateSidebarToggleUI(true);
         }
       });
     }
@@ -300,3 +271,47 @@ function showGlobalToast(message) {
     toastEl.remove();
   });
 }
+
+// Universal Helper: Render Centered 0-100% Firebase Loader Card
+window.createCenteredFirebaseLoader = function(container, subtitleText = 'Conectando con Cloud Firestore...') {
+  if (!container) return null;
+
+  container.innerHTML = `
+    <div class="catalog-loader-container w-100 py-4" style="grid-column: 1 / -1;">
+      <div class="loader-card mx-auto">
+        <img src="logo_probaktronic_solo.png" alt="Probaktronic" height="52" class="pulse-animation mb-3">
+        <h4 class="font-rajdhani fw-bold text-uppercase mb-1 text-dark">CARGANDO DESDE FIREBASE</h4>
+        <p class="text-muted small mb-3">${subtitleText}</p>
+        <div class="progress w-100 mb-2" style="height: 8px; border-radius: 4px; background-color: #E2E8F0;">
+          <div class="loader-progress-bar progress-bar progress-bar-striped progress-bar-animated bg-danger" style="width: 0%;"></div>
+        </div>
+        <div class="loader-progress-percent fw-bold fs-4 text-danger font-rajdhani">0%</div>
+      </div>
+    </div>
+  `;
+
+  const bar = container.querySelector('.loader-progress-bar');
+  const percentEl = container.querySelector('.loader-progress-percent');
+
+  let currentPercent = 0;
+  const timer = setInterval(() => {
+    if (currentPercent < 90) {
+      currentPercent += Math.floor(Math.random() * 15) + 10;
+      if (currentPercent > 90) currentPercent = 90;
+      if (bar) bar.style.width = currentPercent + '%';
+      if (percentEl) percentEl.textContent = currentPercent + '%';
+    }
+  }, 80);
+
+  return {
+    finish: (callback) => {
+      clearInterval(timer);
+      if (bar) bar.style.width = '100%';
+      if (percentEl) percentEl.textContent = '100%';
+      setTimeout(() => {
+        if (callback) callback();
+      }, 200);
+    }
+  };
+};
+
