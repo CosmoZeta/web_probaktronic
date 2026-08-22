@@ -6,8 +6,8 @@
   <title>Probaktronic - Seleccionar Vehículo (Diagramas)</title>
   
   <script>
-    if (sessionStorage.getItem('sidebar_hovered') === 'true' && sessionStorage.getItem('sidebar_locked') !== 'true') {
-      document.documentElement.classList.add('sidebar-expanded-init');
+    if (sessionStorage.getItem('sidebar_locked') === 'true') {
+      document.documentElement.classList.add('sidebar-minimized-init');
     }
   </script>
 
@@ -250,6 +250,220 @@
       user-select: none;
       -webkit-user-drag: none;
     }
+
+    /* Reference Target: Selected Vehicle Segmented Bar & ECU Card */
+    .selected-vehicle-segmented-bar {
+      display: flex;
+      align-items: stretch;
+      border: 1.5px solid var(--brand-red);
+      border-radius: 8px;
+      background-color: #FFFFFF;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(211, 47, 47, 0.08);
+      margin-bottom: 24px;
+    }
+
+    .selected-vehicle-segment {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      border-right: 1px solid #CBD5E1;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #1E293B;
+    }
+
+    .selected-vehicle-segment:last-child {
+      border-right: none;
+      flex: 1;
+      justify-content: space-between;
+    }
+
+    .selected-vehicle-segment img,
+    #selectedVehicleBrandLogo {
+      max-height: 28px !important;
+      max-width: 38px !important;
+      height: 28px !important;
+      object-fit: contain !important;
+      flex-shrink: 0 !important;
+      display: inline-block !important;
+    }
+
+    .btn-remove-selected-vehicle {
+      width: 28px;
+      height: 28px;
+      background: #E2E8F0;
+      border: none;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748B;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-remove-selected-vehicle:hover {
+      background: var(--brand-red);
+      color: #FFFFFF;
+    }
+
+    .ecu-connection-main-card {
+      background-color: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 24px 32px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    .ecu-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ecu-part-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .ecu-part-icon-box {
+      width: 48px;
+      height: 48px;
+      background: #F1F5F9;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #475569;
+      font-size: 1.5rem;
+    }
+
+    .ecu-part-number {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0F172A;
+      margin: 0;
+    }
+
+    .ecu-brand-logo-text {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      font-style: italic;
+      color: var(--brand-red);
+      letter-spacing: 1.5px;
+    }
+
+    .connection-section-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #64748B;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .connection-types-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .connection-type-card {
+      background-color: #E2E8F0;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      min-height: 110px;
+      user-select: none;
+    }
+
+    .connection-type-card:hover {
+      background-color: #CBD5E1;
+      transform: translateY(-2px);
+    }
+
+    .connection-type-card.active {
+      background-color: #FFFFFF;
+      border-color: var(--brand-red);
+      box-shadow: 0 4px 14px rgba(211, 47, 47, 0.15);
+    }
+
+    .connection-type-card .card-corner-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      color: #94A3B8;
+      font-size: 1rem;
+    }
+
+    .connection-type-card.active .card-corner-badge {
+      color: var(--brand-red);
+    }
+
+    .connection-type-card .conn-icon {
+      font-size: 2rem;
+      color: #334155;
+      transition: color 0.2s ease;
+    }
+
+    .connection-type-card.active .conn-icon {
+      color: var(--brand-red);
+    }
+
+    .connection-type-card .conn-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1E293B;
+      text-transform: uppercase;
+      text-align: center;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .connection-type-card.active .conn-label {
+      color: var(--brand-red);
+    }
+
+    .btn-connection-next {
+      width: 100%;
+      padding: 14px;
+      background-color: var(--brand-red);
+      color: #FFFFFF;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(211, 47, 47, 0.25);
+    }
+
+    .btn-connection-next:hover {
+      background-color: #B71C1C;
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 <body>
@@ -325,8 +539,8 @@
           <i class="bi bi-arrow-left"></i>
         </a>
         <div>
-          <h1 class="page-title fs-2 mb-0" id="vehiculosHeaderTitle">SELECCIONAR VEHÍCULO - DIAGRAMAS</h1>
-          <div class="page-subtitle mt-1" id="vehiculosHeaderSubtitle">Seleccione la marca de vehículo para consultar los diagramas esquemáticos y pinouts de diagnóstico</div>
+          <h1 class="page-title fs-2 mb-0" id="vehiculosHeaderTitle">SELECT VEHICLE</h1>
+          <div class="page-subtitle mt-1" id="vehiculosHeaderSubtitle">Seleccione la marca y modelo para consultar los esquemas de conexión y diagnóstico</div>
         </div>
       </div>
 
@@ -334,9 +548,9 @@
       <div id="brandsViewContainer">
         <!-- Section Tabs -->
         <div class="section-tab-bar">
-          <span class="section-tab-item active" data-tab="all">Mostrar Todo</span>
-          <span class="section-tab-item" data-tab="recent">Últimos Usados</span>
-          <span class="section-tab-item" data-tab="fav">Favoritos</span>
+          <span class="section-tab-item active" data-tab="all">Show All</span>
+          <span class="section-tab-item" data-tab="recent">Last Used</span>
+          <span class="section-tab-item" data-tab="fav">Favourites</span>
         </div>
 
         <!-- Filter Toolbar -->
@@ -344,7 +558,7 @@
           <div class="search-input-group">
             <div class="input-group">
               <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-              <input type="text" id="brandSearchInput" class="form-control border-start-0" placeholder="Buscar marca de vehículo...">
+              <input type="text" id="brandSearchInput" class="form-control border-start-0" placeholder="Buscar vehículo o marca...">
             </div>
           </div>
 
@@ -392,162 +606,8 @@
           <span class="alphabet-letter" data-letter="Z">Z</span>
         </div>
 
-        <!-- Brand Grid (Pre-rendered 38 Brands connected live to Cloud Firestore) -->
+        <!-- Brand Grid (Populated dynamically from Cloud Firestore with only active brands) -->
         <section class="brand-grid" id="vehiculosBrandGrid">
-          <div class="brand-card" data-brand="Audi" data-doc-id="audi" onclick="openBrandDiagramModels('audi', 'Audi', 'imagenes svg/ico_logo_audi.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_audi.svg" alt="Audi" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Audi</h4>
-          </div>
-          <div class="brand-card" data-brand="BMW" data-doc-id="bmw" onclick="openBrandDiagramModels('bmw', 'BMW', 'imagenes svg/ico_logo_bmw.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_bmw.svg" alt="BMW" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">BMW</h4>
-          </div>
-          <div class="brand-card" data-brand="BYD" data-doc-id="byd" onclick="openBrandDiagramModels('byd', 'BYD', 'imagenes svg/ico_logo_byd.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_byd.svg" alt="BYD" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">BYD</h4>
-          </div>
-          <div class="brand-card" data-brand="Chevrolet" data-doc-id="chevrolet" onclick="openBrandDiagramModels('chevrolet', 'Chevrolet', 'imagenes svg/ico_logo_chevrolet.png', 'diagramas')">
-            <img src="imagenes svg/ico_logo_chevrolet.png" alt="Chevrolet" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Chevrolet</h4>
-          </div>
-          <div class="brand-card" data-brand="Citroën" data-doc-id="citroen" onclick="openBrandDiagramModels('citroen', 'Citroën', 'imagenes svg/ico_logo_citroen.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_citroen.svg" alt="Citroën" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Citroën</h4>
-          </div>
-          <div class="brand-card" data-brand="Dacia" data-doc-id="dacia" onclick="openBrandDiagramModels('dacia', 'Dacia', 'imagenes svg/ico_logo_dacia.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_dacia.svg" alt="Dacia" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Dacia</h4>
-          </div>
-          <div class="brand-card" data-brand="Daihatsu" data-doc-id="daihatsu" onclick="openBrandDiagramModels('daihatsu', 'Daihatsu', 'imagenes svg/ico_logo_daihatsu.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_daihatsu.svg" alt="Daihatsu" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Daihatsu</h4>
-          </div>
-          <div class="brand-card" data-brand="Fiat" data-doc-id="fiat" onclick="openBrandDiagramModels('fiat', 'Fiat', 'imagenes svg/ico_logo_fiat.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_fiat.svg" alt="Fiat" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Fiat</h4>
-          </div>
-          <div class="brand-card" data-brand="Ford" data-doc-id="ford" onclick="openBrandDiagramModels('ford', 'Ford', 'imagenes svg/ico_logo_ford.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_ford.svg" alt="Ford" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Ford</h4>
-          </div>
-          <div class="brand-card" data-brand="GMC" data-doc-id="gmc" onclick="openBrandDiagramModels('gmc', 'GMC', 'imagenes svg/ico_logo_gmc.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_gmc.svg" alt="GMC" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">GMC</h4>
-          </div>
-          <div class="brand-card" data-brand="Honda" data-doc-id="honda" onclick="openBrandDiagramModels('honda', 'Honda', 'imagenes svg/ico_logo_honda.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_honda.svg" alt="Honda" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Honda</h4>
-          </div>
-          <div class="brand-card" data-brand="Hummer" data-doc-id="hummer" onclick="openBrandDiagramModels('hummer', 'Hummer', 'imagenes svg/ico_logo_hummer.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_hummer.svg" alt="Hummer" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Hummer</h4>
-          </div>
-          <div class="brand-card position-relative" data-brand="Hyundai" data-doc-id="hyundai" onclick="openBrandDiagramModels('hyundai', 'Hyundai', 'imagenes svg/ico_logo_hyundai.svg', 'diagramas')">
-            <span class="badge bg-success position-absolute top-0 end-0 m-2" style="font-size: 0.65rem;">En Vivo</span>
-            <img src="imagenes svg/ico_logo_hyundai.svg" alt="Hyundai" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Hyundai</h4>
-          </div>
-          <div class="brand-card" data-brand="Infiniti" data-doc-id="infiniti" onclick="openBrandDiagramModels('infiniti', 'Infiniti', 'imagenes svg/ico_logo_infiniti.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_infiniti.svg" alt="Infiniti" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Infiniti</h4>
-          </div>
-          <div class="brand-card" data-brand="Isuzu" data-doc-id="isuzu" onclick="openBrandDiagramModels('isuzu', 'Isuzu', 'imagenes svg/ico_logo_isuzu.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_isuzu.svg" alt="Isuzu" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Isuzu</h4>
-          </div>
-          <div class="brand-card" data-brand="Kia" data-doc-id="kia" onclick="openBrandDiagramModels('kia', 'Kia', 'imagenes svg/ico_logo_kia.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_kia.svg" alt="Kia" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Kia</h4>
-          </div>
-          <div class="brand-card" data-brand="Lada" data-doc-id="lada" onclick="openBrandDiagramModels('lada', 'Lada', 'imagenes svg/ico_logo_lada.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_lada.svg" alt="Lada" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Lada</h4>
-          </div>
-          <div class="brand-card" data-brand="Lancia" data-doc-id="lancia" onclick="openBrandDiagramModels('lancia', 'Lancia', 'imagenes svg/ico_logo_lancia.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_lancia.svg" alt="Lancia" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Lancia</h4>
-          </div>
-          <div class="brand-card" data-brand="Lotus" data-doc-id="lotus" onclick="openBrandDiagramModels('lotus', 'Lotus', 'imagenes svg/ico_logo_lotus.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_lotus.svg" alt="Lotus" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Lotus</h4>
-          </div>
-          <div class="brand-card" data-brand="Mahindra" data-doc-id="mahindra" onclick="openBrandDiagramModels('mahindra', 'Mahindra', 'imagenes svg/ico_logo_mahindra.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_mahindra.svg" alt="Mahindra" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Mahindra</h4>
-          </div>
-          <div class="brand-card" data-brand="Maruti" data-doc-id="maruti" onclick="openBrandDiagramModels('maruti', 'Maruti', 'imagenes svg/ico_logo_maruti.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_maruti.svg" alt="Maruti" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Maruti</h4>
-          </div>
-          <div class="brand-card" data-brand="Mazda" data-doc-id="mazda" onclick="openBrandDiagramModels('mazda', 'Mazda', 'imagenes svg/ico_logo_mazda.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_mazda.svg" alt="Mazda" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Mazda</h4>
-          </div>
-          <div class="brand-card" data-brand="Mercedes-Benz" data-doc-id="mercedes" onclick="openBrandDiagramModels('mercedes', 'Mercedes-Benz', 'imagenes svg/ico_logo_mercedes_benz.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_mercedes_benz.svg" alt="Mercedes-Benz" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Mercedes-Benz</h4>
-          </div>
-          <div class="brand-card" data-brand="Mini" data-doc-id="mini" onclick="openBrandDiagramModels('mini', 'Mini', 'imagenes svg/ico_logo_mini.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_mini.svg" alt="Mini" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Mini</h4>
-          </div>
-          <div class="brand-card" data-brand="Mitsubishi" data-doc-id="mitsubishi" onclick="openBrandDiagramModels('mitsubishi', 'Mitsubishi', 'imagenes svg/ico_logo_mitsubishi.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_mitsubishi.svg" alt="Mitsubishi" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Mitsubishi</h4>
-          </div>
-          <div class="brand-card" data-brand="Opel" data-doc-id="opel" onclick="openBrandDiagramModels('opel', 'Opel', 'imagenes svg/ico_logo_opel.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_opel.svg" alt="Opel" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Opel</h4>
-          </div>
-          <div class="brand-card" data-brand="Peugeot" data-doc-id="peugeot" onclick="openBrandDiagramModels('peugeot', 'Peugeot', 'imagenes svg/ico_logo_peugeot.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_peugeot.svg" alt="Peugeot" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Peugeot</h4>
-          </div>
-          <div class="brand-card" data-brand="Pontiac" data-doc-id="pontiac" onclick="openBrandDiagramModels('pontiac', 'Pontiac', 'imagenes svg/ico_logo_pontiac.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_pontiac.svg" alt="Pontiac" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Pontiac</h4>
-          </div>
-          <div class="brand-card" data-brand="Porsche" data-doc-id="porsche" onclick="openBrandDiagramModels('porsche', 'Porsche', 'imagenes svg/ico_logo_porsche.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_porsche.svg" alt="Porsche" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Porsche</h4>
-          </div>
-          <div class="brand-card" data-brand="Renault" data-doc-id="renault" onclick="openBrandDiagramModels('renault', 'Renault', 'imagenes svg/ico_logo_renault.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_renault.svg" alt="Renault" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Renault</h4>
-          </div>
-          <div class="brand-card" data-brand="Seat" data-doc-id="seat" onclick="openBrandDiagramModels('seat', 'Seat', 'imagenes svg/ico_logo_seat.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_seat.svg" alt="Seat" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Seat</h4>
-          </div>
-          <div class="brand-card" data-brand="Škoda" data-doc-id="skoda" onclick="openBrandDiagramModels('skoda', 'Škoda', 'imagenes svg/ico_logo_skoda.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_skoda.svg" alt="Škoda" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Škoda</h4>
-          </div>
-          <div class="brand-card" data-brand="Subaru" data-doc-id="subaru" onclick="openBrandDiagramModels('subaru', 'Subaru', 'imagenes svg/ico_logo_subaru.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_subaru.svg" alt="Subaru" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Subaru</h4>
-          </div>
-          <div class="brand-card" data-brand="Suzuki" data-doc-id="suzuki" onclick="openBrandDiagramModels('suzuki', 'Suzuki', 'imagenes svg/ico_logo_suzuki.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_suzuki.svg" alt="Suzuki" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Suzuki</h4>
-          </div>
-          <div class="brand-card position-relative" data-brand="Toyota" data-doc-id="toyota" onclick="openBrandDiagramModels('toyota', 'Toyota', 'imagenes svg/ico_logo_toyota.svg', 'diagramas')">
-            <span class="badge bg-success position-absolute top-0 end-0 m-2" style="font-size: 0.65rem;">En Vivo</span>
-            <img src="imagenes svg/ico_logo_toyota.svg" alt="Toyota" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Toyota</h4>
-          </div>
-          <div class="brand-card" data-brand="Volkswagen" data-doc-id="volkswagen" onclick="openBrandDiagramModels('volkswagen', 'Volkswagen', 'imagenes svg/ico_logo_volkswagen.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_volkswagen.svg" alt="Volkswagen" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Volkswagen</h4>
-          </div>
-          <div class="brand-card" data-brand="Wuling" data-doc-id="wuling" onclick="openBrandDiagramModels('wuling', 'Wuling', 'imagenes svg/ico_logo_wuling.png', 'diagramas')">
-            <img src="imagenes svg/ico_logo_wuling.png" alt="Wuling" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Wuling</h4>
-          </div>
-          <div class="brand-card" data-brand="Zotye" data-doc-id="zotye" onclick="openBrandDiagramModels('zotye', 'Zotye', 'imagenes svg/ico_logo_zotye.svg', 'diagramas')">
-            <img src="imagenes svg/ico_logo_zotye.svg" alt="Zotye" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-            <h4 class="brand-name-title">Zotye</h4>
-          </div>
         </section>
       </div>
 
@@ -567,78 +627,74 @@
         </div>
       </div>
 
-      <!-- View 3: ECU Info & Connection Type Selector (Level 3 - Probaktronic Mobile App Flow) -->
+      <!-- View 3: ECU Info & Connection Type Selector (Level 3 - Exact Reference Flow) -->
       <div id="ecuInfoViewContainer" class="d-none">
-        <div class="ecu-info-card bg-white rounded-4 p-4 border shadow-sm mx-auto mb-4" style="max-width: 780px;">
-          <!-- Header -->
-          <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-            <h3 class="font-rajdhani fw-bold text-danger text-uppercase mb-0 fs-3">INFORMACIÓN DE LA ECU</h3>
-            <button class="btn btn-outline-secondary btn-sm" onclick="showModelsView()"><i class="bi bi-arrow-left me-1"></i> Volver a Modelos</button>
+        <div style="max-width: 860px; margin: 0 auto;" class="mb-4">
+          <!-- 1. SELECTED Vehicle Segmented Bar -->
+          <div class="mb-3">
+            <span class="small fw-bold text-muted text-uppercase tracking-wider mb-2 d-block" style="font-size: 0.78rem; letter-spacing: 0.6px;">SELECTED</span>
+            <div class="selected-vehicle-segmented-bar">
+              <div class="selected-vehicle-segment" style="min-width: 170px;">
+                <img id="selectedVehicleBrandLogo" src="imagenes svg/ico_logo_toyota.svg" alt="Brand Logo" style="max-height: 28px; max-width: 38px; height: 28px; object-fit: contain; flex-shrink: 0;">
+                <span id="selectedVehicleBrandText" class="fw-bold">Toyota</span>
+              </div>
+              <div class="selected-vehicle-segment" style="min-width: 150px;">
+                <span id="selectedVehicleModelText" class="fw-bold">Yaris</span>
+              </div>
+              <div class="selected-vehicle-segment">
+                <span id="selectedVehicleSpecText" class="fw-bold text-dark">1.5L 109ps (1NZFE)</span>
+                <button class="btn-remove-selected-vehicle" onclick="showModelsView()" title="Cambiar vehículo">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- 1. Selected Vehicle Card -->
-          <div class="mb-4">
-            <span class="small fw-bold text-muted text-uppercase tracking-wider mb-2 d-block">SELECTED VEHICLE</span>
-            <div class="border border-danger border-2 rounded-4 p-3 d-flex align-items-center justify-content-between bg-light">
-              <div class="d-flex align-items-center gap-3">
-                <div class="bg-white p-2 rounded-3 border text-center" style="width: 72px; height: 56px; display: flex; align-items: center; justify-content: center;">
-                  <img id="selectedVehicleBrandLogo" src="imagenes svg/ico_logo_toyota.svg" alt="Brand Logo" style="max-height: 100%; max-width: 100%;">
+          <!-- 2. ECU & Connection Main Card -->
+          <div class="ecu-connection-main-card">
+            <!-- Top ECU Row -->
+            <div class="ecu-header-row border-bottom pb-3 mb-4">
+              <div class="ecu-part-info">
+                <div class="ecu-part-icon-box">
+                  <i class="bi bi-cpu"></i>
                 </div>
                 <div>
-                  <h5 class="font-rajdhani fw-bold text-dark mb-0 fs-5" id="selectedVehicleTitle">TOYOTA HILUX 2011 - 2015</h5>
-                  <span class="text-muted small fw-bold" id="selectedVehicleBrandSub">TOYOTA</span>
+                  <h4 class="ecu-part-number" id="ecuNameTitle">275036-1152</h4>
                 </div>
               </div>
-              <div class="text-end">
-                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill font-rajdhani fw-bold" id="selectedVehicleMotorBadge">Motor 2KD-FTV (2011 - 2015)</span>
+              <div class="ecu-brand-logo-text" id="ecuManufacturerLogo">
+                DENSO
               </div>
             </div>
-          </div>
 
-          <!-- 2. ECU Card -->
-          <div class="mb-4">
-            <span class="small fw-bold text-muted text-uppercase tracking-wider mb-2 d-block">ECU</span>
-            <div class="bg-light rounded-4 p-3 border d-flex align-items-center justify-content-between">
-              <div class="d-flex align-items-center gap-3">
-                <div class="bg-white p-2 rounded-3 border text-center" style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
-                  <i class="bi bi-cpu fs-2 text-danger"></i>
-                </div>
-                <div>
-                  <span class="text-muted small d-block">ECU</span>
-                  <h6 class="font-rajdhani fw-bold text-dark mb-0 fs-5" id="ecuNameTitle">2KD-FTV</h6>
-                </div>
+            <!-- Connection Types Grid -->
+            <div class="mb-4">
+              <div class="connection-section-title">CONNECTION TYPE</div>
+              <div class="connection-types-grid" id="connectionTypeListContainer">
+                <!-- Dynamically generated cards -->
               </div>
-              <img src="logo_probaktronic_solo.png" alt="Probaktronic" height="36">
             </div>
-          </div>
 
-          <!-- 3. Connection Type (List of Archivos / Diagram Documents) -->
-          <div class="mb-4">
-            <span class="small fw-bold text-muted text-uppercase tracking-wider mb-2 d-block">CONNECTION TYPE</span>
-            <div class="d-flex flex-column gap-3" id="connectionTypeListContainer">
-              <!-- Dynamically populated from subcollection 'archivos' -->
+            <!-- Next Button -->
+            <div class="pt-2">
+              <button class="btn-connection-next" id="btnNextToDiagram">
+                Next
+              </button>
             </div>
-          </div>
-
-          <!-- 4. Next Button -->
-          <div class="mt-4 pt-2 border-top">
-            <button class="btn btn-danger btn-lg w-100 py-3 font-rajdhani fw-bold text-uppercase fs-5 rounded-4 shadow-sm" id="btnNextToDiagram">
-              NEXT <i class="bi bi-arrow-right ms-2"></i>
-            </button>
           </div>
         </div>
       </div>
 
-      <!-- View 3: Schematic Diagram Viewer -->
+      <!-- View 4: Schematic Diagram Viewer -->
       <div id="diagramViewContainer" class="d-none">
         <div class="models-modal-card">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
               <span class="badge bg-danger mb-1">ESQUEMA DE DIAGNÓSTICO</span>
-              <h3 class="font-rajdhani fw-bold mb-0 text-uppercase" id="diagramModelTitle">Audi A3</h3>
-              <div class="text-muted small" id="diagramMotorCode">Código de Motor / Parte: 022905100B</div>
+              <h3 class="font-rajdhani fw-bold mb-0 text-uppercase" id="diagramModelTitle">Toyota Hilux</h3>
+              <div class="text-muted small" id="diagramMotorCode">Configuración / Código: 2KD-FTV</div>
             </div>
-            <button class="btn btn-outline-secondary btn-sm" onclick="showModelsView()"><i class="bi bi-arrow-left me-1"></i> Volver a Modelos</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="showEcuInfoView()"><i class="bi bi-arrow-left me-1"></i> Volver a Opciones</button>
           </div>
 
           <div class="bg-dark rounded-4 p-3 text-center mb-3" id="diagramImgContainer" style="min-height: 280px; display: flex; align-items: center; justify-content: center; user-select: none;">

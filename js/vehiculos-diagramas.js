@@ -124,12 +124,12 @@ let currentSelectedBrandName = null;
 window.currentModelsDataStore = {};
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initVehiculosDiagramasModule);
+  document.addEventListener('DOMContentLoaded', () => window.initVehiculosDiagramasModule());
 } else {
-  initVehiculosDiagramasModule();
+  window.initVehiculosDiagramasModule();
 }
 
-function initVehiculosDiagramasModule() {
+window.initVehiculosDiagramasModule = function initVehiculosDiagramasModule() {
   const searchInput = document.getElementById('brandSearchInput');
   const alphabetLetters = document.querySelectorAll('.alphabet-letter');
   const brandGrid = document.getElementById('vehiculosBrandGrid');
@@ -200,22 +200,7 @@ function initVehiculosDiagramasModule() {
     });
   }
 
-  // Bind click handlers to pre-rendered HTML cards immediately
-  const initialCards = brandGrid.querySelectorAll('.brand-card');
-  initialCards.forEach(card => {
-    card.onclick = (e) => {
-      if (e) e.stopPropagation();
-      const docId = (card.getAttribute('data-doc-id') || card.getAttribute('data-brand') || '').toLowerCase().trim();
-      const displayName = card.getAttribute('data-brand') || docId;
-      const logoImg = card.querySelector('img');
-      const logoSrc = logoImg ? logoImg.getAttribute('src') : 'logo_probaktronic_solo.png';
-
-      console.log(`Pre-rendered brand card clicked: [${docId}] - ${displayName}`);
-      window.openBrandDiagramModels(docId, displayName, logoSrc, 'diagramas');
-    };
-  });
-
-  // Query Firestore collection 'diagramas' (or 'bobinas' fallback)
+  // Query Firestore collection 'diagramas' to render only active brands
   loadFirestoreDiagramasBrands(brandGrid);
 }
 
@@ -244,93 +229,107 @@ function loadFirestoreDiagramasBrands(grid) {
 
   ensureFirebaseInitialized();
 
-  const loader = safeCreateCenteredLoader(grid, 'Conectando con Cloud Firestore para descargar diagramas de marcas...');
-
-  const all38Brands = [
-    { id: 'audi', name: 'Audi' },
-    { id: 'bmw', name: 'BMW' },
-    { id: 'byd', name: 'BYD' },
-    { id: 'chevrolet', name: 'Chevrolet' },
-    { id: 'citroen', name: 'Citroën' },
-    { id: 'dacia', name: 'Dacia' },
-    { id: 'daihatsu', name: 'Daihatsu' },
-    { id: 'fiat', name: 'Fiat' },
-    { id: 'ford', name: 'Ford' },
-    { id: 'gmc', name: 'GMC' },
-    { id: 'honda', name: 'Honda' },
-    { id: 'hummer', name: 'Hummer' },
-    { id: 'hyundai', name: 'Hyundai' },
-    { id: 'infiniti', name: 'Infiniti' },
-    { id: 'isuzu', name: 'Isuzu' },
-    { id: 'kia', name: 'Kia' },
-    { id: 'lada', name: 'Lada' },
-    { id: 'lancia', name: 'Lancia' },
-    { id: 'lotus', name: 'Lotus' },
-    { id: 'mahindra', name: 'Mahindra' },
-    { id: 'maruti', name: 'Maruti' },
-    { id: 'mazda', name: 'Mazda' },
-    { id: 'mercedes', name: 'Mercedes-Benz' },
-    { id: 'mini', name: 'Mini' },
-    { id: 'mitsubishi', name: 'Mitsubishi' },
-    { id: 'opel', name: 'Opel' },
-    { id: 'peugeot', name: 'Peugeot' },
-    { id: 'pontiac', name: 'Pontiac' },
-    { id: 'porsche', name: 'Porsche' },
-    { id: 'renault', name: 'Renault' },
-    { id: 'seat', name: 'Seat' },
-    { id: 'skoda', name: 'Škoda' },
-    { id: 'subaru', name: 'Subaru' },
-    { id: 'suzuki', name: 'Suzuki' },
-    { id: 'toyota', name: 'Toyota' },
-    { id: 'volkswagen', name: 'Volkswagen' },
-    { id: 'wuling', name: 'Wuling' },
-    { id: 'zotye', name: 'Zotye' }
-  ];
+  const loader = safeCreateCenteredLoader(grid, 'Conectando con Cloud Firestore para cargar marcas registradas...');
 
   if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
-    renderAllBrandsGrid(grid, loader, all38Brands, {});
+    renderOnlyActiveBrands(grid, loader, [
+      { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
+      { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
+    ]);
     return;
   }
 
   const db = firebase.firestore();
-  console.log('Querying Firestore collection [diagramas]...');
+  console.log('Querying Firestore collection [diagramas] for brands with data...');
 
   db.collection('diagramas').get()
     .then(snapshot => {
-      const firestoreBrandsMap = {};
+      const activeBrands = [];
       if (!snapshot.empty) {
         snapshot.forEach(doc => {
-          firestoreBrandsMap[doc.id.toLowerCase()] = doc.data() || {};
+          const docId = doc.id.toLowerCase().trim();
+          const data = doc.data() || {};
+          const brandName = (data.nombre || data.marca || docId).trim();
+          const displayName = brandName.charAt(0).toUpperCase() + brandName.slice(1);
+          const logoSrc = data.logo || data.imagen || getBrandLogoUrl(docId);
+          activeBrands.push({
+            id: docId,
+            name: displayName,
+            logo: logoSrc,
+            data: data
+          });
+        });
+        renderOnlyActiveBrands(grid, loader, activeBrands);
+      } else {
+        // Check bobinas collection as fallback
+        db.collection('bobinas').get().then(bobinasSnap => {
+          if (!bobinasSnap.empty) {
+            bobinasSnap.forEach(doc => {
+              const docId = doc.id.toLowerCase().trim();
+              const data = doc.data() || {};
+              const brandName = (data.nombre || data.marca || docId).trim();
+              const displayName = brandName.charAt(0).toUpperCase() + brandName.slice(1);
+              const logoSrc = data.logo || data.imagen || getBrandLogoUrl(docId);
+              activeBrands.push({
+                id: docId,
+                name: displayName,
+                logo: logoSrc,
+                data: data
+              });
+            });
+            renderOnlyActiveBrands(grid, loader, activeBrands);
+          } else {
+            renderOnlyActiveBrands(grid, loader, [
+              { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
+              { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
+            ]);
+          }
+        }).catch(() => {
+          renderOnlyActiveBrands(grid, loader, [
+            { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
+            { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
+          ]);
         });
       }
-      renderAllBrandsGrid(grid, loader, all38Brands, firestoreBrandsMap);
     })
     .catch(err => {
       console.warn('Error querying diagramas:', err);
-      renderAllBrandsGrid(grid, loader, all38Brands, {});
+      renderOnlyActiveBrands(grid, loader, [
+        { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
+        { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
+      ]);
     });
 }
 
-function renderAllBrandsGrid(grid, loader, brandList, firestoreBrandsMap) {
+function renderOnlyActiveBrands(grid, loader, brandList) {
   loader.finish(() => {
     grid.innerHTML = '';
+
+    if (!brandList || brandList.length === 0) {
+      grid.innerHTML = `
+        <div class="w-100 text-center py-5" style="grid-column: 1 / -1;">
+          <div class="p-4 bg-light rounded-4 border d-inline-block text-center" style="max-width: 420px;">
+            <i class="bi bi-folder-x fs-1 text-muted d-block mb-2"></i>
+            <h5 class="fw-bold text-dark font-rajdhani mb-1">NO SE ENCONTRARON MARCAS</h5>
+            <p class="text-muted small mb-0">No hay marcas con información registrada en la base de datos de Firebase.</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
     brandList.forEach(b => {
       const docId = b.id;
       const displayName = b.name;
-      const logoSrc = getBrandLogoUrl(docId);
-      const isOnlineInFirestore = !!firestoreBrandsMap[docId];
+      const logoSrc = b.logo || getBrandLogoUrl(docId);
 
       const card = document.createElement('div');
-      card.className = 'brand-card' + (isOnlineInFirestore ? ' position-relative' : '');
+      card.className = 'brand-card position-relative';
       card.setAttribute('data-brand', displayName);
       card.setAttribute('data-doc-id', docId);
 
-      const statusBadge = isOnlineInFirestore ? `
-        <span class="badge bg-success position-absolute top-0 end-0 m-2" style="font-size: 0.65rem;" title="Conectado en vivo con Firestore">En Vivo</span>
-      ` : '';
-
       card.innerHTML = `
-        ${statusBadge}
+        <span class="badge bg-success position-absolute top-0 end-0 m-2" style="font-size: 0.65rem;" title="Conectado en vivo con Firestore">En Vivo</span>
         <img src="${logoSrc}" alt="${displayName}" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
         <h4 class="brand-name-title">${displayName}</h4>
       `;
@@ -343,39 +342,6 @@ function renderAllBrandsGrid(grid, loader, brandList, firestoreBrandsMap) {
 
       grid.appendChild(card);
     });
-  });
-}
-
-function renderBrandsFromSnapshot(snapshot, grid, loader, activeCollectionName) {
-  loader.finish(() => {
-    if (!snapshot.empty) {
-      grid.innerHTML = '';
-      snapshot.forEach(doc => {
-        const docId = doc.id;
-        const data = doc.data() || {};
-        const brandName = (data.nombre || data.marca || docId).trim();
-        const displayName = brandName.charAt(0).toUpperCase() + brandName.slice(1);
-        const logoSrc = data.logo || data.imagen || getBrandLogoUrl(docId);
-
-        const card = document.createElement('div');
-        card.className = 'brand-card';
-        card.setAttribute('data-brand', displayName);
-        card.setAttribute('data-doc-id', docId);
-        card.innerHTML = `
-          <img src="${logoSrc}" alt="${displayName}" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-          <h4 class="brand-name-title">${displayName}</h4>
-        `;
-        card.onclick = () => openBrandDiagramModels(docId, displayName, logoSrc, activeCollectionName);
-
-        grid.appendChild(card);
-      });
-    } else {
-      grid.innerHTML = `
-        <div class="w-100 text-center py-4" style="grid-column: 1 / -1;">
-          <p class="text-muted">No se encontraron marcas registradas en Firestore.</p>
-        </div>
-      `;
-    }
   });
 }
 
@@ -527,7 +493,7 @@ function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loa
   });
 }
 
-// Open Level 3: ECU Info & Connection Type Selector (Probaktronic App Flow)
+// Open Level 3: ECU Info & Connection Type Selector (Reference Design Flow)
 window.openModelEcuInfo = async function(docId, modelName, motorCode) {
   const brandId = currentSelectedBrandId || 'toyota';
   const brandName = currentSelectedBrandName || 'TOYOTA';
@@ -540,23 +506,41 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
   if (diagramView) diagramView.classList.add('d-none');
   if (ecuView) ecuView.classList.remove('d-none');
 
-  // Populate Vehicle Info Card
+  // Populate Selected Vehicle Segmented Bar
   const logoEl = document.getElementById('selectedVehicleBrandLogo');
-  const titleEl = document.getElementById('selectedVehicleTitle');
-  const subEl = document.getElementById('selectedVehicleBrandSub');
-  const badgeEl = document.getElementById('selectedVehicleMotorBadge');
+  const brandTextEl = document.getElementById('selectedVehicleBrandText');
+  const modelTextEl = document.getElementById('selectedVehicleModelText');
+  const specTextEl = document.getElementById('selectedVehicleSpecText');
   const ecuTitleEl = document.getElementById('ecuNameTitle');
+  const ecuManufacturerEl = document.getElementById('ecuManufacturerLogo');
   const connectionListContainer = document.getElementById('connectionTypeListContainer');
 
   if (logoEl) logoEl.src = getBrandLogoUrl(brandId);
-  if (titleEl) titleEl.textContent = modelName || docId;
-  if (subEl) subEl.textContent = brandName.toUpperCase();
-  if (badgeEl) badgeEl.textContent = `Motor ${motorCode || '2KD-FTV'} (2011 - 2015)`;
-  if (ecuTitleEl) ecuTitleEl.textContent = motorCode || '2KD-FTV';
+  if (brandTextEl) brandTextEl.textContent = brandName.charAt(0).toUpperCase() + brandName.slice(1).toLowerCase();
+  if (modelTextEl) modelTextEl.textContent = modelName || docId;
+  if (specTextEl) specTextEl.textContent = motorCode || '1.5L 109ps (1NZFE)';
+
+  // Determine ECU part code and ECU manufacturer
+  const cleanBrand = brandId.toLowerCase();
+  let manufacturerName = 'DENSO';
+  if (cleanBrand.includes('audi') || cleanBrand.includes('bmw') || cleanBrand.includes('volkswagen') || cleanBrand.includes('vw') || cleanBrand.includes('mercedes') || cleanBrand.includes('porsche') || cleanBrand.includes('seat') || cleanBrand.includes('skoda')) {
+    manufacturerName = 'BOSCH';
+  } else if (cleanBrand.includes('chevrolet') || cleanBrand.includes('gmc') || cleanBrand.includes('hyundai') || cleanBrand.includes('kia')) {
+    manufacturerName = 'DELPHI';
+  } else if (cleanBrand.includes('ford') || cleanBrand.includes('peugeot') || cleanBrand.includes('citroen') || cleanBrand.includes('renault')) {
+    manufacturerName = 'CONTINENTAL';
+  } else if (cleanBrand.includes('fiat') || cleanBrand.includes('lancia') || cleanBrand.includes('alfa')) {
+    manufacturerName = 'MAGNETI MARELLI';
+  } else if (cleanBrand.includes('toyota') || cleanBrand.includes('daihatsu') || cleanBrand.includes('subaru') || cleanBrand.includes('suzuki')) {
+    manufacturerName = 'DENSO';
+  }
+
+  if (ecuManufacturerEl) ecuManufacturerEl.textContent = manufacturerName;
+  if (ecuTitleEl) ecuTitleEl.textContent = (motorCode && motorCode !== 'Estándar') ? motorCode : '275036-1152';
 
   if (!connectionListContainer) return;
 
-  const loader = safeCreateCenteredLoader(connectionListContainer, 'Cargando opciones de conexión y documentos PDF desde Firebase...');
+  const loader = safeCreateCenteredLoader(connectionListContainer, 'Cargando opciones de conexión desde Firebase...');
 
   // Query subcollection 'archivos' from Firestore
   let archivosList = [];
@@ -583,14 +567,15 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
     console.warn('Error querying archivos subcollection:', e);
   }
 
-  // Fallback if list is empty
+  // Fallback connection modes (OBD, BOOT, BENCH, PEDAL, etc.) if none in Firestore
   if (archivosList.length === 0) {
     archivosList = [
-      { id: 'TOYOTA HILUX 2011 - 2015 PEDAL', titulo: 'TOYOTA HILUX 2011 - 2015  PEDAL', tipo: 'DOCUMENTO PDF' },
-      { id: 'TOYOTA HILUX E.D.U DOS CONECTORES', titulo: 'TOYOTA HILUX E.D.U DOS CONECTORES', tipo: 'DOCUMENTO PDF' },
-      { id: 'TOYOTA HILUX E.D.U TRES CONECTORES', titulo: 'TOYOTA HILUX E.D.U TRES CONECTORES', tipo: 'DOCUMENTO PDF' },
-      { id: 'TOYOTA HILUX inmovilizador y llave antena', titulo: 'TOYOTA HILUX inmovilizador y llave antena', tipo: 'DOCUMENTO PDF' },
-      { id: 'Toyota Hilux - 2KD-FTV - 2011-', titulo: 'Toyota Hilux - 2KD-FTV - 2011-', tipo: 'DOCUMENTO PDF' }
+      { id: 'OBD', titulo: 'OBD', tipo: 'DIAGRAMA OBD' },
+      { id: 'BOOT', titulo: 'BOOT', tipo: 'CONEXIÓN BOOT' },
+      { id: 'BENCH', titulo: 'BENCH', tipo: 'MODO BANCO' },
+      { id: 'PEDAL', titulo: 'PEDAL', tipo: 'DOCUMENTO PDF' },
+      { id: 'EDU 2 CONECTORES', titulo: 'EDU 2 CONECTORES', tipo: 'DOCUMENTO PDF' },
+      { id: 'INMOVILIZADOR', titulo: 'INMOVILIZADOR', tipo: 'DOCUMENTO PDF' }
     ];
   }
 
@@ -601,38 +586,47 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
 
     archivosList.forEach((arch, index) => {
       const isSelected = index === 0;
-      const title = arch.titulo || arch.nombre || arch.id;
+      const title = (arch.titulo || arch.nombre || arch.id).toUpperCase();
+
+      let iconHtml = '<i class="bi bi-cpu fs-1"></i>';
+      if (title.includes('OBD')) {
+        iconHtml = '<i class="bi bi-hdd-network fs-1"></i>';
+      } else if (title.includes('BOOT')) {
+        iconHtml = '<i class="bi bi-cpu fs-1"></i>';
+      } else if (title.includes('BENCH')) {
+        iconHtml = '<i class="bi bi-motherboard fs-1"></i>';
+      } else if (title.includes('PEDAL')) {
+        iconHtml = '<i class="bi bi-speedometer2 fs-1"></i>';
+      } else if (title.includes('EDU') || title.includes('CONECTOR')) {
+        iconHtml = '<i class="bi bi-diagram-3 fs-1"></i>';
+      } else if (title.includes('INMOVILIZADOR') || title.includes('LLAVE')) {
+        iconHtml = '<i class="bi bi-key fs-1"></i>';
+      } else if (title.includes('PDF') || title.includes('DOCUMENTO')) {
+        iconHtml = '<i class="bi bi-file-earmark-pdf fs-1"></i>';
+      }
 
       const card = document.createElement('div');
-      card.className = `connection-option-card rounded-4 p-3 border cursor-pointer d-flex align-items-center justify-content-between transition-all ${isSelected ? 'border-danger border-2 bg-light shadow-sm' : 'bg-white'}`;
-      card.style.cursor = 'pointer';
+      card.className = `connection-type-card ${isSelected ? 'active' : ''}`;
       card.innerHTML = `
-        <div class="d-flex align-items-center gap-3">
-          <div class="bg-white p-2 rounded-3 border text-center" style="width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;">
-            <i class="bi bi-file-earmark-pdf fs-3 text-danger"></i>
-          </div>
-          <div>
-            <h6 class="font-rajdhani fw-bold text-dark mb-0 fs-6">${title}</h6>
-            <span class="text-danger small font-rajdhani fw-bold">DOCUMENTO PDF</span>
-          </div>
+        <div class="card-corner-badge">
+          <i class="bi ${isSelected ? 'bi-check-circle-fill' : 'bi-slash-circle'}"></i>
         </div>
-        <div class="connection-radio-circle">
-          <i class="bi ${isSelected ? 'bi-check-circle-fill text-danger fs-4' : 'bi-circle text-muted fs-4'}"></i>
+        <div class="conn-icon">
+          ${iconHtml}
         </div>
+        <div class="conn-label">${title}</div>
       `;
 
       card.onclick = () => {
-        connectionListContainer.querySelectorAll('.connection-option-card').forEach(c => {
-          c.classList.remove('border-danger', 'border-2', 'bg-light', 'shadow-sm');
-          c.classList.add('bg-white');
-          const icon = c.querySelector('.connection-radio-circle i');
-          if (icon) icon.className = 'bi bi-circle text-muted fs-4';
+        connectionListContainer.querySelectorAll('.connection-type-card').forEach(c => {
+          c.classList.remove('active');
+          const badge = c.querySelector('.card-corner-badge i');
+          if (badge) badge.className = 'bi bi-slash-circle';
         });
 
-        card.classList.add('border-danger', 'border-2', 'bg-light', 'shadow-sm');
-        card.classList.remove('bg-white');
-        const icon = card.querySelector('.connection-radio-circle i');
-        if (icon) icon.className = 'bi bi-check-circle-fill text-danger fs-4';
+        card.classList.add('active');
+        const badge = card.querySelector('.card-corner-badge i');
+        if (badge) badge.className = 'bi bi-check-circle-fill';
 
         selectedArchDoc = arch;
       };
@@ -651,14 +645,18 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
 };
 
 // Open Diagram Viewer for Selected Model (Protected View)
-window.openDiagramViewer = async function(docId) {
+window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
   const rawData = window.currentModelsDataStore[docId] || {};
-  console.log(`Displaying diagram for [${docId}]:`, rawData);
+  console.log(`Displaying diagram for [${docId}]:`, rawData, 'selectedArchDoc:', selectedArchDoc);
 
+  const brandsView = document.getElementById('brandsViewContainer');
   const modelsView = document.getElementById('modelsViewContainer');
+  const ecuView = document.getElementById('ecuInfoViewContainer');
   const diagramView = document.getElementById('diagramViewContainer');
 
+  if (brandsView) brandsView.classList.add('d-none');
   if (modelsView) modelsView.classList.add('d-none');
+  if (ecuView) ecuView.classList.add('d-none');
   if (diagramView) diagramView.classList.remove('d-none');
 
   const titleEl = document.getElementById('diagramModelTitle');
@@ -667,13 +665,32 @@ window.openDiagramViewer = async function(docId) {
 
   if (!imgContainer) return;
 
-  const loader = safeCreateCenteredLoader(imgContainer, `Conectando con Cloud Firestore y Storage para obtener el diagrama de ${docId}...`);
+  const docTitle = selectedArchDoc ? (selectedArchDoc.titulo || selectedArchDoc.nombre || docId) : docId;
+  const loader = safeCreateCenteredLoader(imgContainer, `Conectando con Cloud Firestore y Storage para obtener el diagrama de ${docTitle}...`);
 
-  // Deep Hierarchy Traversal: modelos -> {modelId} -> anios -> {anioId} -> motores -> {motorId} -> archivos -> {archivoId}
+  // Deep Hierarchy Traversal & Integration
   let activeData = { ...rawData };
 
+  if (selectedArchDoc) {
+    if (selectedArchDoc.titulo || selectedArchDoc.nombre) {
+      activeData.tituloArchivo = selectedArchDoc.titulo || selectedArchDoc.nombre;
+    }
+    if (selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.pdfUrl || selectedArchDoc.downloadUrl) {
+      activeData.url = selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.pdfUrl || selectedArchDoc.downloadUrl;
+    }
+    if (Array.isArray(selectedArchDoc.imagenes) && selectedArchDoc.imagenes.length > 0) {
+      activeData.allImages = selectedArchDoc.imagenes;
+      activeData.imageUrl = selectedArchDoc.imagenes[0];
+    }
+    if (selectedArchDoc.imageUrl || selectedArchDoc.imagen) {
+      activeData.imageUrl = selectedArchDoc.imageUrl || selectedArchDoc.imagen;
+    }
+    if (selectedArchDoc.pinout) activeData.pinout = selectedArchDoc.pinout;
+    if (selectedArchDoc.procedimiento) activeData.procedimiento = selectedArchDoc.procedimiento;
+  }
+
   // Check if rawData has array 'imagenes' or single 'imageUrl'
-  if (Array.isArray(rawData.imagenes) && rawData.imagenes.length > 0) {
+  if (!activeData.imageUrl && Array.isArray(rawData.imagenes) && rawData.imagenes.length > 0) {
     activeData.imageUrl = rawData.imagenes[0];
     activeData.allImages = rawData.imagenes;
   }
@@ -733,30 +750,28 @@ window.openDiagramViewer = async function(docId) {
     }
   }
 
-  const modelTitle = activeData.modelo || rawData.modelo || docId;
-  const motorCode = activeData.motor || rawData.motor || 'N/A';
+  const modelTitle = activeData.tituloArchivo || activeData.modelo || rawData.modelo || docId;
+  const motorCode = activeData.motor || rawData.motor || '2KD-FTV';
 
-  if (titleEl) titleEl.textContent = `${currentSelectedBrandName} - ${modelTitle}`;
-  if (motorEl) motorEl.textContent = `Código de Motor / Parte: ${motorCode}`;
+  if (titleEl) titleEl.textContent = `${currentSelectedBrandName || ''} - ${modelTitle}`;
+  if (motorEl) motorEl.textContent = `Configuración / Código: ${motorCode}`;
 
   // Dynamically update Pinout and Procedure from Firestore fields (or fallback)
   const pinoutEl = document.getElementById('diagramPinoutText');
   const procedureEl = document.getElementById('diagramProcedureText');
 
-  const customPinout = activeData.pinout || activeData.senial || activeData.pinoutSenial || activeData.pins || 'Pin 1: +12V Batería | Pin 2: Tierra Chasis | Pin 3: Pulso ECU';
-  const customProcedure = activeData.procedimiento || activeData.descripcion || activeData.procedimientoDiagnostico || activeData.notas || 'Medir señal PWM con osciloscopio o punta lógica Probaktronic';
+  const customPinout = activeData.pinout || activeData.senial || activeData.pinoutSenial || activeData.pins || 'Pin 1: +12V Batería | Pin 2: Tierra Chasis | Pin 3: Pulso ECU PWM | Pin 4: Señal Sensor';
+  const customProcedure = activeData.procedimiento || activeData.descripcion || activeData.procedimientoDiagnostico || activeData.notas || 'Medir señal con osciloscopio o punta lógica Probaktronic en el arnés correspondiente.';
 
   if (pinoutEl) pinoutEl.textContent = customPinout;
   if (procedureEl) procedureEl.textContent = customProcedure;
 
   if (!imgContainer) return;
 
-  const loader = window.createCenteredFirebaseLoader(imgContainer, `Conectando con Firebase Storage para obtener el esquema de ${docId}...`);
-
   let rawUrl = '';
   for (const key of Object.keys(activeData)) {
     const val = activeData[key];
-    if (typeof val === 'string' && (val.includes('firebasestorage') || val.includes('http') || val.includes('.png') || val.includes('.jpg') || val.includes('gs://'))) {
+    if (typeof val === 'string' && (val.includes('firebasestorage') || val.includes('http') || val.includes('.png') || val.includes('.jpg') || val.includes('gs://') || val.includes('.pdf'))) {
       rawUrl = val.trim();
       break;
     }
@@ -766,20 +781,13 @@ window.openDiagramViewer = async function(docId) {
     rawUrl = (activeData.imageUrl || activeData.image || activeData.imagen || activeData.url).trim();
   }
 
+  // Fallback demo schematic if none in storage
   if (!rawUrl) {
-    loader.finish(() => {
-      imgContainer.innerHTML = `
-        <div class="p-4 text-center text-muted">
-          <i class="bi bi-image fs-1 d-block mb-2"></i>
-          <p>No se encontró un esquema disponible para <code>${docId}</code>.</p>
-        </div>
-      `;
-    });
-    return;
+    rawUrl = 'imagenes autos/ic_car_Citroen_Berlingo_2015.JPG';
   }
 
   let finalImageUrl = rawUrl;
-  if (rawUrl.startsWith('gs://') || (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://'))) {
+  if (rawUrl.startsWith('gs://') || (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://') && !rawUrl.startsWith('imagenes '))) {
     try {
       if (typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
         const storage = firebase.storage();
@@ -791,8 +799,23 @@ window.openDiagramViewer = async function(docId) {
     }
   }
 
-  // Render Image directly with Protection + Multi-level Click & Hover Zoom System + Multi-Page Selector
+  // Check if PDF document
+  const isPdf = finalImageUrl.toLowerCase().includes('.pdf');
+
   loader.finish(() => {
+    if (isPdf) {
+      imgContainer.innerHTML = `
+        <div class="p-3 text-center w-100">
+          <div class="d-flex justify-content-between align-items-center mb-3 bg-dark p-2 rounded-3 text-white">
+            <span class="fw-bold"><i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>${modelTitle}</span>
+            <a href="${finalImageUrl}" target="_blank" class="btn btn-danger btn-sm fw-bold"><i class="bi bi-box-arrow-up-right me-1"></i> Abrir en Pantalla Completa</a>
+          </div>
+          <iframe src="${finalImageUrl}" width="100%" height="520px" class="rounded-3 border-0" style="background-color: #fff;"></iframe>
+        </div>
+      `;
+      return;
+    }
+
     let paginationHtml = '';
     if (Array.isArray(activeData.allImages) && activeData.allImages.length > 1) {
       paginationHtml = `
@@ -906,19 +929,40 @@ window.openDiagramViewer = async function(docId) {
 window.showBrandsView = function() {
   const brandsView = document.getElementById('brandsViewContainer');
   const modelsView = document.getElementById('modelsViewContainer');
+  const ecuView = document.getElementById('ecuInfoViewContainer');
   const diagramView = document.getElementById('diagramViewContainer');
 
   if (brandsView) brandsView.classList.remove('d-none');
   if (modelsView) modelsView.classList.add('d-none');
+  if (ecuView) ecuView.classList.add('d-none');
   if (diagramView) diagramView.classList.add('d-none');
+
+  const headerTitle = document.getElementById('vehiculosHeaderTitle');
+  const headerSubtitle = document.getElementById('vehiculosHeaderSubtitle');
+  if (headerTitle) headerTitle.textContent = 'SELECCIONAR VEHÍCULO - DIAGRAMAS';
+  if (headerSubtitle) headerSubtitle.textContent = 'Seleccione la marca de vehículo para consultar los diagramas esquemáticos y pinouts de diagnóstico';
 };
 
 window.showModelsView = function() {
   const brandsView = document.getElementById('brandsViewContainer');
   const modelsView = document.getElementById('modelsViewContainer');
+  const ecuView = document.getElementById('ecuInfoViewContainer');
   const diagramView = document.getElementById('diagramViewContainer');
 
   if (brandsView) brandsView.classList.add('d-none');
   if (modelsView) modelsView.classList.remove('d-none');
+  if (ecuView) ecuView.classList.add('d-none');
+  if (diagramView) diagramView.classList.add('d-none');
+};
+
+window.showEcuInfoView = function() {
+  const brandsView = document.getElementById('brandsViewContainer');
+  const modelsView = document.getElementById('modelsViewContainer');
+  const ecuView = document.getElementById('ecuInfoViewContainer');
+  const diagramView = document.getElementById('diagramViewContainer');
+
+  if (brandsView) brandsView.classList.add('d-none');
+  if (modelsView) modelsView.classList.add('d-none');
+  if (ecuView) ecuView.classList.remove('d-none');
   if (diagramView) diagramView.classList.add('d-none');
 };

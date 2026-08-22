@@ -6,8 +6,8 @@
   <title>Probaktronic - Dashboard Automotriz</title>
   
   <script>
-    if (sessionStorage.getItem('sidebar_hovered') === 'true' && sessionStorage.getItem('sidebar_locked') !== 'true') {
-      document.documentElement.classList.add('sidebar-expanded-init');
+    if (sessionStorage.getItem('sidebar_locked') === 'true') {
+      document.documentElement.classList.add('sidebar-minimized-init');
     }
   </script>
 
@@ -139,7 +139,7 @@
       <!-- 3 Action Cards (Single Row Layout) -->
       <section class="cards-container">
         <!-- Card 1: Vehículos -->
-        <a href="vehiculos.html" class="action-card">
+        <a href="vehiculos.html" class="action-card action-card-vehicle">
           <div class="card-top-row">
             <div class="card-badge-icon">
               <i class="bi bi-car-front-fill"></i>
@@ -157,13 +157,8 @@
             Gestione sus vehículos y acceda a las funciones de diagnóstico y programación.
           </p>
 
-          <div class="card-illustration-container">
-            <svg viewBox="0 0 280 160" fill="none" stroke="#2B2E34" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M 40 120 C 40 120 50 85 85 75 C 100 70 130 50 175 45 C 220 40 240 60 255 80 L 260 115 L 245 125 C 240 105 215 105 210 125 L 95 125 C 90 105 65 105 60 125 Z"/>
-              <path d="M 100 75 L 145 48 L 210 48 L 225 75 Z"/>
-              <circle cx="77" cy="125" r="18"/>
-              <circle cx="227" cy="125" r="18"/>
-            </svg>
+          <div class="card-vehicle-half-illustration">
+            <img src="fondo_tarjeta_auto.png" alt="Vehículo" class="vehicle-half-img">
           </div>
 
           <div class="card-action-btn">
@@ -279,28 +274,8 @@
         <div class="status-item">
           <span class="status-led-green"></span>
           <div class="status-info-block">
-            <span class="status-label">DISPOSITIVO CONECTADO</span>
-            <span class="status-value text-success">Listo para trabajar</span>
-          </div>
-        </div>
-
-        <div class="status-divider"></div>
-
-        <div class="status-item">
-          <i class="bi bi-usb-symbol status-icon"></i>
-          <div class="status-info-block">
-            <span class="status-label">PUERTO USB</span>
-            <span class="status-value">COM6</span>
-          </div>
-        </div>
-
-        <div class="status-divider"></div>
-
-        <div class="status-item">
-          <i class="bi bi-cpu-fill status-icon"></i>
-          <div class="status-info-block">
-            <span class="status-label">HARDWARE</span>
-            <span class="status-value">HW 1.0</span>
+            <span class="status-label">TIPO DE USUARIO</span>
+            <span class="status-value text-success">Premium</span>
           </div>
         </div>
 
@@ -309,8 +284,8 @@
         <div class="status-item">
           <i class="bi bi-layers-fill status-icon"></i>
           <div class="status-info-block">
-            <span class="status-label">FIRMWARE</span>
-            <span class="status-value">8.10.0.0</span>
+            <span class="status-label">NÚMERO DE VERSIÓN</span>
+            <span class="status-value">1.0</span>
           </div>
         </div>
 
@@ -319,18 +294,8 @@
         <div class="status-item">
           <i class="bi bi-calendar-event-fill status-icon"></i>
           <div class="status-info-block">
-            <span class="status-label">FECHA</span>
-            <span class="status-value" id="firmwareDateValue">06 Aug 2026 16:35</span>
-          </div>
-        </div>
-
-        <div class="status-divider"></div>
-
-        <div class="status-item">
-          <i class="bi bi-upc-scan status-icon"></i>
-          <div class="status-info-block">
-            <span class="status-label">NÚMERO DE SERIE</span>
-            <span class="status-value">65D48B6C35E2B2E7</span>
+            <span class="status-label">FECHA Y HORA</span>
+            <span class="status-value" id="firmwareDateValue">21 ago 2026, 23:28</span>
           </div>
         </div>
       </footer>
@@ -345,5 +310,6 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/global.js"></script>
   <script src="js/firebase-catalog.js"></script>
+  <script src="js/vehiculos-diagramas.js"></script>
 </body>
 </html>

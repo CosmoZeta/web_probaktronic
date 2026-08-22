@@ -6,8 +6,8 @@
   <title>Probaktronic - Telemetría & Dashboard</title>
   
   <script>
-    if (sessionStorage.getItem('sidebar_hovered') === 'true' && sessionStorage.getItem('sidebar_locked') !== 'true') {
-      document.documentElement.classList.add('sidebar-expanded-init');
+    if (sessionStorage.getItem('sidebar_locked') === 'true') {
+      document.documentElement.classList.add('sidebar-minimized-init');
     }
   </script>
 

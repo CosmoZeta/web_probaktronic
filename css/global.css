@@ -220,24 +220,30 @@ body {
   color: #FFFFFF;
 }
 
-/* Instant Head Pre-render Overrides */
-html.sidebar-expanded-init .sidebar {
-  width: 220px !important;
-  padding: 16px 14px !important;
+/* Instant Pre-render for Minimized State */
+html.sidebar-minimized-init .sidebar {
+  width: var(--sidebar-collapsed-width);
+  padding: 16px 8px;
 }
-html.sidebar-expanded-init .sidebar .sidebar-logo-costado {
-  display: block !important;
+html.sidebar-minimized-init .sidebar .sidebar-logo-costado {
+  display: none;
 }
-html.sidebar-expanded-init .sidebar .sidebar-logo-solo {
+html.sidebar-minimized-init .sidebar .sidebar-logo-solo {
+  display: block;
+}
+html.sidebar-minimized-init .sidebar .nav-link-item {
+  justify-content: center;
+  padding: 9px 0;
+}
+html.sidebar-minimized-init .sidebar .nav-link-item span {
   display: none !important;
 }
-html.sidebar-expanded-init .sidebar .nav-link-item span {
-  display: inline-block !important;
-  opacity: 1 !important;
+html.sidebar-minimized-init .sidebar .btn-sidebar-minimize {
+  justify-content: center;
+  padding: 6px 0;
 }
-html.sidebar-expanded-init .sidebar .nav-link-item {
-  justify-content: flex-start !important;
-  padding: 9px 12px !important;
+html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
+  display: none;
 }
 
 /* Main Content Area */
@@ -357,14 +363,15 @@ html.sidebar-expanded-init .sidebar .nav-link-item {
 /* Bottom Dark Status Bar (Card Style) */
 .dark-status-bar {
   margin-top: auto;
+  margin-left: auto;
+  width: fit-content;
   background-color: var(--sidebar-bg);
   border-radius: 12px;
-  padding: 16px 28px;
+  padding: 12px 24px;
   color: #FFFFFF;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
@@ -507,19 +514,61 @@ html.sidebar-expanded-init .sidebar .nav-link-item {
 
 .card-illustration-container {
   position: absolute;
-  right: 12px;
-  bottom: 20px;
-  width: 190px;
-  height: 140px;
+  right: 16px;
+  bottom: 16px;
+  width: 175px;
+  height: 110px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  justify-content: flex-end;
   pointer-events: none;
 }
 
+.card-illustration-container img,
 .card-illustration-container svg {
   max-width: 100%;
   max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.card-illustration-img {
+  max-height: 95px;
+  width: auto;
+  object-fit: contain;
+}
+
+.action-card:hover .card-illustration-container img,
+.action-card:hover .card-illustration-container svg {
+  transform: scale(1.05);
+}
+
+/* Half-Vertical Vehicle Illustration on Action Card */
+.card-vehicle-half-illustration {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.vehicle-half-img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  object-position: right center;
+  transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.action-card:hover .vehicle-half-img {
+  transform: scale(1.05);
 }
 
 .card-action-btn {

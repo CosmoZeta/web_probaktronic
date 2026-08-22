@@ -7,31 +7,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnMinimize = document.querySelector('.btn-sidebar-minimize');
 
   // Check state memory
-  let isManualLocked = sessionStorage.getItem('sidebar_locked') === 'true';
-  let isHovered = sessionStorage.getItem('sidebar_hovered') === 'true';
+  const isMinimized = sessionStorage.getItem('sidebar_locked') === 'true';
 
   if (sidebar) {
-    // Restore user preference state (Fixed state, no hover auto-expansion)
-    if (isManualLocked) {
+    // Restore user preference state
+    if (isMinimized) {
       sidebar.classList.add('minimized');
+      document.documentElement.classList.add('sidebar-minimized-init');
       updateSidebarToggleUI(true);
     } else {
       sidebar.classList.remove('minimized');
+      document.documentElement.classList.remove('sidebar-minimized-init');
       updateSidebarToggleUI(false);
     }
 
-    // Handle Manual Click Toggle Only
+    // Handle Manual Click Toggle
     if (btnMinimize) {
       btnMinimize.addEventListener('click', (e) => {
+        e.preventDefault();
         e.stopPropagation();
         
         const isCurrentlyMinimized = sidebar.classList.contains('minimized');
         if (isCurrentlyMinimized) {
           sidebar.classList.remove('minimized');
+          document.documentElement.classList.remove('sidebar-minimized-init');
           sessionStorage.setItem('sidebar_locked', 'false');
           updateSidebarToggleUI(false);
         } else {
           sidebar.classList.add('minimized');
+          document.documentElement.classList.add('sidebar-minimized-init');
           sessionStorage.setItem('sidebar_locked', 'true');
           updateSidebarToggleUI(true);
         }
@@ -50,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (label) {
       label.textContent = minimized ? 'Expandir' : 'Minimizar';
     }
+    btnMinimize.setAttribute('title', minimized ? 'Expandir menú' : 'Minimizar menú');
   }
 
   // Highlight Active Link
@@ -63,8 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!href || href === '#' || href.startsWith('javascript:')) return;
 
       e.preventDefault();
-      sessionStorage.setItem('sidebar_hovered', 'true');
-
       // Seamlessly load target content
       loadPageContent(href);
     });
@@ -126,6 +129,19 @@ function loadPageContent(url, pushHistory = true) {
         if (url.includes('catalogo.html') && typeof window.fetchFirestoreProducts === 'function') {
           window.fetchFirestoreProducts();
         }
+
+        // If switching to vehiculos, trigger diagramas/vehiculos module directly
+        if (url.includes('vehiculos.html')) {
+          if (typeof window.initVehiculosDiagramasModule === 'function') {
+            window.initVehiculosDiagramasModule();
+          } else {
+            loadScriptDynamically('js/vehiculos-diagramas.js', () => {
+              if (typeof window.initVehiculosDiagramasModule === 'function') {
+                window.initVehiculosDiagramasModule();
+              }
+            });
+          }
+        }
       }
     })
     .catch(err => {
@@ -133,8 +149,44 @@ function loadPageContent(url, pushHistory = true) {
     });
 }
 
+// Helper to load missing scripts on the fly
+function loadScriptDynamically(src, callback) {
+  const existing = document.querySelector(`script[src="${src}"]`);
+  if (existing) {
+    if (callback) callback();
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = src;
+  script.onload = () => {
+    if (callback) callback();
+  };
+  document.body.appendChild(script);
+}
+
 // Initialize Page Features Dynamically
 function initCurrentPageFeatures() {
+  // Check if Vehiculos page loaded
+  if (document.getElementById('vehiculosBrandGrid')) {
+    if (typeof window.initVehiculosDiagramasModule === 'function') {
+      window.initVehiculosDiagramasModule();
+    } else {
+      loadScriptDynamically('js/vehiculos-diagramas.js', () => {
+        if (typeof window.initVehiculosDiagramasModule === 'function') {
+          window.initVehiculosDiagramasModule();
+        }
+      });
+    }
+  }
+
+  // Check if Catalogo page loaded
+  if (document.getElementById('catalogLoaderContainer') && typeof window.fetchFirestoreProducts === 'function') {
+    window.fetchFirestoreProducts();
+  }
+
+  // Process vehicle illustration to remove gray background
+  cleanVehicleImageBackground('.vehicle-half-img, .card-illustration-img');
+
   // Update date display
   const dateEl = document.getElementById('firmwareDateValue');
   if (dateEl) {
@@ -314,4 +366,56 @@ window.createCenteredFirebaseLoader = function(container, subtitleText = 'Conect
     }
   };
 };
+
+// Remove gray background from vehicle illustration
+function cleanVehicleImageBackground(selector) {
+  const images = document.querySelectorAll(selector);
+  images.forEach(img => {
+    if (img.dataset.bgCleaned === 'true') return;
+
+    const process = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        if (!canvas.width || !canvas.height) return;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+
+        // Sample background color near top-left
+        const bgR = data[0];
+        const bgG = data[1];
+        const bgB = data[2];
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          // Check if pixel is background gray / off-white
+          const diff = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+          if (diff < 36 || (r > 215 && g > 215 && b > 215 && Math.abs(r - g) < 10 && Math.abs(g - b) < 10)) {
+            data[i + 3] = 0; // Transparent
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        img.src = canvas.toDataURL('image/png');
+        img.dataset.bgCleaned = 'true';
+      } catch (e) {
+        console.warn('Canvas background removal error:', e);
+      }
+    };
+
+    if (img.complete && (img.naturalWidth || img.width)) {
+      process();
+    } else {
+      img.addEventListener('load', process, { once: true });
+    }
+  });
+}
 
