@@ -60,12 +60,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // Highlight Active Link
   updateActiveNavLink();
 
+  // Mobile Drawer Setup
+  setupMobileDrawer();
+
   // Intercept Sidebar Clicks for Instant Seamless Navigation
   const navLinks = document.querySelectorAll('.sidebar-nav .nav-link-item');
   navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       const href = link.getAttribute('href');
       if (!href || href === '#' || href.startsWith('javascript:')) return;
+
+      // Close mobile drawer on navigation
+      const sidebar = document.querySelector('.sidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (window.innerWidth < 768 && sidebar) {
+        sidebar.classList.remove('mobile-open');
+        if (backdrop) backdrop.classList.remove('active');
+      }
 
       e.preventDefault();
       // Seamlessly load target content
@@ -86,6 +97,36 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize features on initial load
   initCurrentPageFeatures();
 });
+
+// Setup Mobile Menu Drawer & Backdrop
+function setupMobileDrawer() {
+  const btnMobileToggle = document.getElementById('btnMobileMenuToggle');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  const sidebar = document.querySelector('.sidebar');
+
+  if (btnMobileToggle && sidebar) {
+    btnMobileToggle.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      sidebar.classList.toggle('mobile-open');
+      if (backdrop) backdrop.classList.toggle('active');
+    };
+  }
+
+  if (backdrop && sidebar) {
+    backdrop.onclick = () => {
+      sidebar.classList.remove('mobile-open');
+      backdrop.classList.remove('active');
+    };
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidebar && sidebar.classList.contains('mobile-open')) {
+      sidebar.classList.remove('mobile-open');
+      if (backdrop) backdrop.classList.remove('active');
+    }
+  });
+}
 
 function updateActiveNavLink() {
   const currentPath = window.location.pathname.split('/').pop() || 'index.html';
@@ -166,6 +207,9 @@ function loadScriptDynamically(src, callback) {
 
 // Initialize Page Features Dynamically
 function initCurrentPageFeatures() {
+  // Setup Mobile Drawer for current page
+  setupMobileDrawer();
+
   // Check if Vehiculos page loaded
   if (document.getElementById('vehiculosBrandGrid')) {
     if (typeof window.initVehiculosDiagramasModule === 'function') {

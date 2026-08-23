@@ -83,13 +83,22 @@
       </div>
     </aside>
 
+    <!-- Mobile Drawer Backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
     <!-- Main Content Area -->
     <main class="main-content">
+      <!-- Top Header & User Profile Bar -->
       <header class="top-header-bar">
-        <div>
-          <div class="header-greeting">BIBLIOTECA TÉCNICA Y REPUESTOS (FIREBASE FIRESTORE)</div>
-          <h1 class="page-title">CATÁLOGO DE COMPONENTES</h1>
-          <div class="page-subtitle">Sincronizado directamente con la colección <code>tienda</code> / <code>productos</code> de Cloud Firestore</div>
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn-mobile-menu-toggle" id="btnMobileMenuToggle" aria-label="Abrir menú" title="Abrir menú">
+            <i class="bi bi-list"></i>
+          </button>
+          <div>
+            <div class="header-greeting">BIBLIOTECA TÉCNICA Y REPUESTOS (FIREBASE FIRESTORE)</div>
+            <h1 class="page-title">CATÁLOGO DE COMPONENTES</h1>
+            <div class="page-subtitle">Sincronizado directamente con la colección <code>tienda</code> / <code>productos</code> de Cloud Firestore</div>
+          </div>
         </div>
 
         <div class="user-profile-section">
