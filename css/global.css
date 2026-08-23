@@ -1195,31 +1195,64 @@ a.sensor-card .sensor-desc {
     min-height: 100vh;
   }
 
+  /* Redesigned Mobile Top Header - Clean, Stylized, Minimalist */
   .top-header-bar {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 8px;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding: 4px 0 8px 0 !important;
+    margin-bottom: 6px !important;
   }
 
-  .header-greeting {
-    font-size: 0.68rem;
-    margin-bottom: 2px;
+  .btn-mobile-menu-toggle {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1.15rem !important;
+    border-radius: 8px !important;
+    margin-right: 6px !important;
+  }
+
+  .header-greeting,
+  .welcome-subtitle,
+  .page-subtitle,
+  .user-info {
+    display: none !important;
   }
 
   .welcome-title,
   .page-title {
-    font-size: 1.18rem !important;
-    line-height: 1.15;
-    margin-bottom: 2px;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    margin: 0 !important;
+    line-height: 1.1 !important;
   }
 
-  .welcome-subtitle,
-  .page-subtitle {
-    font-size: 0.72rem !important;
-    line-height: 1.2;
+  .user-profile-section {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .notification-bell-btn {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .notification-badge-dot {
+    top: 6px !important;
+    right: 6px !important;
+    width: 6px !important;
+    height: 6px !important;
+  }
+
+  .user-avatar {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 1rem !important;
   }
 
   .section-header-title {
