@@ -543,14 +543,14 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
   transform: scale(1.05);
 }
 
-/* Half-Vertical Vehicle Illustration on Action Card */
+/* Complete Image Illustration on Action Card */
 .card-vehicle-half-illustration {
   position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
+  right: 12px;
+  top: 14px;
+  bottom: 14px;
   width: 50%;
-  height: 100%;
+  height: calc(100% - 28px);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -560,9 +560,11 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
 }
 
 .vehicle-half-img {
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
+  max-height: 100%;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   object-position: right center;
   transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
@@ -1282,7 +1284,10 @@ a.sensor-card .sensor-desc {
 
   .card-vehicle-half-illustration {
     width: 48% !important;
-    height: 100% !important;
+    height: calc(100% - 16px) !important;
+    top: 8px !important;
+    bottom: 8px !important;
+    right: 8px !important;
   }
 
   .card-illustration-container {

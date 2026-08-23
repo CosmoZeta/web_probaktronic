@@ -411,7 +411,7 @@ window.createCenteredFirebaseLoader = function(container, subtitleText = 'Conect
   };
 };
 
-// Remove gray background from vehicle illustration
+// Remove solid/gray backgrounds from card illustrations and make them transparent
 function cleanVehicleImageBackground(selector) {
   const images = document.querySelectorAll(selector);
   images.forEach(img => {
@@ -440,9 +440,10 @@ function cleanVehicleImageBackground(selector) {
           const g = data[i + 1];
           const b = data[i + 2];
 
-          // Check if pixel is background gray / off-white
+          // Check if pixel matches sampled background or is off-white / light gray / white background
           const diff = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
-          if (diff < 36 || (r > 215 && g > 215 && b > 215 && Math.abs(r - g) < 10 && Math.abs(g - b) < 10)) {
+          const isLightNeutral = (r > 208 && g > 208 && b > 208 && Math.abs(r - g) < 16 && Math.abs(g - b) < 16);
+          if (diff < 42 || isLightNeutral) {
             data[i + 3] = 0; // Transparent
           }
         }
