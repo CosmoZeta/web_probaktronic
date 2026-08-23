@@ -123,13 +123,7 @@ let currentSelectedBrandId = null;
 let currentSelectedBrandName = null;
 window.currentModelsDataStore = {};
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => window.initVehiculosDiagramasModule());
-} else {
-  window.initVehiculosDiagramasModule();
-}
-
-window.initVehiculosDiagramasModule = function initVehiculosDiagramasModule() {
+function initVehiculosDiagramasModule() {
   const searchInput = document.getElementById('brandSearchInput');
   const alphabetLetters = document.querySelectorAll('.alphabet-letter');
   const brandGrid = document.getElementById('vehiculosBrandGrid');
@@ -181,39 +175,98 @@ window.initVehiculosDiagramasModule = function initVehiculosDiagramasModule() {
 
   // Smart Top-Left Back Button Handler (Hierarchical Step-by-Step Navigation)
   if (btnBackView) {
-    btnBackView.addEventListener('click', (e) => {
+    btnBackView.onclick = (e) => {
       const brandsView = document.getElementById('brandsViewContainer');
       const modelsView = document.getElementById('modelsViewContainer');
+      const ecuView = document.getElementById('ecuInfoViewContainer');
       const diagramView = document.getElementById('diagramViewContainer');
 
       if (diagramView && !diagramView.classList.contains('d-none')) {
         e.preventDefault();
-        showModelsView();
+        showEcuInfoView(); // Level 4 -> Level 3
+        return;
+      }
+
+      if (ecuView && !ecuView.classList.contains('d-none')) {
+        e.preventDefault();
+        showModelsView(); // Level 3 -> Level 2
         return;
       }
 
       if (modelsView && !modelsView.classList.contains('d-none')) {
         e.preventDefault();
-        showBrandsView();
+        showBrandsView(); // Level 2 -> Level 1
         return;
       }
-    });
+      // If at Level 1 (brandsView), default link to index.html takes effect!
+    };
   }
 
   // Query Firestore collection 'diagramas' to render only active brands
   loadFirestoreDiagramasBrands(brandGrid);
 }
 
+window.initVehiculosDiagramasModule = initVehiculosDiagramasModule;
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initVehiculosDiagramasModule);
+} else {
+  initVehiculosDiagramasModule();
+}
+
 function ensureFirebaseInitialized() {
-  if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-    firebase.initializeApp({
-      apiKey: "AIzaSyC8IUDukbyc5NlQPFUn9ZDYOiR4GeeHRYY",
-      authDomain: "probaktronic-app.firebaseapp.com",
-      projectId: "probaktronic-app",
-      storageBucket: "probaktronic-app.firebasestorage.app",
-      messagingSenderId: "373953615206",
-      appId: "1:373953615206:android:6ccca21cefcb6100ee4a7"
-    });
+  if (typeof firebase !== 'undefined') {
+    try {
+      if (!firebase.apps || !firebase.apps.length) {
+        firebase.initializeApp({
+          apiKey: "AIzaSyC8IUDukbyc5NlQPFUn9ZDYOiR4GeeHRYY",
+          authDomain: "probaktronic-app.firebaseapp.com",
+          projectId: "probaktronic-app",
+          storageBucket: "probaktronic-app.firebasestorage.app",
+          messagingSenderId: "373953615206",
+          appId: "1:373953615206:android:6ccca21cefcb6100ee4a7"
+        });
+      }
+    } catch (e) {
+      console.warn('Firebase init:', e);
+    }
+  }
+}
+
+function ensureFirebaseSDKReady(callback) {
+  if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+    ensureFirebaseInitialized();
+    if (callback) callback();
+    return;
+  }
+
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
+    if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+      clearInterval(interval);
+      ensureFirebaseInitialized();
+      if (callback) callback();
+      return;
+    }
+    if (attempts > 20) {
+      clearInterval(interval);
+      if (callback) callback();
+    }
+  }, 100);
+
+  // Inject scripts if not present
+  if (!document.querySelector('script[src*="firebase-app-compat"]')) {
+    const s1 = document.createElement('script');
+    s1.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
+    s1.onload = () => {
+      if (!document.querySelector('script[src*="firebase-firestore-compat"]')) {
+        const s2 = document.createElement('script');
+        s2.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js';
+        document.head.appendChild(s2);
+      }
+    };
+    document.head.appendChild(s1);
   }
 }
 
@@ -224,101 +277,68 @@ function safeCreateCenteredLoader(container, text) {
   return { finish: (cb) => { if (cb) cb(); } };
 }
 
+const defaultDiagramBrands = [
+  { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
+  { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
+];
+
+let cachedActiveBrands = defaultDiagramBrands;
+
 function loadFirestoreDiagramasBrands(grid) {
-  if (!grid) return;
-
-  ensureFirebaseInitialized();
-
-  const loader = safeCreateCenteredLoader(grid, 'Conectando con Cloud Firestore para cargar marcas registradas...');
-
-  if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
-    renderOnlyActiveBrands(grid, loader, [
-      { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
-      { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
-    ]);
-    return;
+  if (!grid) {
+    grid = document.getElementById('vehiculosBrandGrid');
+    if (!grid) return;
   }
 
-  const db = firebase.firestore();
-  console.log('Querying Firestore collection [diagramas] for brands with data...');
+  // Render registered brands immediately
+  renderOnlyActiveBrands(grid, null, cachedActiveBrands || defaultDiagramBrands);
 
-  db.collection('diagramas').get()
-    .then(snapshot => {
-      const activeBrands = [];
-      if (!snapshot.empty) {
-        snapshot.forEach(doc => {
-          const docId = doc.id.toLowerCase().trim();
-          const data = doc.data() || {};
-          const brandName = (data.nombre || data.marca || docId).trim();
-          const displayName = brandName.charAt(0).toUpperCase() + brandName.slice(1);
-          const logoSrc = data.logo || data.imagen || getBrandLogoUrl(docId);
-          activeBrands.push({
-            id: docId,
-            name: displayName,
-            logo: logoSrc,
-            data: data
-          });
-        });
-        renderOnlyActiveBrands(grid, loader, activeBrands);
-      } else {
-        // Check bobinas collection as fallback
-        db.collection('bobinas').get().then(bobinasSnap => {
-          if (!bobinasSnap.empty) {
-            bobinasSnap.forEach(doc => {
-              const docId = doc.id.toLowerCase().trim();
-              const data = doc.data() || {};
-              const brandName = (data.nombre || data.marca || docId).trim();
-              const displayName = brandName.charAt(0).toUpperCase() + brandName.slice(1);
-              const logoSrc = data.logo || data.imagen || getBrandLogoUrl(docId);
-              activeBrands.push({
-                id: docId,
-                name: displayName,
-                logo: logoSrc,
-                data: data
-              });
-            });
-            renderOnlyActiveBrands(grid, loader, activeBrands);
-          } else {
-            renderOnlyActiveBrands(grid, loader, [
-              { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
-              { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
-            ]);
-          }
-        }).catch(() => {
-          renderOnlyActiveBrands(grid, loader, [
-            { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
-            { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
-          ]);
-        });
-      }
-    })
-    .catch(err => {
-      console.warn('Error querying diagramas:', err);
-      renderOnlyActiveBrands(grid, loader, [
-        { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
-        { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
-      ]);
-    });
-}
-
-function renderOnlyActiveBrands(grid, loader, brandList) {
-  loader.finish(() => {
-    grid.innerHTML = '';
-
-    if (!brandList || brandList.length === 0) {
-      grid.innerHTML = `
-        <div class="w-100 text-center py-5" style="grid-column: 1 / -1;">
-          <div class="p-4 bg-light rounded-4 border d-inline-block text-center" style="max-width: 420px;">
-            <i class="bi bi-folder-x fs-1 text-muted d-block mb-2"></i>
-            <h5 class="fw-bold text-dark font-rajdhani mb-1">NO SE ENCONTRARON MARCAS</h5>
-            <p class="text-muted small mb-0">No hay marcas con información registrada en la base de datos de Firebase.</p>
-          </div>
-        </div>
-      `;
+  ensureFirebaseSDKReady(() => {
+    if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
       return;
     }
 
-    brandList.forEach(b => {
+    const db = firebase.firestore();
+    db.collection('diagramas').get()
+      .then(snapshot => {
+        if (!snapshot.empty) {
+          const firestoreBrands = [];
+          snapshot.forEach(doc => {
+            const docId = doc.id.toLowerCase().trim();
+            const data = doc.data() || {};
+            const brandName = (data.nombre || data.marca || docId).trim();
+            const displayName = brandName.charAt(0).toUpperCase() + brandName.slice(1);
+            const logoSrc = data.logo || data.imagen || getBrandLogoUrl(docId);
+            firestoreBrands.push({
+              id: docId,
+              name: displayName,
+              logo: logoSrc,
+              data: data
+            });
+          });
+
+          if (firestoreBrands.length > 0) {
+            cachedActiveBrands = firestoreBrands;
+            renderOnlyActiveBrands(grid, null, firestoreBrands);
+          }
+        }
+      })
+      .catch(err => {
+        console.warn('Live Firestore diagrams fetch sync:', err);
+      });
+  });
+}
+
+function renderOnlyActiveBrands(grid, loader, brandList) {
+  const doRender = () => {
+    if (!grid) grid = document.getElementById('vehiculosBrandGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    const list = (brandList && brandList.length > 0) ? brandList : defaultDiagramBrands;
+
+    list.forEach(b => {
       const docId = b.id;
       const displayName = b.name;
       const logoSrc = b.logo || getBrandLogoUrl(docId);
@@ -329,8 +349,7 @@ function renderOnlyActiveBrands(grid, loader, brandList) {
       card.setAttribute('data-doc-id', docId);
 
       card.innerHTML = `
-        <span class="badge bg-success position-absolute top-0 end-0 m-2" style="font-size: 0.65rem;" title="Conectado en vivo con Firestore">En Vivo</span>
-        <img src="${logoSrc}" alt="${displayName}" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
+        <img src="${logoSrc}" alt="${displayName}" class="brand-logo-img" style="max-height: 56px; max-width: 120px; width: auto; height: auto; object-fit: contain; margin-bottom: 12px; display: block;" onerror="this.src='logo_probaktronic_solo.png'">
         <h4 class="brand-name-title">${displayName}</h4>
       `;
 
@@ -342,7 +361,13 @@ function renderOnlyActiveBrands(grid, loader, brandList) {
 
       grid.appendChild(card);
     });
-  });
+  };
+
+  if (loader && typeof loader.finish === 'function') {
+    loader.finish(doRender);
+  } else {
+    doRender();
+  }
 }
 
 // Open Models for Selected Brand
@@ -644,10 +669,553 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
   }
 };
 
-// Open Diagram Viewer for Selected Model (Protected View)
+// Global Console Controls for Level 4 Diagnostic Viewer
+let currentConsoleZoom = 1.0;
+window._currentActiveDiagramData = {};
+
+function extractDynamicComponentName(rawTitle) {
+  if (!rawTitle) return { name: 'Componente', phrase: 'del Componente' };
+  const clean = rawTitle.toUpperCase();
+  if (clean.includes('PEDAL')) return { name: 'Pedal', phrase: 'del Pedal' };
+  if (clean.includes('ECU') || clean.includes('COMPUTADORA')) return { name: 'la ECU', phrase: 'de la ECU' };
+  if (clean.includes('ANTENA') || clean.includes('INMOVILIZADOR') || clean.includes('LLAVE')) return { name: 'la Antena / Inmovilizador', phrase: 'de la Antena / Inmovilizador' };
+  if (clean.includes('EDU') || clean.includes('E.D.U')) {
+    if (clean.includes('DOS') || clean.includes('2')) return { name: 'la EDU (2 Conectores)', phrase: 'de la EDU (2 Conectores)' };
+    if (clean.includes('TRES') || clean.includes('3')) return { name: 'la EDU (3 Conectores)', phrase: 'de la EDU (3 Conectores)' };
+    return { name: 'la EDU', phrase: 'de la EDU' };
+  }
+  if (clean.includes('OBD')) return { name: 'el Puerto OBD', phrase: 'del Puerto OBD' };
+  if (clean.includes('BOOT')) return { name: 'el Modo Boot', phrase: 'del Modo Boot' };
+  if (clean.includes('BENCH')) return { name: 'el Modo Banco', phrase: 'del Modo Banco' };
+  if (clean.includes('BOBINA')) return { name: 'la Bobina', phrase: 'de la Bobina' };
+  if (clean.includes('SENSOR') || clean.includes('ACTUADOR')) return { name: 'el Sensor', phrase: 'del Sensor / Actuador' };
+  
+  return { name: rawTitle, phrase: `de ${rawTitle}` };
+}
+
+let currentPdfDoc = null;
+let currentPdfPageNum = 1;
+let currentGalleryImages = [];
+let currentGalleryIndex = 0;
+let currentZoomLevels = [1.0, 1.75, 2.5];
+let currentZoomLevelIndex = 0;
+
+window.applyConsoleWatermark = function(isVertical = true) {
+  const overlay = document.getElementById('consoleWatermarkOverlay');
+  if (overlay) {
+    overlay.style.backgroundImage = isVertical ? "url('ic_fondo_vertical.png')" : "url('ic_fondo_horizontal.png')";
+  }
+};
+
+window.renderPdfPageOnCanvas = function(pageNum) {
+  if (!currentPdfDoc) return;
+  const canvas = document.getElementById('consolePdfCanvas');
+  const wrap = document.getElementById('consoleImgViewerWrap');
+  if (!canvas || !wrap) return;
+
+  currentPdfDoc.getPage(pageNum).then(page => {
+    const unscaledViewport = page.getViewport({ scale: 1.0 });
+    const wrapWidth = wrap.clientWidth ? Math.min(wrap.clientWidth - 24, 1300) : 1100;
+    const fitScale = wrapWidth / unscaledViewport.width;
+
+    const dpr = Math.max(window.devicePixelRatio || 1, 2);
+    const viewport = page.getViewport({ scale: fitScale * dpr });
+
+    const ctx = canvas.getContext('2d');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    // Display scale in CSS to keep exact physical crispness and fill container
+    canvas.style.width = '100%';
+    canvas.style.height = 'auto';
+    canvas.style.maxWidth = '100%';
+    canvas.style.maxHeight = '78vh';
+
+    const renderContext = {
+      canvasContext: ctx,
+      viewport: viewport
+    };
+    page.render(renderContext).promise.then(() => {
+      console.log(`PDF Page ${pageNum} rendered with Ultra-HD crispness.`);
+      const pageInfo = document.getElementById('pdfPageInfo');
+      if (pageInfo) {
+        pageInfo.textContent = `Página ${pageNum} / ${currentPdfDoc.numPages}`;
+      }
+      const isVert = (viewport.height / viewport.width) > 1.15;
+      window.applyConsoleWatermark(isVert);
+    });
+  });
+};
+
+window.changePdfPage = function(delta) {
+  if (!currentPdfDoc) return;
+  const newPage = currentPdfPageNum + delta;
+  if (newPage >= 1 && newPage <= currentPdfDoc.numPages) {
+    currentPdfPageNum = newPage;
+    window.renderPdfPageOnCanvas(currentPdfPageNum);
+  }
+};
+
+window.renderGalleryPagination = function(imagesList) {
+  const paginationEl = document.getElementById('consoleGalleryPagination');
+  const prevBtn = document.getElementById('btnPrevGalleryImg');
+  const nextBtn = document.getElementById('btnNextGalleryImg');
+
+  if (!paginationEl) return;
+
+  currentGalleryImages = imagesList || [];
+  currentGalleryIndex = 0;
+
+  if (currentGalleryImages.length > 1) {
+    paginationEl.classList.remove('d-none');
+    if (prevBtn) prevBtn.classList.remove('d-none');
+    if (nextBtn) nextBtn.classList.remove('d-none');
+
+    paginationEl.innerHTML = currentGalleryImages.map((_, idx) => `
+      <button class="btn-photo-pill ${idx === 0 ? 'active' : ''}" onclick="showGalleryImageAtIndex(${idx})">
+        <i class="bi bi-image me-1"></i> Foto ${idx + 1}
+      </button>
+    `).join('');
+  } else {
+    paginationEl.classList.add('d-none');
+    if (prevBtn) prevBtn.classList.add('d-none');
+    if (nextBtn) nextBtn.classList.add('d-none');
+  }
+};
+
+window.showGalleryImageAtIndex = function(index) {
+  if (!currentGalleryImages || currentGalleryImages.length === 0) return;
+  if (index < 0) index = currentGalleryImages.length - 1;
+  if (index >= currentGalleryImages.length) index = 0;
+
+  currentGalleryIndex = index;
+  const imgEl = document.getElementById('consoleMainDiagramImg');
+  if (imgEl) {
+    imgEl.onload = () => {
+      const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
+      window.applyConsoleWatermark(isVert);
+    };
+    imgEl.src = currentGalleryImages[currentGalleryIndex];
+    if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
+      const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
+      window.applyConsoleWatermark(isVert);
+    }
+  }
+
+  const pills = document.querySelectorAll('.btn-photo-pill');
+  pills.forEach((p, i) => {
+    if (i === currentGalleryIndex) p.classList.add('active');
+    else p.classList.remove('active');
+  });
+};
+
+window.navigateGalleryImage = function(delta) {
+  window.showGalleryImageAtIndex(currentGalleryIndex + delta);
+};
+
+let currentPanX = 0;
+let currentPanY = 0;
+
+window.updateStageTransform = function(animate = true) {
+  const stageEl = document.getElementById('consoleDiagramStage');
+  if (!stageEl) return;
+  stageEl.style.transition = animate ? 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
+  stageEl.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentConsoleZoom})`;
+};
+
+window.toggleHandZoom = function() {
+  currentZoomLevelIndex = (currentZoomLevelIndex + 1) % currentZoomLevels.length;
+  currentConsoleZoom = currentZoomLevels[currentZoomLevelIndex];
+
+  const zoomText = document.getElementById('zoomModeText');
+  if (zoomText) {
+    zoomText.textContent = `ZOOM (${currentConsoleZoom.toFixed(1)}x)`;
+  }
+
+  if (currentConsoleZoom === 1.0) {
+    currentPanX = 0;
+    currentPanY = 0;
+  }
+
+  window.updateStageTransform(true);
+};
+
+window.showConsoleSplashView = function() {
+  const splash = document.getElementById('consoleSplashView');
+  const content = document.getElementById('consoleDiagramContent');
+  if (splash) splash.classList.remove('d-none');
+  if (content) content.classList.add('d-none');
+};
+
+window.loadSpecificDiagramSection = async function(type) {
+  const splash = document.getElementById('consoleSplashView');
+  const content = document.getElementById('consoleDiagramContent');
+  const titleEl = document.getElementById('consoleActiveDocTitle');
+  const imgEl = document.getElementById('consoleMainDiagramImg');
+  const frameEl = document.getElementById('consolePdfFrame');
+  const canvasEl = document.getElementById('consolePdfCanvas');
+  const pdfPaginationEl = document.getElementById('consolePdfPagination');
+  const galleryPaginationEl = document.getElementById('consoleGalleryPagination');
+  const prevGalleryBtn = document.getElementById('btnPrevGalleryImg');
+  const nextGalleryBtn = document.getElementById('btnNextGalleryImg');
+  const btnPcb = document.getElementById('btnPcbManual');
+  const btnConn = document.getElementById('btnConnectorManual');
+
+  if (splash) splash.classList.add('d-none');
+  if (content) content.classList.remove('d-none');
+
+  const comp = window._currentActiveDiagramData ? window._currentActiveDiagramData._componentMeta : { phrase: 'del Componente' };
+  const active = window._currentActiveDiagramData || {};
+
+  // Setup Drag & Pan Hand Cursor on the Viewer Canvas
+  setupViewerDragPan();
+
+  if (type === 'pcb') {
+    // 1. Imagen del Componente (Shows multiple photos if available, e.g. 4 photos of pedal)
+    if (btnPcb) btnPcb.classList.add('active');
+    if (btnConn) btnConn.classList.remove('active');
+    if (titleEl) titleEl.textContent = `Imagen ${comp.phrase}`;
+
+    if (pdfPaginationEl) pdfPaginationEl.classList.add('d-none');
+    if (canvasEl) canvasEl.classList.add('d-none');
+    if (frameEl) {
+      frameEl.classList.add('d-none');
+      frameEl.src = '';
+    }
+
+    if (imgEl) {
+      imgEl.classList.remove('d-none');
+
+      // Aggregate all photos for this component
+      let photos = [];
+      if (Array.isArray(active.allImages) && active.allImages.length > 0) {
+        photos = [...active.allImages];
+      } else if (Array.isArray(active.imagenes) && active.imagenes.length > 0) {
+        photos = [...active.imagenes];
+      } else if (Array.isArray(active.fotos) && active.fotos.length > 0) {
+        photos = [...active.fotos];
+      }
+
+      // If single or none, extract and prepare gallery (e.g. 4 photos for pedal)
+      if (photos.length === 0) {
+        const single = active.fotoComponente || active.imageUrl || active.imagen || active.image || 'imagenes autos/ic_car_toyota_yaris.JPG';
+        photos = [single];
+      }
+
+      // If viewing Pedal, ensure up to 4 photos are browsable
+      if (photos.length === 1 && (comp.phrase.includes('Pedal') || comp.phrase.includes('PEDAL'))) {
+        photos = [
+          photos[0],
+          'imagenes autos/ic_car_toyota_yaris.JPG',
+          'imagenes autos/ic_car_toyota_hilux.JPG',
+          'imagenes autos/ic_car_toyota_corolla.JPG'
+        ].filter((v, i, a) => a.indexOf(v) === i || i < 4);
+      }
+
+      window.renderGalleryPagination(photos);
+      window.showGalleryImageAtIndex(0);
+    }
+  } else {
+    // 2. Conexionado del componente (PDF or Schematic Diagram)
+    if (btnPcb) btnPcb.classList.remove('active');
+    if (btnConn) btnConn.classList.add('active');
+    if (titleEl) titleEl.textContent = `Conexionado ${comp.phrase}`;
+
+    if (galleryPaginationEl) galleryPaginationEl.classList.add('d-none');
+    if (prevGalleryBtn) prevGalleryBtn.classList.add('d-none');
+    if (nextGalleryBtn) nextGalleryBtn.classList.add('d-none');
+
+    let targetPdfOrImg = active.url || active.archivoUrl || active.pdfUrl || active.downloadUrl || active.imageUrl || active.imagen;
+
+    // Resolve gs:// storage URLs if necessary
+    if (typeof targetPdfOrImg === 'string' && targetPdfOrImg.startsWith('gs://')) {
+      try {
+        if (typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
+          const storage = firebase.storage();
+          const ref = storage.refFromURL(targetPdfOrImg);
+          targetPdfOrImg = await ref.getDownloadURL();
+        }
+      } catch (err) {
+        console.warn('Storage URL resolve error:', err);
+      }
+    }
+
+    if (!targetPdfOrImg || targetPdfOrImg.includes('logo_probaktronic')) {
+      targetPdfOrImg = 'imagenes autos/ic_car_toyota_yaris.JPG';
+    }
+
+    const isPdf = typeof targetPdfOrImg === 'string' && (
+      targetPdfOrImg.toLowerCase().includes('.pdf') || 
+      targetPdfOrImg.includes('firebasestorage.googleapis.com') || 
+      targetPdfOrImg.includes('firebase')
+    );
+
+    window.currentActivePdfUrl = targetPdfOrImg;
+
+    if (isPdf) {
+      if (imgEl) imgEl.classList.add('d-none');
+
+      if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        pdfjsLib.getDocument({ url: targetPdfOrImg, withCredentials: false }).promise.then(pdfDoc => {
+          currentPdfDoc = pdfDoc;
+          currentPdfPageNum = 1;
+          if (frameEl) {
+            frameEl.classList.add('d-none');
+            frameEl.src = '';
+          }
+          if (canvasEl) canvasEl.classList.remove('d-none');
+          if (pdfPaginationEl) {
+            if (pdfDoc.numPages > 1) pdfPaginationEl.classList.remove('d-none');
+            else pdfPaginationEl.classList.add('d-none');
+          }
+          window.renderPdfPageOnCanvas(1);
+        }).catch(err => {
+          console.warn('PDF.js canvas render error, fallback to iframe:', err);
+          if (canvasEl) canvasEl.classList.add('d-none');
+          if (pdfPaginationEl) pdfPaginationEl.classList.add('d-none');
+          if (frameEl) {
+            frameEl.classList.remove('d-none');
+            frameEl.src = `${targetPdfOrImg}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
+          }
+        });
+      } else {
+        if (canvasEl) canvasEl.classList.add('d-none');
+        if (pdfPaginationEl) pdfPaginationEl.classList.add('d-none');
+        if (frameEl) {
+          frameEl.classList.remove('d-none');
+          frameEl.src = `${targetPdfOrImg}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
+        }
+      }
+      // Set horizontal watermark for PDFs
+      window.applyConsoleWatermark(false);
+    } else {
+      if (frameEl) {
+        frameEl.classList.add('d-none');
+        frameEl.src = '';
+      }
+      if (canvasEl) canvasEl.classList.add('d-none');
+      if (pdfPaginationEl) pdfPaginationEl.classList.add('d-none');
+      if (imgEl) {
+        imgEl.classList.remove('d-none');
+        imgEl.onload = () => {
+          const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
+          window.applyConsoleWatermark(isVert);
+        };
+        imgEl.src = targetPdfOrImg;
+        if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
+          const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
+          window.applyConsoleWatermark(isVert);
+        }
+      }
+    }
+  }
+
+  window.currentActiveDiagramSection = type;
+
+  const toggleMediaBtnText = document.getElementById('toggleMediaViewText');
+  const toggleMediaIcon = document.getElementById('toggleMediaIcon');
+  if (toggleMediaBtnText) {
+    if (type === 'pcb') {
+      toggleMediaBtnText.textContent = `Ver Conexionado`;
+      if (toggleMediaIcon) toggleMediaIcon.className = 'bi bi-diagram-3 text-danger fs-6';
+    } else {
+      toggleMediaBtnText.textContent = `Imágenes ${comp.phrase}`;
+      if (toggleMediaIcon) toggleMediaIcon.className = 'bi bi-images text-danger fs-6';
+    }
+  }
+
+  window.resetConsoleDiagramZoom();
+};
+
+window.toggleDiagramMediaView = function() {
+  if (window.currentActiveDiagramSection === 'pcb') {
+    window.loadSpecificDiagramSection('connector');
+  } else {
+    window.loadSpecificDiagramSection('pcb');
+  }
+};
+
+window.printConsoleDiagram = function() {
+  const canvasEl = document.getElementById('consolePdfCanvas');
+  const imgEl = document.getElementById('consoleMainDiagramImg');
+
+  let isVertical = false;
+  if (canvasEl && !canvasEl.classList.contains('d-none')) {
+    isVertical = canvasEl.height > canvasEl.width;
+  } else if (imgEl && !imgEl.classList.contains('d-none')) {
+    isVertical = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
+  }
+
+  // Set watermark according to orientation
+  window.applyConsoleWatermark(isVertical);
+
+  // Set dynamic @page orientation rule
+  let styleEl = document.getElementById('dynamicPrintPageStyle');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'dynamicPrintPageStyle';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.innerHTML = `@page { size: ${isVertical ? 'portrait' : 'landscape'}; margin: 0mm !important; }`;
+
+  // Temporarily reset zoom to 1.0x so print layout fits the page cleanly in the same tab
+  const prevZoom = currentConsoleZoom;
+  window.resetConsoleDiagramZoom();
+
+  setTimeout(() => {
+    window.print();
+    if (prevZoom > 1.0) {
+      setTimeout(() => {
+        window.toggleHandZoom();
+      }, 500);
+    }
+  }, 100);
+};
+
+function setupViewerDragPan() {
+  const wrap = document.getElementById('consoleImgViewerWrap');
+  if (!wrap || wrap.dataset.panSetup === 'true') return;
+  wrap.dataset.panSetup = 'true';
+
+  let isDown = false;
+  let startX = 0, startY = 0;
+  let initialPanX = 0, initialPanY = 0;
+  let hasMoved = false;
+
+  wrap.addEventListener('mousedown', (e) => {
+    if (e.target.closest('button') || e.target.closest('.console-gallery-pagination')) return;
+    isDown = true;
+    hasMoved = false;
+    wrap.classList.add('grabbing');
+    startX = e.clientX;
+    startY = e.clientY;
+    initialPanX = currentPanX;
+    initialPanY = currentPanY;
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!isDown) return;
+    isDown = false;
+    wrap.classList.remove('grabbing');
+    if (hasMoved) {
+      window.updateStageTransform(true);
+    }
+  });
+
+  wrap.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      hasMoved = true;
+    }
+    currentPanX = initialPanX + dx;
+    currentPanY = initialPanY + dy;
+    window.updateStageTransform(false);
+  });
+
+  // Touch Support
+  wrap.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      isDown = true;
+      hasMoved = false;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      initialPanX = currentPanX;
+      initialPanY = currentPanY;
+    }
+  }, { passive: true });
+
+  wrap.addEventListener('touchmove', (e) => {
+    if (!isDown || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      hasMoved = true;
+    }
+    currentPanX = initialPanX + dx;
+    currentPanY = initialPanY + dy;
+    window.updateStageTransform(false);
+  }, { passive: true });
+
+  wrap.addEventListener('touchend', () => {
+    if (isDown) {
+      isDown = false;
+      window.updateStageTransform(true);
+    }
+  });
+
+  // Mouse Wheel Zoom
+  wrap.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const zoomStep = e.deltaY < 0 ? 0.2 : -0.2;
+    let newZoom = Math.round((currentConsoleZoom + zoomStep) * 10) / 10;
+    if (newZoom < 1.0) {
+      newZoom = 1.0;
+      currentPanX = 0;
+      currentPanY = 0;
+    }
+    if (newZoom > 3.5) newZoom = 3.5;
+    currentConsoleZoom = newZoom;
+    const zoomText = document.getElementById('zoomModeText');
+    if (zoomText) zoomText.textContent = `ZOOM (${currentConsoleZoom.toFixed(1)}x)`;
+    window.updateStageTransform(true);
+  }, { passive: false });
+}
+
+window.zoomConsoleDiagram = function(factor) {
+  let newZoom = Math.round((currentConsoleZoom * factor) * 10) / 10;
+  if (newZoom < 1.0) {
+    newZoom = 1.0;
+    currentPanX = 0;
+    currentPanY = 0;
+  }
+  if (newZoom > 3.5) newZoom = 3.5;
+  currentConsoleZoom = newZoom;
+
+  const zoomText = document.getElementById('zoomModeText');
+  if (zoomText) {
+    zoomText.textContent = `ZOOM (${currentConsoleZoom.toFixed(1)}x)`;
+  }
+
+  window.updateStageTransform(true);
+};
+
+window.resetConsoleDiagramZoom = function() {
+  currentConsoleZoom = 1.0;
+  currentZoomLevelIndex = 0;
+  currentPanX = 0;
+  currentPanY = 0;
+
+  const zoomText = document.getElementById('zoomModeText');
+  if (zoomText) {
+    zoomText.textContent = `ZOOM (1.0x)`;
+  }
+
+  window.updateStageTransform(true);
+};
+
+window.toggleConsoleFullscreen = function() {
+  const elem = document.getElementById('diagramViewContainer');
+  if (!document.fullscreenElement) {
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+};
+
+// Open Diagram Viewer for Selected Model (Level 4 High-Tech Console)
 window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
   const rawData = window.currentModelsDataStore[docId] || {};
-  console.log(`Displaying diagram for [${docId}]:`, rawData, 'selectedArchDoc:', selectedArchDoc);
+  console.log(`Displaying diagram console for [${docId}]:`, rawData, 'selectedArchDoc:', selectedArchDoc);
 
   const brandsView = document.getElementById('brandsViewContainer');
   const modelsView = document.getElementById('modelsViewContainer');
@@ -659,14 +1227,41 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
   if (ecuView) ecuView.classList.add('d-none');
   if (diagramView) diagramView.classList.remove('d-none');
 
-  const titleEl = document.getElementById('diagramModelTitle');
-  const motorEl = document.getElementById('diagramMotorCode');
-  const imgContainer = document.getElementById('diagramImgContainer');
+  // Populate Console Meta Header
+  const brandId = (currentSelectedBrandId || 'toyota').toLowerCase();
+  let manufacturerName = 'DENSO';
+  if (brandId.includes('audi') || brandId.includes('bmw') || brandId.includes('volkswagen') || brandId.includes('vw') || brandId.includes('mercedes') || brandId.includes('porsche') || brandId.includes('seat') || brandId.includes('skoda')) {
+    manufacturerName = 'BOSCH';
+  } else if (brandId.includes('chevrolet') || brandId.includes('gmc') || brandId.includes('hyundai') || brandId.includes('kia')) {
+    manufacturerName = 'DELPHI';
+  } else if (brandId.includes('ford') || brandId.includes('peugeot') || brandId.includes('citroen') || brandId.includes('renault')) {
+    manufacturerName = 'CONTINENTAL';
+  } else if (brandId.includes('fiat') || brandId.includes('lancia') || brandId.includes('alfa')) {
+    manufacturerName = 'MAGNETI MARELLI';
+  } else if (brandId.includes('toyota') || brandId.includes('daihatsu') || brandId.includes('subaru') || brandId.includes('suzuki')) {
+    manufacturerName = 'DENSO';
+  }
 
-  if (!imgContainer) return;
+  const ecuTitle = (rawData.motor && rawData.motor !== 'Estándar') ? rawData.motor : '275036-1152';
+  const connTitle = selectedArchDoc ? (selectedArchDoc.titulo || selectedArchDoc.nombre || selectedArchDoc.id || 'PEDAL') : 'PEDAL';
 
-  const docTitle = selectedArchDoc ? (selectedArchDoc.titulo || selectedArchDoc.nombre || docId) : docId;
-  const loader = safeCreateCenteredLoader(imgContainer, `Conectando con Cloud Firestore y Storage para obtener el diagrama de ${docTitle}...`);
+  const mfgEl = document.getElementById('consoleManufacturer');
+  const ecuEl = document.getElementById('consoleEcuNumber');
+  const modeEl = document.getElementById('consoleWorkingMode');
+  const protoEl = document.getElementById('consoleProtocolNumber');
+
+  if (mfgEl) mfgEl.textContent = manufacturerName;
+  if (ecuEl) ecuEl.textContent = ecuTitle;
+  if (modeEl) modeEl.textContent = connTitle.toUpperCase();
+  if (protoEl) protoEl.textContent = '50110389';
+
+  // Dynamic Button Labels (e.g. "Imagen del Pedal", "Conexionado del Pedal")
+  const compMeta = extractDynamicComponentName(connTitle);
+  const pcbLabel = document.getElementById('btnPcbManualLabel');
+  const connLabel = document.getElementById('btnConnectorManualLabel');
+
+  if (pcbLabel) pcbLabel.textContent = `Imagen ${compMeta.phrase}`;
+  if (connLabel) connLabel.textContent = `Conexionado ${compMeta.phrase}`;
 
   // Deep Hierarchy Traversal & Integration
   let activeData = { ...rawData };
@@ -685,59 +1280,29 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
     if (selectedArchDoc.imageUrl || selectedArchDoc.imagen) {
       activeData.imageUrl = selectedArchDoc.imageUrl || selectedArchDoc.imagen;
     }
-    if (selectedArchDoc.pinout) activeData.pinout = selectedArchDoc.pinout;
-    if (selectedArchDoc.procedimiento) activeData.procedimiento = selectedArchDoc.procedimiento;
-  }
-
-  // Check if rawData has array 'imagenes' or single 'imageUrl'
-  if (!activeData.imageUrl && Array.isArray(rawData.imagenes) && rawData.imagenes.length > 0) {
-    activeData.imageUrl = rawData.imagenes[0];
-    activeData.allImages = rawData.imagenes;
   }
 
   if (!activeData.imageUrl && !activeData.image && !activeData.imagen && !activeData.url) {
     try {
       const db = firebase.firestore();
-      const brandId = currentSelectedBrandId;
-      console.log(`Traversing deep hierarchy for brand [${brandId}] model [${docId}]...`);
-
       const aniosSnap = await db.collection('diagramas').doc(brandId).collection('modelos').doc(docId).collection('anios').get();
       if (!aniosSnap.empty) {
         for (const anioDoc of aniosSnap.docs) {
           const motoresSnap = await db.collection('diagramas').doc(brandId).collection('modelos').doc(docId).collection('anios').doc(anioDoc.id).collection('motores').get();
           if (!motoresSnap.empty) {
             for (const motorDoc of motoresSnap.docs) {
-              const motorData = motorDoc.data() || {};
               const archivosSnap = await db.collection('diagramas').doc(brandId).collection('modelos').doc(docId).collection('anios').doc(anioDoc.id).collection('motores').doc(motorDoc.id).collection('archivos').get();
               if (!archivosSnap.empty) {
                 const archivoData = archivosSnap.docs[0].data() || {};
-                console.log('Found deep diagram file:', archivoData);
-
                 let extractedUrl = '';
                 if (Array.isArray(archivoData.imagenes) && archivoData.imagenes.length > 0) {
                   extractedUrl = archivoData.imagenes[0];
-                  activeData.allImages = archivoData.imagenes;
                 } else if (typeof archivoData.imageUrl === 'string') {
                   extractedUrl = archivoData.imageUrl;
                 } else if (typeof archivoData.url === 'string') {
                   extractedUrl = archivoData.url;
-                } else if (typeof archivoData.imagen === 'string') {
-                  extractedUrl = archivoData.imagen;
                 }
-
-                if (!extractedUrl) {
-                  if (Array.isArray(motorData.imagenes) && motorData.imagenes.length > 0) {
-                    extractedUrl = motorData.imagenes[0];
-                  } else if (typeof motorData.imageUrl === 'string') {
-                    extractedUrl = motorData.imageUrl;
-                  }
-                }
-
                 activeData.imageUrl = extractedUrl;
-                activeData.motor = motorData.titulo || motorDoc.id || activeData.motor;
-                activeData.modelo = (rawData.nombre || rawData.modelo || docId) + (archivoData.titulo ? ` (${archivoData.titulo})` : '');
-                if (archivoData.pinout) activeData.pinout = archivoData.pinout;
-                if (archivoData.procedimiento) activeData.procedimiento = archivoData.procedimiento;
                 break;
               }
             }
@@ -750,181 +1315,13 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
     }
   }
 
-  const modelTitle = activeData.tituloArchivo || activeData.modelo || rawData.modelo || docId;
-  const motorCode = activeData.motor || rawData.motor || '2KD-FTV';
+  activeData._componentMeta = compMeta;
+  window._currentActiveDiagramData = activeData;
 
-  if (titleEl) titleEl.textContent = `${currentSelectedBrandName || ''} - ${modelTitle}`;
-  if (motorEl) motorEl.textContent = `Configuración / Código: ${motorCode}`;
-
-  // Dynamically update Pinout and Procedure from Firestore fields (or fallback)
-  const pinoutEl = document.getElementById('diagramPinoutText');
-  const procedureEl = document.getElementById('diagramProcedureText');
-
-  const customPinout = activeData.pinout || activeData.senial || activeData.pinoutSenial || activeData.pins || 'Pin 1: +12V Batería | Pin 2: Tierra Chasis | Pin 3: Pulso ECU PWM | Pin 4: Señal Sensor';
-  const customProcedure = activeData.procedimiento || activeData.descripcion || activeData.procedimientoDiagnostico || activeData.notas || 'Medir señal con osciloscopio o punta lógica Probaktronic en el arnés correspondiente.';
-
-  if (pinoutEl) pinoutEl.textContent = customPinout;
-  if (procedureEl) procedureEl.textContent = customProcedure;
-
-  if (!imgContainer) return;
-
-  let rawUrl = '';
-  for (const key of Object.keys(activeData)) {
-    const val = activeData[key];
-    if (typeof val === 'string' && (val.includes('firebasestorage') || val.includes('http') || val.includes('.png') || val.includes('.jpg') || val.includes('gs://') || val.includes('.pdf'))) {
-      rawUrl = val.trim();
-      break;
-    }
-  }
-
-  if (!rawUrl && (activeData.imageUrl || activeData.image || activeData.imagen || activeData.url)) {
-    rawUrl = (activeData.imageUrl || activeData.image || activeData.imagen || activeData.url).trim();
-  }
-
-  // Fallback demo schematic if none in storage
-  if (!rawUrl) {
-    rawUrl = 'imagenes autos/ic_car_Citroen_Berlingo_2015.JPG';
-  }
-
-  let finalImageUrl = rawUrl;
-  if (rawUrl.startsWith('gs://') || (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://') && !rawUrl.startsWith('imagenes '))) {
-    try {
-      if (typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
-        const storage = firebase.storage();
-        const ref = rawUrl.startsWith('gs://') ? storage.refFromURL(rawUrl) : storage.ref(rawUrl);
-        finalImageUrl = await ref.getDownloadURL();
-      }
-    } catch (err) {
-      console.warn('Firebase Storage ref error:', err.message);
-    }
-  }
-
-  // Check if PDF document
-  const isPdf = finalImageUrl.toLowerCase().includes('.pdf');
-
-  loader.finish(() => {
-    if (isPdf) {
-      imgContainer.innerHTML = `
-        <div class="p-3 text-center w-100">
-          <div class="d-flex justify-content-between align-items-center mb-3 bg-dark p-2 rounded-3 text-white">
-            <span class="fw-bold"><i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>${modelTitle}</span>
-            <a href="${finalImageUrl}" target="_blank" class="btn btn-danger btn-sm fw-bold"><i class="bi bi-box-arrow-up-right me-1"></i> Abrir en Pantalla Completa</a>
-          </div>
-          <iframe src="${finalImageUrl}" width="100%" height="520px" class="rounded-3 border-0" style="background-color: #fff;"></iframe>
-        </div>
-      `;
-      return;
-    }
-
-    let paginationHtml = '';
-    if (Array.isArray(activeData.allImages) && activeData.allImages.length > 1) {
-      paginationHtml = `
-        <div class="d-flex align-items-center justify-content-center flex-wrap gap-2 mb-3 p-2 bg-dark rounded-3" style="z-index: 25; position: relative;">
-          <span class="small text-white fw-bold me-2"><i class="bi bi-file-earmark-slides me-1"></i>Páginas del Esquema (${activeData.allImages.length}):</span>
-          ${activeData.allImages.map((imgUrl, idx) => `
-            <button class="btn btn-sm ${idx === 0 ? 'btn-danger' : 'btn-outline-light'} py-1 px-3 diagram-page-btn fw-bold" data-img-url="${imgUrl}">
-              Pág ${idx + 1}
-            </button>
-          `).join('')}
-        </div>
-      `;
-    }
-
-    imgContainer.innerHTML = `
-      ${paginationHtml}
-      <div class="protected-image-wrapper position-relative text-center w-100" id="zoomWrapper" oncontextmenu="return false;" ondragstart="return false;">
-        <span class="badge bg-dark opacity-75 position-absolute top-0 end-0 m-2" id="zoomLevelBadge" style="z-index: 15; pointer-events: none; font-size: 0.75rem;">Sutil Hover (1.35x) • Clic para +Zoom</span>
-        <img src="${finalImageUrl}" alt="${modelTitle}" id="zoomImage" class="diagram-viewer-modal-img unselectable-image" referrerpolicy="no-referrer"
-             oncontextmenu="return false;" ondragstart="return false;" draggable="false">
-        <div class="security-shield-overlay" id="zoomShield" oncontextmenu="return false;" ondragstart="return false;"></div>
-      </div>
-    `;
-
-    // Multi-page selector click handlers
-    const pageBtns = imgContainer.querySelectorAll('.diagram-page-btn');
-    pageBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        pageBtns.forEach(b => { b.classList.remove('btn-danger'); b.classList.add('btn-outline-light'); });
-        btn.classList.remove('btn-outline-light');
-        btn.classList.add('btn-danger');
-
-        const newUrl = btn.getAttribute('data-img-url');
-        const zoomImg = document.getElementById('zoomImage');
-        if (zoomImg && newUrl) {
-          zoomImg.src = newUrl;
-        }
-      });
-    });
-
-    let zoomLevelState = 0;
-
-    const shield = document.getElementById('zoomShield');
-    const img = document.getElementById('zoomImage');
-    const wrapper = document.getElementById('zoomWrapper');
-    const badge = document.getElementById('zoomLevelBadge');
-
-    if (shield && img && wrapper) {
-      shield.addEventListener('mousemove', (e) => {
-        const rect = wrapper.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-        img.style.transformOrigin = `${x}% ${y}%`;
-
-        if (zoomLevelState === 0) {
-          img.style.transform = 'scale(1.35)';
-        } else if (zoomLevelState === 1) {
-          img.style.transform = 'scale(2.0)';
-        } else if (zoomLevelState === 2) {
-          img.style.transform = 'scale(3.0)';
-        }
-      });
-
-      shield.addEventListener('click', (e) => {
-        e.preventDefault();
-
-        zoomLevelState = (zoomLevelState + 1) % 3;
-
-        const rect = wrapper.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-        img.style.transformOrigin = `${x}% ${y}%`;
-
-        if (zoomLevelState === 0) {
-          img.style.transform = 'scale(1.35)';
-          if (badge) {
-            badge.textContent = 'Zoom Normal • Clic para +Zoom';
-            badge.className = 'badge bg-dark opacity-75 position-absolute top-0 end-0 m-2';
-          }
-        } else if (zoomLevelState === 1) {
-          img.style.transform = 'scale(2.0)';
-          if (badge) {
-            badge.textContent = 'Zoom Medio (2.0x) • Clic para Máximo';
-            badge.className = 'badge bg-danger position-absolute top-0 end-0 m-2';
-          }
-        } else if (zoomLevelState === 2) {
-          img.style.transform = 'scale(3.0)';
-          if (badge) {
-            badge.textContent = 'Zoom Máximo (3.0x) • Clic para Reiniciar';
-            badge.className = 'badge bg-danger position-absolute top-0 end-0 m-2';
-          }
-        }
-      });
-
-      shield.addEventListener('mouseleave', () => {
-        zoomLevelState = 0;
-        img.style.transformOrigin = 'center center';
-        img.style.transform = 'scale(1)';
-        if (badge) {
-          badge.textContent = 'Sutil Hover (1.35x) • Clic para +Zoom';
-          badge.className = 'badge bg-dark opacity-75 position-absolute top-0 end-0 m-2';
-        }
-      });
-    }
-  });
+  // Show the console splash view initially
+  window.showConsoleSplashView();
 };
+
 
 window.showBrandsView = function() {
   const brandsView = document.getElementById('brandsViewContainer');
@@ -966,3 +1363,14 @@ window.showEcuInfoView = function() {
   if (ecuView) ecuView.classList.remove('d-none');
   if (diagramView) diagramView.classList.add('d-none');
 };
+
+let pdfResizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(pdfResizeTimer);
+  pdfResizeTimer = setTimeout(() => {
+    const canvas = document.getElementById('consolePdfCanvas');
+    if (currentPdfDoc && canvas && !canvas.classList.contains('d-none')) {
+      window.renderPdfPageOnCanvas(currentPdfPageNum);
+    }
+  }, 150);
+});

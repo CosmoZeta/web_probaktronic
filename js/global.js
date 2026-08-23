@@ -63,13 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mobile Drawer Setup
   setupMobileDrawer();
 
-  // Intercept Sidebar Clicks for Instant Seamless Navigation
+  // Handle Sidebar Navigation Links
   const navLinks = document.querySelectorAll('.sidebar-nav .nav-link-item');
   navLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-      const href = link.getAttribute('href');
-      if (!href || href === '#' || href.startsWith('javascript:')) return;
-
+    link.addEventListener('click', () => {
       // Close mobile drawer on navigation
       const sidebar = document.querySelector('.sidebar');
       const backdrop = document.getElementById('sidebarBackdrop');
@@ -77,21 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebar.classList.remove('mobile-open');
         if (backdrop) backdrop.classList.remove('active');
       }
-
-      e.preventDefault();
-      // Seamlessly load target content
-      loadPageContent(href);
     });
-  });
-
-  // Handle Browser Back / Forward Buttons
-  window.addEventListener('popstate', (e) => {
-    if (e.state && e.state.url) {
-      loadPageContent(e.state.url, false);
-    } else {
-      const currentUrl = window.location.pathname.split('/').pop() || 'index.html';
-      loadPageContent(currentUrl, false);
-    }
   });
 
   // Initialize features on initial load
@@ -165,24 +148,6 @@ function loadPageContent(url, pushHistory = true) {
 
         updateActiveNavLink();
         initCurrentPageFeatures();
-
-        // If switching to catalog, trigger Firestore load directly
-        if (url.includes('catalogo.html') && typeof window.fetchFirestoreProducts === 'function') {
-          window.fetchFirestoreProducts();
-        }
-
-        // If switching to vehiculos, trigger diagramas/vehiculos module directly
-        if (url.includes('vehiculos.html')) {
-          if (typeof window.initVehiculosDiagramasModule === 'function') {
-            window.initVehiculosDiagramasModule();
-          } else {
-            loadScriptDynamically('js/vehiculos-diagramas.js', () => {
-              if (typeof window.initVehiculosDiagramasModule === 'function') {
-                window.initVehiculosDiagramasModule();
-              }
-            });
-          }
-        }
       }
     })
     .catch(err => {

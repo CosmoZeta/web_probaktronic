@@ -17,6 +17,7 @@
   
   <!-- Stylesheets -->
   <link href="css/global.css" rel="stylesheet">
+  <link href="css/vehiculos.css" rel="stylesheet">
   
   <style>
     .select-vehicle-header {
@@ -635,7 +636,7 @@
 
     <!-- Main Content Area -->
     <main class="main-content">
-      <!-- Select Vehicle Header with Back Button and Mobile Toggle -->
+      <!-- Select Vehicle Header with Back Button, Probaktronic Logo, and Mobile Toggle -->
       <div class="select-vehicle-header">
         <button class="btn-mobile-menu-toggle" id="btnMobileMenuToggle" aria-label="Abrir menú" title="Abrir menú">
           <i class="bi bi-list"></i>
@@ -644,8 +645,11 @@
           <i class="bi bi-arrow-left"></i>
         </a>
         <div>
-          <h1 class="page-title fs-2 mb-0" id="vehiculosHeaderTitle">SELECT VEHICLE</h1>
+          <h1 class="page-title fs-2 mb-0" id="vehiculosHeaderTitle">SELECCIONAR VEHÍCULO</h1>
           <div class="page-subtitle mt-1" id="vehiculosHeaderSubtitle">Seleccione la marca y modelo para consultar los esquemas de conexión y diagnóstico</div>
+          <div class="header-sublogo-wrap mt-2">
+            <img src="logo_probaktronic_costado.png" alt="Probaktronic" style="height: 22px; width: auto; object-fit: contain;">
+          </div>
         </div>
       </div>
 
@@ -653,9 +657,9 @@
       <div id="brandsViewContainer">
         <!-- Section Tabs -->
         <div class="section-tab-bar">
-          <span class="section-tab-item active" data-tab="all">Show All</span>
-          <span class="section-tab-item" data-tab="recent">Last Used</span>
-          <span class="section-tab-item" data-tab="fav">Favourites</span>
+          <span class="section-tab-item active" data-tab="all">Mostrar Todo</span>
+          <span class="section-tab-item" data-tab="recent">Últimos Usados</span>
+          <span class="section-tab-item" data-tab="fav">Favoritos</span>
         </div>
 
         <!-- Filter Toolbar -->
@@ -737,7 +741,7 @@
         <div style="max-width: 860px; margin: 0 auto;" class="mb-4">
           <!-- 1. SELECTED Vehicle Segmented Bar -->
           <div class="mb-3">
-            <span class="small fw-bold text-muted text-uppercase tracking-wider mb-2 d-block" style="font-size: 0.78rem; letter-spacing: 0.6px;">SELECTED</span>
+            <span class="small fw-bold text-muted text-uppercase tracking-wider mb-2 d-block" style="font-size: 0.78rem; letter-spacing: 0.6px;">SELECCIONADO</span>
             <div class="selected-vehicle-segmented-bar">
               <div class="selected-vehicle-segment" style="min-width: 170px;">
                 <img id="selectedVehicleBrandLogo" src="imagenes svg/ico_logo_toyota.svg" alt="Brand Logo" style="max-height: 28px; max-width: 38px; height: 28px; object-fit: contain; flex-shrink: 0;">
@@ -774,7 +778,7 @@
 
             <!-- Connection Types Grid -->
             <div class="mb-4">
-              <div class="connection-section-title">CONNECTION TYPE</div>
+              <div class="connection-section-title">TIPO DE CONEXIÓN</div>
               <div class="connection-types-grid" id="connectionTypeListContainer">
                 <!-- Dynamically generated cards -->
               </div>
@@ -783,48 +787,146 @@
             <!-- Next Button -->
             <div class="pt-2">
               <button class="btn-connection-next" id="btnNextToDiagram">
-                Next
+                CONTINUAR DIAGNÓSTICO
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- View 4: Schematic Diagram Viewer -->
+      <!-- View 4: High-Tech Technical Diagnostic Console (Level 4 Inspired Viewer) -->
       <div id="diagramViewContainer" class="d-none">
-        <div class="models-modal-card">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <span class="badge bg-danger mb-1">ESQUEMA DE DIAGNÓSTICO</span>
-              <h3 class="font-rajdhani fw-bold mb-0 text-uppercase" id="diagramModelTitle">Toyota Hilux</h3>
-              <div class="text-muted small" id="diagramMotorCode">Configuración / Código: 2KD-FTV</div>
-            </div>
-            <button class="btn btn-outline-secondary btn-sm" onclick="showEcuInfoView()"><i class="bi bi-arrow-left me-1"></i> Volver a Opciones</button>
-          </div>
-
-          <div class="bg-dark rounded-4 p-3 text-center mb-3" id="diagramImgContainer" style="min-height: 280px; display: flex; align-items: center; justify-content: center; user-select: none;">
-            <!-- Dynamically populated by js/vehiculos-diagramas.js -->
-          </div>
-
-          <div class="row g-3">
-            <div class="col-md-6">
-              <div class="card p-3 bg-light border-0">
-                <span class="small fw-bold text-muted">PINOUT Y SEÑAL</span>
-                <span class="fw-bold" id="diagramPinoutText">Pin 1: +12V Batería | Pin 2: Tierra Chasis | Pin 3: Pulso ECU</span>
+        <div class="technical-console-window">
+          
+          <!-- 1. Top Technical Header Bar -->
+          <div class="console-top-bar">
+            <!-- Left Info Block: Manufacturer, ECU, Protocol & Working Mode -->
+            <div class="console-left-meta">
+              <div class="console-chip-icon">
+                <i class="bi bi-cpu-fill"></i>
+              </div>
+              <div class="console-meta-item">
+                <span class="console-meta-label">FABRICANTE / ECU</span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="console-manufacturer-badge" id="consoleManufacturer">DENSO</span>
+                  <span class="console-ecu-number" id="consoleEcuNumber">275036-1152</span>
+                </div>
+              </div>
+              <div class="console-meta-divider"></div>
+              <div class="console-meta-item d-none d-md-block">
+                <span class="console-meta-label">NÚMERO DE PROTOCOLO</span>
+                <span class="console-meta-value" id="consoleProtocolNumber">50110389</span>
+              </div>
+              <div class="console-meta-divider d-none d-md-block"></div>
+              <div class="console-meta-item">
+                <span class="console-meta-label">COMPONENTE / MODO</span>
+                <div class="d-flex align-items-center gap-1">
+                  <i class="bi bi-motherboard text-danger"></i>
+                  <span class="console-meta-value text-uppercase" id="consoleWorkingMode">PEDAL</span>
+                </div>
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="card p-3 bg-light border-0">
-                <span class="small fw-bold text-muted">PROCEDIMIENTO</span>
-                <span class="fw-bold" id="diagramProcedureText">Medir señal PWM con osciloscopio o punta lógica Probaktronic</span>
+
+            <!-- Right Window Controls -->
+            <div class="console-window-controls">
+              <button class="console-control-btn" id="btnToggleFullscreen" onclick="toggleConsoleFullscreen()" title="Pantalla completa">
+                <i class="bi bi-fullscreen"></i>
+              </button>
+              <button class="console-control-btn close-btn" onclick="showEcuInfoView()" title="Cerrar visor">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Main Dark Workspace Canvas -->
+          <div class="console-workspace-canvas" id="consoleWorkspace">
+            <!-- Watermark / Splash view with dynamic choices -->
+            <div class="console-splash-view" id="consoleSplashView">
+              <div class="console-brand-watermark mb-4 text-center">
+                <img src="logo_probaktronic_costado.png" alt="Probaktronic" class="console-probak-logo pulse-animation">
+                <div class="console-brand-sub mt-2">MOTORSPORT & AUTOMOTIVE DIAGNOSTICS</div>
+              </div>
+
+              <!-- Action Buttons with Dynamic Labels -->
+              <div class="console-manual-buttons-row">
+                <button class="btn-console-action active" id="btnPcbManual" onclick="loadSpecificDiagramSection('pcb')">
+                  <i class="bi bi-image me-2"></i> <span id="btnPcbManualLabel">Imagen del Componente</span>
+                </button>
+                <button class="btn-console-action" id="btnConnectorManual" onclick="loadSpecificDiagramSection('connector')">
+                  <i class="bi bi-diagram-3 me-2"></i> <span id="btnConnectorManualLabel">Conexionado del Componente</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Schematic/Diagram Viewer Container -->
+            <div class="console-diagram-content d-none" id="consoleDiagramContent">
+              <div class="console-diagram-toolbar">
+                <span class="console-diagram-title font-rajdhani fw-bold" id="consoleActiveDocTitle">Esquema de Diagnóstico</span>
+                <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                  <!-- Botón para ver imágenes del componente / pedal -->
+                  <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnToggleMediaView" onclick="toggleDiagramMediaView()" title="Ver imágenes o volver al conexionado">
+                    <i class="bi bi-images text-danger fs-6" id="toggleMediaIcon"></i>
+                    <span class="small font-rajdhani fw-bold" id="toggleMediaViewText">Imágenes del Pedal</span>
+                  </button>
+
+                  <!-- Botón para Imprimir el PDF con Marca de Agua -->
+                  <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnPrintDiagramPdf" onclick="printConsoleDiagram()" title="Imprimir diagrama con marca de agua">
+                    <i class="bi bi-printer text-info fs-6"></i>
+                    <span class="small font-rajdhani fw-bold">Imprimir</span>
+                  </button>
+
+                  <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnToggleZoomPan" onclick="toggleHandZoom()" title="Hacer clic para ampliar o reducir con la mano">
+                    <i class="bi bi-hand-index-thumb text-danger fs-6"></i>
+                    <span class="small font-rajdhani fw-bold" id="zoomModeText">ZOOM (1x)</span>
+                  </button>
+                  <button class="btn btn-dark btn-sm border" onclick="resetConsoleDiagramZoom()" title="Ajustar a pantalla"><i class="bi bi-aspect-ratio"></i></button>
+                  <button class="btn btn-outline-light btn-sm" onclick="showConsoleSplashView()"><i class="bi bi-arrow-left me-1"></i> Opciones</button>
+                </div>
+              </div>
+
+              <div class="console-img-viewer-wrap" id="consoleImgViewerWrap">
+                <!-- Gallery Navigation Arrows for multiple photos -->
+                <button class="btn-gallery-nav prev-btn d-none" id="btnPrevGalleryImg" onclick="navigateGalleryImage(-1)" title="Foto anterior">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="btn-gallery-nav next-btn d-none" id="btnNextGalleryImg" onclick="navigateGalleryImage(1)" title="Siguiente foto">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+
+                <div class="console-diagram-stage" id="consoleDiagramStage">
+                  <!-- Watermark Overlay (Vertical or Horizontal based on orientation) -->
+                  <div class="console-watermark-overlay" id="consoleWatermarkOverlay"></div>
+                  <div class="security-shield-overlay" id="consoleSecurityShield" title="Protección de diagrama Probaktronic"></div>
+
+                  <!-- Visual Media Targets -->
+                  <img id="consoleMainDiagramImg" src="" alt="Diagrama Probaktronic" class="console-diagram-img hand-cursor" draggable="false">
+                  <iframe id="consolePdfFrame" src="" class="console-pdf-frame d-none" frameborder="0"></iframe>
+                  <canvas id="consolePdfCanvas" class="console-diagram-canvas hand-cursor d-none"></canvas>
+                </div>
+              </div>
+
+              <!-- Multi-Photo Gallery Pagination Strip (For 4 Pedal Photos, ECU Photos, etc.) -->
+              <div class="console-gallery-pagination d-none mt-3" id="consoleGalleryPagination">
+                <!-- Dynamically generated photo buttons -->
+              </div>
+
+              <!-- Pagination for Multi-Page PDFs -->
+              <div class="console-pdf-pagination d-none mt-3" id="consolePdfPagination">
+                <button class="btn btn-outline-light btn-sm px-3" id="btnPdfPrevPage" onclick="changePdfPage(-1)"><i class="bi bi-chevron-left me-1"></i> Anterior</button>
+                <span class="text-white small fw-bold mx-3 font-rajdhani" id="pdfPageInfo">Página 1 / 1</span>
+                <button class="btn btn-outline-light btn-sm px-3" id="btnPdfNextPage" onclick="changePdfPage(1)">Siguiente <i class="bi bi-chevron-right ms-1"></i></button>
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
     </main>
   </div>
+
+  <!-- PDF.js Engine for Pure Image Rendering without Browser PDF Chrome -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
   <!-- Firebase Web SDK Compat Libraries (App, Firestore & Storage) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
