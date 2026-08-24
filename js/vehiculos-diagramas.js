@@ -1105,6 +1105,8 @@ window.loadSpecificDiagramSection = async function(type) {
       if (typeof pdfjsLib !== 'undefined') {
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+
         pdfjsLib.getDocument({ url: targetPdfOrImg, withCredentials: false }).promise.then(pdfDoc => {
           currentPdfDoc = pdfDoc;
           currentPdfPageNum = 1;
@@ -1119,20 +1121,29 @@ window.loadSpecificDiagramSection = async function(type) {
           }
           window.renderPdfPageOnCanvas(1);
         }).catch(err => {
-          console.warn('PDF.js canvas render error, fallback to iframe:', err);
+          console.warn('PDF.js canvas render error, fallback to viewer:', err);
           if (canvasEl) canvasEl.classList.add('d-none');
           if (pdfPaginationEl) pdfPaginationEl.classList.add('d-none');
           if (frameEl) {
             frameEl.classList.remove('d-none');
-            frameEl.src = `${targetPdfOrImg}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
+            if (isMobileDevice || targetPdfOrImg.includes('firebasestorage.googleapis.com')) {
+              frameEl.src = `https://docs.google.com/viewer?url=${encodeURIComponent(targetPdfOrImg)}&embedded=true`;
+            } else {
+              frameEl.src = `${targetPdfOrImg}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
+            }
           }
         });
       } else {
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
         if (canvasEl) canvasEl.classList.add('d-none');
         if (pdfPaginationEl) pdfPaginationEl.classList.add('d-none');
         if (frameEl) {
           frameEl.classList.remove('d-none');
-          frameEl.src = `${targetPdfOrImg}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
+          if (isMobileDevice || targetPdfOrImg.includes('firebasestorage.googleapis.com')) {
+            frameEl.src = `https://docs.google.com/viewer?url=${encodeURIComponent(targetPdfOrImg)}&embedded=true`;
+          } else {
+            frameEl.src = `${targetPdfOrImg}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
+          }
         }
       }
       // Set horizontal watermark for PDFs

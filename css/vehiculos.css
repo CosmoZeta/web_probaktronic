@@ -1331,3 +1331,48 @@
   }
 }
 
+
+@media (max-width: 768px) {
+  .console-diagram-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 8px 10px !important;
+    gap: 8px !important;
+  }
+  .console-diagram-toolbar-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+  .console-diagram-title {
+    font-size: 0.92rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 180px !important;
+  }
+  .console-diagram-toolbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    padding-bottom: 2px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .console-diagram-toolbar-actions .btn {
+    padding: 3px 8px !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  .console-pdf-frame {
+    width: 100% !important;
+    height: 70vh !important;
+    min-height: 380px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: #111827 !important;
+  }
+}
