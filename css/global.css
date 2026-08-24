@@ -1042,31 +1042,63 @@ a.sensor-card .sensor-desc {
   visibility: visible;
 }
 
-/* Mobile Hamburger Toggle Button - Dark Theme */
+/* Mobile Hamburger Toggle Button - Stylized Pill with Text */
 .btn-mobile-menu-toggle {
   display: none;
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background-color: var(--sidebar-bg);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  height: 38px;
+  padding: 0 14px 0 10px;
+  border-radius: 20px;
+  background: #0F172A;
+  border: 1.5px solid rgba(220, 38, 38, 0.45);
   color: #FFFFFF;
-  font-size: 1.35rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.8px;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(220, 38, 38, 0.15);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
   margin-right: 8px;
+  user-select: none;
+}
+
+.btn-mobile-menu-toggle i {
+  font-size: 1.3rem;
+  color: #EF4444;
+  transition: transform 0.2s ease, color 0.2s ease;
+  line-height: 1;
+}
+
+.btn-mobile-menu-toggle .menu-pill-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #F8FAFC;
+  line-height: 1;
 }
 
 .btn-mobile-menu-toggle:hover,
 .btn-mobile-menu-toggle:active {
-  background-color: var(--brand-red);
+  background: linear-gradient(135deg, #DC2626, #B91C1C);
   color: #FFFFFF;
-  border-color: var(--brand-red);
-  transform: scale(1.04);
+  border-color: #DC2626;
+  transform: scale(1.03);
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+}
+
+.btn-mobile-menu-toggle:hover i,
+.btn-mobile-menu-toggle:active i {
+  color: #FFFFFF;
+  transform: rotate(90deg);
+}
+
+.btn-mobile-menu-toggle:hover .menu-pill-text,
+.btn-mobile-menu-toggle:active .menu-pill-text {
+  color: #FFFFFF;
 }
 
 /* Utility Classes */
@@ -1208,11 +1240,22 @@ a.sensor-card .sensor-desc {
   }
 
   .btn-mobile-menu-toggle {
-    width: 36px !important;
+    display: inline-flex !important;
+    width: auto !important;
     height: 36px !important;
-    font-size: 1.15rem !important;
-    border-radius: 8px !important;
-    margin-right: 6px !important;
+    padding: 0 12px 0 8px !important;
+    border-radius: 18px !important;
+    gap: 5px !important;
+    margin-right: 8px !important;
+  }
+  
+  .btn-mobile-menu-toggle i {
+    font-size: 1.2rem !important;
+  }
+  
+  .btn-mobile-menu-toggle .menu-pill-text {
+    font-size: 0.8rem !important;
+    display: inline-block !important;
   }
 
   .header-greeting,
