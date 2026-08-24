@@ -250,8 +250,47 @@
 
     @media (max-width: 768px) {
       .model-list-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+      }
+      .model-item-card {
+        padding: 10px !important;
+        border-radius: 12px !important;
+        min-height: auto !important;
+      }
+      .model-card-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 6px !important;
+        margin-bottom: 6px !important;
+      }
+      .model-car-thumb-wrap {
+        width: 100% !important;
+        height: 68px !important;
+        min-width: 100% !important;
+      }
+      .model-card-title {
+        font-size: 0.84rem !important;
+        margin-bottom: 2px !important;
+      }
+      .model-card-subtitle {
+        font-size: 0.7rem !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 1 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+      }
+      .model-card-badge {
+        font-size: 0.62rem !important;
+        padding: 2px 6px !important;
+        margin-bottom: 3px !important;
+      }
+      .model-card-footer {
+        padding-top: 6px !important;
+        font-size: 0.68rem !important;
+      }
+      .model-card-footer i {
+        font-size: 0.75rem !important;
       }
     }
 
@@ -441,6 +480,26 @@
       cursor: zoom-in;
       user-select: none;
       -webkit-user-drag: none;
+    }
+
+    @media (max-width: 768px) {
+      .brand-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+      }
+      .brand-card {
+        height: auto !important;
+        min-height: 95px !important;
+        padding: 12px 6px !important;
+        border-radius: 12px !important;
+      }
+      .brand-logo-img {
+        height: 38px !important;
+        max-width: 85% !important;
+      }
+      .brand-name-title {
+        font-size: 0.8rem !important;
+      }
     }
   </style>
 </head>
@@ -667,8 +726,8 @@
 
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/global.js?v=2.1"></script>
-  <script src="js/firebase-catalog.js?v=2.1"></script>
-  <script src="js/bobinas.js?v=2.1"></script>
+  <script src="js/global.js?v=2.3"></script>
+  <script src="js/firebase-catalog.js?v=2.3"></script>
+  <script src="js/bobinas.js?v=2.3"></script>
 </body>
 </html>

@@ -1399,7 +1399,12 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
 
   if (mfgEl) mfgEl.textContent = manufacturerName;
   if (ecuEl) ecuEl.textContent = ecuTitle;
-  if (modeEl) modeEl.textContent = connTitle.toUpperCase();
+  let cleanModeTitle = connTitle;
+  // Clean redundant brand and year prefix if present
+  const redundantPrefixRegex = new RegExp(`^(${currentSelectedBrandName || ''}|toyota|hyundai|nissan|chevrolet|audi|kia|ford)\\s*([a-zA-Z0-9_-]+)?\\s*(\\d{4}\\s*-\\s*\\d{4})?\\s*`, 'i');
+  const stripped = cleanModeTitle.replace(redundantPrefixRegex, '').trim();
+  if (stripped.length >= 3) cleanModeTitle = stripped;
+  if (modeEl) modeEl.textContent = cleanModeTitle.toUpperCase();
   if (protoEl) protoEl.textContent = '50110389';
 
   // Dynamic Button Labels (e.g. "Imagen del Pedal", "Conexionado del Pedal")
