@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <defs>
+    <linearGradient id="nissanGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#C00000" />
+      <stop offset="100%" stop-color="#800000" />
+    </linearGradient>
+  </defs>
+  <circle cx="250" cy="250" r="210" fill="url(#nissanGrad)" />
+  <!-- Outer Chrome Ring -->
+  <circle cx="250" cy="250" r="160" fill="none" stroke="#FFFFFF" stroke-width="24" />
+  <!-- Central Bar -->
+  <rect x="70" y="210" width="360" height="80" rx="10" fill="#FFFFFF" />
+  <!-- Text NISSAN -->
+  <text x="250" y="266" font-family="'Arial Black', 'Helvetica', sans-serif" font-weight="900" font-size="52" fill="#800000" text-anchor="middle" letter-spacing="6">NISSAN</text>
+</svg>
