@@ -3013,6 +3013,12 @@ window.initInteractiveEcuLayer = async function() {
   // Load existing hotspots from Firestore or local defaults
   await loadEcuHotspotsFromStorage(imgW, imgH);
 
+  // Auto-sync admin's local hotspots to Firestore in background
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') ? window.isProbaktronicAdmin() : (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
+  if (isAdmin && currentEcuHotspots.length > 0) {
+    saveEcuHotspotsToStorage().catch(() => {});
+  }
+
   // Attach SVG Drawing events if not already attached
   setupEcuSvgEventListeners(svg);
 
