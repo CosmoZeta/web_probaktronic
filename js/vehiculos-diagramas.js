@@ -1018,7 +1018,7 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
 
       const adminEditBtnHtml = isAdmin ? `
         <div class="position-absolute top-0 end-0 m-1 d-flex gap-1" style="z-index: 15;">
-          <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center" style="width: 26px; height: 26px;" title="Cambiar ícono de esta tarjeta" onclick="openAdminMechanicalIconPicker(event, '${cardKey}')">
+          <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center" style="width: 26px; height: 26px;" title="Cambiar ícono de esta tarjeta" onclick="openAdminMechanicalIconPicker(event, '${cardKey}', { brandDocId: '${arch.brandDocId || ''}', modelDocId: '${arch.modelDocId || ''}', anioDocId: '${arch.anioDocId || ''}', motorDocId: '${arch.motorDocId || ''}', archDocId: '${arch.archDocId || arch.id || ''}' })">
             <i class="bi bi-star-fill text-danger" style="font-size: 10px;"></i>
           </button>
           <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger" style="width: 26px; height: 26px;" title="Editar o Gestionar Diagrama (Admin)" onclick="openAdminEditItemModal(event, 'diagram', { id: '${arch.archDocId || ''}', name: '${title}', brand: '${arch.brandDocId || ''}', model: '${arch.modelDocId || ''}', anio: '${arch.anioDocId || ''}', motor: '${arch.motorDocId || ''}', fileUrl: '${arch.url || arch.imageUrl || ''}' })">
@@ -1953,15 +1953,17 @@ window.addEventListener('resize', () => {
 
 // --- ADMIN MECHANICAL ICON PICKER FOR CONNECTION CARDS ---
 let currentEditingCardKey = '';
+let currentEditingCardArchContext = null;
 let selectedMechanicalIconChoice = '';
 
-window.openAdminMechanicalIconPicker = function(e, cardKey) {
+window.openAdminMechanicalIconPicker = function(e, cardKey, archContext = null) {
   if (e) {
     e.preventDefault();
     e.stopPropagation();
   }
 
   currentEditingCardKey = cardKey;
+  currentEditingCardArchContext = archContext;
   selectedMechanicalIconChoice = '';
 
   injectAdminMechanicalIconPickerModal();
@@ -1973,6 +1975,78 @@ window.openAdminMechanicalIconPicker = function(e, cardKey) {
   if (modalEl && typeof bootstrap !== 'undefined') {
     const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
     bsModal.show();
+  }
+};
+
+window.saveAdminMechanicalIconChoice = async function() {
+  const customInput = document.getElementById('adminCustomIconInput');
+  if (customInput && customInput.value.trim()) {
+    selectedMechanicalIconChoice = customInput.value.trim();
+  }
+
+  if (!currentEditingCardKey || !selectedMechanicalIconChoice) {
+    alert('Por favor seleccione un ícono para aplicar.');
+    return;
+  }
+
+  // 1. Guardado inmediato en LocalStorage (Caché local)
+  try {
+    const saved = JSON.parse(localStorage.getItem('probaktronic_card_icons') || '{}');
+    saved[currentEditingCardKey] = selectedMechanicalIconChoice;
+    const safeKey = currentEditingCardKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+    saved[safeKey] = selectedMechanicalIconChoice;
+    localStorage.setItem('probaktronic_card_icons', JSON.stringify(saved));
+  } catch (e) {}
+
+  // 2. Aplicar inmediatamente al DOM actual
+  applyCustomIconToKey(currentEditingCardKey, selectedMechanicalIconChoice);
+
+  // 3. Guardado directo en el documento del diagrama en Firestore
+  try {
+    ensureFirebaseInitialized();
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      const db = firebase.firestore();
+
+      if (currentEditingCardArchContext && currentEditingCardArchContext.archDocId) {
+        const { brandDocId, modelDocId, anioDocId, motorDocId, archDocId } = currentEditingCardArchContext;
+        if (brandDocId && modelDocId && anioDocId && motorDocId && archDocId) {
+          const cleanBrand = brandDocId.toLowerCase().trim();
+          const cleanModel = modelDocId.toLowerCase().trim();
+          await db.collection('diagramas').doc(cleanBrand)
+            .collection('modelos').doc(cleanModel)
+            .collection('anios').doc(anioDocId)
+            .collection('motores').doc(motorDocId)
+            .collection('archivos').doc(archDocId)
+            .set({ icono: selectedMechanicalIconChoice }, { merge: true });
+          console.log('Icono guardado directamente en Firestore en el documento de diagrama:', archDocId);
+        }
+      }
+
+      // 4. Guardado en app_config > iconos_tarjetas (Global fallback)
+      const safeKey = currentEditingCardKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const cleanKey = currentEditingCardKey.trim();
+      const payload = {
+        [cleanKey]: selectedMechanicalIconChoice,
+        [safeKey]: selectedMechanicalIconChoice,
+        [cleanKey.toUpperCase()]: selectedMechanicalIconChoice,
+        last_updated: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      await db.collection('app_config').doc('iconos_tarjetas').set(payload, { merge: true });
+      console.log('Icono guardado exitosamente en Firestore app_config/iconos_tarjetas:', safeKey, selectedMechanicalIconChoice);
+    }
+  } catch (err) {
+    console.error('Error guardando en Firestore:', err);
+  }
+
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast(`¡Ícono sincronizado en Firestore para "${currentEditingCardKey}"!`);
+  }
+
+  const modalEl = document.getElementById('adminMechanicalIconPickerModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const bsModal = bootstrap.Modal.getInstance(modalEl);
+    if (bsModal) bsModal.hide();
   }
 };
 
@@ -2096,60 +2170,6 @@ function injectAdminMechanicalIconPickerModal() {
     });
   });
 }
-
-window.saveAdminMechanicalIconChoice = async function() {
-  const customInput = document.getElementById('adminCustomIconInput');
-  if (customInput && customInput.value.trim()) {
-    selectedMechanicalIconChoice = customInput.value.trim();
-  }
-
-  if (!currentEditingCardKey || !selectedMechanicalIconChoice) {
-    alert('Por favor seleccione un ícono para aplicar.');
-    return;
-  }
-
-  // 1. Guardado inmediato en LocalStorage (Caché local ultra-rápido)
-  try {
-    const saved = JSON.parse(localStorage.getItem('probaktronic_card_icons') || '{}');
-    saved[currentEditingCardKey] = selectedMechanicalIconChoice;
-    localStorage.setItem('probaktronic_card_icons', JSON.stringify(saved));
-  } catch (e) {}
-
-  // 2. Aplicar inmediatamente al DOM actual
-  applyCustomIconToKey(currentEditingCardKey, selectedMechanicalIconChoice);
-
-  // 3. Guardado oficial en Cloud Firestore: app_config > iconos_tarjetas
-  try {
-    ensureFirebaseInitialized();
-    if (typeof firebase !== 'undefined' && firebase.firestore) {
-      const db = firebase.firestore();
-      const safeKey = currentEditingCardKey.replace(/[^a-zA-Z0-9_-]/g, '_');
-      const cleanKey = currentEditingCardKey.trim();
-      
-      const payload = {
-        [cleanKey]: selectedMechanicalIconChoice,
-        [safeKey]: selectedMechanicalIconChoice,
-        [cleanKey.toUpperCase()]: selectedMechanicalIconChoice,
-        last_updated: firebase.firestore.FieldValue.serverTimestamp()
-      };
-
-      await db.collection('app_config').doc('iconos_tarjetas').set(payload, { merge: true });
-      console.log('Icono guardado exitosamente en Firestore app_config/iconos_tarjetas:', safeKey, selectedMechanicalIconChoice);
-    }
-  } catch (err) {
-    console.error('Error guardando en Firestore app_config/iconos_tarjetas:', err);
-  }
-
-  if (typeof window.showGlobalToast === 'function') {
-    window.showGlobalToast(`¡Ícono sincronizado en tiempo real en Firebase para "${currentEditingCardKey}"!`);
-  }
-
-  const modalEl = document.getElementById('adminMechanicalIconPickerModal');
-  if (modalEl && typeof bootstrap !== 'undefined') {
-    const bsModal = bootstrap.Modal.getInstance(modalEl);
-    if (bsModal) bsModal.hide();
-  }
-};
 
 function applyCustomIconToKey(key, iconValue) {
   if (!key || !iconValue) return;
