@@ -1302,7 +1302,20 @@ window.loadSpecificDiagramSection = async function(type) {
 
     if (galleryPaginationEl) galleryPaginationEl.classList.add('d-none');
     if (prevGalleryBtn) prevGalleryBtn.classList.add('d-none');
-    if (nextGalleryBtn) nextGalleryBtn.classList.add('d-none');
+    let stageLoader = document.getElementById('consoleDiagramStageLoader');
+    if (!stageLoader) {
+      stageLoader = document.createElement('div');
+      stageLoader.id = 'consoleDiagramStageLoader';
+      stageLoader.className = 'position-absolute top-50 start-50 translate-middle text-center p-3 bg-white bg-opacity-75 rounded-3 shadow-sm';
+      stageLoader.style.zIndex = '20';
+      stageLoader.innerHTML = `
+        <div class="spinner-border text-danger spinner-border-sm mb-1" role="status"></div>
+        <div class="small fw-bold text-dark font-rajdhani" style="font-size: 0.75rem;">Cargando esquema...</div>
+      `;
+      const stageEl = document.getElementById('consoleDiagramStage');
+      if (stageEl) stageEl.appendChild(stageLoader);
+    }
+    if (stageLoader) stageLoader.classList.remove('d-none');
 
     let targetPdfOrImg = active.url || active.archivoUrl || active.pdfUrl || active.downloadUrl || active.imageUrl || active.imagen;
 
@@ -1323,11 +1336,10 @@ window.loadSpecificDiagramSection = async function(type) {
       targetPdfOrImg = 'imagenes autos/ic_car_toyota_yaris.JPG';
     }
 
-    const isPdf = typeof targetPdfOrImg === 'string' && (
-      targetPdfOrImg.toLowerCase().includes('.pdf') || 
-      targetPdfOrImg.includes('firebasestorage.googleapis.com') || 
-      targetPdfOrImg.includes('firebase')
-    );
+    // Accurate PDF check: must end with .pdf and not be an image
+    const cleanUrlLower = (targetPdfOrImg || '').toLowerCase();
+    const isImageExt = /\.(png|jpg|jpeg|webp|svg|gif|bmp)(\?|$)/i.test(cleanUrlLower);
+    const isPdf = !isImageExt && (cleanUrlLower.includes('.pdf') || cleanUrlLower.includes('%2epdf'));
 
     window.currentActivePdfUrl = targetPdfOrImg;
 
@@ -1337,9 +1349,8 @@ window.loadSpecificDiagramSection = async function(type) {
       if (typeof pdfjsLib !== 'undefined') {
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-
         pdfjsLib.getDocument({ url: targetPdfOrImg, withCredentials: false }).promise.then(pdfDoc => {
+          if (stageLoader) stageLoader.classList.add('d-none');
           currentPdfDoc = pdfDoc;
           currentPdfPageNum = 1;
           if (frameEl) {
@@ -1353,34 +1364,28 @@ window.loadSpecificDiagramSection = async function(type) {
           }
           window.renderPdfPageOnCanvas(1);
         }).catch(err => {
+          if (stageLoader) stageLoader.classList.add('d-none');
           console.warn('PDF.js canvas render error, fallback to viewer:', err);
           if (canvasEl) canvasEl.classList.add('d-none');
           if (pdfPaginationEl) pdfPaginationEl.classList.add('d-none');
           if (frameEl) {
             frameEl.classList.remove('d-none');
-            if (isMobileDevice || targetPdfOrImg.includes('firebasestorage.googleapis.com')) {
-              frameEl.src = `https://docs.google.com/viewer?url=${encodeURIComponent(targetPdfOrImg)}&embedded=true`;
-            } else {
-              frameEl.src = `${targetPdfOrImg}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
-            }
+            frameEl.src = `${targetPdfOrImg}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
           }
         });
       } else {
-        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+        if (stageLoader) stageLoader.classList.add('d-none');
         if (canvasEl) canvasEl.classList.add('d-none');
         if (pdfPaginationEl) pdfPaginationEl.classList.add('d-none');
         if (frameEl) {
           frameEl.classList.remove('d-none');
-          if (isMobileDevice || targetPdfOrImg.includes('firebasestorage.googleapis.com')) {
-            frameEl.src = `https://docs.google.com/viewer?url=${encodeURIComponent(targetPdfOrImg)}&embedded=true`;
-          } else {
-            frameEl.src = `${targetPdfOrImg}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
-          }
+          frameEl.src = `${targetPdfOrImg}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
         }
       }
       // Set horizontal watermark for PDFs
       window.applyConsoleWatermark(false);
     } else {
+      // Direct instant image rendering
       if (frameEl) {
         frameEl.classList.add('d-none');
         frameEl.src = '';
@@ -1390,11 +1395,16 @@ window.loadSpecificDiagramSection = async function(type) {
       if (imgEl) {
         imgEl.classList.remove('d-none');
         imgEl.onload = () => {
+          if (stageLoader) stageLoader.classList.add('d-none');
           const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
           window.applyConsoleWatermark(isVert);
         };
+        imgEl.onerror = () => {
+          if (stageLoader) stageLoader.classList.add('d-none');
+        };
         imgEl.src = targetPdfOrImg;
         if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
+          if (stageLoader) stageLoader.classList.add('d-none');
           const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
           window.applyConsoleWatermark(isVert);
         }
@@ -1665,48 +1675,14 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
     if (selectedArchDoc.titulo || selectedArchDoc.nombre) {
       activeData.tituloArchivo = selectedArchDoc.titulo || selectedArchDoc.nombre;
     }
-    if (selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.pdfUrl || selectedArchDoc.downloadUrl) {
-      activeData.url = selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.pdfUrl || selectedArchDoc.downloadUrl;
+    const fileUrl = selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.pdfUrl || selectedArchDoc.downloadUrl || selectedArchDoc.imageUrl || selectedArchDoc.imagen;
+    if (fileUrl) {
+      activeData.url = fileUrl;
+      activeData.imageUrl = fileUrl;
     }
     if (Array.isArray(selectedArchDoc.imagenes) && selectedArchDoc.imagenes.length > 0) {
       activeData.allImages = selectedArchDoc.imagenes;
       activeData.imageUrl = selectedArchDoc.imagenes[0];
-    }
-    if (selectedArchDoc.imageUrl || selectedArchDoc.imagen) {
-      activeData.imageUrl = selectedArchDoc.imageUrl || selectedArchDoc.imagen;
-    }
-  }
-
-  if (!activeData.imageUrl && !activeData.image && !activeData.imagen && !activeData.url) {
-    try {
-      const db = firebase.firestore();
-      const aniosSnap = await db.collection('diagramas').doc(brandId).collection('modelos').doc(docId).collection('anios').get();
-      if (!aniosSnap.empty) {
-        for (const anioDoc of aniosSnap.docs) {
-          const motoresSnap = await db.collection('diagramas').doc(brandId).collection('modelos').doc(docId).collection('anios').doc(anioDoc.id).collection('motores').get();
-          if (!motoresSnap.empty) {
-            for (const motorDoc of motoresSnap.docs) {
-              const archivosSnap = await db.collection('diagramas').doc(brandId).collection('modelos').doc(docId).collection('anios').doc(anioDoc.id).collection('motores').doc(motorDoc.id).collection('archivos').get();
-              if (!archivosSnap.empty) {
-                const archivoData = archivosSnap.docs[0].data() || {};
-                let extractedUrl = '';
-                if (Array.isArray(archivoData.imagenes) && archivoData.imagenes.length > 0) {
-                  extractedUrl = archivoData.imagenes[0];
-                } else if (typeof archivoData.imageUrl === 'string') {
-                  extractedUrl = archivoData.imageUrl;
-                } else if (typeof archivoData.url === 'string') {
-                  extractedUrl = archivoData.url;
-                }
-                activeData.imageUrl = extractedUrl;
-                break;
-              }
-            }
-          }
-          if (activeData.imageUrl) break;
-        }
-      }
-    } catch (e) {
-      console.warn('Subcollection deep inspection error:', e);
     }
   }
 
@@ -2094,30 +2070,37 @@ window.saveAdminMechanicalIconChoice = async function() {
     return;
   }
 
-  // Save to Local Storage
+  // 1. Guardado inmediato en LocalStorage (Caché local ultra-rápido)
   try {
     const saved = JSON.parse(localStorage.getItem('probaktronic_card_icons') || '{}');
     saved[currentEditingCardKey] = selectedMechanicalIconChoice;
     localStorage.setItem('probaktronic_card_icons', JSON.stringify(saved));
   } catch (e) {}
 
-  // Apply immediately to matching DOM elements
+  // 2. Aplicar inmediatamente al DOM actual
   applyCustomIconToKey(currentEditingCardKey, selectedMechanicalIconChoice);
 
-  // Save to Firestore under app_config/iconos_tarjetas
+  // 3. Guardado oficial en Cloud Firestore: app_config > iconos_tarjetas
   try {
+    ensureFirebaseInitialized();
     if (typeof firebase !== 'undefined' && firebase.firestore) {
       const db = firebase.firestore();
-      await db.collection('app_config').doc('iconos_tarjetas').set({
-        [currentEditingCardKey]: selectedMechanicalIconChoice
-      }, { merge: true });
+      const safeKey = currentEditingCardKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+      
+      const payload = {
+        [safeKey]: selectedMechanicalIconChoice,
+        last_updated: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      await db.collection('app_config').doc('iconos_tarjetas').set(payload, { merge: true });
+      console.log('Icono guardado exitosamente en Firestore app_config/iconos_tarjetas:', safeKey, selectedMechanicalIconChoice);
     }
   } catch (err) {
-    console.warn('Guardado en caché local para tarjetas:', err);
+    console.error('Error guardando en Firestore app_config/iconos_tarjetas:', err);
   }
 
   if (typeof window.showGlobalToast === 'function') {
-    window.showGlobalToast(`¡Ícono actualizado correctamente para "${currentEditingCardKey}"!`);
+    window.showGlobalToast(`¡Ícono sincronizado en tiempo real en Firebase para "${currentEditingCardKey}"!`);
   }
 
   const modalEl = document.getElementById('adminMechanicalIconPickerModal');
@@ -2130,13 +2113,22 @@ window.saveAdminMechanicalIconChoice = async function() {
 function applyCustomIconToKey(key, iconValue) {
   if (!key || !iconValue) return;
   const cleanKey = key.toLowerCase().trim();
+  const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
 
   const targetElements = document.querySelectorAll('[data-icon-key]');
   targetElements.forEach(el => {
     const elKey = (el.getAttribute('data-icon-key') || '').toLowerCase().trim();
     const elTitle = (el.getAttribute('data-icon-title') || '').toLowerCase().trim();
+    const safeElKey = elKey.replace(/[^a-zA-Z0-9_-]/g, '_');
 
-    if (elKey === cleanKey || elTitle === cleanKey || cleanKey.includes(elKey) || elKey.includes(cleanKey) || (elTitle && (cleanKey.includes(elTitle) || elTitle.includes(cleanKey)))) {
+    const isMatch = (
+      elKey === cleanKey || elTitle === cleanKey ||
+      safeElKey === safeKey ||
+      cleanKey.includes(elKey) || elKey.includes(cleanKey) ||
+      (elTitle && (cleanKey.includes(elTitle) || elTitle.includes(cleanKey)))
+    );
+
+    if (isMatch) {
       if (iconValue.startsWith('bi-')) {
         el.innerHTML = `<i class="bi ${iconValue} fs-1"></i>`;
       } else if (iconValue.endsWith('.png') || iconValue.endsWith('.svg') || iconValue.includes('/') || iconValue.startsWith('http')) {
@@ -2148,6 +2140,8 @@ function applyCustomIconToKey(key, iconValue) {
   });
 }
 
+let cardIconsFirestoreUnsubscribe = null;
+
 function applyAllCustomCardIcons() {
   let saved = {};
   try {
@@ -2158,20 +2152,23 @@ function applyAllCustomCardIcons() {
     applyCustomIconToKey(key, iconVal);
   });
 
-  // Query Firestore for live sync
-  if (typeof firebase !== 'undefined' && firebase.firestore) {
+  // Suscripción en Tiempo Real (Real-time Live Listener onSnapshot) con Firestore
+  if (typeof firebase !== 'undefined' && firebase.firestore && !cardIconsFirestoreUnsubscribe) {
     const db = firebase.firestore();
-    db.collection('app_config').doc('iconos_tarjetas').get().then(doc => {
+    cardIconsFirestoreUnsubscribe = db.collection('app_config').doc('iconos_tarjetas').onSnapshot(doc => {
       if (doc.exists) {
         const firestoreIcons = doc.data() || {};
         try {
-          localStorage.setItem('probaktronic_card_icons', JSON.stringify({ ...saved, ...firestoreIcons }));
+          const merged = { ...saved, ...firestoreIcons };
+          localStorage.setItem('probaktronic_card_icons', JSON.stringify(merged));
         } catch (e) {}
         Object.entries(firestoreIcons).forEach(([k, v]) => {
           applyCustomIconToKey(k, v);
         });
       }
-    }).catch(e => console.warn('Firestore card icons fetch:', e));
+    }, err => {
+      console.warn('Firestore card icons real-time listener error:', err);
+    });
   }
 }
 
