@@ -1914,3 +1914,271 @@ window.saveAdminMechanicalIconChoice = async function() {
     if (bsModal) bsModal.hide();
   }
 };
+
+// --- ADMIN DIAGRAM UPLOAD CONTROLLER ---
+
+window.openAdminAddDiagramModal = function(e) {
+  if (e) e.preventDefault();
+
+  const user = window.probaktronicCurrentUser;
+  const isAdmin = user && (user.email === 'prueba@probak.com');
+
+  if (!isAdmin) {
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('Acceso exclusivo para el Administrador del sistema.');
+    } else {
+      alert('Acceso exclusivo para el Administrador del sistema.');
+    }
+    return;
+  }
+
+  // Pre-fill defaults based on current selection
+  if (currentSelectedFuelType) {
+    window.setAdminModalFuel(currentSelectedFuelType);
+  } else {
+    window.setAdminModalFuel('diesel');
+  }
+
+  const modalEl = document.getElementById('adminAddDiagramModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    bsModal.show();
+  }
+};
+
+window.setAdminModalFuel = function(fuelType) {
+  const boxDiesel = document.getElementById('fuelBoxDiesel');
+  const boxGasolina = document.getElementById('fuelBoxGasolina');
+  const radioDiesel = document.getElementById('adminRadioDiesel');
+  const radioGasolina = document.getElementById('adminRadioGasolina');
+  const catSelect = document.getElementById('adminModalCategorySelect');
+
+  if (fuelType === 'diesel') {
+    if (boxDiesel) { boxDiesel.classList.add('border-danger', 'bg-danger-subtle'); boxDiesel.classList.remove('bg-white'); }
+    if (boxGasolina) { boxGasolina.classList.remove('border-danger', 'bg-danger-subtle'); boxGasolina.classList.add('bg-white'); }
+    if (radioDiesel) radioDiesel.checked = true;
+
+    if (catSelect) {
+      catSelect.innerHTML = `
+        <option value="pickup" selected>🛻 PICKUP / CAMIONETAS (Hilux, Frontier, Ranger...)</option>
+        <option value="furgon">🚐 FURGÓN / VAN (H1, Sprinter, Transit...)</option>
+        <option value="camiones">🚛 CAMIONES / PESADO (Isuzu N-Series, Hino, Fuso...)</option>
+        <option value="maquinaria">🚜 MAQUINARIA PESADA (Caterpillar, Komatsu, JCB...)</option>
+      `;
+    }
+  } else {
+    if (boxGasolina) { boxGasolina.classList.add('border-danger', 'bg-danger-subtle'); boxGasolina.classList.remove('bg-white'); }
+    if (boxDiesel) { boxDiesel.classList.remove('border-danger', 'bg-danger-subtle'); boxDiesel.classList.add('bg-white'); }
+    if (radioGasolina) radioGasolina.checked = true;
+
+    if (catSelect) {
+      catSelect.innerHTML = `
+        <option value="sedan" selected>🚗 SEDÁN / HATCHBACK (Corolla, Yaris, Accent...)</option>
+        <option value="suv">🚙 SUV / CROSSOVER (RAV4, Tucson, Sportage...)</option>
+        <option value="pickup_gas">🛻 PICKUP GASOLINA (Tacoma, Hilux Gasolina...)</option>
+      `;
+    }
+  }
+};
+
+window.setDiagramTitlePreset = function(preset) {
+  const brand = (document.getElementById('adminModalBrandInput')?.value || '').trim().toUpperCase();
+  const model = (document.getElementById('adminModalModelInput')?.value || '').trim().toUpperCase();
+  const year = (document.getElementById('adminModalYearInput')?.value || '').trim();
+  const titleInput = document.getElementById('adminModalDiagramTitleInput');
+
+  let base = `${brand} ${model} ${year}`.trim();
+  if (!base) base = 'VEHÍCULO';
+
+  if (titleInput) {
+    titleInput.value = `${base} ${preset}`.trim();
+  }
+};
+
+let adminSelectedDiagramFile = null;
+
+window.handleAdminModalFileChange = function(input) {
+  const badgeWrap = document.getElementById('adminModalFilePreviewWrap');
+  const badgeName = document.getElementById('adminModalFileNameBadge');
+
+  if (input.files && input.files[0]) {
+    adminSelectedDiagramFile = input.files[0];
+    if (badgeWrap && badgeName) {
+      badgeName.textContent = `Archivo: ${adminSelectedDiagramFile.name} (${(adminSelectedDiagramFile.size / 1024).toFixed(1)} KB)`;
+      badgeWrap.classList.remove('d-none');
+    }
+  } else {
+    adminSelectedDiagramFile = null;
+    if (badgeWrap) badgeWrap.classList.add('d-none');
+  }
+};
+
+window.handleAdminSubmitNewDiagram = async function(e) {
+  e.preventDefault();
+
+  const user = window.probaktronicCurrentUser;
+  if (!user || user.email !== 'prueba@probak.com') {
+    alert('Permiso denegado: solo el administrador puede publicar diagramas.');
+    return;
+  }
+
+  const fuelType = document.querySelector('input[name="adminModalFuelRadio"]:checked')?.value || 'diesel';
+  const category = document.getElementById('adminModalCategorySelect')?.value || 'pickup';
+  const rawBrand = (document.getElementById('adminModalBrandInput')?.value || '').trim();
+  const rawModel = (document.getElementById('adminModalModelInput')?.value || '').trim();
+  const rawYear = (document.getElementById('adminModalYearInput')?.value || '').trim();
+  const rawMotor = (document.getElementById('adminModalMotorInput')?.value || '').trim();
+  const rawTitle = (document.getElementById('adminModalDiagramTitleInput')?.value || '').trim();
+
+  if (!rawBrand || !rawModel || !rawYear || !rawMotor || !rawTitle || !adminSelectedDiagramFile) {
+    alert('Por favor completa todos los campos y selecciona el archivo del diagrama.');
+    return;
+  }
+
+  const btnSubmit = document.getElementById('btnAdminSubmitDiagram');
+  const progressWrap = document.getElementById('adminModalProgressBarWrap');
+  const progressBar = document.getElementById('adminModalProgressBar');
+  const statusMsg = document.getElementById('adminModalStatusMsg');
+
+  if (btnSubmit) btnSubmit.disabled = true;
+  if (progressWrap) progressWrap.classList.remove('d-none');
+  if (progressBar) progressBar.style.width = '25%';
+  if (statusMsg) {
+    statusMsg.className = 'small text-center fw-bold text-primary';
+    statusMsg.textContent = 'Subiendo archivo a Firebase Storage...';
+  }
+
+  try {
+    ensureFirebaseInitialized();
+    const db = firebase.firestore();
+    let fileDownloadUrl = '';
+
+    const brandUpper = rawBrand.toUpperCase().trim();
+    const brandDocId = rawBrand.toLowerCase().trim();
+    const modelLower = rawModel.toLowerCase().trim();
+    const cleanFileName = adminSelectedDiagramFile.name;
+    const motorFolder = `${rawYear} motor ${modelLower} ${rawMotor}`.trim();
+
+    // 1. Upload to Firebase Storage in exact folder hierarchy:
+    // gs://probaktronic-app.firebasestorage.app/diagramas/TOYOTA/hilux/2011 - 2015 motor hilux 2kd o 1kd/
+    try {
+      if (typeof firebase.storage === 'function') {
+        const storageRef = firebase.storage().ref();
+        const uploadPath = `diagramas/${brandUpper}/${modelLower}/${motorFolder}/${cleanFileName}`;
+        const fileRef = storageRef.child(uploadPath);
+
+        if (progressBar) progressBar.style.width = '50%';
+        const uploadSnapshot = await fileRef.put(adminSelectedDiagramFile);
+        fileDownloadUrl = await uploadSnapshot.ref.getDownloadURL();
+      }
+    } catch (storageErr) {
+      console.warn('Storage upload fallback:', storageErr);
+      // Fallback: Read as Data URL
+      fileDownloadUrl = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target.result);
+        reader.readAsDataURL(adminSelectedDiagramFile);
+      });
+    }
+
+    if (progressBar) progressBar.style.width = '75%';
+    if (statusMsg) statusMsg.textContent = 'Guardando estructura compatible en Firestore...';
+
+    // 2. Write exact hierarchy into Firestore:
+    // diagramas/{brandDocId}/modelos/{modelDocId}/anios/{rawYear}/motores/{rawMotor}/archivos/{rawTitle}
+
+    // Step A: Brand Document
+    await db.collection('diagramas').doc(brandDocId).set({
+      nombre: rawBrand.toUpperCase(),
+      marca: rawBrand.toUpperCase(),
+      ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    // Step B: Model Document
+    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).set({
+      nombre: `${rawBrand} ${rawModel} ${rawYear}`.toUpperCase(),
+      modelo: rawModel,
+      marca: rawBrand.toUpperCase(),
+      combustible: fuelType,
+      categoria: category
+    }, { merge: true });
+
+    // Step C: Anios Document
+    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).collection('anios').doc(rawYear).set({
+      anio: rawYear
+    }, { merge: true });
+
+    // Step D: Motores Document
+    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).collection('anios').doc(rawYear).collection('motores').doc(rawMotor).set({
+      combustible: fuelType,
+      categoria: category,
+      titulo: `${rawModel} ${rawMotor}`.toLowerCase(),
+      imageUrl: fileDownloadUrl,
+      motor: rawMotor
+    }, { merge: true });
+
+    // Step E: Archivos Document (The diagram file)
+    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).collection('anios').doc(rawYear).collection('motores').doc(rawMotor).collection('archivos').doc(rawTitle).set({
+      titulo: rawTitle,
+      url: fileDownloadUrl,
+      imageUrl: fileDownloadUrl,
+      combustible: fuelType,
+      categoria: category,
+      motor: rawMotor,
+      fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    if (progressBar) progressBar.style.width = '100%';
+    if (statusMsg) {
+      statusMsg.className = 'small text-center fw-bold text-success';
+      statusMsg.textContent = '¡Diagrama publicado con éxito en Firestore!';
+    }
+
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast(`¡Diagrama "${rawTitle}" publicado con éxito! Sincronizado con la Web y Android Studio.`);
+    }
+
+    setTimeout(() => {
+      // Close Modal & Reset Form
+      const modalEl = document.getElementById('adminAddDiagramModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        const bsModal = bootstrap.Modal.getInstance(modalEl);
+        if (bsModal) bsModal.hide();
+      }
+      document.getElementById('adminAddDiagramForm')?.reset();
+      if (progressWrap) progressWrap.classList.add('d-none');
+      if (progressBar) progressBar.style.width = '0%';
+      if (statusMsg) statusMsg.textContent = '';
+      if (btnSubmit) btnSubmit.disabled = false;
+
+      // Reload brands/models view
+      const brandGrid = document.getElementById('vehiculosBrandGrid');
+      if (brandGrid) loadFirestoreDiagramasBrands(brandGrid);
+    }, 1200);
+
+  } catch (error) {
+    console.error('Error publicando diagrama:', error);
+    if (btnSubmit) btnSubmit.disabled = false;
+    if (statusMsg) {
+      statusMsg.className = 'small text-center fw-bold text-danger';
+      statusMsg.textContent = `Error al guardar: ${error.message}`;
+    }
+  }
+};
+
+// Check admin button visibility on Auth change
+function checkAdminButtonVisibility() {
+  const btn = document.getElementById('btnAdminAddDiagram');
+  if (!btn) return;
+  const user = window.probaktronicCurrentUser;
+  if (user && user.email === 'prueba@probak.com') {
+    btn.classList.remove('d-none');
+  } else {
+    btn.classList.add('d-none');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', checkAdminButtonVisibility);
+if (typeof firebase !== 'undefined' && firebase.auth) {
+  firebase.auth().onAuthStateChanged(() => checkAdminButtonVisibility());
+}

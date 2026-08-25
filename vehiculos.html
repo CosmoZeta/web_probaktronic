@@ -861,6 +861,23 @@
         font-size: 0.95rem !important;
       }
     }
+    .fuel-radio-box {
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #FFFFFF;
+    }
+    .fuel-radio-box:hover {
+      border-color: #EF4444 !important;
+      background: #FEF2F2 !important;
+    }
+    .fuel-radio-box.active-fuel-box {
+      border-color: #EF4444 !important;
+      background: #FEF2F2 !important;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12);
+    }
+    .cursor-pointer {
+      cursor: pointer !important;
+    }
   </style>
 </head>
 <body>
@@ -942,12 +959,17 @@
         <a href="index.html" class="btn-back-square" id="btnBackView" title="Volver a la Página Principal">
           <i class="bi bi-arrow-left"></i>
         </a>
-        <div>
+        <div class="flex-grow-1">
           <h1 class="page-title fs-2 mb-0" id="vehiculosHeaderTitle">SELECCIONAR VEHÍCULO</h1>
           <div class="page-subtitle mt-1" id="vehiculosHeaderSubtitle">Seleccione la marca y modelo para consultar los esquemas de conexión y diagnóstico</div>
           <div class="header-sublogo-wrap mt-2">
             <img src="logo_probaktronic_costado.png" alt="Probaktronic" style="height: 22px; width: auto; object-fit: contain;">
           </div>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <button class="btn btn-danger btn-sm rounded-pill fw-bold shadow-sm d-none" id="btnAdminAddDiagram" onclick="openAdminAddDiagramModal()" title="Subir nuevo diagrama a Firestore (Solo Administrador)">
+            <i class="bi bi-cloud-arrow-up-fill me-1"></i> Subir Diagrama (Admin)
+          </button>
         </div>
       </div>
 
@@ -1421,6 +1443,148 @@
       </div>
 
     </main>
+  </div>
+
+  <!-- Modal Admin: Subir Nuevo Diagrama (Hijo directo del body para evitar bloqueos de z-index) -->
+  <div class="modal fade" id="adminAddDiagramModal" tabindex="-1" aria-labelledby="adminAddDiagramModalLabel" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+        <div class="modal-header bg-dark text-white border-0 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-cloud-arrow-up-fill text-white fs-5"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0" id="adminAddDiagramModalLabel">PANEL ADMINISTRADOR: PUBLICAR DIAGRAMA</h5>
+              <div class="text-muted" style="font-size: 0.75rem;">Sube esquemas de conexión compatibles con la Web y Android Studio</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form id="adminAddDiagramForm" onsubmit="handleAdminSubmitNewDiagram(event)">
+          <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+
+            <!-- Paso 1: Tipo de Motorización (Gasolina vs Diesel) -->
+            <div class="mb-4">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-2">1. SELECCIONE MOTORIZACIÓN / COMBUSTIBLE</label>
+              <div class="d-flex gap-3">
+                <div class="form-check form-check-inline p-3 border rounded-3 flex-fill text-center cursor-pointer fuel-radio-box active-fuel-box" id="fuelBoxDiesel" onclick="setAdminModalFuel('diesel')">
+                  <input class="form-check-input d-none" type="radio" name="adminModalFuelRadio" id="adminRadioDiesel" value="diesel" checked>
+                  <label class="form-check-label fw-bold font-rajdhani fs-5 d-block cursor-pointer" for="adminRadioDiesel">
+                    <i class="bi bi-droplet-fill text-danger me-1"></i> DIÉSEL
+                  </label>
+                  <span class="small text-muted" style="font-size: 0.75rem;">Common Rail, EDC, Heavy Duty</span>
+                </div>
+
+                <div class="form-check form-check-inline p-3 border rounded-3 flex-fill text-center cursor-pointer fuel-radio-box" id="fuelBoxGasolina" onclick="setAdminModalFuel('gasolina')">
+                  <input class="form-check-input d-none" type="radio" name="adminModalFuelRadio" id="adminRadioGasolina" value="gasolina">
+                  <label class="form-check-label fw-bold font-rajdhani fs-5 d-block cursor-pointer" for="adminRadioGasolina">
+                    <i class="bi bi-fuel-pump-fill text-danger me-1"></i> GASOLINA
+                  </label>
+                  <span class="small text-muted" style="font-size: 0.75rem;">MPFI, GDI, Ciclo Otto</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Paso 2: Categoría de Vehículo -->
+            <div class="mb-4">
+              <label for="adminModalCategorySelect" class="form-label font-rajdhani fw-bold text-dark mb-1">2. CATEGORÍA DEL VEHÍCULO</label>
+              <select class="form-select form-select-lg" id="adminModalCategorySelect" required>
+                <!-- Opciones dinámicas según Diesel / Gasolina -->
+                <option value="pickup" selected>🛻 PICKUP / CAMIONETAS (Hilux, Frontier, Ranger...)</option>
+                <option value="furgon">🚐 FURGÓN / VAN (H1, Sprinter, Transit...)</option>
+                <option value="camiones">🚛 CAMIONES / PESADO (Isuzu N-Series, Hino, Fuso...)</option>
+                <option value="maquinaria">🚜 MAQUINARIA PESADA (Caterpillar, Komatsu, JCB...)</option>
+              </select>
+            </div>
+
+            <!-- Paso 3 y 4: Marca y Modelo -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="adminModalBrandInput" class="form-label font-rajdhani fw-bold text-dark mb-1">3. MARCA DEL VEHÍCULO</label>
+                <input type="text" class="form-control text-uppercase" id="adminModalBrandInput" list="adminBrandDataList" placeholder="Ej: TOYOTA, HYUNDAI, ISUZU" required>
+                <datalist id="adminBrandDataList">
+                  <option value="TOYOTA">
+                  <option value="NISSAN">
+                  <option value="HYUNDAI">
+                  <option value="ISUZU">
+                  <option value="MITSUBISHI">
+                  <option value="FORD">
+                  <option value="CHEVROLET">
+                  <option value="HINO">
+                  <option value="FUSO">
+                  <option value="VOLVO">
+                  <option value="CATERPILLAR">
+                  <option value="KOMATSU">
+                </datalist>
+              </div>
+
+              <div class="col-md-6">
+                <label for="adminModalModelInput" class="form-label font-rajdhani fw-bold text-dark mb-1">4. MODELO DEL VEHÍCULO</label>
+                <input type="text" class="form-control" id="adminModalModelInput" placeholder="Ej: Hilux, Frontier, D-Max, Corolla" required>
+              </div>
+            </div>
+
+            <!-- Paso 5 y 6: Año y Motor -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="adminModalYearInput" class="form-label font-rajdhani fw-bold text-dark mb-1">5. RANGO DE AÑOS</label>
+                <input type="text" class="form-control" id="adminModalYearInput" placeholder="Ej: 2011 - 2015 o 2018 - 2022" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="adminModalMotorInput" class="form-label font-rajdhani fw-bold text-dark mb-1">6. CÓDIGO DE MOTOR / PARTE</label>
+                <input type="text" class="form-control" id="adminModalMotorInput" placeholder="Ej: 2KD-FTV, 1GD, 4JJ1, 4E-FE" required>
+              </div>
+            </div>
+
+            <!-- Paso 7: Título / Nombre del Archivo / Componente -->
+            <div class="mb-3">
+              <label for="adminModalDiagramTitleInput" class="form-label font-rajdhani fw-bold text-dark mb-1">7. TÍTULO DEL DIAGRAMA / COMPONENTE</label>
+              <input type="text" class="form-control" id="adminModalDiagramTitleInput" placeholder="Ej: TOYOTA HILUX 2011 - 2015 PEDAL" required>
+              <div class="d-flex flex-wrap gap-1 mt-2">
+                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3" onclick="setDiagramTitlePreset('PEDAL')"><i class="bi bi-sliders2 me-1"></i> PEDAL APP</span>
+                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3" onclick="setDiagramTitlePreset('ECU')"><i class="bi bi-cpu-fill me-1"></i> PINOUT ECU</span>
+                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3" onclick="setDiagramTitlePreset('INMOVILIZADOR')"><i class="bi bi-shield-lock-fill me-1"></i> INMOVILIZADOR</span>
+                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3" onclick="setDiagramTitlePreset('EDU DOS CONECTORES')"><i class="bi bi-diagram-3-fill me-1"></i> EDU 2 CONECTORES</span>
+                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3" onclick="setDiagramTitlePreset('EDU TRES CONECTORES')"><i class="bi bi-diagram-3-fill me-1"></i> EDU 3 CONECTORES</span>
+                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3" onclick="setDiagramTitlePreset('CUERPO DE ACELERACION')"><i class="bi bi-speedometer me-1"></i> CUERPO ACEL.</span>
+              </div>
+            </div>
+
+            <!-- Paso 8: Archivo (PDF, Imagen) -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1">8. ARCHIVO DEL DIAGRAMA (PDF O IMAGEN)</label>
+              <div class="border border-2 border-dashed rounded-3 p-3 text-center bg-light" id="adminUploadDropArea">
+                <i class="bi bi-file-earmark-arrow-up-fill text-danger fs-1 d-block mb-1"></i>
+                <span class="small fw-bold text-dark d-block">Selecciona el PDF o Imagen del Esquema</span>
+                <span class="text-muted" style="font-size: 0.72rem;">Formatos admitidos: PDF, PNG, JPG, WEBP</span>
+                <input type="file" id="adminModalFileInput" class="form-control form-control-sm mt-2" accept=".pdf,image/*" required onchange="handleAdminModalFileChange(this)">
+                <div id="adminModalFilePreviewWrap" class="mt-2 d-none">
+                  <span class="badge bg-success" id="adminModalFileNameBadge"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress d-none mb-2" id="adminModalProgressBarWrap" style="height: 10px;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger" id="adminModalProgressBar" role="progressbar" style="width: 0%;"></div>
+            </div>
+
+            <div id="adminModalStatusMsg" class="small text-center fw-bold"></div>
+
+          </div>
+
+          <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow" id="btnAdminSubmitDiagram">
+              <i class="bi bi-cloud-check-fill me-1"></i> Subir y Publicar en Firebase
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <!-- PDF.js Engine for Pure Image Rendering without Browser PDF Chrome -->

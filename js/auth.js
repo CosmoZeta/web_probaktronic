@@ -232,6 +232,14 @@ function renderLoggedInHeaderUI(userData) {
             <span>Personalizar Avatar</span>
           </a>
         </li>
+        ${isAdmin ? `
+        <li>
+          <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger fw-bold" href="vehiculos.html" onclick="if(window.openAdminAddDiagramModal) { event.preventDefault(); openAdminAddDiagramModal(); }">
+            <i class="bi bi-cloud-arrow-up-fill fs-5"></i>
+            <span>Subir Diagrama (Admin)</span>
+          </a>
+        </li>
+        ` : ''}
         <li><hr class="dropdown-divider my-1"></li>
         <li>
           <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger" href="#" onclick="logoutUser(event)">
