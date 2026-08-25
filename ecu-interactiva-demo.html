@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Probaktronic - Visor & Editor Interactivo de ECU</title>
+  
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Roboto:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #0A0D14;
+      --panel-bg: rgba(16, 22, 34, 0.94);
+      --neon-cyan: #00F0FF;
+      --neon-red: #FF3366;
+      --neon-green: #00FF88;
+      --neon-yellow: #FFD000;
+      --border-glow: rgba(0, 240, 255, 0.3);
+      --text-muted: #8E9AA8;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: #E2E8F0;
+      font-family: 'Roboto', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Control Bar */
+    .top-bar {
+      height: 60px;
+      background: linear-gradient(180deg, #131A29 0%, #0D121D 100%);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 100;
+    }
+
+    .brand-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-badge {
+      background: rgba(0, 240, 255, 0.15);
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .btn-editor-toggle {
+      background: rgba(255, 208, 0, 0.15);
+      border: 1px solid var(--neon-yellow);
+      color: var(--neon-yellow);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .btn-editor-toggle:hover, .btn-editor-toggle.active {
+      background: var(--neon-yellow);
+      color: #000;
+      box-shadow: 0 0 15px rgba(255, 208, 0, 0.6);
+    }
+
+    /* Main Workspace Layout */
+    .workspace {
+      flex: 1;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Interactive Board Viewport (Pan & Zoom Area) */
+    .viewport-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+      background: radial-gradient(circle at center, #151D2E 0%, #080A10 100%);
+    }
+
+    .viewport-container.editing {
+      cursor: crosshair !important;
+    }
+
+    .viewport-container:active {
+      cursor: grabbing;
+    }
+
+    /* Unified Transformable Stage (Image + SVG locked together) */
+    #transformStage {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1000px;
+      height: 1094px;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    #ecuImage {
+      display: block;
+      width: 1000px;
+      height: 1094px;
+      pointer-events: none;
+      filter: contrast(1.05) brightness(1.02);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+      border-radius: 8px;
+    }
+
+    /* SVG Overlay on top of image with exact same coordinate system (1000 x 1094) */
+    #svgOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1000px;
+      height: 1094px;
+      pointer-events: auto;
+    }
+
+    /* Hotspot Styling */
+    .hotspot-box {
+      cursor: pointer;
+      fill: rgba(0, 240, 255, 0.08);
+      stroke: var(--neon-cyan);
+      stroke-width: 2px;
+      vector-effect: non-scaling-stroke;
+      transition: fill 0.2s, stroke 0.2s;
+    }
+
+    .hotspot-box:hover {
+      fill: rgba(0, 240, 255, 0.32);
+      stroke: #FFFFFF;
+      stroke-width: 3px;
+      filter: drop-shadow(0 0 8px var(--neon-cyan));
+    }
+
+    .hotspot-box.active {
+      fill: rgba(0, 255, 136, 0.28);
+      stroke: var(--neon-green);
+      stroke-width: 3.5px;
+      filter: drop-shadow(0 0 12px var(--neon-green));
+    }
+
+    .hotspot-pin {
+      cursor: pointer;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .hotspot-pin circle.outer-ring {
+      fill: none;
+      stroke: var(--neon-cyan);
+      stroke-width: 2px;
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+
+    .hotspot-pin circle.inner-dot {
+      fill: var(--neon-cyan);
+      transition: transform 0.2s;
+    }
+
+    .hotspot-pin:hover circle.inner-dot {
+      fill: #fff;
+    }
+
+    .hotspot-pin.active circle.outer-ring {
+      stroke: var(--neon-green);
+      animation: pulseActive 1.2s infinite ease-in-out;
+    }
+
+    .hotspot-pin.active circle.inner-dot {
+      fill: var(--neon-green);
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { r: 14; opacity: 0.4; }
+      50% { r: 20; opacity: 1; stroke: #00F0FF; }
+    }
+
+    @keyframes pulseActive {
+      0%, 100% { r: 16; opacity: 0.6; }
+      50% { r: 24; opacity: 1; stroke: #00FF88; }
+    }
+
+    /* Leader line inside SVG */
+    .leader-line {
+      fill: none;
+      stroke: var(--neon-green);
+      stroke-width: 2.5px;
+      vector-effect: non-scaling-stroke;
+      stroke-dasharray: 6 3;
+      animation: dashMove 1.5s linear infinite;
+      filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.8));
+    }
+
+    @keyframes dashMove {
+      to { stroke-dashoffset: -18; }
+    }
+
+    /* Active drawing box while dragging */
+    #drawingBox {
+      fill: rgba(255, 208, 0, 0.25);
+      stroke: var(--neon-yellow);
+      stroke-width: 2.5px;
+      stroke-dasharray: 5 3;
+      vector-effect: non-scaling-stroke;
+      display: none;
+    }
+
+    /* Floating / Fixed Info Panel */
+    .side-info-panel {
+      width: 420px;
+      background: var(--panel-bg);
+      border-left: 1px solid rgba(0, 240, 255, 0.2);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      z-index: 50;
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      background: rgba(0, 240, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: #fff;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-body {
+      padding: 20px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .info-card-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      background: rgba(0, 240, 255, 0.12);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    .component-title-text {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 6px;
+    }
+
+    .component-desc {
+      color: #CBD5E1;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .tech-specs-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.85rem;
+    }
+
+    .spec-row:last-child {
+      border-bottom: none;
+    }
+
+    .spec-label {
+      color: var(--text-muted);
+    }
+
+    .spec-value {
+      color: #00F0FF;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Floating Toolbar */
+    .floating-toolbar {
+      position: absolute;
+      bottom: 25px;
+      left: 25px;
+      display: flex;
+      gap: 8px;
+      background: rgba(16, 22, 34, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      backdrop-filter: blur(12px);
+      padding: 6px;
+      border-radius: 30px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      z-index: 80;
+    }
+
+    .tool-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tool-btn:hover {
+      background: var(--neon-cyan);
+      color: #000;
+      transform: scale(1.1);
+      box-shadow: 0 0 12px var(--neon-cyan);
+    }
+
+    .zoom-level-badge {
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--neon-cyan);
+      font-weight: 600;
+    }
+
+    /* Coordinates inspector box (Helper) */
+    .coords-badge {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--neon-green);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 4px;
+      z-index: 80;
+      pointer-events: none;
+    }
+
+    /* Helper instruction banner in editor mode */
+    .editor-banner {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 208, 0, 0.95);
+      color: #000;
+      padding: 6px 20px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      display: none;
+      box-shadow: 0 4px 15px rgba(255, 208, 0, 0.4);
+      z-index: 85;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-cancel-draw {
+      background: #000;
+      color: #FFF;
+      border: none;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-cancel-draw:hover {
+      background: #333;
+    }
+
+    /* Modal Form Styles */
+    .custom-modal-content {
+      background: #101622;
+      border: 1px solid var(--neon-cyan);
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+      color: #E2E8F0;
+    }
+    .custom-modal-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .custom-form-control {
+      background: #0A0D14;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #FFF;
+    }
+    .custom-form-control:focus {
+      background: #0D121D;
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+      color: #FFF;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-bar">
+    <div class="brand-title">
+      <i class="bi bi-cpu-fill text-info"></i>
+      <span>PROBAKTRONIC</span>
+      <span class="brand-badge">INTERACTIVE ECU</span>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+      <!-- Editor Toggle Button -->
+      <button class="btn-editor-toggle" id="btnToggleEditor">
+        <i class="bi bi-bounding-box me-1"></i> <span id="editorBtnText">MODO DIBUJAR ESPACIOS</span>
+      </button>
+
+      <!-- Undo Last Trazo Button -->
+      <button class="btn btn-sm btn-outline-warning" id="btnUndoLast" title="Deshacer / Eliminar último componente creado">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> Deshacer Trazo
+      </button>
+
+      <button class="btn btn-sm btn-outline-info" id="btnExportJson" title="Ver / Exportar JSON">
+        <i class="bi bi-code-square me-1"></i> Exportar JSON
+      </button>
+
+      <a href="vehiculos.html" class="btn btn-sm btn-outline-light d-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left"></i> Volver
+      </a>
+    </div>
+  </header>
+
+  <!-- Workspace -->
+  <div class="workspace">
+    <!-- Viewport Container with Pan & Zoom -->
+    <div class="viewport-container" id="viewport">
+      <div class="coords-badge" id="coordsBadge">Zoom: 1.0x &bull; Calibración 1:1</div>
+      
+      <!-- Top Instruction Banner during drawing -->
+      <div class="editor-banner" id="editorBanner">
+        <span><i class="bi bi-pencil-fill me-1"></i> <strong>Modo Dibujo:</strong> Haz clic y arrastra sobre cualquier chip (o pulsa ESC para cancelar)</span>
+        <button class="btn-cancel-draw" id="btnCancelDrawBanner" title="Cancelar trazo actual"><i class="bi bi-x-circle me-1"></i>Cancelar</button>
+      </div>
+
+      <!-- Unified Matrix Stage (Image + SVG in exact 1:1 scale) -->
+      <div id="transformStage">
+        <img id="ecuImage" src="ecu_demo_2kd.png" alt="ECU Denso 2KD-FTV">
+
+        <svg id="svgOverlay" viewBox="0 0 1000 1094" preserveAspectRatio="none">
+          <!-- Animated Dynamic Leader Line -->
+          <path id="activeLeaderLine" class="leader-line" d="" style="display: none;"></path>
+
+          <!-- Hotspots Definition -->
+          <g id="hotspotsGroup"></g>
+
+          <!-- Active Drag/Draw Rectangle in Editor Mode -->
+          <rect id="drawingBox" x="0" y="0" width="0" height="0" rx="4"></rect>
+        </svg>
+      </div>
+
+      <!-- Floating Zoom Controls -->
+      <div class="floating-toolbar">
+        <button class="tool-btn" id="btnZoomIn" title="Acercar (Zoom +)"><i class="bi bi-zoom-in"></i></button>
+        <div class="zoom-level-badge" id="zoomDisplay">100%</div>
+        <button class="tool-btn" id="btnZoomOut" title="Alejar (Zoom -)"><i class="bi bi-zoom-out"></i></button>
+        <button class="tool-btn" id="btnResetView" title="Restablecer Vista (100%)"><i class="bi bi-arrows-fullscreen"></i></button>
+      </div>
+    </div>
+
+    <!-- Side Technical Info Panel -->
+    <aside class="side-info-panel" id="infoPanel">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <i class="bi bi-diagram-3-fill text-info"></i>
+          <span>DATOS DEL COMPONENTE</span>
+        </h2>
+        <button class="btn btn-sm btn-outline-danger p-1 px-2 d-none" id="btnDeleteActive" title="Eliminar este componente">
+          <i class="bi bi-trash me-1"></i> Eliminar
+        </button>
+      </div>
+
+      <div class="panel-body" id="panelContent">
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-hand-index-thumb fs-1 mb-3 text-info opacity-50"></i>
+          <h5 class="text-white font-rajdhani">Haz clic en un componente</h5>
+          <p class="small text-muted px-3">Toca cualquier chip para ver sus datos o activa el botón <strong>"Modo Dibujar Espacios"</strong> para crear tus propios componentes arrastrando el ratón.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Modal to Add / Define New Component -->
+  <div class="modal fade" id="modalAddComponent" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content custom-modal-content">
+        <div class="modal-header custom-modal-header">
+          <h5 class="modal-title font-rajdhani fw-bold text-info"><i class="bi bi-plus-circle-fill me-2"></i>Designar Nuevo Componente</h5>
+          <button type="button" class="btn-close btn-close-white" id="btnDiscardTrazoX" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="newComponentForm">
+            <div class="mb-2">
+              <label class="form-label small text-muted">Nombre del Componente</label>
+              <input type="text" id="compName" class="form-control form-control-sm custom-form-control" placeholder="Ej: Driver Motor Mariposa (Throttle)" required>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small text-muted">Código / Serigrafía</label>
+                <input type="text" id="compCode" class="form-control form-control-sm custom-form-control" placeholder="Ej: TLE6244X / Denso IC">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Categoría</label>
+                <select id="compCategory" class="form-select form-select-sm custom-form-control">
+                  <option value="Actuadores de Potencia">Actuador / Driver</option>
+                  <option value="Procesamiento Central">Microprocesador / MCU</option>
+                  <option value="Almacenamiento & Seguridad">Memoria EEPROM / Flash</option>
+                  <option value="Alimentación Interna">Regulador / Power IC</option>
+                  <option value="Comunicaciones">Transceiver CAN / K-Line</option>
+                  <option value="Conexionado">Pines / Conector</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small text-muted">¿Qué controla? (Función)</label>
+              <textarea id="compControla" class="form-control form-control-sm custom-form-control" rows="2" placeholder="Ej: Controla la apertura del cuerpo de aceleración y respuesta del pedal acelerador..." required></textarea>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small text-muted">Voltajes de Operación</label>
+                <input type="text" id="compVoltajes" class="form-control form-control-sm custom-form-control" placeholder="Ej: 12V BATT / PWM 5V">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Pines Críticos</label>
+                <input type="text" id="compPines" class="form-control form-control-sm custom-form-control" placeholder="Ej: Pin 4: GND, Pin 12: Señal">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small text-muted">Síntomas comunes de falla</label>
+              <input type="text" id="compFallas" class="form-control form-control-sm custom-form-control" placeholder="Ej: Sin aceleración, código DTC P2101">
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-secondary">
+              <button type="button" class="btn btn-sm btn-outline-danger" id="btnDiscardTrazo" data-bs-dismiss="modal">
+                <i class="bi bi-trash me-1"></i> Descartar Mal Trazo
+              </button>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-sm btn-info fw-bold font-rajdhani px-3">GUARDAR ESPACIO</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal to View Exported JSON -->
+  <div class="modal fade" id="modalExportJson" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content custom-modal-content">
+        <div class="modal-header custom-modal-header">
+          <h5 class="modal-title font-rajdhani fw-bold text-info"><i class="bi bi-filetype-json me-2"></i>Estructura JSON de Componentes Mapeados</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-muted mb-2">Este JSON se genera automáticamente con todas las coordenadas calculadas en base 1:1. Puedes guardarlo en Firestore o en tus archivos JS.</p>
+          <textarea id="jsonOutputArea" class="form-control custom-form-control font-monospace small" rows="12" readonly></textarea>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-sm btn-info" id="btnCopyJson"><i class="bi bi-clipboard me-1"></i> Copiar al Portapapeles</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Initial Components List
+    const defaultComponents = [
+      {
+        id: 'comp_1',
+        name: 'Microcontrolador Principal (MCU)',
+        code: 'DENSO / TOSHIBA 32-Bit QFP',
+        category: 'Procesamiento Central',
+        x: 580, y: 155, width: 220, height: 230,
+        pinX: 690, pinY: 270,
+        controla: 'Cerebro principal de la ECU. Procesa señales de sensores en tiempo real (CKP, CMP, MAP, Temperatura) y comanda el mapa de inyección y presión del Common Rail.',
+        voltajes: 'VCC: 5.0V / Núcleo: 3.3V',
+        fallas_comunes: 'Vehículo no arranca, sin comunicación con escáner OBD2 (Sin testigo Check Engine).',
+        pines_clave: 'Alimentación: Pines 1, 32, 64 &bull; Cristal oscilador: 20MHz'
+      },
+      {
+        id: 'comp_2',
+        name: 'Memoria Flash / EEPROM',
+        code: '93C86 / 25Cxxx SPI',
+        category: 'Almacenamiento & Seguridad',
+        x: 260, y: 170, width: 170, height: 130,
+        pinX: 345, pinY: 235,
+        controla: 'Almacena la codificación del inmovilizador (Llaves/Transponder), número VIN, kilometraje y mapas de calibración del motor.',
+        voltajes: 'VCC: 5.0V en Pin 8',
+        fallas_comunes: 'Error de inmovilizador (Luz de seguridad parpadea), bloqueo de arranque, códigos P1600 / B2799.',
+        pines_clave: 'Pin 1: CS &bull; Pin 4: GND &bull; Pin 8: VCC 5V'
+      },
+      {
+        id: 'comp_3',
+        name: 'Driver Etapa Inyectores Common Rail',
+        code: 'SE555 / MOSFET Driver Array',
+        category: 'Actuadores de Potencia',
+        x: 235, y: 535, width: 170, height: 100,
+        pinX: 320, pinY: 585,
+        controla: 'Maneja la apertura y corte de los inyectores electrohidráulicos diésel mediante pulsos de alta corriente.',
+        voltajes: 'Voltaje de disparo: 12V / Retorno señal GND controlada',
+        fallas_comunes: 'Fallo de cilindro (Misfire), humo negro, códigos P0201, P0202, P0203, P0204.',
+        pines_clave: 'Gate: PWM 5V &bull; Drain: Señal a Inyector'
+      },
+      {
+        id: 'comp_4',
+        name: 'Regulador de Voltaje & Power IC',
+        code: 'SE587 Multi-Voltage Regulator',
+        category: 'Alimentación Interna',
+        x: 580, y: 590, width: 180, height: 100,
+        pinX: 670, pinY: 640,
+        controla: 'Genera las fuentes estabilizadas de 5.0V para sensores de motor (TPS, MAP, Riel de combustible) y 3.3V para la lógica digital.',
+        voltajes: 'Entrada: +12V BATT &bull; Salida: +5.0V y +3.3V Estables',
+        fallas_comunes: 'Sin 5V en sensores de motor, sensores marcan 0V o 5V fijo, códigos de sobretensión.',
+        pines_clave: 'VCC_IN: 12V Ignición &bull; VREF: 5.00V ±0.05V'
+      },
+      {
+        id: 'comp_5',
+        name: 'Transistores MOSFET Salidas SCV / EGR',
+        code: 'Power MOSFET SOT-223',
+        category: 'Actuadores de Potencia',
+        x: 180, y: 690, width: 160, height: 100,
+        pinX: 260, pinY: 740,
+        controla: 'Controla la válvula reguladora de succión (SCV) de la bomba de alta presión diésel y la electroválvula EGR.',
+        voltajes: 'PWM de 12V con modulación por ancho de pulsos',
+        fallas_comunes: 'Falta de presión en el riel Common Rail, motor entra en modo de emergencia o se apaga en aceleración.',
+        pines_clave: 'Control de frecuencia: 250Hz - 1kHz'
+      }
+    ];
+
+    let ecuComponents = JSON.parse(localStorage.getItem('ecu_custom_components')) || defaultComponents;
+
+    // DOM Elements
+    const viewport = document.getElementById('viewport');
+    const stage = document.getElementById('transformStage');
+    const svgOverlay = document.getElementById('svgOverlay');
+    const coordsBadge = document.getElementById('coordsBadge');
+    const zoomDisplay = document.getElementById('zoomDisplay');
+    const hotspotsGroup = document.getElementById('hotspotsGroup');
+    const activeLeaderLine = document.getElementById('activeLeaderLine');
+    const panelContent = document.getElementById('panelContent');
+    const btnToggleEditor = document.getElementById('btnToggleEditor');
+    const editorBtnText = document.getElementById('editorBtnText');
+    const editorBanner = document.getElementById('editorBanner');
+    const drawingBox = document.getElementById('drawingBox');
+    const btnDeleteActive = document.getElementById('btnDeleteActive');
+    const btnUndoLast = document.getElementById('btnUndoLast');
+    const modalAddComponentEl = document.getElementById('modalAddComponent');
+    const modalAddComponent = new bootstrap.Modal(modalAddComponentEl);
+    const modalExportJson = new bootstrap.Modal(document.getElementById('modalExportJson'));
+
+    let scale = 1;
+    let pointX = 0;
+    let pointY = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let activeComponentId = null;
+
+    // Editor Drawing States
+    let isEditorMode = false;
+    let isDrawing = false;
+    let drawStartX = 0;
+    let drawStartY = 0;
+    let tempBoxData = null;
+
+    // Center Stage Initially
+    function initView() {
+      const vRect = viewport.getBoundingClientRect();
+      scale = Math.min((vRect.width - 60) / 1000, (vRect.height - 60) / 1094, 1.0);
+      pointX = (vRect.width - 1000 * scale) / 2;
+      pointY = (vRect.height - 1094 * scale) / 2;
+      updateTransform();
+    }
+
+    function updateTransform() {
+      stage.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+      zoomDisplay.textContent = `${Math.round(scale * 100)}%`;
+      coordsBadge.innerHTML = `Zoom: <strong>${scale.toFixed(2)}x</strong> &bull; Modo: <span style="color:${isEditorMode ? '#FFD000' : '#00F0FF'}">${isEditorMode ? 'DIBUJO DE ESPACIOS' : 'VISOR ACTIVO'}</span>`;
+    }
+
+    // Mathematical W3C Standard Inverse Matrix Conversion (100% Zero-Offset Tracking)
+    function getSVGPoint(e) {
+      const pt = svgOverlay.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const matrix = svgOverlay.getScreenCTM();
+      if (!matrix) return { x: 0, y: 0 };
+      const transformed = pt.matrixTransform(matrix.inverse());
+      return {
+        x: Math.max(0, Math.min(1000, Math.round(transformed.x))),
+        y: Math.max(0, Math.min(1094, Math.round(transformed.y)))
+      };
+    }
+
+    // Zoom Handling
+    function zoomTo(newScale, clientX, clientY) {
+      newScale = Math.min(Math.max(0.3, newScale), 6.0);
+      const vRect = viewport.getBoundingClientRect();
+      const cx = clientX !== undefined ? clientX - vRect.left : vRect.width / 2;
+      const cy = clientY !== undefined ? clientY - vRect.top : vRect.height / 2;
+
+      pointX = cx - (cx - pointX) * (newScale / scale);
+      pointY = cy - (cy - pointY) * (newScale / scale);
+      scale = newScale;
+      updateTransform();
+    }
+
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.15 : 0.85;
+      zoomTo(scale * factor, e.clientX, e.clientY);
+    }, { passive: false });
+
+    // Cancel current drawing stroke
+    function cancelCurrentDrawing() {
+      isDrawing = false;
+      drawingBox.style.display = 'none';
+      tempBoxData = null;
+    }
+
+    // Escape Key cancels drawing
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        cancelCurrentDrawing();
+      }
+    });
+
+    document.getElementById('btnCancelDrawBanner').addEventListener('click', (e) => {
+      e.stopPropagation();
+      cancelCurrentDrawing();
+    });
+
+    document.getElementById('btnDiscardTrazo').addEventListener('click', () => {
+      cancelCurrentDrawing();
+    });
+
+    // Mouse Down: Pan vs Draw Box
+    viewport.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.floating-toolbar') || e.target.closest('.editor-banner') || e.target.closest('.modal')) return;
+
+      if (isEditorMode) {
+        // Start Drawing Bounding Box using exact matrix transform
+        const p = getSVGPoint(e);
+        isDrawing = true;
+        drawStartX = p.x;
+        drawStartY = p.y;
+        drawingBox.setAttribute('x', drawStartX);
+        drawingBox.setAttribute('y', drawStartY);
+        drawingBox.setAttribute('width', 0);
+        drawingBox.setAttribute('height', 0);
+        drawingBox.style.display = 'block';
+      } else {
+        // Pan Mode
+        isDragging = true;
+        startX = e.clientX - pointX;
+        startY = e.clientY - pointY;
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isDrawing && isEditorMode) {
+        const p = getSVGPoint(e);
+        const curX = Math.min(drawStartX, p.x);
+        const curY = Math.min(drawStartY, p.y);
+        const curW = Math.abs(p.x - drawStartX);
+        const curH = Math.abs(p.y - drawStartY);
+
+        drawingBox.setAttribute('x', curX);
+        drawingBox.setAttribute('y', curY);
+        drawingBox.setAttribute('width', curW);
+        drawingBox.setAttribute('height', curH);
+      } else if (isDragging) {
+        pointX = e.clientX - startX;
+        pointY = e.clientY - startY;
+        updateTransform();
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (isDrawing && isEditorMode) {
+        isDrawing = false;
+        drawingBox.style.display = 'none';
+
+        const boxX = parseInt(drawingBox.getAttribute('x'));
+        const boxY = parseInt(drawingBox.getAttribute('y'));
+        const boxW = parseInt(drawingBox.getAttribute('width'));
+        const boxH = parseInt(drawingBox.getAttribute('height'));
+
+        // If drawn box is larger than 12px, open form modal
+        if (boxW > 12 && boxH > 12) {
+          tempBoxData = {
+            x: boxX,
+            y: boxY,
+            width: boxW,
+            height: boxH,
+            pinX: Math.round(boxX + boxW / 2),
+            pinY: Math.round(boxY + boxH / 2)
+          };
+
+          document.getElementById('newComponentForm').reset();
+          modalAddComponent.show();
+        }
+      }
+      isDragging = false;
+    });
+
+    // Form Submit: Save New Component
+    document.getElementById('newComponentForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!tempBoxData) return;
+
+      const newComp = {
+        id: 'comp_' + Date.now(),
+        name: document.getElementById('compName').value,
+        code: document.getElementById('compCode').value || 'N/A',
+        category: document.getElementById('compCategory').value,
+        controla: document.getElementById('compControla').value,
+        voltajes: document.getElementById('compVoltajes').value || '12V / 5V',
+        pines_clave: document.getElementById('compPines').value || 'N/D',
+        fallas_comunes: document.getElementById('compFallas').value || 'Fallo de operación o señal ausente.',
+        ...tempBoxData
+      };
+
+      ecuComponents.push(newComp);
+      localStorage.setItem('ecu_custom_components', JSON.stringify(ecuComponents));
+      
+      modalAddComponent.hide();
+      renderHotspots();
+      selectComponent(newComp);
+    });
+
+    // Toggle Editor Mode
+    btnToggleEditor.addEventListener('click', () => {
+      isEditorMode = !isEditorMode;
+      if (isEditorMode) {
+        btnToggleEditor.classList.add('active');
+        editorBtnText.textContent = 'FINALIZAR DIBUJO (MODO VISOR)';
+        editorBanner.style.display = 'flex';
+        viewport.classList.add('editing');
+      } else {
+        btnToggleEditor.classList.remove('active');
+        editorBtnText.textContent = 'MODO DIBUJAR ESPACIOS';
+        editorBanner.style.display = 'none';
+        viewport.classList.remove('editing');
+      }
+      updateTransform();
+    });
+
+    // Undo Last Trazo Button
+    btnUndoLast.addEventListener('click', () => {
+      if (ecuComponents.length === 0) {
+        alert('No hay componentes en la lista.');
+        return;
+      }
+      const last = ecuComponents.pop();
+      localStorage.setItem('ecu_custom_components', JSON.stringify(ecuComponents));
+      activeLeaderLine.style.display = 'none';
+      btnDeleteActive.classList.add('d-none');
+      renderHotspots();
+      panelContent.innerHTML = `
+        <div class="alert alert-warning text-dark small">
+          <strong>Último trazo eliminado:</strong> ${last.name} (${last.code})
+        </div>
+      `;
+    });
+
+    // Export JSON
+    document.getElementById('btnExportJson').addEventListener('click', () => {
+      document.getElementById('jsonOutputArea').value = JSON.stringify(ecuComponents, null, 2);
+      modalExportJson.show();
+    });
+
+    document.getElementById('btnCopyJson').addEventListener('click', () => {
+      navigator.clipboard.writeText(JSON.stringify(ecuComponents, null, 2));
+      alert('¡JSON copiado al portapapeles!');
+    });
+
+    // Delete Component
+    btnDeleteActive.addEventListener('click', () => {
+      if (!activeComponentId) return;
+      if (confirm('¿Deseas eliminar este componente seleccionado?')) {
+        ecuComponents = ecuComponents.filter(c => c.id !== activeComponentId);
+        localStorage.setItem('ecu_custom_components', JSON.stringify(ecuComponents));
+        activeLeaderLine.style.display = 'none';
+        btnDeleteActive.classList.add('d-none');
+        renderHotspots();
+        panelContent.innerHTML = `
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-check2-circle fs-1 mb-3 text-success"></i>
+            <h5 class="text-white font-rajdhani">Componente eliminado</h5>
+            <p class="small text-muted">Selecciona otro componente o dibuja uno nuevo.</p>
+          </div>
+        `;
+      }
+    });
+
+    // Toolbar Buttons
+    document.getElementById('btnZoomIn').addEventListener('click', () => zoomTo(scale * 1.25));
+    document.getElementById('btnZoomOut').addEventListener('click', () => zoomTo(scale * 0.8));
+    document.getElementById('btnResetView').addEventListener('click', () => initView());
+
+    // Render Hotspots onto SVG
+    function renderHotspots() {
+      hotspotsGroup.innerHTML = '';
+      
+      ecuComponents.forEach(comp => {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('data-id', comp.id);
+
+        // Bounding Box on chip
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', comp.x);
+        rect.setAttribute('y', comp.y);
+        rect.setAttribute('width', comp.width);
+        rect.setAttribute('height', comp.height);
+        rect.setAttribute('rx', '4');
+        rect.setAttribute('class', 'hotspot-box');
+        rect.id = `box-${comp.id}`;
+
+        // Pin Glow Marker
+        const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        pinG.setAttribute('class', 'hotspot-pin');
+        pinG.setAttribute('transform', `translate(${comp.pinX}, ${comp.pinY})`);
+        pinG.id = `pin-${comp.id}`;
+
+        const outerRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        outerRing.setAttribute('class', 'outer-ring');
+        outerRing.setAttribute('r', '14');
+
+        const innerDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        innerDot.setAttribute('class', 'inner-dot');
+        innerDot.setAttribute('r', '5');
+
+        pinG.appendChild(outerRing);
+        pinG.appendChild(innerDot);
+
+        // Click Event
+        g.addEventListener('click', (e) => {
+          if (isEditorMode) return;
+          e.stopPropagation();
+          selectComponent(comp);
+        });
+
+        g.appendChild(rect);
+        g.appendChild(pinG);
+        hotspotsGroup.appendChild(g);
+      });
+    }
+
+    // Select Component & Draw Dynamic Leader Line
+    function selectComponent(comp) {
+      activeComponentId = comp.id;
+      btnDeleteActive.classList.remove('d-none');
+
+      document.querySelectorAll('.hotspot-box').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.hotspot-pin').forEach(el => el.classList.remove('active'));
+      
+      const box = document.getElementById(`box-${comp.id}`);
+      const pin = document.getElementById(`pin-${comp.id}`);
+      if (box) box.classList.add('active');
+      if (pin) pin.classList.add('active');
+
+      // Draw SVG Leader Line from chip to the right edge of stage
+      const startX = comp.pinX;
+      const startY = comp.pinY;
+      const targetX = 990;
+      const targetY = Math.max(80, Math.min(comp.pinY, 1000));
+      const midX = startX + (targetX - startX) * 0.5;
+
+      const pathData = `M ${startX} ${startY} L ${midX} ${startY} L ${targetX} ${targetY}`;
+      activeLeaderLine.setAttribute('d', pathData);
+      activeLeaderLine.style.display = 'block';
+
+      // Update Side Info Panel Content
+      panelContent.innerHTML = `
+        <span class="info-card-badge"><i class="bi bi-tag-fill me-1"></i> ${comp.category}</span>
+        <h3 class="component-title-text">${comp.name}</h3>
+        <div class="text-info font-monospace small mb-3 fw-bold">${comp.code}</div>
+
+        <div class="tech-specs-box">
+          <div class="spec-row">
+            <span class="spec-label">Función Principal:</span>
+          </div>
+          <p class="component-desc mb-2 mt-1 text-light">${comp.controla}</p>
+        </div>
+
+        <div class="tech-specs-box">
+          <div class="spec-row">
+            <span class="spec-label">Voltajes de Operación:</span>
+            <span class="spec-value">${comp.voltajes}</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">Pines Críticos:</span>
+            <span class="spec-value text-warning">${comp.pines_clave}</span>
+          </div>
+        </div>
+
+        <div class="alert alert-danger bg-opacity-10 border-danger text-white small mt-3">
+          <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> Síntomas de Falla:</div>
+          <div>${comp.fallas_comunes}</div>
+        </div>
+
+        <div class="d-grid gap-2 mt-4">
+          <button class="btn btn-outline-info btn-sm font-rajdhani fw-bold" onclick="alert('Abriendo Pinout Detallado...')">
+            <i class="bi bi-file-earmark-pdf me-1"></i> VER PINOUT & DATASHEET
+          </button>
+        </div>
+      `;
+    }
+
+    // Auto select first component after load
+    window.addEventListener('load', () => {
+      initView();
+      renderHotspots();
+      if (ecuComponents.length > 0) {
+        setTimeout(() => {
+          selectComponent(ecuComponents[0]);
+        }, 300);
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      initView();
+    });
+  </script>
+</body>
+</html>

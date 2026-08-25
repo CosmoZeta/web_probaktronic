@@ -1446,6 +1446,15 @@
                     <span class="small font-rajdhani fw-bold">Imprimir</span>
                   </button>
 
+                  <!-- Botón Admin: Modo Dibujar Espacios de Componentes ECU -->
+                  <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminToggleEcuEditor" onclick="toggleAdminEcuEditorMode()" title="Modo Administrador: Dibujar y mapear componentes en la ECU">
+                    <i class="bi bi-bounding-box"></i>
+                    <span id="adminEcuEditorBtnText">DIBUJAR ESPACIOS</span>
+                  </button>
+                  <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1" id="btnAdminUndoEcuHotspot" onclick="undoLastAdminEcuHotspot()" title="Deshacer último componente dibujado">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                  </button>
+
                   <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnToggleZoomPan" onclick="toggleHandZoom()" title="Hacer clic para ampliar o reducir con la mano">
                     <i class="bi bi-hand-index-thumb text-danger fs-6"></i>
                     <span class="small font-rajdhani fw-bold" id="zoomModeText">ZOOM (1x)</span>
@@ -1464,6 +1473,12 @@
                   <i class="bi bi-chevron-right"></i>
                 </button>
 
+                <!-- Admin Instruction Banner when drawing -->
+                <div class="console-ecu-editor-banner d-none" id="consoleEcuEditorBanner">
+                  <span><i class="bi bi-pencil-fill me-1 text-warning"></i> <strong>Modo Dibujo Admin:</strong> Arrastra sobre el chip para marcarlo (ESC para cancelar)</span>
+                  <button class="btn btn-sm btn-dark py-0 px-2 rounded-pill ms-2" onclick="cancelAdminEcuDrawing()"><i class="bi bi-x-circle me-1"></i>Cancelar</button>
+                </div>
+
                 <div class="console-diagram-stage" id="consoleDiagramStage">
                   <!-- Watermark Overlay (Vertical or Horizontal based on orientation) -->
                   <div class="console-watermark-overlay" id="consoleWatermarkOverlay"></div>
@@ -1471,8 +1486,35 @@
 
                   <!-- Visual Media Targets -->
                   <img id="consoleMainDiagramImg" src="" alt="Diagrama Probaktronic" class="console-diagram-img hand-cursor" draggable="false">
+                  
+                  <!-- Interactive SVG Overlay for ECU PCB Components & Leader Lines -->
+                  <svg id="consoleEcuSvgOverlay" class="console-ecu-svg-overlay d-none" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+                    <path id="consoleEcuActiveLeaderLine" class="console-ecu-leader-line" d="" style="display: none;"></path>
+                    <g id="consoleEcuHotspotsGroup"></g>
+                    <rect id="consoleEcuDrawingBox" class="console-ecu-drawing-box" x="0" y="0" width="0" height="0" rx="4" style="display: none;"></rect>
+                  </svg>
+
                   <iframe id="consolePdfFrame" src="" class="console-pdf-frame d-none" frameborder="0"></iframe>
                   <canvas id="consolePdfCanvas" class="console-diagram-canvas hand-cursor d-none"></canvas>
+                </div>
+
+                <!-- Floating / Slide-in Component Info Drawer -->
+                <div class="console-ecu-info-drawer d-none" id="consoleEcuInfoDrawer">
+                  <div class="drawer-header d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                      <i class="bi bi-cpu-fill text-info fs-5"></i>
+                      <h6 class="mb-0 font-rajdhani fw-bold text-white" id="ecuDrawerTitle">COMPONENTE ECU</h6>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                      <button class="btn btn-sm btn-outline-danger p-0 px-2 d-none" id="btnAdminDeleteSelectedHotspot" onclick="deleteActiveEcuComponent()" title="Eliminar componente (Admin)">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                      <button class="btn-close btn-close-white btn-sm" onclick="closeEcuInfoDrawer()"></button>
+                    </div>
+                  </div>
+                  <div class="drawer-body" id="ecuDrawerContent">
+                    <!-- Dynamic Component Details injected here -->
+                  </div>
                 </div>
               </div>
 
@@ -1706,6 +1748,149 @@
           </div>
           <div class="modal-footer bg-light border-0 py-2 px-4 d-flex justify-content-end">
             <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Designar / Mapear Nuevo Componente ECU (Detallado con Previsualización y Plantillas) -->
+  <div class="modal fade" id="modalAdminAddEcuComponent" tabindex="-1" data-bs-backdrop="static" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content text-white" style="background: #0E131F; border: 1px solid #00F0FF; border-radius: 16px; box-shadow: 0 0 45px rgba(0, 240, 255, 0.35); overflow: hidden;">
+        
+        <!-- Modal Header with Chip Preview -->
+        <div class="modal-header border-secondary py-3 px-4" style="background: linear-gradient(90deg, rgba(0, 240, 255, 0.1) 0%, rgba(17, 24, 39, 0.8) 100%);">
+          <div class="d-flex align-items-center gap-3">
+            <!-- Live Cropped Chip Preview Canvas -->
+            <div class="border border-info rounded-3 p-1 bg-black d-flex align-items-center justify-content-center shadow" style="width: 70px; height: 70px; overflow: hidden; flex-shrink: 0;">
+              <canvas id="adminEcuCropCanvas" width="60" height="60" style="object-fit: cover; width: 100%; height: 100%; border-radius: 4px;"></canvas>
+            </div>
+            <div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-warning text-dark font-rajdhani fw-bold" style="font-size: 0.75rem;">MODO ADMINISTRADOR</span>
+                <span class="text-muted small" id="adminEcuCoordsDisplay" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">X: 0 | Y: 0</span>
+              </div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0 text-white fs-4">DESIGNAR FICHA TÉCNICA DEL COMPONENTE</h5>
+              <div class="text-info opacity-75 small">Completa los datos técnicos para los diagnósticos de los técnicos y talleres</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="cancelAdminEcuDrawing()"></button>
+        </div>
+
+        <form id="formAdminAddEcuComponent" onsubmit="handleAdminSubmitEcuComponent(event)">
+          <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+
+            <!-- Quick Template Presets Bar -->
+            <div class="mb-3 p-2 rounded-3" style="background: rgba(255, 255, 255, 0.04); border: 1px dashed rgba(0, 240, 255, 0.3);">
+              <div class="small fw-bold text-warning mb-1 font-rajdhani"><i class="bi bi-lightning-charge-fill me-1"></i>PLANTILLAS RÁPIDAS (Autocompletar según tipo de chip):</div>
+              <div class="d-flex flex-wrap gap-1">
+                <button type="button" class="btn btn-dark btn-sm border border-secondary text-info py-0 px-2 small" onclick="applyEcuTemplate('driver_inyectores')">Driver Inyectores</button>
+                <button type="button" class="btn btn-dark btn-sm border border-secondary text-info py-0 px-2 small" onclick="applyEcuTemplate('mcu_procesador')">Microprocesador MCU</button>
+                <button type="button" class="btn btn-dark btn-sm border border-secondary text-info py-0 px-2 small" onclick="applyEcuTemplate('eeprom_immo')">Memoria Inmovilizador (EEPROM)</button>
+                <button type="button" class="btn btn-dark btn-sm border border-secondary text-info py-0 px-2 small" onclick="applyEcuTemplate('power_regulator')">Regulador 5V / Power IC</button>
+                <button type="button" class="btn btn-dark btn-sm border border-secondary text-info py-0 px-2 small" onclick="applyEcuTemplate('transceiver_can')">Línea CAN / Comunicación</button>
+                <button type="button" class="btn btn-dark btn-sm border border-secondary text-info py-0 px-2 small" onclick="applyEcuTemplate('scv_mosfet')">MOSFET SCV / Presión</button>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 1: Identificación del Integrado -->
+            <div class="text-info font-rajdhani fw-bold border-bottom border-secondary pb-1 mb-2">
+              <i class="bi bi-cpu-fill me-1"></i> 1. IDENTIFICACIÓN Y CATEGORÍA
+            </div>
+            
+            <div class="row g-2 mb-3">
+              <div class="col-md-7">
+                <label class="form-label small text-light fw-bold mb-1">Nombre Técnico del Componente <span class="text-danger">*</span></label>
+                <input type="text" id="adminEcuCompName" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: Driver de Inyección Cilindros 1 y 4" required>
+                <div class="text-muted" style="font-size: 0.72rem;">Nombre descriptivo que verá el técnico en el visor</div>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small text-light fw-bold mb-1">Categoría del Sistema <span class="text-danger">*</span></label>
+                <select id="adminEcuCompCategory" class="form-select form-select-sm bg-dark text-white border-secondary">
+                  <option value="Actuadores de Potencia">Actuador / Driver de Potencia</option>
+                  <option value="Procesamiento Central">Microprocesador / MCU Principal</option>
+                  <option value="Almacenamiento & Seguridad">Memoria EEPROM / Flash / Inmo</option>
+                  <option value="Alimentación Interna">Regulador de Voltaje / Power IC</option>
+                  <option value="Comunicaciones">Transceiver CAN-Bus / K-Line</option>
+                  <option value="Sensores & Entradas">Entrada Señal Sensor (CKP/CMP/MAP)</option>
+                  <option value="Conexionado">Peine de Conexión / Pines</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-md-4">
+                <label class="form-label small text-light fw-bold mb-1">Código de Serigrafía / Chip</label>
+                <input type="text" id="adminEcuCompCode" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: TLE6244X / SE555 / 93C86">
+                <div class="text-muted" style="font-size: 0.72rem;">Código grabado en el lomo del integrado</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small text-light fw-bold mb-1">Fabricante del Integrado</label>
+                <input type="text" id="adminEcuCompManufacturer" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: Bosch, Denso, Toshiba, ST">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small text-light fw-bold mb-1">Encapsulado</label>
+                <input type="text" id="adminEcuCompPackage" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: QFP-64, SOIC-8, SOT-223, SMD">
+              </div>
+            </div>
+
+            <!-- SECCIÓN 2: Función y Diagnóstico -->
+            <div class="text-info font-rajdhani fw-bold border-bottom border-secondary pb-1 mb-2 mt-3">
+              <i class="bi bi-gear-wide-connected me-1"></i> 2. FUNCIÓN EN EL MOTOR (¿QUÉ CONTROLA?)
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small text-light fw-bold mb-1">Descripción de la Función y Control <span class="text-danger">*</span></label>
+              <textarea id="adminEcuCompControla" class="form-control form-control-sm bg-dark text-white border-secondary" rows="2" placeholder="Ej: Controla los pulsos de apertura de inyectores diésel de alta presión mediante modulación PWM. Al recibir disparo del MCU conmuta la etapa de potencia hacia el ramal..." required></textarea>
+              <div class="text-muted" style="font-size: 0.72rem;">Explica detalladamente qué actuador o sensor comanda y cómo opera</div>
+            </div>
+
+            <!-- SECCIÓN 3: Mediciones Eléctricas y Pruebas -->
+            <div class="text-info font-rajdhani fw-bold border-bottom border-secondary pb-1 mb-2 mt-3">
+              <i class="bi bi-speedometer me-1"></i> 3. PARÁMETROS DE MEDICIÓN & VOLTAJES
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small text-light fw-bold mb-1">Voltajes de Operación y Señales</label>
+                <input type="text" id="adminEcuCompVoltajes" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: VCC: 5.0V ±0.05V / Disparo: 12V PWM">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small text-light fw-bold mb-1">Pines Críticos de Prueba (Multímetro / Osciloscopio)</label>
+                <input type="text" id="adminEcuCompPines" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: Pin 1: Masa (GND) &bull; Pin 4: Señal PWM &bull; Pin 8: VCC +5V">
+              </div>
+            </div>
+
+            <!-- SECCIÓN 4: Fallas Comunes y DTCs -->
+            <div class="text-info font-rajdhani fw-bold border-bottom border-secondary pb-1 mb-2 mt-3">
+              <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> 4. SÍNTOMAS DE FALLA Y CÓDIGOS DTC
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-md-5">
+                <label class="form-label small text-light fw-bold mb-1">Códigos DTC Relacionados</label>
+                <input type="text" id="adminEcuCompDtcs" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: P0201, P0204, P0087">
+              </div>
+              <div class="col-md-7">
+                <label class="form-label small text-light fw-bold mb-1">Síntomas en el Vehículo</label>
+                <input type="text" id="adminEcuCompFallas" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: Pérdida de potencia, cilindro 1 inactivo, humo negro, motor no acelera">
+              </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-secondary">
+              <button type="button" class="btn btn-sm btn-outline-danger px-3 fw-bold font-rajdhani" data-bs-dismiss="modal" onclick="cancelAdminEcuDrawing()">
+                <i class="bi bi-trash me-1"></i> DESCARTAR MAL TRAZO
+              </button>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-secondary px-3" data-bs-dismiss="modal" onclick="cancelAdminEcuDrawing()">Cancelar</button>
+                <button type="submit" class="btn btn-sm btn-info text-dark fw-bold font-rajdhani px-4 shadow">
+                  <i class="bi bi-check-circle-fill me-1"></i> GUARDAR COMPONENTE EN FIREBASE
+                </button>
+              </div>
+            </div>
+
           </div>
         </form>
       </div>

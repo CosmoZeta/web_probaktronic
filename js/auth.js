@@ -141,13 +141,32 @@ function initAuthObserver() {
   });
 }
 
+window.isProbaktronicAdmin = function() {
+  const user = window.probaktronicCurrentUser;
+  if (!user) {
+    try {
+      const raw = localStorage.getItem('probaktronic_cached_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        return (u.email === 'prueba@probak.com' || u.rol === 'admin' || u.isAdmin === true);
+      }
+    } catch(e) {}
+    return false;
+  }
+  return (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true);
+};
+
 // Render User Header UI when Logged In
 function renderLoggedInHeaderUI(userData) {
   const profileSection = document.querySelector('.user-profile-section');
   if (!profileSection) return;
 
-  const isAdmin = (userData.email === 'prueba@probak.com');
+  const isAdmin = (userData.email === 'prueba@probak.com' || userData.rol === 'admin' || userData.isAdmin === true);
   const isPremium = !!userData.esPremium;
+
+  if (typeof window.updateEcuAdminUI === 'function') {
+    window.updateEcuAdminUI();
+  }
 
   let roleText = 'Técnico';
   let greetingText = 'BIENVENIDO AL SISTEMA, TÉCNICO';

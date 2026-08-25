@@ -1173,11 +1173,17 @@ window.showGalleryImageAtIndex = function(index) {
     imgEl.onload = () => {
       const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
       window.applyConsoleWatermark(isVert);
+      if (window.currentActiveDiagramSection === 'pcb') {
+        window.initInteractiveEcuLayer();
+      }
     };
     imgEl.src = currentGalleryImages[currentGalleryIndex];
     if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
       const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
       window.applyConsoleWatermark(isVert);
+      if (window.currentActiveDiagramSection === 'pcb') {
+        window.initInteractiveEcuLayer();
+      }
     }
   }
 
@@ -1293,8 +1299,21 @@ window.loadSpecificDiagramSection = async function(type) {
 
       window.renderGalleryPagination(photos);
       window.showGalleryImageAtIndex(0);
+
+      // Activate interactive ECU layer & check Admin controls
+      if (typeof window.initInteractiveEcuLayer === 'function') {
+        window.initInteractiveEcuLayer();
+      }
+      if (typeof window.updateEcuAdminUI === 'function') {
+        window.updateEcuAdminUI();
+      }
     }
   } else {
+    // Hide interactive ECU overlay on PDF/Connector mode
+    if (typeof window.hideInteractiveEcuLayer === 'function') {
+      window.hideInteractiveEcuLayer();
+    }
+
     // 2. Conexionado del componente (PDF or Schematic Diagram)
     if (btnPcb) btnPcb.classList.remove('active');
     if (btnConn) btnConn.classList.add('active');
@@ -2875,3 +2894,690 @@ window.handleAdminTriggerDeleteFromModal = function() {
     }
   }
 };
+
+/* ==========================================================================
+   PROBAKTRONIC INTERACTIVE ECU PCB VIEWER & ADMIN HOTSPOT MAPPER ENGINE
+   ========================================================================== */
+
+let currentEcuHotspots = [];
+let activeEcuComponentId = null;
+let isEcuEditorMode = false;
+let isEcuDrawing = false;
+let ecuDrawStartX = 0;
+let ecuDrawStartY = 0;
+let tempEcuBoxData = null;
+let currentEcuStorageKey = 'default_ecu_2kd';
+
+// Check & Update Admin UI Controls
+window.updateEcuAdminUI = function() {
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') ? window.isProbaktronicAdmin() : false;
+  const toggleBtn = document.getElementById('btnAdminToggleEcuEditor');
+  const undoBtn = document.getElementById('btnAdminUndoEcuHotspot');
+  const delBtn = document.getElementById('btnAdminDeleteSelectedHotspot');
+
+  if (toggleBtn) {
+    if (isAdmin && window.currentActiveDiagramSection === 'pcb') {
+      toggleBtn.classList.remove('d-none');
+      toggleBtn.classList.add('d-flex');
+    } else {
+      toggleBtn.classList.add('d-none');
+      toggleBtn.classList.remove('d-flex');
+    }
+  }
+
+  if (undoBtn) {
+    if (isAdmin && window.currentActiveDiagramSection === 'pcb' && isEcuEditorMode) {
+      undoBtn.classList.remove('d-none');
+      undoBtn.classList.add('d-flex');
+    } else {
+      undoBtn.classList.add('d-none');
+      undoBtn.classList.remove('d-flex');
+    }
+  }
+
+  if (delBtn) {
+    if (isAdmin && activeEcuComponentId) {
+      delBtn.classList.remove('d-none');
+    } else {
+      delBtn.classList.add('d-none');
+    }
+  }
+};
+
+// Generate Storage Document Key for current vehicle / ECU
+function getActiveEcuStorageKey() {
+  const brand = (window.currentSelectedBrandId || 'brand').toLowerCase();
+  const model = (window.currentSelectedModelId || 'model').toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const active = window._currentActiveDiagramData || {};
+  const title = (active.tituloArchivo || active.motor || active.id || 'ecu').toLowerCase().replace(/[^a-z0-9]/g, '_');
+  return `ecu_hotspots_${brand}_${model}_${title}`;
+}
+
+// Initialize Interactive ECU Layer
+window.initInteractiveEcuLayer = async function() {
+  const svg = document.getElementById('consoleEcuSvgOverlay');
+  const img = document.getElementById('consoleMainDiagramImg');
+  if (!svg || !img) return;
+
+  svg.classList.remove('d-none');
+  currentEcuStorageKey = getActiveEcuStorageKey();
+
+  // Set SVG ViewBox matching Image Natural Dimensions
+  const imgW = img.naturalWidth || 1000;
+  const imgH = img.naturalHeight || 1094;
+  svg.setAttribute('viewBox', `0 0 ${imgW} ${imgH}`);
+
+  // Load existing hotspots from Firestore or local defaults
+  await loadEcuHotspotsFromStorage(imgW, imgH);
+
+  // Attach SVG Drawing events if not already attached
+  setupEcuSvgEventListeners(svg);
+
+  // Update Admin Buttons visibility
+  window.updateEcuAdminUI();
+};
+
+window.hideInteractiveEcuLayer = function() {
+  const svg = document.getElementById('consoleEcuSvgOverlay');
+  const drawer = document.getElementById('consoleEcuInfoDrawer');
+  const banner = document.getElementById('consoleEcuEditorBanner');
+  const toggleBtn = document.getElementById('btnAdminToggleEcuEditor');
+  const undoBtn = document.getElementById('btnAdminUndoEcuHotspot');
+
+  if (svg) svg.classList.add('d-none');
+  if (drawer) drawer.classList.add('d-none');
+  if (banner) banner.classList.add('d-none');
+  if (toggleBtn) {
+    toggleBtn.classList.add('d-none');
+    toggleBtn.classList.remove('d-flex', 'btn-warning');
+    toggleBtn.classList.add('btn-outline-warning');
+  }
+  if (undoBtn) undoBtn.classList.add('d-none');
+
+  isEcuEditorMode = false;
+  isEcuDrawing = false;
+  activeEcuComponentId = null;
+};
+
+// Default Hilux 2KD Denso ECU Hotspots for instant out-of-the-box demo
+function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
+  const scaleX = imgW / 1000;
+  const scaleY = imgH / 1094;
+
+  return [
+    {
+      id: 'ecu_comp_mcu',
+      name: 'Microcontrolador Principal (MCU)',
+      code: 'DENSO / TOSHIBA 32-Bit QFP',
+      category: 'Procesamiento Central',
+      x: Math.round(580 * scaleX), y: Math.round(155 * scaleY),
+      width: Math.round(220 * scaleX), height: Math.round(230 * scaleY),
+      pinX: Math.round(690 * scaleX), pinY: Math.round(270 * scaleY),
+      controla: 'Cerebro principal de la ECU. Procesa señales de sensores en tiempo real (CKP, CMP, MAP, Temperatura) y comanda el mapa de inyección y presión del Common Rail.',
+      voltajes: 'VCC: 5.0V / Núcleo: 3.3V',
+      fallas_comunes: 'Vehículo no arranca, sin comunicación con escáner OBD2 (Sin testigo Check Engine).',
+      pines_clave: 'Alimentación: Pines 1, 32, 64 &bull; Cristal oscilador: 20MHz'
+    },
+    {
+      id: 'ecu_comp_eeprom',
+      name: 'Memoria Flash / EEPROM',
+      code: '93C86 / 25Cxxx SPI',
+      category: 'Almacenamiento & Seguridad',
+      x: Math.round(260 * scaleX), y: Math.round(170 * scaleY),
+      width: Math.round(170 * scaleX), height: Math.round(130 * scaleY),
+      pinX: Math.round(345 * scaleX), pinY: Math.round(235 * scaleY),
+      controla: 'Almacena la codificación del inmovilizador (Llaves/Transponder), número VIN, kilometraje y mapas de calibración del motor.',
+      voltajes: 'VCC: 5.0V en Pin 8',
+      fallas_comunes: 'Error de inmovilizador (Luz de seguridad parpadea), bloqueo de arranque, códigos P1600 / B2799.',
+      pines_clave: 'Pin 1: CS &bull; Pin 4: GND &bull; Pin 8: VCC 5V'
+    },
+    {
+      id: 'ecu_comp_drivers',
+      name: 'Driver Etapa Inyectores Common Rail',
+      code: 'SE555 / MOSFET Driver Array',
+      category: 'Actuadores de Potencia',
+      x: Math.round(235 * scaleX), y: Math.round(535 * scaleY),
+      width: Math.round(170 * scaleX), height: Math.round(100 * scaleY),
+      pinX: Math.round(320 * scaleX), pinY: Math.round(585 * scaleY),
+      controla: 'Maneja la apertura y corte de los inyectores electrohidráulicos diésel mediante pulsos de alta corriente.',
+      voltajes: 'Voltaje de disparo: 12V / Retorno señal GND controlada',
+      fallas_comunes: 'Fallo de cilindro (Misfire), humo negro, códigos P0201, P0202, P0203, P0204.',
+      pines_clave: 'Gate: PWM 5V &bull; Drain: Señal a Inyector'
+    },
+    {
+      id: 'ecu_comp_power',
+      name: 'Regulador de Voltaje & Power IC',
+      code: 'SE587 Multi-Voltage Regulator',
+      category: 'Alimentación Interna',
+      x: Math.round(580 * scaleX), y: Math.round(590 * scaleY),
+      width: Math.round(180 * scaleX), height: Math.round(100 * scaleY),
+      pinX: Math.round(670 * scaleX), pinY: Math.round(640 * scaleY),
+      controla: 'Genera las fuentes estabilizadas de 5.0V para sensores de motor (TPS, MAP, Riel de combustible) y 3.3V para la lógica digital.',
+      voltajes: 'Entrada: +12V BATT &bull; Salida: +5.0V y +3.3V Estables',
+      fallas_comunes: 'Sin 5V en sensores de motor, sensores marcan 0V o 5V fijo, códigos de sobretensión.',
+      pines_clave: 'VCC_IN: 12V Ignición &bull; VREF: 5.00V ±0.05V'
+    },
+    {
+      id: 'ecu_comp_scv',
+      name: 'Transistores MOSFET Salidas SCV / EGR',
+      code: 'Power MOSFET SOT-223',
+      category: 'Actuadores de Potencia',
+      x: Math.round(180 * scaleX), y: Math.round(690 * scaleY),
+      width: Math.round(160 * scaleX), height: Math.round(100 * scaleY),
+      pinX: Math.round(260 * scaleX), pinY: Math.round(740 * scaleY),
+      controla: 'Controla la válvula reguladora de succión (SCV) de la bomba de alta presión diésel y la electroválvula EGR.',
+      voltajes: 'PWM de 12V con modulación por ancho de pulsos',
+      fallas_comunes: 'Falta de presión en el riel Common Rail, motor entra en modo de emergencia o se apaga en aceleración.',
+      pines_clave: 'Control de frecuencia: 250Hz - 1kHz'
+    }
+  ];
+}
+
+// Load from Firestore with fallback to LocalStorage
+async function loadEcuHotspotsFromStorage(imgW, imgH) {
+  currentEcuHotspots = [];
+
+  try {
+    if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+      const db = firebase.firestore();
+      const doc = await db.collection('ecu_interactive_hotspots').doc(currentEcuStorageKey).get();
+      if (doc.exists && Array.isArray(doc.data().componentes)) {
+        currentEcuHotspots = doc.data().componentes;
+      }
+    }
+  } catch (err) {
+    console.warn('Firestore hotspots read warning:', err);
+  }
+
+  if (currentEcuHotspots.length === 0) {
+    const rawLocal = localStorage.getItem(currentEcuStorageKey);
+    if (rawLocal) {
+      try { currentEcuHotspots = JSON.parse(rawLocal); } catch (e) {}
+    }
+  }
+
+  if (currentEcuHotspots.length === 0) {
+    currentEcuHotspots = getDefaultHiluxHotspots(imgW, imgH);
+  }
+
+  renderEcuHotspots();
+}
+
+// Save to Firestore and LocalStorage
+async function saveEcuHotspotsToStorage() {
+  localStorage.setItem(currentEcuStorageKey, JSON.stringify(currentEcuHotspots));
+
+  try {
+    if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+      const db = firebase.firestore();
+      await db.collection('ecu_interactive_hotspots').doc(currentEcuStorageKey).set({
+        componentes: currentEcuHotspots,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      console.log('Componentes ECU guardados en Firestore correctamente.');
+    }
+  } catch (err) {
+    console.warn('Firestore hotspots save warning:', err);
+  }
+}
+
+// Render SVG Hotspot Nodes
+function renderEcuHotspots() {
+  const group = document.getElementById('consoleEcuHotspotsGroup');
+  if (!group) return;
+  group.innerHTML = '';
+
+  currentEcuHotspots.forEach(comp => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('data-id', comp.id);
+
+    // Box
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', comp.x);
+    rect.setAttribute('y', comp.y);
+    rect.setAttribute('width', comp.width);
+    rect.setAttribute('height', comp.height);
+    rect.setAttribute('rx', '4');
+    rect.setAttribute('class', 'ecu-hotspot-box');
+    rect.id = `ecu-box-${comp.id}`;
+
+    // Pin
+    const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    pinG.setAttribute('class', 'ecu-hotspot-pin');
+    pinG.setAttribute('transform', `translate(${comp.pinX}, ${comp.pinY})`);
+    pinG.id = `ecu-pin-${comp.id}`;
+
+    const outerRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    outerRing.setAttribute('class', 'outer-ring');
+    outerRing.setAttribute('r', '14');
+
+    const innerDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    innerDot.setAttribute('class', 'inner-dot');
+    innerDot.setAttribute('r', '5');
+
+    pinG.appendChild(outerRing);
+    pinG.appendChild(innerDot);
+
+    // Click handler
+    g.addEventListener('click', (e) => {
+      if (isEcuEditorMode) return;
+      e.stopPropagation();
+      window.selectEcuComponent(comp);
+    });
+
+    g.appendChild(rect);
+    g.appendChild(pinG);
+    group.appendChild(g);
+  });
+}
+
+// Select Component & Show Details + Animated Leader Line
+window.selectEcuComponent = function(comp) {
+  activeEcuComponentId = comp.id;
+  const line = document.getElementById('consoleEcuActiveLeaderLine');
+  const drawer = document.getElementById('consoleEcuInfoDrawer');
+  const drawerTitle = document.getElementById('ecuDrawerTitle');
+  const drawerContent = document.getElementById('ecuDrawerContent');
+
+  document.querySelectorAll('.ecu-hotspot-box').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.ecu-hotspot-pin').forEach(el => el.classList.remove('active'));
+
+  const box = document.getElementById(`ecu-box-${comp.id}`);
+  const pin = document.getElementById(`ecu-pin-${comp.id}`);
+  if (box) box.classList.add('active');
+  if (pin) pin.classList.add('active');
+
+  // Draw Leader Line
+  if (line) {
+    const svg = document.getElementById('consoleEcuSvgOverlay');
+    const vb = svg ? svg.viewBox.baseVal : { width: 1000, height: 1094 };
+    const startX = comp.pinX;
+    const startY = comp.pinY;
+    const targetX = Math.round(vb.width * 0.98);
+    const targetY = Math.max(60, Math.min(comp.pinY, vb.height - 60));
+    const midX = Math.round(startX + (targetX - startX) * 0.5);
+
+    line.setAttribute('d', `M ${startX} ${startY} L ${midX} ${startY} L ${targetX} ${targetY}`);
+    line.style.display = 'block';
+  }
+
+  // Populate Rich Technical Drawer
+  if (drawer && drawerTitle && drawerContent) {
+    drawerTitle.textContent = comp.name;
+
+    const dtcBadges = comp.dtcs ? comp.dtcs.split(',').map(d => `<span class="badge bg-danger bg-opacity-25 text-danger border border-danger me-1 font-monospace">${d.trim()}</span>`).join(' ') : '';
+    const mfgBadge = comp.manufacturer ? `<span class="badge bg-secondary me-1"><i class="bi bi-building me-1"></i>${comp.manufacturer}</span>` : '';
+    const pkgBadge = comp.package ? `<span class="badge bg-dark border border-secondary text-info me-1 font-monospace">${comp.package}</span>` : '';
+
+    drawerContent.innerHTML = `
+      <div class="d-flex flex-wrap gap-1 mb-2">
+        <span class="badge bg-info bg-opacity-25 text-info border border-info font-monospace" style="font-size: 0.75rem;">
+          <i class="bi bi-tag-fill me-1"></i> ${comp.category || 'Componente'}
+        </span>
+        ${mfgBadge}
+        ${pkgBadge}
+      </div>
+
+      <div class="text-info font-monospace small mb-2 fw-bold fs-6">${comp.code || 'N/A'}</div>
+
+      <!-- Función Principal -->
+      <div class="tech-box">
+        <div class="spec-label mb-1 text-info fw-bold"><i class="bi bi-gear-wide-connected me-1"></i>¿Qué Controla en el Motor?</div>
+        <div class="text-light small" style="line-height: 1.45;">${comp.controla}</div>
+      </div>
+
+      <!-- Parámetros Eléctricos -->
+      <div class="tech-box">
+        <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-secondary border-opacity-25">
+          <span class="spec-label">Voltaje Operación:</span>
+          <span class="spec-val">${comp.voltajes || '12V / 5V'}</span>
+        </div>
+        <div class="mt-1">
+          <span class="spec-label d-block mb-1">Pines Críticos (Medición):</span>
+          <span class="spec-val text-warning small font-monospace d-block">${comp.pines_clave || 'N/D'}</span>
+        </div>
+      </div>
+
+      <!-- Diagnóstico de Fallas -->
+      <div class="alert alert-danger bg-opacity-10 border-danger text-white small p-2 mb-2">
+        <div class="fw-bold mb-1 text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i> Síntomas de Falla:</div>
+        <div class="text-light" style="font-size: 0.82rem;">${comp.fallas_comunes || 'Sin respuesta o señal no emitida.'}</div>
+        ${dtcBadges ? `<div class="mt-2 pt-1 border-top border-danger border-opacity-25"><strong class="small text-danger me-1">DTCs:</strong> ${dtcBadges}</div>` : ''}
+      </div>
+    `;
+
+    drawer.classList.remove('d-none');
+  }
+
+  window.updateEcuAdminUI();
+};
+
+window.closeEcuInfoDrawer = function() {
+  const drawer = document.getElementById('consoleEcuInfoDrawer');
+  const line = document.getElementById('consoleEcuActiveLeaderLine');
+  if (drawer) drawer.classList.add('d-none');
+  if (line) line.style.display = 'none';
+  document.querySelectorAll('.ecu-hotspot-box').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.ecu-hotspot-pin').forEach(el => el.classList.remove('active'));
+  activeEcuComponentId = null;
+  window.updateEcuAdminUI();
+};
+
+// Quick Template Preset Loader for Fast & Detailed Mapping
+window.applyEcuTemplate = function(type) {
+  const nameEl = document.getElementById('adminEcuCompName');
+  const codeEl = document.getElementById('adminEcuCompCode');
+  const catEl = document.getElementById('adminEcuCompCategory');
+  const mfgEl = document.getElementById('adminEcuCompManufacturer');
+  const pkgEl = document.getElementById('adminEcuCompPackage');
+  const funEl = document.getElementById('adminEcuCompControla');
+  const voltEl = document.getElementById('adminEcuCompVoltajes');
+  const pinEl = document.getElementById('adminEcuCompPines');
+  const dtcEl = document.getElementById('adminEcuCompDtcs');
+  const failEl = document.getElementById('adminEcuCompFallas');
+
+  const templates = {
+    driver_inyectores: {
+      name: 'Driver de Inyectores Common Rail',
+      code: 'SE555 / MOSFET Array',
+      cat: 'Actuadores de Potencia',
+      mfg: 'Denso / Bosch',
+      pkg: 'Power SOIC / QFP',
+      fun: 'Comanda los pulsos de apertura y cierre de los inyectores electrohidráulicos mediante descarga de alta tensión (80V) y mantenimiento de corriente PWM.',
+      volt: 'Disparo: 80V DC &bull; Retorno PWM: 12V',
+      pin: 'Gate: 5V Lógica &bull; Drain: Señal a Inyector &bull; Source: Masa Shunt',
+      dtcs: 'P0201, P0202, P0203, P0204',
+      fail: 'Fallo de cilindro (Misfire), motor sin fuerza, humo negro denso, inyector queda abierto o bloqueado.'
+    },
+    mcu_procesador: {
+      name: 'Microprocesador Principal (MCU)',
+      code: 'DENSO 32-Bit / Renesas SH7058',
+      cat: 'Procesamiento Central',
+      mfg: 'Renesas / Toshiba',
+      pkg: 'QFP-144 / QFP-176',
+      fun: 'Unidad central de cálculo de la ECU. Procesa señales de sensores en tiempo real (CKP, CMP, MAP, TPS) y ejecuta las cartografías de inyección y avance.',
+      volt: 'VCC Digital: 5.00V ±0.05V &bull; Núcleo Lógico: 3.3V',
+      pin: 'Pin 1, 36, 72: VCC (+5V) &bull; Cristal: 20.00 MHz &bull; Reset: 5V activo alto',
+      dtcs: 'P0606, P0607, P1600',
+      fail: 'Vehículo no arranca, no enciende testigo Check Engine, sin comunicación OBD2 con el escáner.'
+    },
+    eeprom_immo: {
+      name: 'Memoria Flash / Inmovilizador (EEPROM)',
+      code: '93C86 / 25Cxxx SPI',
+      cat: 'Almacenamiento & Seguridad',
+      mfg: 'ST / Microchip',
+      pkg: 'SOIC-8',
+      fun: 'Almacena la codificación del transponder (Llaves/Inmovilizador), VIN del vehículo, odómetro y mapas de compensación de inyección.',
+      volt: 'VCC: +5.0V en Pin 8',
+      pin: 'Pin 1: CS (Chip Select) &bull; Pin 4: GND &bull; Pin 5: DI &bull; Pin 6: DO &bull; Pin 8: VCC 5V',
+      dtcs: 'B2799, P1600, B2796',
+      fail: 'Bloqueo de arranque del motor, testigo de seguridad parpadea, pérdida de sincronización de llaves.'
+    },
+    power_regulator: {
+      name: 'Regulador Multi-Voltaje & Power IC',
+      code: 'SE587 / System Power Management',
+      cat: 'Alimentación Interna',
+      mfg: 'Denso / Infineon',
+      pkg: 'Power QFP-44',
+      fun: 'Convierte los +12V de batería en fuentes reguladas ultra-estables de +5.0V para sensores externos del motor y +3.3V para procesador digital.',
+      volt: 'Entrada: +12V BATT &bull; Salida VREF: +5.00V ±0.02V &bull; 3.3V',
+      pin: 'V_IN: 12V Ignición &bull; VREF: 5.0V Sensores &bull; V_RESET: 5V',
+      dtcs: 'P0641, P0651, P0685',
+      fail: 'Sensores de motor marcan 0V o 5V fijo, códigos de sobretensión, cortes intermitentes de motor.'
+    },
+    transceiver_can: {
+      name: 'Transceiver de Comunicación CAN-Bus',
+      code: 'PCA82C250 / TJA1050',
+      cat: 'Comunicaciones',
+      mfg: 'NXP / Texas Instruments',
+      pkg: 'SOIC-8',
+      fun: 'Convierte las tramas lógicas del microprocesador en señales diferenciales de alta velocidad para la red CAN del vehículo y puerto OBD2.',
+      volt: 'VCC: 5.0V &bull; CAN-H: 2.5V - 3.5V &bull; CAN-L: 1.5V - 2.5V',
+      pin: 'Pin 1: TXD &bull; Pin 3: VCC 5V &bull; Pin 6: CAN-L &bull; Pin 7: CAN-H',
+      dtcs: 'U0100, U0001, U1000',
+      fail: 'Sin comunicación entre ECU y ABS/Tablero, escáner marca "Error de Enlace", testigo de comunicación encendido.'
+    },
+    scv_mosfet: {
+      name: 'MOSFET de Potencia Válvula SCV / EGR',
+      code: 'Power MOSFET N-Channel',
+      cat: 'Actuadores de Potencia',
+      mfg: 'Toshiba / Vishay',
+      pkg: 'SOT-223 / D2PAK',
+      fun: 'Controla la modulación PWM de la válvula de control de succión (SCV) de la bomba diésel de alta presión y la válvula EGR.',
+      volt: 'Alimentación: 12V &bull; Señal PWM: 250Hz a 1kHz',
+      pin: 'Pin 1: Gate (Control) &bull; Pin 2/Tab: Drain (Salida SCV) &bull; Pin 3: Source (GND)',
+      dtcs: 'P0087, P0088, P0093, P0403',
+      fail: 'Falta de presión en el riel Common Rail, motor entra en modo de emergencia (Limp Mode) o se apaga al acelerar.'
+    }
+  };
+
+  const t = templates[type];
+  if (!t) return;
+
+  if (nameEl) nameEl.value = t.name;
+  if (codeEl) codeEl.value = t.code;
+  if (catEl) catEl.value = t.cat;
+  if (mfgEl) mfgEl.value = t.mfg;
+  if (pkgEl) pkgEl.value = t.pkg;
+  if (funEl) funEl.value = t.fun;
+  if (voltEl) voltEl.value = t.volt;
+  if (pinEl) pinEl.value = t.pin;
+  if (dtcEl) dtcEl.value = t.dtcs;
+  if (failEl) failEl.value = t.fail;
+};
+
+// Admin Editor Controls
+window.toggleAdminEcuEditorMode = function() {
+  isEcuEditorMode = !isEcuEditorMode;
+  const toggleBtn = document.getElementById('btnAdminToggleEcuEditor');
+  const btnText = document.getElementById('adminEcuEditorBtnText');
+  const banner = document.getElementById('consoleEcuEditorBanner');
+  const wrap = document.getElementById('consoleImgViewerWrap');
+
+  if (isEcuEditorMode) {
+    if (toggleBtn) {
+      toggleBtn.classList.remove('btn-outline-warning');
+      toggleBtn.classList.add('btn-warning', 'text-dark');
+    }
+    if (btnText) btnText.textContent = 'FINALIZAR DIBUJO';
+    if (banner) banner.classList.remove('d-none');
+    if (wrap) wrap.style.cursor = 'crosshair';
+  } else {
+    if (toggleBtn) {
+      toggleBtn.classList.add('btn-outline-warning');
+      toggleBtn.classList.remove('btn-warning', 'text-dark');
+    }
+    if (btnText) btnText.textContent = 'DIBUJAR ESPACIOS';
+    if (banner) banner.classList.add('d-none');
+    if (wrap) wrap.style.cursor = 'grab';
+  }
+
+  window.updateEcuAdminUI();
+};
+
+window.cancelAdminEcuDrawing = function() {
+  isEcuDrawing = false;
+  const box = document.getElementById('consoleEcuDrawingBox');
+  if (box) box.style.display = 'none';
+  tempEcuBoxData = null;
+};
+
+window.undoLastAdminEcuHotspot = async function() {
+  if (currentEcuHotspots.length === 0) {
+    alert('No hay componentes registrados para deshacer.');
+    return;
+  }
+  const last = currentEcuHotspots.pop();
+  await saveEcuHotspotsToStorage();
+  window.closeEcuInfoDrawer();
+  renderEcuHotspots();
+};
+
+window.deleteActiveEcuComponent = async function() {
+  if (!activeEcuComponentId) return;
+  if (confirm('¿Deseas eliminar este componente de la ECU permanentemente?')) {
+    currentEcuHotspots = currentEcuHotspots.filter(c => c.id !== activeEcuComponentId);
+    await saveEcuHotspotsToStorage();
+    window.closeEcuInfoDrawer();
+    renderEcuHotspots();
+  }
+};
+
+window.handleAdminSubmitEcuComponent = async function(e) {
+  e.preventDefault();
+  if (!tempEcuBoxData) return;
+
+  const newComp = {
+    id: 'ecu_comp_' + Date.now(),
+    name: document.getElementById('adminEcuCompName').value,
+    code: document.getElementById('adminEcuCompCode').value || 'N/A',
+    category: document.getElementById('adminEcuCompCategory').value,
+    manufacturer: document.getElementById('adminEcuCompManufacturer').value || '',
+    package: document.getElementById('adminEcuCompPackage').value || '',
+    controla: document.getElementById('adminEcuCompControla').value,
+    voltajes: document.getElementById('adminEcuCompVoltajes').value || '12V / 5V',
+    pines_clave: document.getElementById('adminEcuCompPines').value || 'N/D',
+    dtcs: document.getElementById('adminEcuCompDtcs').value || '',
+    fallas_comunes: document.getElementById('adminEcuCompFallas').value || 'Fallo de operación o señal ausente.',
+    ...tempEcuBoxData
+  };
+
+  currentEcuHotspots.push(newComp);
+  await saveEcuHotspotsToStorage();
+
+  const modalEl = document.getElementById('modalAdminAddEcuComponent');
+  const bsModal = modalEl ? bootstrap.Modal.getInstance(modalEl) : null;
+  if (bsModal) bsModal.hide();
+
+  renderEcuHotspots();
+  window.selectEcuComponent(newComp);
+};
+
+// SVG Mouse / Touch Coordinate Helper via Standard Inverse Matrix
+function getEcuSvgCoordinates(svg, e) {
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+  const matrix = svg.getScreenCTM();
+  if (!matrix) return { x: 0, y: 0 };
+  const transformed = pt.matrixTransform(matrix.inverse());
+  const vb = svg.viewBox.baseVal;
+  return {
+    x: Math.max(0, Math.min(vb.width, Math.round(transformed.x))),
+    y: Math.max(0, Math.min(vb.height, Math.round(transformed.y)))
+  };
+}
+
+// Generate Chip Crop Snapshot on Canvas
+function drawChipPreviewSnapshot(boxX, boxY, boxW, boxH) {
+  const img = document.getElementById('consoleMainDiagramImg');
+  const canvas = document.getElementById('adminEcuCropCanvas');
+  const coordsEl = document.getElementById('adminEcuCoordsDisplay');
+  if (!img || !canvas) return;
+
+  if (coordsEl) {
+    coordsEl.textContent = `X: ${boxX}, Y: ${boxY} [${boxW}x${boxH}px]`;
+  }
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  try {
+    // Map SVG coordinates to image source pixels
+    const svg = document.getElementById('consoleEcuSvgOverlay');
+    const vb = svg ? svg.viewBox.baseVal : { width: img.naturalWidth || 1000, height: img.naturalHeight || 1094 };
+
+    const scaleX = (img.naturalWidth || img.width) / vb.width;
+    const scaleY = (img.naturalHeight || img.height) / vb.height;
+
+    const srcX = Math.max(0, boxX * scaleX);
+    const srcY = Math.max(0, boxY * scaleY);
+    const srcW = Math.max(1, boxW * scaleX);
+    const srcH = Math.max(1, boxH * scaleY);
+
+    ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height);
+  } catch (err) {
+    console.warn('Canvas crop snapshot warning:', err);
+  }
+}
+
+function setupEcuSvgEventListeners(svg) {
+  if (svg.dataset.ecuEventsAttached === 'true') return;
+  svg.dataset.ecuEventsAttached = 'true';
+
+  const box = document.getElementById('consoleEcuDrawingBox');
+
+  svg.addEventListener('mousedown', (e) => {
+    if (!isEcuEditorMode) return;
+    e.stopPropagation();
+
+    const p = getEcuSvgCoordinates(svg, e);
+    isEcuDrawing = true;
+    ecuDrawStartX = p.x;
+    ecuDrawStartY = p.y;
+
+    if (box) {
+      box.setAttribute('x', ecuDrawStartX);
+      box.setAttribute('y', ecuDrawStartY);
+      box.setAttribute('width', 0);
+      box.setAttribute('height', 0);
+      box.style.display = 'block';
+    }
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isEcuDrawing || !isEcuEditorMode || !box) return;
+    const p = getEcuSvgCoordinates(svg, e);
+    const curX = Math.min(ecuDrawStartX, p.x);
+    const curY = Math.min(ecuDrawStartY, p.y);
+    const curW = Math.abs(p.x - ecuDrawStartX);
+    const curH = Math.abs(p.y - ecuDrawStartY);
+
+    box.setAttribute('x', curX);
+    box.setAttribute('y', curY);
+    box.setAttribute('width', curW);
+    box.setAttribute('height', curH);
+  });
+
+  window.addEventListener('mouseup', (e) => {
+    if (!isEcuDrawing || !isEcuEditorMode || !box) return;
+    isEcuDrawing = false;
+    box.style.display = 'none';
+
+    const boxX = parseInt(box.getAttribute('x') || 0);
+    const boxY = parseInt(box.getAttribute('y') || 0);
+    const boxW = parseInt(box.getAttribute('width') || 0);
+    const boxH = parseInt(box.getAttribute('height') || 0);
+
+    if (boxW > 12 && boxH > 12) {
+      tempEcuBoxData = {
+        x: boxX,
+        y: boxY,
+        width: boxW,
+        height: boxH,
+        pinX: Math.round(boxX + boxW / 2),
+        pinY: Math.round(boxY + boxH / 2)
+      };
+
+      // Draw mini snapshot of the selected chip into the modal
+      drawChipPreviewSnapshot(boxX, boxY, boxW, boxH);
+
+      const form = document.getElementById('formAdminAddEcuComponent');
+      if (form) form.reset();
+
+      const modalEl = document.getElementById('modalAdminAddEcuComponent');
+      if (modalEl) {
+        const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        bsModal.show();
+      }
+    }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isEcuEditorMode) {
+      window.cancelAdminEcuDrawing();
+    }
+  });
+}
+
+
