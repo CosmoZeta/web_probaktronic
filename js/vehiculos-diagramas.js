@@ -925,8 +925,25 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
     return !deletedDiagrams.includes(cleanId) && !deletedDiagrams.includes(cleanTitle);
   });
 
-  const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
+  const isAdmin = (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin'));
   const btnNext = document.getElementById('btnNextToDiagram');
+
+  // Fetch live global card icons from Firestore
+  let firestoreCardIcons = {};
+  try {
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      const iconDoc = await firebase.firestore().collection('app_config').doc('iconos_tarjetas').get().catch(() => null);
+      if (iconDoc && iconDoc.exists) {
+        firestoreCardIcons = iconDoc.data() || {};
+        try {
+          const localSaved = JSON.parse(localStorage.getItem('probaktronic_card_icons') || '{}');
+          localStorage.setItem('probaktronic_card_icons', JSON.stringify({ ...localSaved, ...firestoreCardIcons }));
+        } catch (e) {}
+      }
+    }
+  } catch (e) {
+    console.warn('Could not fetch app_config/iconos_tarjetas:', e);
+  }
 
   loader.finish(() => {
     connectionListContainer.innerHTML = '';
@@ -964,15 +981,17 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
       const isSelected = index === 0;
       const title = (arch.titulo || arch.nombre || arch.id).toUpperCase();
       const cardKey = arch.id || title;
+      const safeKey = cardKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const safeTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_');
 
-      // Check if Admin set a custom icon for this card key
-      let customIcon = arch.icono;
-      try {
-        const savedCustomIcons = JSON.parse(localStorage.getItem('probaktronic_card_icons') || '{}');
-        if (savedCustomIcons[cardKey]) {
-          customIcon = savedCustomIcons[cardKey];
-        }
-      } catch (e) {}
+      // Check if Admin set a custom icon for this card key (Firestore first, then LocalStorage, then arch.icono)
+      let customIcon = arch.icono || firestoreCardIcons[cardKey] || firestoreCardIcons[safeKey] || firestoreCardIcons[title] || firestoreCardIcons[safeTitle];
+      if (!customIcon) {
+        try {
+          const savedCustomIcons = JSON.parse(localStorage.getItem('probaktronic_card_icons') || '{}');
+          customIcon = savedCustomIcons[cardKey] || savedCustomIcons[safeKey] || savedCustomIcons[title] || savedCustomIcons[safeTitle];
+        } catch (e) {}
+      }
 
       let iconHtml = '<i class="bi bi-file-earmark-pdf-fill fs-1"></i>';
       if (customIcon) {
@@ -2105,9 +2124,12 @@ window.saveAdminMechanicalIconChoice = async function() {
     if (typeof firebase !== 'undefined' && firebase.firestore) {
       const db = firebase.firestore();
       const safeKey = currentEditingCardKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const cleanKey = currentEditingCardKey.trim();
       
       const payload = {
+        [cleanKey]: selectedMechanicalIconChoice,
         [safeKey]: selectedMechanicalIconChoice,
+        [cleanKey.toUpperCase()]: selectedMechanicalIconChoice,
         last_updated: firebase.firestore.FieldValue.serverTimestamp()
       };
 
