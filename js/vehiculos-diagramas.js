@@ -1722,6 +1722,7 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
       activeData.allImages = selectedArchDoc.imagenes;
       activeData.imageUrl = selectedArchDoc.imagenes[0];
     }
+    activeData._selectedArchDoc = selectedArchDoc;
   }
 
   activeData._componentMeta = compMeta;
@@ -3119,18 +3120,63 @@ function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
 async function loadEcuHotspotsFromStorage(imgW, imgH) {
   currentEcuHotspots = [];
 
-  try {
-    if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
-      const db = firebase.firestore();
-      const doc = await db.collection('ecu_interactive_hotspots').doc(currentEcuStorageKey).get();
-      if (doc.exists && Array.isArray(doc.data().componentes)) {
-        currentEcuHotspots = doc.data().componentes;
-      }
-    }
-  } catch (err) {
-    console.warn('Firestore hotspots read warning:', err);
+  const active = window._currentActiveDiagramData || {};
+  const archDoc = active._selectedArchDoc || {};
+
+  // 1. Check if the diagram document already had componentes_ecu
+  if (Array.isArray(archDoc.componentes_ecu) && archDoc.componentes_ecu.length > 0) {
+    currentEcuHotspots = archDoc.componentes_ecu;
   }
 
+  // 2. Fetch directly from the specific Firestore diagram document
+  if (currentEcuHotspots.length === 0 && archDoc.brandDocId && archDoc.modelDocId && archDoc.anioDocId && archDoc.motorDocId && archDoc.archDocId) {
+    try {
+      if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+        const db = firebase.firestore();
+        const cleanBrand = (archDoc.brandDocId || '').toLowerCase().trim();
+        const cleanModel = (archDoc.modelDocId || '').toLowerCase().trim();
+        const docSnap = await db.collection('diagramas').doc(cleanBrand)
+          .collection('modelos').doc(cleanModel)
+          .collection('anios').doc(archDoc.anioDocId)
+          .collection('motores').doc(archDoc.motorDocId)
+          .collection('archivos').doc(archDoc.archDocId).get().catch(() => null);
+
+        if (docSnap && docSnap.exists && Array.isArray(docSnap.data().componentes_ecu)) {
+          currentEcuHotspots = docSnap.data().componentes_ecu;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 3. Fetch from collection 'diagramas' > 'ecu_hotspots'
+  if (currentEcuHotspots.length === 0) {
+    try {
+      if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+        const db = firebase.firestore();
+        const docSnap = await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(currentEcuStorageKey).get().catch(() => null);
+        if (docSnap && docSnap.exists && Array.isArray(docSnap.data().componentes)) {
+          currentEcuHotspots = docSnap.data().componentes;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 4. Fetch from collection 'ecu_interactive_hotspots'
+  if (currentEcuHotspots.length === 0) {
+    try {
+      if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+        const db = firebase.firestore();
+        const doc = await db.collection('ecu_interactive_hotspots').doc(currentEcuStorageKey).get().catch(() => null);
+        if (doc && doc.exists && Array.isArray(doc.data().componentes)) {
+          currentEcuHotspots = doc.data().componentes;
+        }
+      }
+    } catch (err) {
+      console.warn('Firestore hotspots read warning:', err);
+    }
+  }
+
+  // 5. Fallback to LocalStorage
   if (currentEcuHotspots.length === 0) {
     const rawLocal = localStorage.getItem(currentEcuStorageKey);
     if (rawLocal) {
@@ -3138,6 +3184,7 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
     }
   }
 
+  // 6. Default fallback for initial Hilux ECU
   if (currentEcuHotspots.length === 0) {
     currentEcuHotspots = getDefaultHiluxHotspots(imgW, imgH);
   }
@@ -3145,18 +3192,49 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
   renderEcuHotspots();
 }
 
-// Save to Firestore and LocalStorage
+// Save to Firestore and LocalStorage (Multi-Layer Zero-Fail Sync)
 async function saveEcuHotspotsToStorage() {
   localStorage.setItem(currentEcuStorageKey, JSON.stringify(currentEcuHotspots));
+
+  const active = window._currentActiveDiagramData || {};
+  const archDoc = active._selectedArchDoc || {};
 
   try {
     if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
       const db = firebase.firestore();
+
+      // Layer A: Write directly into the specific diagram document in Firestore
+      if (archDoc.brandDocId && archDoc.modelDocId && archDoc.anioDocId && archDoc.motorDocId && archDoc.archDocId) {
+        const cleanBrand = (archDoc.brandDocId || '').toLowerCase().trim();
+        const cleanModel = (archDoc.modelDocId || '').toLowerCase().trim();
+        await db.collection('diagramas').doc(cleanBrand)
+          .collection('modelos').doc(cleanModel)
+          .collection('anios').doc(archDoc.anioDocId)
+          .collection('motores').doc(archDoc.motorDocId)
+          .collection('archivos').doc(archDoc.archDocId)
+          .set({
+            componentes_ecu: currentEcuHotspots,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true }).catch(err => console.warn('Diagram doc hotspots save error:', err));
+        console.log('Componentes ECU guardados directamente en el documento del diagrama en Firestore.');
+      }
+
+      // Layer B: Write to collection 'diagramas' > 'ecu_hotspots' (Protected by diagram rules)
+      await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(currentEcuStorageKey).set({
+        componentes: currentEcuHotspots,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true }).catch(() => null);
+
+      // Layer C: Write to 'ecu_interactive_hotspots'
       await db.collection('ecu_interactive_hotspots').doc(currentEcuStorageKey).set({
         componentes: currentEcuHotspots,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      console.log('Componentes ECU guardados en Firestore correctamente.');
+      }, { merge: true }).catch(() => null);
+
+      console.log('Componentes ECU sincronizados exitosamente en Firestore.');
+      if (typeof window.showGlobalToast === 'function') {
+        window.showGlobalToast('¡Componentes de la ECU guardados en la nube de Firebase!');
+      }
     }
   } catch (err) {
     console.warn('Firestore hotspots save warning:', err);
