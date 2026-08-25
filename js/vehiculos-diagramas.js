@@ -3048,7 +3048,7 @@ window.hideInteractiveEcuLayer = function() {
   activeEcuComponentId = null;
 };
 
-// Default Hilux 2KD Denso ECU Hotspots for instant out-of-the-box demo
+// Default Hilux 2KD Denso ECU Hotspots (3 main circuits)
 function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
   const scaleX = imgW / 1000;
   const scaleY = imgH / 1094;
@@ -3092,32 +3092,6 @@ function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
       voltajes: 'Voltaje de disparo: 12V / Retorno señal GND controlada',
       fallas_comunes: 'Fallo de cilindro (Misfire), humo negro, códigos P0201, P0202, P0203, P0204.',
       pines_clave: 'Gate: PWM 5V &bull; Drain: Señal a Inyector'
-    },
-    {
-      id: 'ecu_comp_power',
-      name: 'Regulador de Voltaje & Power IC',
-      code: 'SE587 Multi-Voltage Regulator',
-      category: 'Alimentación Interna',
-      x: Math.round(580 * scaleX), y: Math.round(590 * scaleY),
-      width: Math.round(180 * scaleX), height: Math.round(100 * scaleY),
-      pinX: Math.round(670 * scaleX), pinY: Math.round(640 * scaleY),
-      controla: 'Genera las fuentes estabilizadas de 5.0V para sensores de motor (TPS, MAP, Riel de combustible) y 3.3V para la lógica digital.',
-      voltajes: 'Entrada: +12V BATT &bull; Salida: +5.0V y +3.3V Estables',
-      fallas_comunes: 'Sin 5V en sensores de motor, sensores marcan 0V o 5V fijo, códigos de sobretensión.',
-      pines_clave: 'VCC_IN: 12V Ignición &bull; VREF: 5.00V ±0.05V'
-    },
-    {
-      id: 'ecu_comp_scv',
-      name: 'Transistores MOSFET Salidas SCV / EGR',
-      code: 'Power MOSFET SOT-223',
-      category: 'Actuadores de Potencia',
-      x: Math.round(180 * scaleX), y: Math.round(690 * scaleY),
-      width: Math.round(160 * scaleX), height: Math.round(100 * scaleY),
-      pinX: Math.round(260 * scaleX), pinY: Math.round(740 * scaleY),
-      controla: 'Controla la válvula reguladora de succión (SCV) de la bomba de alta presión diésel y la electroválvula EGR.',
-      voltajes: 'PWM de 12V con modulación por ancho de pulsos',
-      fallas_comunes: 'Falta de presión en el riel Common Rail, motor entra en modo de emergencia o se apaga en aceleración.',
-      pines_clave: 'Control de frecuencia: 250Hz - 1kHz'
     }
   ];
 }
