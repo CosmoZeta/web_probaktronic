@@ -248,6 +248,60 @@
       margin-top: 20px;
     }
 
+    /* Structured Navigation Styles (Gasolina vs Diesel & Categories) */
+    .fuel-type-card {
+      background: #FFFFFF;
+      border: 2px solid #E2E8F0;
+      border-radius: 20px;
+      padding: 36px 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    .fuel-type-card:hover {
+      border-color: var(--brand-red, #DC2626);
+      transform: translateY(-5px);
+      box-shadow: 0 14px 30px rgba(220, 38, 38, 0.15);
+    }
+
+    .fuel-icon-wrap {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px auto;
+      font-size: 2.6rem;
+      transition: transform 0.3s ease;
+    }
+
+    .fuel-type-card:hover .fuel-icon-wrap {
+      transform: scale(1.08);
+    }
+
+    .category-card {
+      background: #FFFFFF;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 24px 20px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .category-card:hover {
+      border-color: var(--brand-red, #DC2626);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 24px rgba(220, 38, 38, 0.12);
+    }
+
+    .vehicle-breadcrumb-nav {
+      border-color: #E2E8F0 !important;
+    }
+
     @media (max-width: 768px) {
       .brand-grid,
       .model-list-grid {
@@ -897,8 +951,200 @@
         </div>
       </div>
 
+      <!-- Interactive Breadcrumb Path Bar -->
+      <div class="vehicle-breadcrumb-nav mb-4 d-flex align-items-center gap-2 px-3 py-2 bg-white rounded-3 border shadow-sm" id="vehicleBreadcrumbNav">
+        <a href="#" class="breadcrumb-item text-dark fw-bold text-decoration-none small d-flex align-items-center gap-1" onclick="showFuelSelectorView(event)">
+          <i class="bi bi-car-front-fill text-danger"></i> Vehículos
+        </a>
+        <span class="text-muted small breadcrumb-sep d-none" id="bcrumbSep1"><i class="bi bi-chevron-right fs-7"></i></span>
+        <a href="#" class="breadcrumb-item text-dark fw-semibold text-decoration-none small d-none" id="bcrumbFuelType" onclick="returnFuelTypeView(event)">
+          Diesel
+        </a>
+        <span class="text-muted small breadcrumb-sep d-none" id="bcrumbSep2"><i class="bi bi-chevron-right fs-7"></i></span>
+        <span class="breadcrumb-item text-danger fw-bold small d-none" id="bcrumbCategory">
+          Pickup
+        </span>
+      </div>
+
+      <!-- View 0A: Fuel Selector View (Gasolina vs Diesel) -->
+      <div id="fuelSelectorViewContainer">
+        <div class="text-center mb-4">
+          <h3 class="font-rajdhani fw-bold text-dark mb-1">SELECCIONE EL TIPO DE MOTORIZACIÓN</h3>
+          <p class="text-muted small">Elija el sistema de combustible del vehículo para consultar esquemas y pinouts de diagnóstico</p>
+        </div>
+
+        <div class="row g-4 justify-content-center max-w-900 mx-auto mb-5">
+          <!-- Card Gasolina -->
+          <div class="col-md-5">
+            <div class="fuel-type-card h-100" onclick="selectFuelType('gasolina')">
+              <div class="fuel-icon-wrap bg-danger-subtle text-danger">
+                <i class="bi bi-fuel-pump-fill"></i>
+              </div>
+              <h3 class="font-rajdhani fw-bold text-dark fs-2 mb-2">GASOLINA</h3>
+              <p class="text-muted small mb-3">Sistemas de inyección electrónica MPFI, GDI, cuerpos de aceleración TPS y sensores ciclo Otto.</p>
+              <button class="btn btn-outline-danger rounded-pill px-4 fw-bold">
+                Ingresar a Gasolina <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card Diesel -->
+          <div class="col-md-5">
+            <div class="fuel-type-card h-100 border-danger shadow-sm" onclick="selectFuelType('diesel')">
+              <div class="fuel-icon-wrap bg-dark text-white">
+                <i class="bi bi-droplet-fill"></i>
+              </div>
+              <h3 class="font-rajdhani fw-bold text-dark fs-2 mb-2">DIESEL</h3>
+              <p class="text-muted small mb-3">Sistemas Common Rail, inyectores piezoeléctricos, bombas EDC y unidades de control Heavy Duty.</p>
+              <button class="btn btn-danger rounded-pill px-4 fw-bold shadow">
+                Ingresar a Diesel <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View 0B: Diesel Categories View (Pickup, Furgón, Camiones, Maquinarias) -->
+      <div id="dieselCategoriesViewContainer" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+          <div>
+            <h3 class="font-rajdhani fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+              <i class="bi bi-droplet-fill text-danger"></i> CATEGORÍAS DIESEL
+            </h3>
+            <p class="text-muted small mb-0">Seleccione la categoría de vehículo o maquinaria Diesel a diagnosticar</p>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm" onclick="showFuelSelectorView()"><i class="bi bi-arrow-left me-1"></i> Volver a Motorización</button>
+        </div>
+
+        <div class="row g-4 mb-5">
+          <!-- 1. Pickup / Camionetas (ACTIVA - CON MODELOS CARGADOS) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="category-card h-100 text-center position-relative shadow-sm" onclick="selectVehicleCategory('pickup', 'diesel', 'PICKUP / CAMIONETAS', 1)">
+              <div class="mb-2">
+                <span class="badge bg-danger rounded-pill px-3 py-1 fw-bold fs-7 shadow-sm">
+                  <i class="bi bi-check-circle-fill me-1"></i> 1 Modelo Disponible
+                </span>
+              </div>
+              <div class="category-icon-wrap mx-auto mb-3 bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+                <i class="bi bi-truck-front-fill"></i>
+              </div>
+              <h4 class="font-rajdhani fw-bold text-dark fs-4 mb-1">PICKUP</h4>
+              <p class="text-muted small mb-3" style="font-size: 0.8rem;">Camionetas 4x4 / 4x2 (Toyota Hilux, Nissan Frontier, Ford Ranger...)</p>
+              <button class="btn btn-danger btn-sm rounded-pill w-100 fw-bold shadow-sm">
+                Ver Toyota Hilux <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Furgón / Van (INACTIVA - 0 MODELOS) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="category-card h-100 text-center position-relative opacity-75 bg-light" style="cursor: not-allowed;" onclick="selectVehicleCategory('furgon', 'diesel', 'FURGÓN / VAN', 0)">
+              <div class="mb-2">
+                <span class="badge bg-secondary rounded-pill px-3 py-1 fs-7">
+                  <i class="bi bi-clock-history me-1"></i> 0 Modelos
+                </span>
+              </div>
+              <div class="category-icon-wrap mx-auto mb-3 bg-secondary-subtle text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+                <i class="bi bi-box-seam-fill"></i>
+              </div>
+              <h4 class="font-rajdhani fw-bold text-muted fs-4 mb-1">FURGÓN</h4>
+              <p class="text-muted small mb-3" style="font-size: 0.8rem;">Vans de Carga y Pasajeros (Hyundai H1, Sprinter, Transit...)</p>
+              <button class="btn btn-outline-secondary btn-sm rounded-pill w-100 disabled">
+                Próximamente
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. Camiones (INACTIVA - 0 MODELOS) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="category-card h-100 text-center position-relative opacity-75 bg-light" style="cursor: not-allowed;" onclick="selectVehicleCategory('camiones', 'diesel', 'CAMIONES / PESADO', 0)">
+              <div class="mb-2">
+                <span class="badge bg-secondary rounded-pill px-3 py-1 fs-7">
+                  <i class="bi bi-clock-history me-1"></i> 0 Modelos
+                </span>
+              </div>
+              <div class="category-icon-wrap mx-auto mb-3 bg-secondary-subtle text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+                <i class="bi bi-truck"></i>
+              </div>
+              <h4 class="font-rajdhani fw-bold text-muted fs-4 mb-1">CAMIONES</h4>
+              <p class="text-muted small mb-3" style="font-size: 0.8rem;">Camiones Livianos y Pesados (Isuzu N-Series, Hino, Fuso...)</p>
+              <button class="btn btn-outline-secondary btn-sm rounded-pill w-100 disabled">
+                Próximamente
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. Maquinarias Pesadas (INACTIVA - 0 MODELOS) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="category-card h-100 text-center position-relative opacity-75 bg-light" style="cursor: not-allowed;" onclick="selectVehicleCategory('maquinaria', 'diesel', 'MAQUINARIAS PESADAS', 0)">
+              <div class="mb-2">
+                <span class="badge bg-secondary rounded-pill px-3 py-1 fs-7">
+                  <i class="bi bi-clock-history me-1"></i> 0 Modelos
+                </span>
+              </div>
+              <div class="category-icon-wrap mx-auto mb-3 bg-secondary-subtle text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+                <i class="bi bi-gear-wide-connected"></i>
+              </div>
+              <h4 class="font-rajdhani fw-bold text-muted fs-4 mb-1">MAQUINARIAS</h4>
+              <p class="text-muted small mb-3" style="font-size: 0.8rem;">Maquinaria Pesada & Industrial (Caterpillar, Komatsu...)</p>
+              <button class="btn btn-outline-secondary btn-sm rounded-pill w-100 disabled">
+                Próximamente
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View 0C: Gasolina Categories View -->
+      <div id="gasolinaCategoriesViewContainer" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+          <div>
+            <h3 class="font-rajdhani fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+              <i class="bi bi-fuel-pump-fill text-danger"></i> CATEGORÍAS GASOLINA
+            </h3>
+            <p class="text-muted small mb-0">Seleccione el segmento de vehículo Gasolina a diagnosticar</p>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm" onclick="showFuelSelectorView()"><i class="bi bi-arrow-left me-1"></i> Volver a Motorización</button>
+        </div>
+
+        <div class="row g-4 mb-5">
+          <div class="col-md-4 col-sm-6">
+            <div class="category-card h-100 text-center" onclick="selectVehicleCategory('sedan', 'gasolina', 'SEDÁN / HATCHBACK')">
+              <div class="category-icon-wrap mx-auto mb-3 bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+                <i class="bi bi-car-front-fill"></i>
+              </div>
+              <h4 class="font-rajdhani fw-bold text-dark fs-4 mb-2">SEDÁN / HATCHBACK</h4>
+              <p class="text-muted small mb-3">Vehículos livianos de ciudad y carretera.</p>
+              <span class="badge bg-danger rounded-pill px-3 py-2">Ver Autos Gasolina</span>
+            </div>
+          </div>
+
+          <div class="col-md-4 col-sm-6">
+            <div class="category-card h-100 text-center" onclick="selectVehicleCategory('suv', 'gasolina', 'SUV / CROSSOVER')">
+              <div class="category-icon-wrap mx-auto mb-3 bg-dark text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+                <i class="bi bi-shield-shaded"></i>
+              </div>
+              <h4 class="font-rajdhani fw-bold text-dark fs-4 mb-2">SUV / CROSSOVER</h4>
+              <p class="text-muted small mb-3">Camionetas familiares y Crossovers Gasolina.</p>
+              <span class="badge bg-secondary rounded-pill px-3 py-2">Ver SUV Gasolina</span>
+            </div>
+          </div>
+
+          <div class="col-md-4 col-sm-6">
+            <div class="category-card h-100 text-center" onclick="selectVehicleCategory('pickup_gas', 'gasolina', 'PICKUP GASOLINA')">
+              <div class="category-icon-wrap mx-auto mb-3 bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+                <i class="bi bi-truck-front-fill"></i>
+              </div>
+              <h4 class="font-rajdhani fw-bold text-dark fs-4 mb-2">PICKUP GASOLINA</h4>
+              <p class="text-muted small mb-3">Camionetas pickup con motorización a gasolina.</p>
+              <span class="badge bg-secondary rounded-pill px-3 py-2">Ver Pickups Gasolina</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- View 1: Brands Selector View -->
-      <div id="brandsViewContainer">
+      <div id="brandsViewContainer" class="d-none">
         <!-- Section Tabs -->
         <div class="section-tab-bar">
           <span class="section-tab-item active" data-tab="all">Mostrar Todo</span>
@@ -1180,8 +1426,9 @@
   <!-- PDF.js Engine for Pure Image Rendering without Browser PDF Chrome -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-  <!-- Firebase Web SDK Compat Libraries (App, Firestore & Storage) -->
+  <!-- Firebase Web SDK Compat Libraries (App, Auth, Firestore & Storage) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
@@ -1189,6 +1436,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/global.js?v=2.4"></script>
   <script src="js/firebase-catalog.js?v=2.4"></script>
+  <script src="js/auth.js"></script>
   <script src="js/vehiculos-diagramas.js?v=2.4"></script>
 </body>
 </html>

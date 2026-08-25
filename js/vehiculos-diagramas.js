@@ -248,24 +248,40 @@ function initVehiculosDiagramasModule() {
       const ecuView = document.getElementById('ecuInfoViewContainer');
       const diagramView = document.getElementById('diagramViewContainer');
 
+      const fuelView = document.getElementById('fuelSelectorViewContainer');
+      const dieselCatView = document.getElementById('dieselCategoriesViewContainer');
+      const gasCatView = document.getElementById('gasolinaCategoriesViewContainer');
+
       if (diagramView && !diagramView.classList.contains('d-none')) {
         e.preventDefault();
-        showEcuInfoView(); // Level 4 -> Level 3
+        showEcuInfoView();
         return;
       }
 
       if (ecuView && !ecuView.classList.contains('d-none')) {
         e.preventDefault();
-        showModelsView(); // Level 3 -> Level 2
+        showModelsView();
         return;
       }
 
       if (modelsView && !modelsView.classList.contains('d-none')) {
         e.preventDefault();
-        showBrandsView(); // Level 2 -> Level 1
+        showBrandsView();
         return;
       }
-      // If at Level 1 (brandsView), default link to index.html takes effect!
+
+      if (brandsView && !brandsView.classList.contains('d-none')) {
+        e.preventDefault();
+        returnFuelTypeView();
+        return;
+      }
+
+      if ((dieselCatView && !dieselCatView.classList.contains('d-none')) || (gasCatView && !gasCatView.classList.contains('d-none'))) {
+        e.preventDefault();
+        showFuelSelectorView();
+        return;
+      }
+      // If at Level 1 (fuelView), default link to index.html takes effect!
     };
   }
 
@@ -286,12 +302,12 @@ function ensureFirebaseInitialized() {
     try {
       if (!firebase.apps || !firebase.apps.length) {
         firebase.initializeApp({
-          apiKey: "AIzaSyC8IUDukbyc5NlQPFUn9ZDYOiR4GeeHRYY",
+          apiKey: "AIzaSyC8IUDukbyc5NlQPFUn9ZDYOir4GeeHRYY",
           authDomain: "probaktronic-app.firebaseapp.com",
           projectId: "probaktronic-app",
           storageBucket: "probaktronic-app.firebasestorage.app",
           messagingSenderId: "373953615206",
-          appId: "1:373953615206:android:6ccca21cefcb6100ee4a7"
+          appId: "1:373953615206:web:6ccca21cefcb6100ee4a7"
         });
       }
     } catch (e) {
@@ -554,7 +570,35 @@ async function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid,
 
   loader.finish(() => {
     modelsListGrid.innerHTML = '';
-    modelEntries.forEach(({ docId, data }) => {
+
+    // Filter model entries by selected fuel type (Diesel vs Gasolina) if active
+    let filteredEntries = modelEntries;
+    if (currentSelectedFuelType) {
+      filteredEntries = modelEntries.filter(({ docId, data }) => {
+        const modelName = data.modelo || data.nombre || docId;
+        const motor = data.motor || 'Estándar';
+        const fuelInfo = getFuelTypeInfo(data, modelName, motor);
+        if (currentSelectedFuelType === 'diesel') {
+          return fuelInfo.isDiesel;
+        } else if (currentSelectedFuelType === 'gasolina') {
+          return !fuelInfo.isDiesel;
+        }
+        return true;
+      });
+    }
+
+    if (filteredEntries.length === 0) {
+      modelsListGrid.innerHTML = `
+        <div class="w-100 text-center py-5" style="grid-column: 1 / -1;">
+          <div style="color: #DC2626; font-size: 2.5rem; margin-bottom: 10px;"><i class="bi bi-info-circle"></i></div>
+          <h5 class="fw-bold text-dark">No hay modelos de ${currentSelectedFuelType ? currentSelectedFuelType.toUpperCase() : ''} disponibles</h5>
+          <p class="text-muted small">No se encontraron modelos registrados en esta categoría para ${brandName}.</p>
+        </div>
+      `;
+      return;
+    }
+
+    filteredEntries.forEach(({ docId, data }) => {
       const modelName = data.modelo || data.nombre || docId;
       const motor = data.motor || 'Estándar';
       const fuelInfo = getFuelTypeInfo(data, modelName, motor);
@@ -622,7 +666,16 @@ function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loa
     'fiat': [{ id: 'Doblo', modelo: 'Fiat Doblò 1.4 Fire', motor: 'Fire 8V / 16V', combustible: 'gasolina' }]
   };
 
-  const list = defaultModelsMap[brandDocId.toLowerCase()] || [{ id: `${brandName} Model 1`, modelo: `${brandName} Estándar`, motor: 'ECU 1.6L', combustible: 'gasolina' }];
+  let list = defaultModelsMap[brandDocId.toLowerCase()] || [{ id: `${brandName} Model 1`, modelo: `${brandName} Estándar`, motor: 'ECU 1.6L', combustible: 'gasolina' }];
+
+  if (currentSelectedFuelType) {
+    list = list.filter(m => {
+      const fuelInfo = getFuelTypeInfo(m, m.modelo, m.motor);
+      if (currentSelectedFuelType === 'diesel') return fuelInfo.isDiesel;
+      if (currentSelectedFuelType === 'gasolina') return !fuelInfo.isDiesel;
+      return true;
+    });
+  }
 
   loader.finish(() => {
     modelsListGrid.innerHTML = '';
@@ -759,27 +812,51 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
     archivosList.forEach((arch, index) => {
       const isSelected = index === 0;
       const title = (arch.titulo || arch.nombre || arch.id).toUpperCase();
+      const cardKey = arch.id || title;
 
-      let iconHtml = '<i class="bi bi-cpu fs-1"></i>';
-      if (title.includes('OBD')) {
-        iconHtml = '<i class="bi bi-hdd-network fs-1"></i>';
+      // Check if Admin set a custom icon for this card key
+      let customIcon = arch.icono;
+      try {
+        const savedCustomIcons = JSON.parse(localStorage.getItem('probaktronic_card_icons') || '{}');
+        if (savedCustomIcons[cardKey]) {
+          customIcon = savedCustomIcons[cardKey];
+        }
+      } catch (e) {}
+
+      let iconHtml = '<i class="bi bi-cpu-fill fs-1"></i>';
+      if (customIcon) {
+        if (customIcon.startsWith('bi-')) {
+          iconHtml = `<i class="bi ${customIcon} fs-1"></i>`;
+        } else if (customIcon.startsWith('http') || customIcon.includes('/') || customIcon.endsWith('.svg') || customIcon.endsWith('.png')) {
+          iconHtml = `<img src="${customIcon}" alt="Icono" style="max-height: 48px; object-fit: contain;">`;
+        }
+      } else if (title.includes('OBD')) {
+        iconHtml = '<i class="bi bi-hdd-network-fill fs-1"></i>';
       } else if (title.includes('BOOT')) {
-        iconHtml = '<i class="bi bi-cpu fs-1"></i>';
+        iconHtml = '<i class="bi bi-cpu-fill fs-1"></i>';
       } else if (title.includes('BENCH')) {
-        iconHtml = '<i class="bi bi-motherboard fs-1"></i>';
+        iconHtml = '<i class="bi bi-motherboard-fill fs-1"></i>';
       } else if (title.includes('PEDAL')) {
-        iconHtml = '<i class="bi bi-speedometer2 fs-1"></i>';
+        iconHtml = '<i class="bi bi-sliders2 fs-1" title="Pedal Acelerador APP"></i>';
       } else if (title.includes('EDU') || title.includes('CONECTOR')) {
-        iconHtml = '<i class="bi bi-diagram-3 fs-1"></i>';
+        iconHtml = '<i class="bi bi-diagram-3-fill fs-1"></i>';
       } else if (title.includes('INMOVILIZADOR') || title.includes('LLAVE')) {
-        iconHtml = '<i class="bi bi-key fs-1"></i>';
+        iconHtml = '<i class="bi bi-key-fill fs-1"></i>';
       } else if (title.includes('PDF') || title.includes('DOCUMENTO')) {
-        iconHtml = '<i class="bi bi-file-earmark-pdf fs-1"></i>';
+        iconHtml = '<i class="bi bi-file-earmark-pdf-fill fs-1"></i>';
       }
 
+      const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
+      const adminEditBtnHtml = isAdmin ? `
+        <button class="btn btn-sm btn-light position-absolute top-0 end-0 m-1 rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; z-index: 15;" title="Cambiar ícono de esta tarjeta como Administrador" onclick="openAdminMechanicalIconPicker(event, '${cardKey}')">
+          <i class="bi bi-pencil-fill text-danger" style="font-size: 10px;"></i>
+        </button>
+      ` : '';
+
       const card = document.createElement('div');
-      card.className = `connection-type-card ${isSelected ? 'active' : ''}`;
+      card.className = `connection-type-card position-relative ${isSelected ? 'active' : ''}`;
       card.innerHTML = `
+        ${adminEditBtnHtml}
         <div class="card-corner-badge">
           <i class="bi ${isSelected ? 'bi-check-circle-fill' : 'bi-slash-circle'}"></i>
         </div>
@@ -1486,12 +1563,142 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
 };
 
 
-window.showBrandsView = function() {
+let currentSelectedFuelType = ''; // 'gasolina' or 'diesel'
+let currentSelectedCategoryKey = ''; // 'pickup', 'furgon', 'camiones', 'maquinaria'
+
+window.showFuelSelectorView = function(e) {
+  if (e) e.preventDefault();
+
+  const fuelView = document.getElementById('fuelSelectorViewContainer');
+  const dieselCatView = document.getElementById('dieselCategoriesViewContainer');
+  const gasCatView = document.getElementById('gasolinaCategoriesViewContainer');
   const brandsView = document.getElementById('brandsViewContainer');
   const modelsView = document.getElementById('modelsViewContainer');
   const ecuView = document.getElementById('ecuInfoViewContainer');
   const diagramView = document.getElementById('diagramViewContainer');
 
+  if (fuelView) fuelView.classList.remove('d-none');
+  if (dieselCatView) dieselCatView.classList.add('d-none');
+  if (gasCatView) gasCatView.classList.add('d-none');
+  if (brandsView) brandsView.classList.add('d-none');
+  if (modelsView) modelsView.classList.add('d-none');
+  if (ecuView) ecuView.classList.add('d-none');
+  if (diagramView) diagramView.classList.add('d-none');
+
+  updateBreadcrumbUI('fuel');
+
+  const headerTitle = document.getElementById('vehiculosHeaderTitle');
+  const headerSubtitle = document.getElementById('vehiculosHeaderSubtitle');
+  if (headerTitle) headerTitle.textContent = 'SELECCIONAR VEHÍCULO';
+  if (headerSubtitle) headerSubtitle.textContent = 'Seleccione el tipo de motorización y categoría para consultar los esquemas de diagnóstico';
+};
+
+window.selectFuelType = function(fuelType) {
+  currentSelectedFuelType = fuelType;
+
+  const fuelView = document.getElementById('fuelSelectorViewContainer');
+  const dieselCatView = document.getElementById('dieselCategoriesViewContainer');
+  const gasCatView = document.getElementById('gasolinaCategoriesViewContainer');
+
+  if (fuelView) fuelView.classList.add('d-none');
+
+  if (fuelType === 'diesel') {
+    if (dieselCatView) dieselCatView.classList.remove('d-none');
+    if (gasCatView) gasCatView.classList.add('d-none');
+    updateBreadcrumbUI('fuel_type', 'Diesel');
+  } else {
+    if (gasCatView) gasCatView.classList.remove('d-none');
+    if (dieselCatView) dieselCatView.classList.add('d-none');
+    updateBreadcrumbUI('fuel_type', 'Gasolina');
+  }
+};
+
+window.returnFuelTypeView = function(e) {
+  if (e) e.preventDefault();
+  if (currentSelectedFuelType) {
+    selectFuelType(currentSelectedFuelType);
+  } else {
+    showFuelSelectorView();
+  }
+};
+
+window.selectVehicleCategory = function(catKey, fuelType, catTitle, count = 1) {
+  if (count <= 0) {
+    const msg = `La categoría "${catTitle}" no tiene modelos cargados aún. Próximamente disponible.`;
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast(msg);
+    } else {
+      alert(msg);
+    }
+    return;
+  }
+
+  currentSelectedCategoryKey = catKey;
+  currentSelectedFuelType = fuelType;
+
+  const fuelView = document.getElementById('fuelSelectorViewContainer');
+  const dieselCatView = document.getElementById('dieselCategoriesViewContainer');
+  const gasCatView = document.getElementById('gasolinaCategoriesViewContainer');
+  const brandsView = document.getElementById('brandsViewContainer');
+
+  if (fuelView) fuelView.classList.add('d-none');
+  if (dieselCatView) dieselCatView.classList.add('d-none');
+  if (gasCatView) gasCatView.classList.add('d-none');
+  if (brandsView) brandsView.classList.remove('d-none');
+
+  updateBreadcrumbUI('category', fuelType === 'diesel' ? 'Diesel' : 'Gasolina', catTitle);
+
+  const headerTitle = document.getElementById('vehiculosHeaderTitle');
+  const headerSubtitle = document.getElementById('vehiculosHeaderSubtitle');
+  if (headerTitle) headerTitle.textContent = `MARCAS ${catTitle}`;
+  if (headerSubtitle) headerSubtitle.textContent = `Seleccione la marca de ${catTitle} (${fuelType.toUpperCase()}) para ver modelos y diagramas`;
+};
+
+function updateBreadcrumbUI(level, fuelLabel = '', catLabel = '') {
+  const sep1 = document.getElementById('bcrumbSep1');
+  const bFuel = document.getElementById('bcrumbFuelType');
+  const sep2 = document.getElementById('bcrumbSep2');
+  const bCat = document.getElementById('bcrumbCategory');
+
+  if (level === 'fuel') {
+    if (sep1) sep1.classList.add('d-none');
+    if (bFuel) bFuel.classList.add('d-none');
+    if (sep2) sep2.classList.add('d-none');
+    if (bCat) bCat.classList.add('d-none');
+  } else if (level === 'fuel_type') {
+    if (sep1) sep1.classList.remove('d-none');
+    if (bFuel) {
+      bFuel.classList.remove('d-none');
+      bFuel.textContent = fuelLabel;
+    }
+    if (sep2) sep2.classList.add('d-none');
+    if (bCat) bCat.classList.add('d-none');
+  } else if (level === 'category') {
+    if (sep1) sep1.classList.remove('d-none');
+    if (bFuel) {
+      bFuel.classList.remove('d-none');
+      bFuel.textContent = fuelLabel;
+    }
+    if (sep2) sep2.classList.remove('d-none');
+    if (bCat) {
+      bCat.classList.remove('d-none');
+      bCat.textContent = catLabel;
+    }
+  }
+}
+
+window.showBrandsView = function() {
+  const fuelView = document.getElementById('fuelSelectorViewContainer');
+  const dieselCatView = document.getElementById('dieselCategoriesViewContainer');
+  const gasCatView = document.getElementById('gasolinaCategoriesViewContainer');
+  const brandsView = document.getElementById('brandsViewContainer');
+  const modelsView = document.getElementById('modelsViewContainer');
+  const ecuView = document.getElementById('ecuInfoViewContainer');
+  const diagramView = document.getElementById('diagramViewContainer');
+
+  if (fuelView) fuelView.classList.add('d-none');
+  if (dieselCatView) dieselCatView.classList.add('d-none');
+  if (gasCatView) gasCatView.classList.add('d-none');
   if (brandsView) brandsView.classList.remove('d-none');
   if (modelsView) modelsView.classList.add('d-none');
   if (ecuView) ecuView.classList.add('d-none');
@@ -1499,8 +1706,8 @@ window.showBrandsView = function() {
 
   const headerTitle = document.getElementById('vehiculosHeaderTitle');
   const headerSubtitle = document.getElementById('vehiculosHeaderSubtitle');
-  if (headerTitle) headerTitle.textContent = 'SELECCIONAR VEHÍCULO - DIAGRAMAS';
-  if (headerSubtitle) headerSubtitle.textContent = 'Seleccione la marca de vehículo para consultar los diagramas esquemáticos y pinouts de diagnóstico';
+  if (headerTitle) headerTitle.textContent = 'SELECCIONAR MARCA DE VEHÍCULO';
+  if (headerSubtitle) headerSubtitle.textContent = 'Seleccione la marca de vehículo para consultar los esquemas de conexión y diagnóstico';
 };
 
 window.showModelsView = function() {
@@ -1537,3 +1744,173 @@ window.addEventListener('resize', () => {
     }
   }, 150);
 });
+
+// --- ADMIN MECHANICAL ICON PICKER FOR CONNECTION CARDS ---
+let currentEditingCardKey = '';
+let selectedMechanicalIconChoice = '';
+
+window.openAdminMechanicalIconPicker = function(e, cardKey) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  currentEditingCardKey = cardKey;
+  selectedMechanicalIconChoice = '';
+
+  injectAdminMechanicalIconPickerModal();
+
+  const titleSpan = document.getElementById('adminIconCardTitle');
+  if (titleSpan) titleSpan.textContent = cardKey;
+
+  const modalEl = document.getElementById('adminMechanicalIconPickerModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    bsModal.show();
+  }
+};
+
+function injectAdminMechanicalIconPickerModal() {
+  if (document.getElementById('adminMechanicalIconPickerModal')) return;
+
+  const mechanicalIcons = [
+    { title: 'Pedal de Acelerador APP', icon: 'bi-sliders2' },
+    { title: 'Mecánico con Llave', icon: 'bi-person-gear' },
+    { title: 'Herramientas Cruzadas', icon: 'bi-wrench-adjustable' },
+    { title: 'Pinzas / Caimanes de Carga', icon: 'bi-lightning-charge-fill' },
+    { title: 'Motor & Capó Abierto', icon: 'bi-car-front-fill' },
+    { title: 'Amortiguador / Suspensión', icon: 'bi-bounding-box-circles' },
+    { title: 'Palanca de Cambios / Caja', icon: 'bi-diagram-2-fill' },
+    { title: 'Aceitera & Lubricación', icon: 'bi-droplet-half' },
+    { title: 'Batería Automotriz', icon: 'bi-battery-charging' },
+    { title: 'Bujía de Encendido', icon: 'bi-lightning-fill' },
+    { title: 'Elevador Hidráulico / Taller', icon: 'bi-truck-front-fill' },
+    { title: 'Latonería & Pintura', icon: 'bi-palette-fill' },
+    { title: 'Eje & Diferencial 4x4', icon: 'bi-gear-wide-connected' },
+    { title: 'Neumático & Rueda', icon: 'bi-circle-square' },
+    { title: 'Volante de Dirección', icon: 'bi-disc-fill' },
+    { title: 'Velocímetro / Manómetro', icon: 'bi-speedometer2' },
+    { title: 'Obturador / Mariposa TPS', icon: 'bi-circle-half' },
+    { title: 'Inyectores / Combustible', icon: 'bi-fuel-pump-fill' },
+    { title: 'Sensor Oxígeno LSU / Lambda', icon: 'bi-wind' },
+    { title: 'Válvula IAC / Ralentí', icon: 'bi-fan' },
+    { title: 'Sensor CKP / CMP / Giro', icon: 'bi-arrow-repeat' },
+    { title: 'Osciloscopio / Señal PWM', icon: 'bi-activity' },
+    { title: 'ECU / Computadora ECM', icon: 'bi-cpu-fill' },
+    { title: 'Drivers IGBT / Módulo', icon: 'bi-motherboard-fill' },
+    { title: 'Inmovilizador / Llave', icon: 'bi-key-fill' },
+    { title: 'Red OBD-II / CAN Bus', icon: 'bi-hdd-network-fill' },
+    { title: 'Conectores & Pinout', icon: 'bi-diagram-3-fill' },
+    { title: 'Fusibles & Relés', icon: 'bi-toggle-on' }
+  ];
+
+  const iconChoicesHtml = mechanicalIcons.map(item => `
+    <button type="button" class="btn btn-outline-dark btn-mech-icon-choice p-2 text-center" data-icon="${item.icon}" title="${item.title}" style="width: 70px; height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px;">
+      <i class="bi ${item.icon} fs-3"></i>
+      <span style="font-size: 8px; line-height: 1; margin-top: 4px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.title}</span>
+    </button>
+  `).join('');
+
+  const modalHtml = `
+    <div class="modal fade" id="adminMechanicalIconPickerModal" tabindex="-1" aria-labelledby="adminMechanicalIconPickerModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+          <div class="modal-header bg-dark text-white border-0 py-3">
+            <h5 class="modal-title font-rajdhani fw-bold d-flex align-items-center gap-2" id="adminMechanicalIconPickerModalLabel">
+              <i class="bi bi-pencil-square text-danger fs-4"></i> PERSONALIZAR ÍCONO DE TARJETA (ADMIN)
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4" style="max-height: 80vh; overflow-y: auto;">
+            <div class="alert alert-info border-0 mb-3 py-2 small">
+              <i class="bi bi-info-circle-fill me-1"></i>
+              Selecciona el ícono mecánico representativo para la tarjeta: <strong id="adminIconCardTitle" class="text-danger">TARJETA</strong>
+            </div>
+
+            <!-- Mechanical & Electronic Icons Grid -->
+            <label class="form-label font-rajdhani fw-bold text-dark mb-2">Seleccione el ícono automotriz/mecánico:</label>
+            <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap mb-4" id="mechIconsContainer">
+              ${iconChoicesHtml}
+            </div>
+
+            <!-- Custom URL or SVG -->
+            <div class="mb-3">
+              <label for="adminCustomIconInput" class="form-label font-rajdhani fw-bold text-dark mb-1">O ingrese una ruta SVG / URL de imagen personalizada:</label>
+              <input type="text" class="form-control form-control-sm" id="adminCustomIconInput" placeholder="Ej: imagenes svg/ico_logo_toyota.svg o bi-sliders2">
+            </div>
+
+          </div>
+          <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="saveAdminMechanicalIconChoice()">
+              <i class="bi bi-check-lg me-1"></i> Aplicar a la Tarjeta
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  const modalEl = document.getElementById('adminMechanicalIconPickerModal');
+  if (!modalEl) return;
+
+  modalEl.querySelectorAll('.btn-mech-icon-choice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      modalEl.querySelectorAll('.btn-mech-icon-choice').forEach(b => b.classList.remove('active', 'btn-danger', 'text-white'));
+      btn.classList.add('active', 'btn-danger', 'text-white');
+      selectedMechanicalIconChoice = btn.dataset.icon;
+      const customInput = document.getElementById('adminCustomIconInput');
+      if (customInput) customInput.value = selectedMechanicalIconChoice;
+    });
+  });
+}
+
+window.saveAdminMechanicalIconChoice = async function() {
+  const customInput = document.getElementById('adminCustomIconInput');
+  if (customInput && customInput.value.trim()) {
+    selectedMechanicalIconChoice = customInput.value.trim();
+  }
+
+  if (!currentEditingCardKey || !selectedMechanicalIconChoice) {
+    alert('Por favor seleccione un ícono para aplicar.');
+    return;
+  }
+
+  // Save to Local Storage
+  try {
+    const saved = JSON.parse(localStorage.getItem('probaktronic_card_icons') || '{}');
+    saved[currentEditingCardKey] = selectedMechanicalIconChoice;
+    localStorage.setItem('probaktronic_card_icons', JSON.stringify(saved));
+  } catch (e) {}
+
+  // Save to Firestore under app_config/iconos_tarjetas
+  try {
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      const db = firebase.firestore();
+      await db.collection('app_config').doc('iconos_tarjetas').set({
+        [currentEditingCardKey]: selectedMechanicalIconChoice
+      }, { merge: true });
+    }
+  } catch (err) {
+    console.warn('Guardado en caché local para tarjetas:', err);
+  }
+
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast(`Ícono actualizado para ${currentEditingCardKey}`);
+  }
+
+  // Reload connection cards view
+  if (typeof window.renderVehiculoConexionesView === 'function' && window.currentSelectedVehicleData) {
+    window.renderVehiculoConexionesView(window.currentSelectedVehicleData);
+  } else {
+    location.reload();
+  }
+
+  const modalEl = document.getElementById('adminMechanicalIconPickerModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const bsModal = bootstrap.Modal.getInstance(modalEl);
+    if (bsModal) bsModal.hide();
+  }
+};

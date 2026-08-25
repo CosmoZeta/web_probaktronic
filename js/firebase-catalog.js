@@ -2,12 +2,12 @@
 console.log('--- Probaktronic Firebase Firestore Loaded ---');
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC8IUDukbyc5NlQPFUn9ZDYOiR4GeeHRYY",
+  apiKey: "AIzaSyC8IUDukbyc5NlQPFUn9ZDYOir4GeeHRYY",
   authDomain: "probaktronic-app.firebaseapp.com",
   projectId: "probaktronic-app",
   storageBucket: "probaktronic-app.firebasestorage.app",
   messagingSenderId: "373953615206",
-  appId: "1:373953615206:android:6ccca21cefcb6100ee4a7"
+  appId: "1:373953615206:web:6ccca21cefcb6100ee4a7"
 };
 
 // Global memory cache for instant 0-second re-display

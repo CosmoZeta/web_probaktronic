@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Usuario - Probaktronic</title>
+
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link href="css/global.css" rel="stylesheet">
+  
+  <style>
+    body {
+      background-color: #F8FAFC;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow-x: hidden;
+      padding: 20px 0;
+    }
+    .auth-card-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 20px;
+      z-index: 10;
+    }
+    .auth-card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      padding: 36px 28px;
+    }
+    .auth-brand-logo {
+      max-height: 54px;
+      max-width: 100%;
+      width: auto;
+      display: block;
+      margin: 0 auto;
+      object-fit: contain;
+    }
+    .auth-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      color: #0F172A;
+      letter-spacing: 0.5px;
+    }
+    .auth-subtitle {
+      font-size: 0.88rem;
+      color: #64748B;
+    }
+    .form-control:focus {
+      border-color: #D32F2F;
+      box-shadow: 0 0 0 0.25rem rgba(211, 47, 47, 0.15);
+    }
+    .btn-auth-submit {
+      background-color: #D32F2F;
+      border-color: #D32F2F;
+      color: white;
+      font-weight: 600;
+      padding: 12px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-auth-submit:hover {
+      background-color: #B71C1C;
+      border-color: #B71C1C;
+      color: white;
+      transform: translateY(-1px);
+    }
+    .input-group-text-custom {
+      background-color: #F8FAFC;
+      border-right: none;
+      color: #64748B;
+    }
+    .input-with-icon {
+      border-left: none;
+    }
+    .privacy-notice {
+      background-color: #F1F5F9;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Tech Circuit Vector Background Watermark -->
+  <svg class="bg-circuit-watermark" viewBox="0 0 800 600" fill="none">
+    <path d="M 300 0 L 450 150 L 700 150 L 800 250" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <circle cx="450" cy="150" r="4" fill="#94A3B8"/>
+    <circle cx="700" cy="150" r="4" fill="#94A3B8"/>
+    <path d="M 500 0 L 600 100 L 800 100" stroke="#E2E8F0" stroke-width="1.5"/>
+    <circle cx="600" cy="100" r="3" fill="#CBD5E1"/>
+  </svg>
+
+  <div class="auth-card-container">
+    <div class="auth-card">
+      
+      <!-- Brand Header -->
+      <div class="text-center mb-4">
+        <a href="index.html" class="d-inline-block w-100 text-center" title="Probaktronic Home">
+          <img src="logo_probaktronic_costado.png" alt="Probaktronic Logo" class="auth-brand-logo mb-3">
+        </a>
+        <h3 class="auth-title text-uppercase mb-1">REGISTRO DE USUARIO</h3>
+        <p class="auth-subtitle mb-0">Cree su cuenta para solicitar acceso al sistema</p>
+      </div>
+
+      <!-- Privacy Guarantee Notice -->
+      <div class="privacy-notice mb-4 d-flex align-items-center gap-2 border">
+        <i class="bi bi-shield-lock-fill text-success fs-5"></i>
+        <span>Solicitamos únicamente nombre de usuario, correo y contraseña. No requerimos datos sensibles.</span>
+      </div>
+
+      <!-- Alert Notification Area -->
+      <div id="authAlert" class="alert alert-danger d-none py-2 px-3 small" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span id="authAlertText">Mensaje de error</span>
+      </div>
+
+      <!-- Success Registration Box (Hidden initially) -->
+      <div id="successRegistrationCard" class="d-none text-center py-3">
+        <div class="mb-3">
+          <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+        </div>
+        <h4 class="font-rajdhani fw-bold text-dark mb-2">¡REGISTRO COMPLETADO!</h4>
+        <p class="text-secondary small mb-3">
+          Su cuenta Free ha sido creada e iniciada exitosamente con el correo <strong id="registeredEmailSpan"></strong>.
+        </p>
+        <div class="alert alert-success text-start small mb-4">
+          <i class="bi bi-check-circle-fill me-1"></i>
+          <strong>Cuenta Free Activa:</strong> Ya tienes acceso a la plataforma. Redirigiendo a la página principal...
+        </div>
+        <a href="index.html" class="btn btn-auth-submit w-100">
+          IR A LA PÁGINA PRINCIPAL
+        </a>
+      </div>
+
+      <!-- Registration Form -->
+      <form id="registerAuthForm" novalidate>
+        <!-- Username Input -->
+        <div class="mb-3">
+          <label for="usernameInput" class="form-label text-dark fw-semibold small">NOMBRE DE USUARIO / TÉCNICO</label>
+          <div class="input-group">
+            <span class="input-group-text input-group-text-custom"><i class="bi bi-person-fill"></i></span>
+            <input type="text" class="form-control input-with-icon" id="usernameInput" placeholder="Ej: Técnico Automotriz" required autocomplete="name">
+          </div>
+        </div>
+
+        <!-- Email Input -->
+        <div class="mb-3">
+          <label for="emailInput" class="form-label text-dark fw-semibold small">CORREO ELECTRÓNICO</label>
+          <div class="input-group">
+            <span class="input-group-text input-group-text-custom"><i class="bi bi-envelope-fill"></i></span>
+            <input type="email" class="form-control input-with-icon" id="emailInput" placeholder="ingrese su correo" required autocomplete="email">
+          </div>
+        </div>
+
+        <!-- Password Input -->
+        <div class="mb-3">
+          <label for="passwordInput" class="form-label text-dark fw-semibold small">CONTRASEÑA</label>
+          <div class="input-group">
+            <span class="input-group-text input-group-text-custom"><i class="bi bi-lock-fill"></i></span>
+            <input type="password" class="form-control input-with-icon" id="passwordInput" placeholder="ingrese su contraseña" required autocomplete="new-password">
+          </div>
+        </div>
+
+        <!-- Confirm Password Input -->
+        <div class="mb-4">
+          <label for="confirmPasswordInput" class="form-label text-dark fw-semibold small">CONFIRMAR CONTRASEÑA</label>
+          <div class="input-group">
+            <span class="input-group-text input-group-text-custom"><i class="bi bi-shield-check"></i></span>
+            <input type="password" class="form-control input-with-icon" id="confirmPasswordInput" placeholder="ingrese su contraseña" required autocomplete="new-password">
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-auth-submit w-100 d-flex align-items-center justify-content-center gap-2 mb-3" id="btnRegisterSubmit">
+          <span id="btnSubmitText">SOLICITAR REGISTRO</span>
+          <div class="spinner-border spinner-border-sm d-none" id="registerSpinner" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        </button>
+      </form>
+
+      <!-- Bottom Links -->
+      <div class="text-center pt-3 border-top" id="formBottomLinks">
+        <p class="small text-muted mb-2">
+          ¿Ya posees una cuenta? 
+          <a href="login.html" class="text-danger fw-bold text-decoration-none">Inicia sesión aquí</a>
+        </p>
+        <a href="index.html" class="small text-secondary text-decoration-none d-inline-flex align-items-center gap-1">
+          <i class="bi bi-arrow-left"></i> Volver a la página principal
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Firebase Compatibility SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <!-- Bootstrap & Auth JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/global.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('registerAuthForm');
+      const usernameInput = document.getElementById('usernameInput');
+      const emailInput = document.getElementById('emailInput');
+      const passwordInput = document.getElementById('passwordInput');
+      const confirmPasswordInput = document.getElementById('confirmPasswordInput');
+      const alertEl = document.getElementById('authAlert');
+      const alertText = document.getElementById('authAlertText');
+      const btnSubmit = document.getElementById('btnRegisterSubmit');
+      const btnSubmitText = document.getElementById('btnSubmitText');
+      const spinner = document.getElementById('registerSpinner');
+      const successCard = document.getElementById('successRegistrationCard');
+      const registeredEmailSpan = document.getElementById('registeredEmailSpan');
+      const formBottomLinks = document.getElementById('formBottomLinks');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        alertEl.classList.add('d-none');
+
+        const nombre = usernameInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+
+        if (!nombre || !email || !password || !confirmPassword) {
+          showError('Por favor llene todos los campos del formulario.');
+          return;
+        }
+
+        if (password.length < 6) {
+          showError('La contraseña debe contener al menos 6 caracteres.');
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          showError('Las contraseñas no coinciden.');
+          return;
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmitText.textContent = 'REGISTRANDO CUENTA...';
+        spinner.classList.remove('d-none');
+
+        try {
+          await window.registerUser(nombre, email, password);
+          
+          // Show Success state
+          form.classList.add('d-none');
+          if (formBottomLinks) formBottomLinks.classList.add('d-none');
+          registeredEmailSpan.textContent = email;
+          successCard.classList.remove('d-none');
+
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 1500);
+
+        } catch (err) {
+          console.error('Error al registrar usuario:', err);
+          let msg = err.message || 'Error al completar el registro.';
+          if (err.code === 'auth/email-already-in-use') {
+            msg = 'Este correo electrónico ya se encuentra registrado.';
+          } else if (err.code === 'auth/invalid-email') {
+            msg = 'El correo electrónico ingresado es inválido.';
+          } else if (err.code === 'auth/weak-password') {
+            msg = 'La contraseña es muy débil. Ingrese una combinación más segura.';
+          }
+          showError(msg);
+        } finally {
+          btnSubmit.disabled = false;
+          btnSubmitText.textContent = 'SOLICITAR REGISTRO';
+          spinner.classList.add('d-none');
+        }
+      });
+
+      function showError(text) {
+        alertText.textContent = text;
+        alertEl.classList.remove('d-none');
+      }
+    });
+  </script>
+</body>
+</html>
