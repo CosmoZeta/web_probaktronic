@@ -974,9 +974,9 @@
       </div>
 
       <!-- Interactive Breadcrumb Path Bar -->
-      <div class="vehicle-breadcrumb-nav mb-4 d-flex align-items-center gap-2 px-3 py-2 bg-white rounded-3 border shadow-sm" id="vehicleBreadcrumbNav">
+      <div class="vehicle-breadcrumb-nav mb-4 d-none align-items-center gap-2 px-3 py-2 bg-white rounded-3 border shadow-sm" id="vehicleBreadcrumbNav">
         <a href="#" class="breadcrumb-item text-dark fw-bold text-decoration-none small d-flex align-items-center gap-1" onclick="showFuelSelectorView(event)">
-          <i class="bi bi-car-front-fill text-danger"></i> Vehículos
+          Vehículos
         </a>
         <span class="text-muted small breadcrumb-sep d-none" id="bcrumbSep1"><i class="bi bi-chevron-right fs-7"></i></span>
         <a href="#" class="breadcrumb-item text-dark fw-semibold text-decoration-none small d-none" id="bcrumbFuelType" onclick="returnFuelTypeView(event)">
@@ -998,8 +998,11 @@
         <div class="row g-4 justify-content-center max-w-900 mx-auto mb-5">
           <!-- Card Gasolina -->
           <div class="col-md-5">
-            <div class="fuel-type-card h-100" onclick="selectFuelType('gasolina')">
-              <div class="fuel-icon-wrap bg-danger-subtle text-danger">
+            <div class="fuel-type-card h-100 position-relative" onclick="selectFuelType('gasolina')">
+              <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'fuel_gasolina', 'Gasolina')" title="Personalizar ícono de Gasolina">
+                <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
+              </button>
+              <div class="fuel-icon-wrap bg-danger-subtle text-danger" data-icon-key="fuel_gasolina">
                 <i class="bi bi-fuel-pump-fill"></i>
               </div>
               <h3 class="font-rajdhani fw-bold text-dark fs-2 mb-2">GASOLINA</h3>
@@ -1012,13 +1015,16 @@
 
           <!-- Card Diesel -->
           <div class="col-md-5">
-            <div class="fuel-type-card h-100 border-danger shadow-sm" onclick="selectFuelType('diesel')">
-              <div class="fuel-icon-wrap bg-dark text-white">
+            <div class="fuel-type-card h-100 position-relative" onclick="selectFuelType('diesel')">
+              <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'fuel_diesel', 'Diesel')" title="Personalizar ícono de Diésel">
+                <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
+              </button>
+              <div class="fuel-icon-wrap bg-dark text-white" data-icon-key="fuel_diesel">
                 <i class="bi bi-droplet-fill"></i>
               </div>
               <h3 class="font-rajdhani fw-bold text-dark fs-2 mb-2">DIESEL</h3>
               <p class="text-muted small mb-3">Sistemas Common Rail, inyectores piezoeléctricos, bombas EDC y unidades de control Heavy Duty.</p>
-              <button class="btn btn-danger rounded-pill px-4 fw-bold shadow">
+              <button class="btn btn-outline-danger rounded-pill px-4 fw-bold">
                 Ingresar a Diesel <i class="bi bi-arrow-right ms-1"></i>
               </button>
             </div>
@@ -1042,12 +1048,15 @@
           <!-- 1. Pickup / Camionetas (ACTIVA - CON MODELOS CARGADOS) -->
           <div class="col-md-3 col-sm-6">
             <div class="category-card h-100 text-center position-relative shadow-sm" onclick="selectVehicleCategory('pickup', 'diesel', 'PICKUP / CAMIONETAS', 1)">
+              <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'cat_pickup', 'Categoría Pickup')" title="Personalizar ícono de Pickup">
+                <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
+              </button>
               <div class="mb-2">
                 <span class="badge bg-danger rounded-pill px-3 py-1 fw-bold fs-7 shadow-sm">
                   <i class="bi bi-check-circle-fill me-1"></i> 1 Modelo Disponible
                 </span>
               </div>
-              <div class="category-icon-wrap mx-auto mb-3 bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+              <div class="category-icon-wrap mx-auto mb-3 bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;" data-icon-key="cat_pickup">
                 <i class="bi bi-truck-front-fill"></i>
               </div>
               <h4 class="font-rajdhani fw-bold text-dark fs-4 mb-1">PICKUP</h4>
@@ -1061,12 +1070,15 @@
           <!-- 2. Furgón / Van (INACTIVA - 0 MODELOS) -->
           <div class="col-md-3 col-sm-6">
             <div class="category-card h-100 text-center position-relative opacity-75 bg-light" style="cursor: not-allowed;" onclick="selectVehicleCategory('furgon', 'diesel', 'FURGÓN / VAN', 0)">
+              <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'cat_furgon', 'Categoría Furgón')" title="Personalizar ícono de Furgón">
+                <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
+              </button>
               <div class="mb-2">
                 <span class="badge bg-secondary rounded-pill px-3 py-1 fs-7">
                   <i class="bi bi-clock-history me-1"></i> 0 Modelos
                 </span>
               </div>
-              <div class="category-icon-wrap mx-auto mb-3 bg-secondary-subtle text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+              <div class="category-icon-wrap mx-auto mb-3 bg-secondary-subtle text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;" data-icon-key="cat_furgon">
                 <i class="bi bi-box-seam-fill"></i>
               </div>
               <h4 class="font-rajdhani fw-bold text-muted fs-4 mb-1">FURGÓN</h4>
@@ -1080,12 +1092,15 @@
           <!-- 3. Camiones (INACTIVA - 0 MODELOS) -->
           <div class="col-md-3 col-sm-6">
             <div class="category-card h-100 text-center position-relative opacity-75 bg-light" style="cursor: not-allowed;" onclick="selectVehicleCategory('camiones', 'diesel', 'CAMIONES / PESADO', 0)">
+              <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'cat_camiones', 'Categoría Camiones')" title="Personalizar ícono de Camiones">
+                <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
+              </button>
               <div class="mb-2">
                 <span class="badge bg-secondary rounded-pill px-3 py-1 fs-7">
                   <i class="bi bi-clock-history me-1"></i> 0 Modelos
                 </span>
               </div>
-              <div class="category-icon-wrap mx-auto mb-3 bg-secondary-subtle text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+              <div class="category-icon-wrap mx-auto mb-3 bg-secondary-subtle text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;" data-icon-key="cat_camiones">
                 <i class="bi bi-truck"></i>
               </div>
               <h4 class="font-rajdhani fw-bold text-muted fs-4 mb-1">CAMIONES</h4>
@@ -1099,12 +1114,15 @@
           <!-- 4. Maquinarias Pesadas (INACTIVA - 0 MODELOS) -->
           <div class="col-md-3 col-sm-6">
             <div class="category-card h-100 text-center position-relative opacity-75 bg-light" style="cursor: not-allowed;" onclick="selectVehicleCategory('maquinaria', 'diesel', 'MAQUINARIAS PESADAS', 0)">
+              <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'cat_maquinaria', 'Categoría Maquinarias')" title="Personalizar ícono de Maquinaria">
+                <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
+              </button>
               <div class="mb-2">
                 <span class="badge bg-secondary rounded-pill px-3 py-1 fs-7">
                   <i class="bi bi-clock-history me-1"></i> 0 Modelos
                 </span>
               </div>
-              <div class="category-icon-wrap mx-auto mb-3 bg-secondary-subtle text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+              <div class="category-icon-wrap mx-auto mb-3 bg-secondary-subtle text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;" data-icon-key="cat_maquinaria">
                 <i class="bi bi-gear-wide-connected"></i>
               </div>
               <h4 class="font-rajdhani fw-bold text-muted fs-4 mb-1">MAQUINARIAS</h4>
@@ -1130,36 +1148,69 @@
         </div>
 
         <div class="row g-4 mb-5">
+          <!-- 1. Sedán / Hatchback (ACTIVA - MODELOS DISPONIBLES) -->
           <div class="col-md-4 col-sm-6">
-            <div class="category-card h-100 text-center" onclick="selectVehicleCategory('sedan', 'gasolina', 'SEDÁN / HATCHBACK')">
-              <div class="category-icon-wrap mx-auto mb-3 bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+            <div class="category-card h-100 text-center position-relative cursor-pointer shadow-sm border-danger" onclick="selectVehicleCategory('sedan', 'gasolina', 'SEDÁN / HATCHBACK', 1)">
+              <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'cat_sedan', 'Categoría Sedán')" title="Personalizar ícono de Sedán">
+                <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
+              </button>
+              <div class="mb-2">
+                <span class="badge bg-danger rounded-pill px-3 py-1 fs-7">
+                  <i class="bi bi-check-circle-fill me-1"></i> 1 Modelo Disponible
+                </span>
+              </div>
+              <div class="category-icon-wrap mx-auto mb-3 bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;" data-icon-key="cat_sedan">
                 <i class="bi bi-car-front-fill"></i>
               </div>
-              <h4 class="font-rajdhani fw-bold text-dark fs-4 mb-2">SEDÁN / HATCHBACK</h4>
-              <p class="text-muted small mb-3">Vehículos livianos de ciudad y carretera.</p>
-              <span class="badge bg-danger rounded-pill px-3 py-2">Ver Autos Gasolina</span>
+              <h4 class="font-rajdhani fw-bold text-dark fs-4 mb-1">SEDÁN / HATCHBACK</h4>
+              <p class="text-muted small mb-3" style="font-size: 0.8rem;">Vehículos livianos de ciudad y carretera (Corolla, Accent...)</p>
+              <button class="btn btn-danger btn-sm rounded-pill w-100 fw-bold shadow-sm">
+                Ver Autos Sedán <i class="bi bi-arrow-right ms-1"></i>
+              </button>
             </div>
           </div>
 
+          <!-- 2. SUV / Crossover (INACTIVA - 0 MODELOS) -->
           <div class="col-md-4 col-sm-6">
-            <div class="category-card h-100 text-center" onclick="selectVehicleCategory('suv', 'gasolina', 'SUV / CROSSOVER')">
-              <div class="category-icon-wrap mx-auto mb-3 bg-dark text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+            <div class="category-card h-100 text-center position-relative opacity-75 bg-light" style="cursor: not-allowed;" onclick="selectVehicleCategory('suv', 'gasolina', 'SUV / CROSSOVER', 0)">
+              <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'cat_suv', 'Categoría SUV')" title="Personalizar ícono de SUV">
+                <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
+              </button>
+              <div class="mb-2">
+                <span class="badge bg-secondary rounded-pill px-3 py-1 fs-7">
+                  <i class="bi bi-clock-history me-1"></i> 0 Modelos
+                </span>
+              </div>
+              <div class="category-icon-wrap mx-auto mb-3 bg-secondary-subtle text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;" data-icon-key="cat_suv">
                 <i class="bi bi-shield-shaded"></i>
               </div>
-              <h4 class="font-rajdhani fw-bold text-dark fs-4 mb-2">SUV / CROSSOVER</h4>
-              <p class="text-muted small mb-3">Camionetas familiares y Crossovers Gasolina.</p>
-              <span class="badge bg-secondary rounded-pill px-3 py-2">Ver SUV Gasolina</span>
+              <h4 class="font-rajdhani fw-bold text-muted fs-4 mb-1">SUV / CROSSOVER</h4>
+              <p class="text-muted small mb-3" style="font-size: 0.8rem;">Camionetas familiares y Crossovers Gasolina (RAV4, Tucson...)</p>
+              <button class="btn btn-outline-secondary btn-sm rounded-pill w-100 disabled">
+                Próximamente
+              </button>
             </div>
           </div>
 
+          <!-- 3. Pickup Gasolina (INACTIVA - 0 MODELOS) -->
           <div class="col-md-4 col-sm-6">
-            <div class="category-card h-100 text-center" onclick="selectVehicleCategory('pickup_gas', 'gasolina', 'PICKUP GASOLINA')">
-              <div class="category-icon-wrap mx-auto mb-3 bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;">
+            <div class="category-card h-100 text-center position-relative opacity-75 bg-light" style="cursor: not-allowed;" onclick="selectVehicleCategory('pickup_gas', 'gasolina', 'PICKUP GASOLINA', 0)">
+              <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'cat_pickup_gas', 'Categoría Pickup Gasolina')" title="Personalizar ícono de Pickup Gasolina">
+                <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
+              </button>
+              <div class="mb-2">
+                <span class="badge bg-secondary rounded-pill px-3 py-1 fs-7">
+                  <i class="bi bi-clock-history me-1"></i> 0 Modelos
+                </span>
+              </div>
+              <div class="category-icon-wrap mx-auto mb-3 bg-secondary-subtle text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 2rem;" data-icon-key="cat_pickup_gas">
                 <i class="bi bi-truck-front-fill"></i>
               </div>
-              <h4 class="font-rajdhani fw-bold text-dark fs-4 mb-2">PICKUP GASOLINA</h4>
-              <p class="text-muted small mb-3">Camionetas pickup con motorización a gasolina.</p>
-              <span class="badge bg-secondary rounded-pill px-3 py-2">Ver Pickups Gasolina</span>
+              <h4 class="font-rajdhani fw-bold text-muted fs-4 mb-1">PICKUP GASOLINA</h4>
+              <p class="text-muted small mb-3" style="font-size: 0.8rem;">Camionetas pickup con motorización a gasolina (Hilux Gasolina...)</p>
+              <button class="btn btn-outline-secondary btn-sm rounded-pill w-100 disabled">
+                Próximamente
+              </button>
             </div>
           </div>
         </div>
@@ -1581,6 +1632,80 @@
             <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow" id="btnAdminSubmitDiagram">
               <i class="bi bi-cloud-check-fill me-1"></i> Subir y Publicar en Firebase
             </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Edición y Gestión de Marcas, Modelos y Diagramas -->
+  <div class="modal fade" id="adminEditItemModal" tabindex="-1" aria-labelledby="adminEditItemModalLabel" aria-hidden="true" style="z-index: 1065;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+        <div class="modal-header bg-dark text-white border-0 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-pencil-square text-white fs-5"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0" id="adminEditItemModalLabel">EDITAR Y GESTIONAR</h5>
+              <div class="text-muted" style="font-size: 0.75rem;" id="adminEditItemModalSubtitle">Modifica los datos o elimina este apartado de Firestore</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form id="adminEditItemForm" onsubmit="handleAdminSaveItemChanges(event)">
+          <div class="modal-body p-4">
+            <input type="hidden" id="adminEditItemType">
+            <input type="hidden" id="adminEditItemId">
+            <input type="hidden" id="adminEditItemParentBrand">
+            <input type="hidden" id="adminEditItemParentModel">
+            <input type="hidden" id="adminEditItemParentAnio">
+            <input type="hidden" id="adminEditItemParentMotor">
+            <input type="hidden" id="adminEditItemFileUrl">
+
+            <!-- Campo Nombre / Título -->
+            <div class="mb-3">
+              <label for="adminEditItemNameInput" class="form-label font-rajdhani fw-bold text-dark mb-1" id="adminEditItemNameLabel">NOMBRE O TÍTULO</label>
+              <input type="text" class="form-control" id="adminEditItemNameInput" required>
+            </div>
+
+            <!-- Campo Motor / Código (Opcional según tipo) -->
+            <div class="mb-3 d-none" id="adminEditItemMotorWrap">
+              <label for="adminEditItemMotorInput" class="form-label font-rajdhani fw-bold text-dark mb-1">CÓDIGO DE MOTOR / PARTE</label>
+              <input type="text" class="form-control" id="adminEditItemMotorInput" placeholder="Ej: 2KD-FTV, 1GD, 1.6 Gamma">
+            </div>
+
+            <!-- Campo Combustible (Opcional según tipo) -->
+            <div class="mb-3 d-none" id="adminEditItemFuelWrap">
+              <label for="adminEditItemFuelSelect" class="form-label font-rajdhani fw-bold text-dark mb-1">MOTORIZACIÓN / COMBUSTIBLE</label>
+              <select class="form-select" id="adminEditItemFuelSelect">
+                <option value="diesel">DIÉSEL</option>
+                <option value="gasolina">GASOLINA</option>
+              </select>
+            </div>
+
+            <div id="adminEditItemStatusMsg" class="small text-center fw-bold mb-2"></div>
+
+            <div class="d-flex justify-content-end mb-4">
+              <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnAdminSaveItem">
+                <i class="bi bi-check2-circle me-1"></i> Guardar Cambios
+              </button>
+            </div>
+
+            <!-- Zona de Peligro: Eliminar Apartado -->
+            <div class="border-top pt-3 mt-3">
+              <label class="form-label font-rajdhani fw-bold text-danger mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> ZONA DE ELIMINACIÓN</label>
+              <p class="text-muted small mb-2" style="font-size: 0.78rem;">Si este apartado se creó por error o ya no es necesario, puedes eliminarlo con confirmación.</p>
+              <button type="button" class="btn btn-outline-danger w-100 rounded-pill fw-bold" id="btnAdminDangerDelete" onclick="handleAdminTriggerDeleteFromModal()">
+                <i class="bi bi-trash3-fill me-1"></i> Eliminar este Apartado
+              </button>
+            </div>
+
+          </div>
+          <div class="modal-footer bg-light border-0 py-2 px-4 d-flex justify-content-end">
+            <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
           </div>
         </form>
       </div>

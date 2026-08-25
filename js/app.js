@@ -61,13 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Update current date dynamically in info bar
-  const dateEl = document.getElementById('firmwareDateValue');
-  if (dateEl) {
-    const now = new Date();
-    const options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-    dateEl.textContent = now.toLocaleDateString('es-ES', options);
-  }
+  // Live system clock handled globally by js/global.js
 });
 
 // Helper toast notification

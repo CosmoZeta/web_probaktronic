@@ -196,13 +196,32 @@ function initCurrentPageFeatures() {
   // Process vehicle illustration to remove gray background
   cleanVehicleImageBackground('.vehicle-half-img, .card-illustration-img');
 
-  // Update date display
-  const dateEl = document.getElementById('firmwareDateValue');
-  if (dateEl) {
-    const now = new Date();
-    const options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-    dateEl.textContent = now.toLocaleDateString('es-ES', options);
+  // Update date & time display in real time (Live Clock)
+  function startLiveSystemClock() {
+    const dateEl = document.getElementById('firmwareDateValue');
+    if (!dateEl) return;
+
+    function update() {
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      const month = months[now.getMonth()];
+      const year = now.getFullYear();
+
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'p. m.' : 'a. m.';
+      const hours12 = String(hours % 12 || 12).padStart(2, '0');
+
+      dateEl.textContent = `${day} ${month} ${year}, ${hours12}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    update();
+    setInterval(update, 1000);
   }
+
+  startLiveSystemClock();
 
   // Vehiculos Filters
   const brandChips = document.querySelectorAll('.brand-chip');

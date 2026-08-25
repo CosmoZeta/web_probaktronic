@@ -360,12 +360,42 @@ function safeCreateCenteredLoader(container, text) {
   return { finish: (cb) => { if (cb) cb(); } };
 }
 
+function getDeletedItemsList(type) {
+  try {
+    return JSON.parse(localStorage.getItem(`probaktronic_deleted_${type}`) || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function markItemAsDeleted(type, id) {
+  if (!id) return;
+  const cleanId = String(id).toLowerCase().trim();
+  try {
+    const list = getDeletedItemsList(type);
+    if (!list.includes(cleanId)) {
+      list.push(cleanId);
+      localStorage.setItem(`probaktronic_deleted_${type}`, JSON.stringify(list));
+    }
+  } catch (e) {}
+
+  // Sync to Firestore app_config/deleted_items
+  try {
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      const db = firebase.firestore();
+      db.collection('app_config').doc('deleted_items').set({
+        [type]: firebase.firestore.FieldValue.arrayUnion(cleanId)
+      }, { merge: true }).catch(() => {});
+    }
+  } catch (e) {}
+}
+
 const defaultDiagramBrands = [
   { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
   { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
 ];
 
-let cachedActiveBrands = defaultDiagramBrands;
+let cachedActiveBrands = null;
 
 function loadFirestoreDiagramasBrands(grid) {
   if (!grid) {
@@ -373,8 +403,11 @@ function loadFirestoreDiagramasBrands(grid) {
     if (!grid) return;
   }
 
-  // Render registered brands immediately
-  renderOnlyActiveBrands(grid, null, cachedActiveBrands || defaultDiagramBrands);
+  const deletedBrands = getDeletedItemsList('brands');
+
+  // Render immediately from cache/filtered defaults
+  const initialList = (cachedActiveBrands || defaultDiagramBrands).filter(b => !deletedBrands.includes(b.id.toLowerCase().trim()) && !deletedBrands.includes(b.name.toLowerCase().trim()));
+  renderOnlyActiveBrands(grid, null, initialList);
 
   ensureFirebaseSDKReady(() => {
     if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
@@ -384,12 +417,18 @@ function loadFirestoreDiagramasBrands(grid) {
     const db = firebase.firestore();
     db.collection('diagramas').get()
       .then(snapshot => {
+        const firestoreBrands = [];
+        const currentDeleted = getDeletedItemsList('brands');
+
         if (!snapshot.empty) {
-          const firestoreBrands = [];
           snapshot.forEach(doc => {
             const docId = doc.id.toLowerCase().trim();
+            if (currentDeleted.includes(docId)) return; // Skip deleted
+
             const data = doc.data() || {};
             const brandName = (data.nombre || data.marca || docId).trim();
+            if (currentDeleted.includes(brandName.toLowerCase().trim())) return; // Skip deleted
+
             const displayName = brandName.charAt(0).toUpperCase() + brandName.slice(1);
             const logoSrc = data.logo || data.imagen || getBrandLogoUrl(docId);
             firestoreBrands.push({
@@ -399,12 +438,10 @@ function loadFirestoreDiagramasBrands(grid) {
               data: data
             });
           });
-
-          if (firestoreBrands.length > 0) {
-            cachedActiveBrands = firestoreBrands;
-            renderOnlyActiveBrands(grid, null, firestoreBrands);
-          }
         }
+
+        cachedActiveBrands = firestoreBrands;
+        renderOnlyActiveBrands(grid, null, firestoreBrands);
       })
       .catch(err => {
         console.warn('Live Firestore diagrams fetch sync:', err);
@@ -419,12 +456,21 @@ function renderOnlyActiveBrands(grid, loader, brandList) {
 
     grid.innerHTML = '';
 
-    const list = (brandList && brandList.length > 0) ? brandList : defaultDiagramBrands;
+    const deletedBrands = getDeletedItemsList('brands');
+    let list = (brandList !== null && brandList !== undefined) ? brandList : (cachedActiveBrands || defaultDiagramBrands);
+    list = list.filter(b => !deletedBrands.includes(b.id.toLowerCase().trim()) && !deletedBrands.includes(b.name.toLowerCase().trim()));
 
     list.forEach(b => {
       const docId = b.id;
       const displayName = b.name;
       const logoSrc = b.logo || getBrandLogoUrl(docId);
+
+      const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
+      const editBrandBtn = isAdmin ? `
+        <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-1" style="width: 26px; height: 26px; z-index: 15;" title="Editar o Gestionar Marca (Admin)" onclick="openAdminEditItemModal(event, 'brand', { id: '${docId}', name: '${displayName}' })">
+          <i class="bi bi-pencil-fill" style="font-size: 10px;"></i>
+        </button>
+      ` : '';
 
       const card = document.createElement('div');
       card.className = 'brand-card position-relative';
@@ -432,6 +478,7 @@ function renderOnlyActiveBrands(grid, loader, brandList) {
       card.setAttribute('data-doc-id', docId);
 
       card.innerHTML = `
+        ${editBrandBtn}
         <img src="${logoSrc}" alt="${displayName}" class="brand-logo-img" style="max-height: 56px; max-width: 120px; width: auto; height: auto; object-fit: contain; margin-bottom: 12px; display: block;" onerror="this.src='logo_probaktronic_solo.png'">
         <h4 class="brand-name-title">${displayName}</h4>
       `;
@@ -614,9 +661,17 @@ async function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid,
         </div>
       `;
 
+      const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
+      const editModelBtn = isAdmin ? `
+        <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${docId}', name: '${modelName}', brand: '${brandName}', motor: '${motor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}' })">
+          <i class="bi bi-pencil-fill" style="font-size: 11px;"></i>
+        </button>
+      ` : '';
+
       const card = document.createElement('div');
-      card.className = 'model-item-card';
+      card.className = 'model-item-card position-relative';
       card.innerHTML = `
+        ${editModelBtn}
         <div class="model-card-header">
           ${thumbHtml}
           <div class="model-card-info">
@@ -693,9 +748,17 @@ function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loa
         </div>
       `;
 
+      const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
+      const editModelBtn = isAdmin ? `
+        <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${m.id}', name: '${m.modelo}', brand: '${brandName}', motor: '${m.motor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}' })">
+          <i class="bi bi-pencil-fill" style="font-size: 11px;"></i>
+        </button>
+      ` : '';
+
       const card = document.createElement('div');
-      card.className = 'model-item-card';
+      card.className = 'model-item-card position-relative';
       card.innerHTML = `
+        ${deleteModelBtn}
         <div class="model-card-header">
           ${thumbHtml}
           <div class="model-card-info">
@@ -767,47 +830,135 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
 
   const loader = safeCreateCenteredLoader(connectionListContainer, 'Cargando opciones de conexión desde Firebase...');
 
-  // Query subcollection 'archivos' from Firestore
+  // Query subcollection 'archivos' from Firestore (Universal Case-Insensitive Deep Search)
   let archivosList = [];
   try {
     const db = firebase.firestore();
-    const aniosSnap = await db.collection('diagramas').doc(brandId).collection('modelos').doc(docId).collection('anios').get();
-    
-    if (!aniosSnap.empty) {
-      for (const anioDoc of aniosSnap.docs) {
-        const motoresSnap = await db.collection('diagramas').doc(brandId).collection('modelos').doc(docId).collection('anios').doc(anioDoc.id).collection('motores').get();
-        if (!motoresSnap.empty) {
-          for (const motorDoc of motoresSnap.docs) {
-            const archivosSnap = await db.collection('diagramas').doc(brandId).collection('modelos').doc(docId).collection('anios').doc(anioDoc.id).collection('motores').doc(motorDoc.id).collection('archivos').get();
-            if (!archivosSnap.empty) {
-              archivosSnap.forEach(aDoc => {
-                archivosList.push({ id: aDoc.id, ...aDoc.data() });
-              });
+    const cleanBrand = (brandId || '').toLowerCase().trim();
+    const cleanDoc = (docId || '').toLowerCase().trim();
+    const cleanModel = (modelName || '').toLowerCase().trim();
+
+    // 1. Fetch matching brand documents in collection 'diagramas'
+    const allBrandsSnap = await db.collection('diagramas').get().catch(() => null);
+    const matchingBrandDocs = [];
+
+    if (allBrandsSnap && !allBrandsSnap.empty) {
+      allBrandsSnap.forEach(bDoc => {
+        const bId = bDoc.id.toLowerCase().trim();
+        const bData = bDoc.data() || {};
+        const bName = (bData.nombre || bData.marca || '').toLowerCase().trim();
+        if (bId === cleanBrand || bName === cleanBrand || cleanBrand.includes(bId) || bId.includes(cleanBrand)) {
+          matchingBrandDocs.push(bDoc);
+        }
+      });
+    }
+
+    if (matchingBrandDocs.length === 0) {
+      const brandDirect = Array.from(new Set([brandId, cleanBrand, brandId.toUpperCase(), 'Toyota', 'toyota', 'TOYOTA']));
+      for (const bd of brandDirect) {
+        matchingBrandDocs.push(db.collection('diagramas').doc(bd));
+      }
+    }
+
+    // 2. Traverse matching brand docs -> modelos -> anios -> motores -> archivos
+    for (const bDocRef of matchingBrandDocs) {
+      const bRef = bDocRef.ref || bDocRef;
+      const bVar = bDocRef.id || brandId;
+
+      try {
+        const modelosSnap = await bRef.collection('modelos').get().catch(() => null);
+        if (modelosSnap && !modelosSnap.empty) {
+          for (const mDoc of modelosSnap.docs) {
+            const mId = mDoc.id.toLowerCase().trim();
+            const mData = mDoc.data() || {};
+            const mName = (mData.modelo || mData.nombre || '').toLowerCase().trim();
+
+            const isMatch = (
+              mId === cleanDoc || mId === cleanModel ||
+              cleanDoc.includes(mId) || mId.includes(cleanDoc) ||
+              cleanModel.includes(mId) || mId.includes(cleanModel) ||
+              (cleanDoc.includes('corolla') && mId.includes('corolla')) ||
+              (cleanDoc.includes('hilux') && mId.includes('hilux')) ||
+              (cleanDoc.includes('accent') && mId.includes('accent'))
+            );
+
+            if (isMatch) {
+              const aniosSnap = await mDoc.ref.collection('anios').get().catch(() => null);
+              if (aniosSnap && !aniosSnap.empty) {
+                for (const anioDoc of aniosSnap.docs) {
+                  const motoresSnap = await anioDoc.ref.collection('motores').get().catch(() => null);
+                  if (motoresSnap && !motoresSnap.empty) {
+                    for (const motorDoc of motoresSnap.docs) {
+                      const archivosSnap = await motorDoc.ref.collection('archivos').get().catch(() => null);
+                      if (archivosSnap && !archivosSnap.empty) {
+                        archivosSnap.forEach(aDoc => {
+                          const aData = aDoc.data() || {};
+                          archivosList.push({
+                            id: aDoc.id,
+                            brandDocId: bVar,
+                            modelDocId: mDoc.id,
+                            anioDocId: anioDoc.id,
+                            motorDocId: motorDoc.id,
+                            archDocId: aDoc.id,
+                            ...aData
+                          });
+                        });
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
-      }
+      } catch (errM) {}
     }
   } catch (e) {
     console.warn('Error querying archivos subcollection:', e);
   }
 
-  // Fallback connection modes (OBD, BOOT, BENCH, PEDAL, etc.) if none in Firestore
-  if (archivosList.length === 0) {
-    archivosList = [
-      { id: 'OBD', titulo: 'OBD', tipo: 'DIAGRAMA OBD' },
-      { id: 'BOOT', titulo: 'BOOT', tipo: 'CONEXIÓN BOOT' },
-      { id: 'BENCH', titulo: 'BENCH', tipo: 'MODO BANCO' },
-      { id: 'PEDAL', titulo: 'PEDAL', tipo: 'DOCUMENTO PDF' },
-      { id: 'EDU 2 CONECTORES', titulo: 'EDU 2 CONECTORES', tipo: 'DOCUMENTO PDF' },
-      { id: 'INMOVILIZADOR', titulo: 'INMOVILIZADOR', tipo: 'DOCUMENTO PDF' }
-    ];
-  }
+  // Filter out any deleted diagrams
+  const deletedDiagrams = getDeletedItemsList('diagrams');
+  archivosList = archivosList.filter(a => {
+    const cleanId = (a.id || '').toLowerCase().trim();
+    const cleanTitle = (a.titulo || a.nombre || '').toLowerCase().trim();
+    return !deletedDiagrams.includes(cleanId) && !deletedDiagrams.includes(cleanTitle);
+  });
 
-  let selectedArchDoc = archivosList[0];
+  const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
+  const btnNext = document.getElementById('btnNextToDiagram');
 
   loader.finish(() => {
     connectionListContainer.innerHTML = '';
+
+    if (archivosList.length === 0) {
+      connectionListContainer.innerHTML = `
+        <div class="w-100 text-center py-5" style="grid-column: 1 / -1;">
+          <div class="bg-light rounded-circle p-3 d-inline-flex mb-2">
+            <i class="bi bi-file-earmark-x text-danger" style="font-size: 2.5rem;"></i>
+          </div>
+          <h5 class="fw-bold text-dark mt-2 font-rajdhani">NO HAY DIAGRAMAS CARGADOS PARA ESTE MODELO</h5>
+          <p class="text-muted small mb-3">Aún no se han subido esquemas o diagramas de conexión para este vehículo.</p>
+          ${isAdmin ? `
+            <button class="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm" onclick="openAdminUploadModal()">
+              <i class="bi bi-cloud-arrow-up-fill me-1"></i> Subir Primer Diagrama (Admin)
+            </button>
+          ` : ''}
+        </div>
+      `;
+      if (btnNext) {
+        btnNext.disabled = true;
+        btnNext.classList.add('opacity-50');
+      }
+      return;
+    }
+
+    if (btnNext) {
+      btnNext.disabled = false;
+      btnNext.classList.remove('opacity-50');
+    }
+
+    let selectedArchDoc = archivosList[0];
 
     archivosList.forEach((arch, index) => {
       const isSelected = index === 0;
@@ -823,21 +974,21 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
         }
       } catch (e) {}
 
-      let iconHtml = '<i class="bi bi-cpu-fill fs-1"></i>';
+      let iconHtml = '<i class="bi bi-file-earmark-pdf-fill fs-1"></i>';
       if (customIcon) {
         if (customIcon.startsWith('bi-')) {
           iconHtml = `<i class="bi ${customIcon} fs-1"></i>`;
         } else if (customIcon.startsWith('http') || customIcon.includes('/') || customIcon.endsWith('.svg') || customIcon.endsWith('.png')) {
-          iconHtml = `<img src="${customIcon}" alt="Icono" style="max-height: 48px; object-fit: contain;">`;
+          iconHtml = `<img src="${customIcon}" alt="Icono" style="max-height: 48px; max-width: 48px; object-fit: contain;">`;
         }
+      } else if (title.includes('PEDAL')) {
+        iconHtml = '<img src="pedal_acelerador.png" alt="Pedal Acelerador APP" style="max-height: 48px; max-width: 48px; object-fit: contain;">';
       } else if (title.includes('OBD')) {
         iconHtml = '<i class="bi bi-hdd-network-fill fs-1"></i>';
       } else if (title.includes('BOOT')) {
         iconHtml = '<i class="bi bi-cpu-fill fs-1"></i>';
       } else if (title.includes('BENCH')) {
         iconHtml = '<i class="bi bi-motherboard-fill fs-1"></i>';
-      } else if (title.includes('PEDAL')) {
-        iconHtml = '<i class="bi bi-sliders2 fs-1" title="Pedal Acelerador APP"></i>';
       } else if (title.includes('EDU') || title.includes('CONECTOR')) {
         iconHtml = '<i class="bi bi-diagram-3-fill fs-1"></i>';
       } else if (title.includes('INMOVILIZADOR') || title.includes('LLAVE')) {
@@ -846,11 +997,15 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
         iconHtml = '<i class="bi bi-file-earmark-pdf-fill fs-1"></i>';
       }
 
-      const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
       const adminEditBtnHtml = isAdmin ? `
-        <button class="btn btn-sm btn-light position-absolute top-0 end-0 m-1 rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; z-index: 15;" title="Cambiar ícono de esta tarjeta como Administrador" onclick="openAdminMechanicalIconPicker(event, '${cardKey}')">
-          <i class="bi bi-pencil-fill text-danger" style="font-size: 10px;"></i>
-        </button>
+        <div class="position-absolute top-0 end-0 m-1 d-flex gap-1" style="z-index: 15;">
+          <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center" style="width: 26px; height: 26px;" title="Cambiar ícono de esta tarjeta" onclick="openAdminMechanicalIconPicker(event, '${cardKey}')">
+            <i class="bi bi-star-fill text-danger" style="font-size: 10px;"></i>
+          </button>
+          <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger" style="width: 26px; height: 26px;" title="Editar o Gestionar Diagrama (Admin)" onclick="openAdminEditItemModal(event, 'diagram', { id: '${arch.archDocId || ''}', name: '${title}', brand: '${arch.brandDocId || ''}', model: '${arch.modelDocId || ''}', anio: '${arch.anioDocId || ''}', motor: '${arch.motorDocId || ''}', fileUrl: '${arch.url || arch.imageUrl || ''}' })">
+            <i class="bi bi-pencil-fill" style="font-size: 10px;"></i>
+          </button>
+        </div>
       ` : '';
 
       const card = document.createElement('div');
@@ -860,7 +1015,7 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
         <div class="card-corner-badge">
           <i class="bi ${isSelected ? 'bi-check-circle-fill' : 'bi-slash-circle'}"></i>
         </div>
-        <div class="conn-icon">
+        <div class="conn-icon" data-icon-key="${cardKey}" data-icon-title="${title}">
           ${iconHtml}
         </div>
         <div class="conn-label">${title}</div>
@@ -882,15 +1037,15 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
 
       connectionListContainer.appendChild(card);
     });
-  });
 
-  // Attach NEXT button handler
-  const btnNext = document.getElementById('btnNextToDiagram');
-  if (btnNext) {
-    btnNext.onclick = () => {
-      openDiagramViewer(docId, selectedArchDoc);
-    };
-  }
+    if (btnNext) {
+      btnNext.onclick = () => {
+        if (selectedArchDoc) {
+          openDiagramViewer(docId, selectedArchDoc);
+        }
+      };
+    }
+  });
 };
 
 // Global Console Controls for Level 4 Diagnostic Viewer
@@ -1599,17 +1754,35 @@ window.selectFuelType = function(fuelType) {
   const fuelView = document.getElementById('fuelSelectorViewContainer');
   const dieselCatView = document.getElementById('dieselCategoriesViewContainer');
   const gasCatView = document.getElementById('gasolinaCategoriesViewContainer');
+  const brandsView = document.getElementById('brandsViewContainer');
+  const modelsView = document.getElementById('modelsViewContainer');
+  const ecuView = document.getElementById('ecuInfoViewContainer');
+  const diagramView = document.getElementById('diagramViewContainer');
 
   if (fuelView) fuelView.classList.add('d-none');
+  if (brandsView) brandsView.classList.add('d-none');
+  if (modelsView) modelsView.classList.add('d-none');
+  if (ecuView) ecuView.classList.add('d-none');
+  if (diagramView) diagramView.classList.add('d-none');
 
   if (fuelType === 'diesel') {
     if (dieselCatView) dieselCatView.classList.remove('d-none');
     if (gasCatView) gasCatView.classList.add('d-none');
     updateBreadcrumbUI('fuel_type', 'Diesel');
+
+    const headerTitle = document.getElementById('vehiculosHeaderTitle');
+    const headerSubtitle = document.getElementById('vehiculosHeaderSubtitle');
+    if (headerTitle) headerTitle.textContent = 'CATEGORÍAS DIÉSEL';
+    if (headerSubtitle) headerSubtitle.textContent = 'Seleccione la categoría de vehículo o maquinaria Diésel a diagnosticar';
   } else {
     if (gasCatView) gasCatView.classList.remove('d-none');
     if (dieselCatView) dieselCatView.classList.add('d-none');
     updateBreadcrumbUI('fuel_type', 'Gasolina');
+
+    const headerTitle = document.getElementById('vehiculosHeaderTitle');
+    const headerSubtitle = document.getElementById('vehiculosHeaderSubtitle');
+    if (headerTitle) headerTitle.textContent = 'CATEGORÍAS GASOLINA';
+    if (headerSubtitle) headerSubtitle.textContent = 'Seleccione el segmento de vehículo Gasolina a diagnosticar';
   }
 };
 
@@ -1640,11 +1813,17 @@ window.selectVehicleCategory = function(catKey, fuelType, catTitle, count = 1) {
   const dieselCatView = document.getElementById('dieselCategoriesViewContainer');
   const gasCatView = document.getElementById('gasolinaCategoriesViewContainer');
   const brandsView = document.getElementById('brandsViewContainer');
+  const modelsView = document.getElementById('modelsViewContainer');
+  const ecuView = document.getElementById('ecuInfoViewContainer');
+  const diagramView = document.getElementById('diagramViewContainer');
 
   if (fuelView) fuelView.classList.add('d-none');
   if (dieselCatView) dieselCatView.classList.add('d-none');
   if (gasCatView) gasCatView.classList.add('d-none');
   if (brandsView) brandsView.classList.remove('d-none');
+  if (modelsView) modelsView.classList.add('d-none');
+  if (ecuView) ecuView.classList.add('d-none');
+  if (diagramView) diagramView.classList.add('d-none');
 
   updateBreadcrumbUI('category', fuelType === 'diesel' ? 'Diesel' : 'Gasolina', catTitle);
 
@@ -1655,17 +1834,26 @@ window.selectVehicleCategory = function(catKey, fuelType, catTitle, count = 1) {
 };
 
 function updateBreadcrumbUI(level, fuelLabel = '', catLabel = '') {
+  const nav = document.getElementById('vehicleBreadcrumbNav');
   const sep1 = document.getElementById('bcrumbSep1');
   const bFuel = document.getElementById('bcrumbFuelType');
   const sep2 = document.getElementById('bcrumbSep2');
   const bCat = document.getElementById('bcrumbCategory');
 
   if (level === 'fuel') {
+    if (nav) {
+      nav.classList.add('d-none');
+      nav.classList.remove('d-flex');
+    }
     if (sep1) sep1.classList.add('d-none');
     if (bFuel) bFuel.classList.add('d-none');
     if (sep2) sep2.classList.add('d-none');
     if (bCat) bCat.classList.add('d-none');
   } else if (level === 'fuel_type') {
+    if (nav) {
+      nav.classList.remove('d-none');
+      nav.classList.add('d-flex');
+    }
     if (sep1) sep1.classList.remove('d-none');
     if (bFuel) {
       bFuel.classList.remove('d-none');
@@ -1674,6 +1862,10 @@ function updateBreadcrumbUI(level, fuelLabel = '', catLabel = '') {
     if (sep2) sep2.classList.add('d-none');
     if (bCat) bCat.classList.add('d-none');
   } else if (level === 'category') {
+    if (nav) {
+      nav.classList.remove('d-none');
+      nav.classList.add('d-flex');
+    }
     if (sep1) sep1.classList.remove('d-none');
     if (bFuel) {
       bFuel.classList.remove('d-none');
@@ -1774,45 +1966,69 @@ function injectAdminMechanicalIconPickerModal() {
   if (document.getElementById('adminMechanicalIconPickerModal')) return;
 
   const mechanicalIcons = [
-    { title: 'Pedal de Acelerador APP', icon: 'bi-sliders2' },
-    { title: 'Mecánico con Llave', icon: 'bi-person-gear' },
-    { title: 'Herramientas Cruzadas', icon: 'bi-wrench-adjustable' },
-    { title: 'Pinzas / Caimanes de Carga', icon: 'bi-lightning-charge-fill' },
-    { title: 'Motor & Capó Abierto', icon: 'bi-car-front-fill' },
-    { title: 'Amortiguador / Suspensión', icon: 'bi-bounding-box-circles' },
-    { title: 'Palanca de Cambios / Caja', icon: 'bi-diagram-2-fill' },
-    { title: 'Aceitera & Lubricación', icon: 'bi-droplet-half' },
-    { title: 'Batería Automotriz', icon: 'bi-battery-charging' },
-    { title: 'Bujía de Encendido', icon: 'bi-lightning-fill' },
-    { title: 'Elevador Hidráulico / Taller', icon: 'bi-truck-front-fill' },
-    { title: 'Latonería & Pintura', icon: 'bi-palette-fill' },
-    { title: 'Eje & Diferencial 4x4', icon: 'bi-gear-wide-connected' },
-    { title: 'Neumático & Rueda', icon: 'bi-circle-square' },
-    { title: 'Volante de Dirección', icon: 'bi-disc-fill' },
-    { title: 'Velocímetro / Manómetro', icon: 'bi-speedometer2' },
-    { title: 'Obturador / Mariposa TPS', icon: 'bi-circle-half' },
-    { title: 'Inyectores / Combustible', icon: 'bi-fuel-pump-fill' },
-    { title: 'Sensor Oxígeno LSU / Lambda', icon: 'bi-wind' },
-    { title: 'Válvula IAC / Ralentí', icon: 'bi-fan' },
-    { title: 'Sensor CKP / CMP / Giro', icon: 'bi-arrow-repeat' },
-    { title: 'Osciloscopio / Señal PWM', icon: 'bi-activity' },
-    { title: 'ECU / Computadora ECM', icon: 'bi-cpu-fill' },
-    { title: 'Drivers IGBT / Módulo', icon: 'bi-motherboard-fill' },
+    { title: 'Pedal Acelerador APP', icon: 'pedal_acelerador.png' },
+    { title: 'Pedal Freno', icon: 'pedal_acelerador.png' },
+    { title: 'ECU Computadora ECM', icon: 'bi-cpu-fill' },
+    { title: 'Pinout E.D.U Multipines', icon: 'bi-diagram-3-fill' },
     { title: 'Inmovilizador / Llave', icon: 'bi-key-fill' },
+    { title: 'Drivers IGBT / Placa', icon: 'bi-motherboard-fill' },
+    { title: 'Surtidor Gasolina', icon: 'bi-fuel-pump-fill' },
+    { title: 'Gota Diésel / Aceite', icon: 'bi-droplet-fill' },
+    { title: 'Camioneta Pickup', icon: 'bi-truck-front-fill' },
+    { title: 'Furgón / Van Carga', icon: 'bi-box-seam-fill' },
+    { title: 'Camión Pesado', icon: 'bi-truck' },
+    { title: 'Maquinaria Pesada', icon: 'bi-gear-wide-connected' },
+    { title: 'Sedán / Auto Liviano', icon: 'bi-car-front-fill' },
+    { title: 'SUV / Crossover 4x4', icon: 'bi-shield-shaded' },
+    { title: 'Cuerpo Acelerador TPS', icon: 'bi-circle-half' },
+    { title: 'Bomba Inyección Diésel', icon: 'bi-fuel-pump' },
+    { title: 'Inyectores Common Rail', icon: 'bi-layers-fill' },
+    { title: 'Bobina / Chispa', icon: 'bi-lightning-charge-fill' },
+    { title: 'Batería 12V / 24V', icon: 'bi-battery-charging' },
+    { title: 'Bujía / Precalentador', icon: 'bi-lightning-fill' },
+    { title: 'Turbocompresor / Turbo', icon: 'bi-fan' },
+    { title: 'Válvula EGR / Emisiones', icon: 'bi-recycle' },
+    { title: 'Sensor MAF Flujómetro', icon: 'bi-wind' },
+    { title: 'Sensor MAP Presión', icon: 'bi-speedometer' },
+    { title: 'Sensor CKP / Cigüeñal', icon: 'bi-arrow-repeat' },
+    { title: 'Sensor CMP / Levas', icon: 'bi-arrow-clockwise' },
+    { title: 'Sensor Oxígeno / Lambda', icon: 'bi-activity' },
+    { title: 'Termostato / ECT Temp', icon: 'bi-thermometer-high' },
+    { title: 'Alternador & Generador', icon: 'bi-arrow-left-right' },
+    { title: 'Motor de Arranque', icon: 'bi-power' },
+    { title: 'Fusibles & Relés BCM', icon: 'bi-toggle-on' },
+    { title: 'Frenos ABS / Control ESP', icon: 'bi-record-circle' },
+    { title: 'Transmisión / Caja TCM', icon: 'bi-gear-fill' },
+    { title: 'Palanca de Cambios', icon: 'bi-diagram-2-fill' },
+    { title: 'Amortiguador / Suspensión', icon: 'bi-bounding-box-circles' },
+    { title: 'Aceitera & Lubricación', icon: 'bi-droplet-half' },
+    { title: 'Volante / Dirección EPS', icon: 'bi-disc-fill' },
+    { title: 'Velocímetro / Scanner', icon: 'bi-speedometer2' },
     { title: 'Red OBD-II / CAN Bus', icon: 'bi-hdd-network-fill' },
-    { title: 'Conectores & Pinout', icon: 'bi-diagram-3-fill' },
-    { title: 'Fusibles & Relés', icon: 'bi-toggle-on' }
+    { title: 'Herramientas Mecánico', icon: 'bi-wrench-adjustable' },
+    { title: 'Mecánico con Llave', icon: 'bi-person-gear' },
+    { title: 'Seguridad / Alarma', icon: 'bi-shield-lock-fill' },
+    { title: 'Documento / Esquema PDF', icon: 'bi-file-earmark-pdf-fill' },
+    { title: 'Estrella / Favorito', icon: 'bi-star-fill' },
+    { title: 'Escudo Probaktronic', icon: 'bi-shield-check' }
   ];
 
-  const iconChoicesHtml = mechanicalIcons.map(item => `
-    <button type="button" class="btn btn-outline-dark btn-mech-icon-choice p-2 text-center" data-icon="${item.icon}" title="${item.title}" style="width: 70px; height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px;">
-      <i class="bi ${item.icon} fs-3"></i>
-      <span style="font-size: 8px; line-height: 1; margin-top: 4px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.title}</span>
-    </button>
-  `).join('');
+  const iconChoicesHtml = mechanicalIcons.map(item => {
+    const isImg = item.icon.endsWith('.png') || item.icon.endsWith('.svg') || item.icon.includes('/');
+    const iconVisual = isImg
+      ? `<img src="${item.icon}" alt="${item.title}" style="max-height: 32px; max-width: 32px; object-fit: contain; margin-bottom: 2px;">`
+      : `<i class="bi ${item.icon} fs-3"></i>`;
+
+    return `
+      <button type="button" class="btn btn-outline-dark btn-mech-icon-choice p-2 text-center" data-icon="${item.icon}" title="${item.title}" style="width: 82px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px;">
+        ${iconVisual}
+        <span style="font-size: 8px; line-height: 1.1; margin-top: 4px; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.title}</span>
+      </button>
+    `;
+  }).join('');
 
   const modalHtml = `
-    <div class="modal fade" id="adminMechanicalIconPickerModal" tabindex="-1" aria-labelledby="adminMechanicalIconPickerModalLabel" aria-hidden="true">
+    <div class="modal fade" id="adminMechanicalIconPickerModal" tabindex="-1" aria-labelledby="adminMechanicalIconPickerModalLabel" aria-hidden="true" style="z-index: 1070;">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
           <div class="modal-header bg-dark text-white border-0 py-3">
@@ -1824,26 +2040,26 @@ function injectAdminMechanicalIconPickerModal() {
           <div class="modal-body p-4" style="max-height: 80vh; overflow-y: auto;">
             <div class="alert alert-info border-0 mb-3 py-2 small">
               <i class="bi bi-info-circle-fill me-1"></i>
-              Selecciona el ícono mecánico representativo para la tarjeta: <strong id="adminIconCardTitle" class="text-danger">TARJETA</strong>
+              Selecciona el nuevo ícono representativo para: <strong id="adminIconCardTitle" class="text-danger">TARJETA</strong>
             </div>
 
             <!-- Mechanical & Electronic Icons Grid -->
-            <label class="form-label font-rajdhani fw-bold text-dark mb-2">Seleccione el ícono automotriz/mecánico:</label>
+            <label class="form-label font-rajdhani fw-bold text-dark mb-2">Seleccione el ícono automotriz / mecánico:</label>
             <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap mb-4" id="mechIconsContainer">
               ${iconChoicesHtml}
             </div>
 
             <!-- Custom URL or SVG -->
             <div class="mb-3">
-              <label for="adminCustomIconInput" class="form-label font-rajdhani fw-bold text-dark mb-1">O ingrese una ruta SVG / URL de imagen personalizada:</label>
-              <input type="text" class="form-control form-control-sm" id="adminCustomIconInput" placeholder="Ej: imagenes svg/ico_logo_toyota.svg o bi-sliders2">
+              <label for="adminCustomIconInput" class="form-label font-rajdhani fw-bold text-dark mb-1">O ingrese una clase Bootstrap Icons (ej: bi-tools) o ruta de imagen:</label>
+              <input type="text" class="form-control form-control-sm" id="adminCustomIconInput" placeholder="Ej: bi-sliders2, bi-cpu-fill, o imagenes svg/ico_logo_toyota.svg">
             </div>
 
           </div>
           <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
             <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
             <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="saveAdminMechanicalIconChoice()">
-              <i class="bi bi-check-lg me-1"></i> Aplicar a la Tarjeta
+              <i class="bi bi-check-lg me-1"></i> Aplicar y Guardar Ícono
             </button>
           </div>
         </div>
@@ -1885,6 +2101,9 @@ window.saveAdminMechanicalIconChoice = async function() {
     localStorage.setItem('probaktronic_card_icons', JSON.stringify(saved));
   } catch (e) {}
 
+  // Apply immediately to matching DOM elements
+  applyCustomIconToKey(currentEditingCardKey, selectedMechanicalIconChoice);
+
   // Save to Firestore under app_config/iconos_tarjetas
   try {
     if (typeof firebase !== 'undefined' && firebase.firestore) {
@@ -1898,14 +2117,7 @@ window.saveAdminMechanicalIconChoice = async function() {
   }
 
   if (typeof window.showGlobalToast === 'function') {
-    window.showGlobalToast(`Ícono actualizado para ${currentEditingCardKey}`);
-  }
-
-  // Reload connection cards view
-  if (typeof window.renderVehiculoConexionesView === 'function' && window.currentSelectedVehicleData) {
-    window.renderVehiculoConexionesView(window.currentSelectedVehicleData);
-  } else {
-    location.reload();
+    window.showGlobalToast(`¡Ícono actualizado correctamente para "${currentEditingCardKey}"!`);
   }
 
   const modalEl = document.getElementById('adminMechanicalIconPickerModal');
@@ -1914,6 +2126,79 @@ window.saveAdminMechanicalIconChoice = async function() {
     if (bsModal) bsModal.hide();
   }
 };
+
+function applyCustomIconToKey(key, iconValue) {
+  if (!key || !iconValue) return;
+  const cleanKey = key.toLowerCase().trim();
+
+  const targetElements = document.querySelectorAll('[data-icon-key]');
+  targetElements.forEach(el => {
+    const elKey = (el.getAttribute('data-icon-key') || '').toLowerCase().trim();
+    const elTitle = (el.getAttribute('data-icon-title') || '').toLowerCase().trim();
+
+    if (elKey === cleanKey || elTitle === cleanKey || cleanKey.includes(elKey) || elKey.includes(cleanKey) || (elTitle && (cleanKey.includes(elTitle) || elTitle.includes(cleanKey)))) {
+      if (iconValue.startsWith('bi-')) {
+        el.innerHTML = `<i class="bi ${iconValue} fs-1"></i>`;
+      } else if (iconValue.endsWith('.png') || iconValue.endsWith('.svg') || iconValue.includes('/') || iconValue.startsWith('http')) {
+        el.innerHTML = `<img src="${iconValue}" alt="${key}" style="max-height: 48px; max-width: 48px; object-fit: contain;">`;
+      } else {
+        el.innerHTML = `<i class="bi ${iconValue} fs-1"></i>`;
+      }
+    }
+  });
+}
+
+function applyAllCustomCardIcons() {
+  let saved = {};
+  try {
+    saved = JSON.parse(localStorage.getItem('probaktronic_card_icons') || '{}');
+  } catch (e) {}
+
+  Object.entries(saved).forEach(([key, iconVal]) => {
+    applyCustomIconToKey(key, iconVal);
+  });
+
+  // Query Firestore for live sync
+  if (typeof firebase !== 'undefined' && firebase.firestore) {
+    const db = firebase.firestore();
+    db.collection('app_config').doc('iconos_tarjetas').get().then(doc => {
+      if (doc.exists) {
+        const firestoreIcons = doc.data() || {};
+        try {
+          localStorage.setItem('probaktronic_card_icons', JSON.stringify({ ...saved, ...firestoreIcons }));
+        } catch (e) {}
+        Object.entries(firestoreIcons).forEach(([k, v]) => {
+          applyCustomIconToKey(k, v);
+        });
+      }
+    }).catch(e => console.warn('Firestore card icons fetch:', e));
+  }
+}
+
+function checkAdminCardIconButtonsVisibility() {
+  const user = window.probaktronicCurrentUser;
+  const isAdmin = user && (user.email === 'prueba@probak.com');
+  const editButtons = document.querySelectorAll('.admin-card-icon-edit-btn');
+  editButtons.forEach(btn => {
+    if (isAdmin) {
+      btn.classList.remove('d-none');
+    } else {
+      btn.classList.add('d-none');
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyAllCustomCardIcons();
+  checkAdminCardIconButtonsVisibility();
+});
+
+if (typeof firebase !== 'undefined' && firebase.auth) {
+  firebase.auth().onAuthStateChanged(() => {
+    checkAdminCardIconButtonsVisibility();
+    applyAllCustomCardIcons();
+  });
+}
 
 // --- ADMIN DIAGRAM UPLOAD CONTROLLER ---
 
@@ -2182,3 +2467,414 @@ document.addEventListener('DOMContentLoaded', checkAdminButtonVisibility);
 if (typeof firebase !== 'undefined' && firebase.auth) {
   firebase.auth().onAuthStateChanged(() => checkAdminButtonVisibility());
 }
+
+// --- ADMIN DELETE DIAGRAM / FILE CONTROLLER ---
+window.handleAdminDeleteDiagramFile = async function(e, brandDocId, modelDocId, anioDocId, motorDocId, archDocId, diagramTitle, fileUrl) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  const user = window.probaktronicCurrentUser;
+  if (!user || user.email !== 'prueba@probak.com') {
+    alert('Acceso exclusivo para el Administrador.');
+    return;
+  }
+
+  const confirmDelete = confirm(`¿Está seguro de eliminar el diagrama/documento "${diagramTitle}"?\n\nEsta acción borrará el archivo de Firestore y Storage de forma segura sin afectar el resto de la base de datos ni la app de Android Studio.`);
+  if (!confirmDelete) return;
+
+  try {
+    ensureFirebaseInitialized();
+    const db = firebase.firestore();
+
+    // 1. Delete from Firebase Storage if URL is available
+    if (fileUrl && fileUrl.startsWith('http') && typeof firebase.storage === 'function') {
+      try {
+        const storageRef = firebase.storage().refFromURL(fileUrl);
+        await storageRef.delete();
+        console.log('Archivo de Storage eliminado con éxito');
+      } catch (stErr) {
+        console.warn('Nota Storage al eliminar:', stErr);
+      }
+    }
+
+    // 2. Delete specific document in Firestore
+    if (brandDocId && modelDocId && anioDocId && motorDocId && archDocId) {
+      await db.collection('diagramas').doc(brandDocId.toLowerCase().trim())
+        .collection('modelos').doc(modelDocId.toLowerCase().trim())
+        .collection('anios').doc(anioDocId)
+        .collection('motores').doc(motorDocId)
+        .collection('archivos').doc(archDocId).delete();
+    }
+
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast(`Diagrama "${diagramTitle}" eliminado exitosamente.`);
+    } else {
+      alert(`Diagrama "${diagramTitle}" eliminado exitosamente.`);
+    }
+
+    // 3. Reload current vehicle connection cards
+    if (modelDocId) {
+      window.openModelEcuInfo(modelDocId, modelDocId, motorDocId);
+    } else {
+      location.reload();
+    }
+
+  } catch (err) {
+    console.error('Error al eliminar archivo:', err);
+    alert('Ocurrió un error al eliminar el archivo: ' + err.message);
+  }
+};
+
+// Recursive deletion helper for Firestore subcollections
+async function deleteDocumentRecursively(docRef) {
+  if (!docRef) return;
+  const knownSubcollections = ['modelos', 'anios', 'motores', 'archivos'];
+  for (const subName of knownSubcollections) {
+    try {
+      const snap = await docRef.collection(subName).get().catch(() => null);
+      if (snap && !snap.empty) {
+        for (const subDoc of snap.docs) {
+          await deleteDocumentRecursively(subDoc.ref);
+        }
+      }
+    } catch (e) {}
+  }
+  await docRef.delete().catch(() => {});
+}
+
+// --- ADMIN DELETE BRAND CONTROLLER ---
+window.handleAdminDeleteBrand = async function(e, brandDocId, brandName) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  const user = window.probaktronicCurrentUser;
+  if (!user || user.email !== 'prueba@probak.com') {
+    alert('Acceso exclusivo para el Administrador.');
+    return;
+  }
+
+  const cleanBrand = (brandDocId || brandName).toLowerCase().trim();
+  const upperBrand = (brandDocId || brandName).toUpperCase().trim();
+  const titleBrand = brandName ? (brandName.charAt(0).toUpperCase() + brandName.slice(1).toLowerCase()).trim() : '';
+
+  // 1. Mark as deleted in local persistent storage & Firestore
+  markItemAsDeleted('brands', cleanBrand);
+  markItemAsDeleted('brands', upperBrand);
+  if (brandName) {
+    markItemAsDeleted('brands', brandName.toLowerCase().trim());
+  }
+
+  // 2. Remove card immediately from the DOM
+  const brandGrid = document.getElementById('vehiculosBrandGrid');
+  if (brandGrid) {
+    const cards = brandGrid.querySelectorAll('.brand-card');
+    cards.forEach(c => {
+      const docAttr = (c.getAttribute('data-doc-id') || '').toLowerCase().trim();
+      const nameAttr = (c.getAttribute('data-brand') || '').toLowerCase().trim();
+      if (docAttr === cleanBrand || nameAttr === cleanBrand || (brandName && nameAttr === brandName.toLowerCase().trim())) {
+        c.remove();
+      }
+    });
+  }
+
+  if (cachedActiveBrands) {
+    cachedActiveBrands = cachedActiveBrands.filter(b => b.id.toLowerCase().trim() !== cleanBrand && b.name.toLowerCase().trim() !== cleanBrand);
+  }
+
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast(`Marca "${brandName}" eliminada exitosamente de Firestore.`);
+  } else {
+    alert(`Marca "${brandName}" eliminada exitosamente de Firestore.`);
+  }
+
+  // 3. Deep Recursive deletion of brand doc & all subcollections in Firestore
+  try {
+    ensureFirebaseInitialized();
+    const db = firebase.firestore();
+
+    const variants = Array.from(new Set([cleanBrand, upperBrand, titleBrand, brandDocId, brandName].filter(Boolean)));
+    for (const bVar of variants) {
+      const bRef = db.collection('diagramas').doc(bVar);
+      await deleteDocumentRecursively(bRef);
+    }
+
+    // Refresh grid
+    if (brandGrid) {
+      loadFirestoreDiagramasBrands(brandGrid);
+    }
+  } catch (err) {
+    console.error('Error al eliminar marca en Firestore:', err);
+  }
+};
+
+// --- ADMIN DELETE MODEL CONTROLLER ---
+window.handleAdminDeleteModel = async function(e, brandName, modelDocId, modelName) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  const user = window.probaktronicCurrentUser;
+  if (!user || user.email !== 'prueba@probak.com') {
+    alert('Acceso exclusivo para el Administrador.');
+    return;
+  }
+
+  const cleanBrand = (currentSelectedBrandId || brandName).toLowerCase().trim();
+  const upperBrand = (currentSelectedBrandId || brandName).toUpperCase().trim();
+  const cleanModel = modelDocId.toLowerCase().trim();
+  const upperModel = modelDocId.toUpperCase().trim();
+
+  // 1. Mark as deleted in local storage & Firestore
+  markItemAsDeleted('models', cleanModel);
+  if (modelName) markItemAsDeleted('models', modelName.toLowerCase().trim());
+
+  // 2. Remove card immediately from the DOM
+  const modelsListGrid = document.getElementById('brandModelsListGrid');
+  if (modelsListGrid) {
+    const cards = modelsListGrid.querySelectorAll('.model-item-card');
+    cards.forEach(c => {
+      const title = c.querySelector('.model-card-title')?.textContent.toLowerCase().trim();
+      const subtitle = c.querySelector('.model-card-subtitle')?.textContent.toLowerCase().trim();
+      if (title === cleanModel || subtitle === cleanModel || (modelName && subtitle === modelName.toLowerCase().trim())) {
+        c.remove();
+      }
+    });
+  }
+
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast(`Modelo "${modelName}" eliminado exitosamente.`);
+  } else {
+    alert(`Modelo "${modelName}" eliminado exitosamente.`);
+  }
+
+  // 3. Deep Recursive deletion of model & its subcollections in Firestore
+  try {
+    ensureFirebaseInitialized();
+    const db = firebase.firestore();
+
+    const brandVars = Array.from(new Set([cleanBrand, upperBrand].filter(Boolean)));
+    const modelVars = Array.from(new Set([cleanModel, upperModel, modelDocId, modelName].filter(Boolean)));
+
+    for (const bVar of brandVars) {
+      for (const mVar of modelVars) {
+        const mRef = db.collection('diagramas').doc(bVar).collection('modelos').doc(mVar);
+        await deleteDocumentRecursively(mRef);
+      }
+    }
+  } catch (err) {
+    console.error('Error al eliminar modelo en Firestore:', err);
+  }
+};
+
+// --- ADMIN UNIVERSAL EDIT & MANAGE MODAL CONTROLLER ---
+let currentEditingItemContext = null;
+
+window.openAdminEditItemModal = function(e, type, itemData) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  const user = window.probaktronicCurrentUser;
+  if (!user || user.email !== 'prueba@probak.com') {
+    alert('Acceso exclusivo para el Administrador.');
+    return;
+  }
+
+  currentEditingItemContext = { type, ...itemData };
+
+  const modalEl = document.getElementById('adminEditItemModal');
+  if (!modalEl) return;
+
+  const titleEl = document.getElementById('adminEditItemModalLabel');
+  const subtitleEl = document.getElementById('adminEditItemModalSubtitle');
+  const nameInput = document.getElementById('adminEditItemNameInput');
+  const nameLabel = document.getElementById('adminEditItemNameLabel');
+  const motorWrap = document.getElementById('adminEditItemMotorWrap');
+  const motorInput = document.getElementById('adminEditItemMotorInput');
+  const fuelWrap = document.getElementById('adminEditItemFuelWrap');
+  const fuelSelect = document.getElementById('adminEditItemFuelSelect');
+  const statusMsg = document.getElementById('adminEditItemStatusMsg');
+
+  if (statusMsg) statusMsg.textContent = '';
+
+  document.getElementById('adminEditItemType').value = type;
+  document.getElementById('adminEditItemId').value = itemData.id || '';
+  document.getElementById('adminEditItemParentBrand').value = itemData.brand || '';
+  document.getElementById('adminEditItemParentModel').value = itemData.model || '';
+  document.getElementById('adminEditItemParentAnio').value = itemData.anio || '';
+  document.getElementById('adminEditItemParentMotor').value = itemData.motor || '';
+  document.getElementById('adminEditItemFileUrl').value = itemData.fileUrl || '';
+
+  if (type === 'brand') {
+    if (titleEl) titleEl.textContent = `GESTIONAR MARCA: ${itemData.name}`;
+    if (subtitleEl) subtitleEl.textContent = 'Edita el nombre de la marca o elimínala de Firestore';
+    if (nameLabel) nameLabel.textContent = 'NOMBRE DE LA MARCA';
+    if (nameInput) nameInput.value = itemData.name || itemData.id;
+    if (motorWrap) motorWrap.classList.add('d-none');
+    if (fuelWrap) fuelWrap.classList.add('d-none');
+  } else if (type === 'model') {
+    if (titleEl) titleEl.textContent = `GESTIONAR MODELO: ${itemData.name}`;
+    if (subtitleEl) subtitleEl.textContent = 'Edita los datos del modelo o elimínalo de Firestore';
+    if (nameLabel) nameLabel.textContent = 'NOMBRE DEL MODELO';
+    if (nameInput) nameInput.value = itemData.name || itemData.id;
+    if (motorWrap) {
+      motorWrap.classList.remove('d-none');
+      if (motorInput) motorInput.value = itemData.motor || '';
+    }
+    if (fuelWrap) {
+      fuelWrap.classList.remove('d-none');
+      if (fuelSelect) fuelSelect.value = (itemData.fuel || 'gasolina').toLowerCase();
+    }
+  } else if (type === 'diagram') {
+    if (titleEl) titleEl.textContent = `GESTIONAR DIAGRAMA: ${itemData.name}`;
+    if (subtitleEl) subtitleEl.textContent = 'Modifica el título del diagrama o elimínalo de Firestore y Storage';
+    if (nameLabel) nameLabel.textContent = 'TÍTULO DEL DIAGRAMA';
+    if (nameInput) nameInput.value = itemData.name || itemData.id;
+    if (motorWrap) motorWrap.classList.add('d-none');
+    if (fuelWrap) fuelWrap.classList.add('d-none');
+  }
+
+  if (typeof bootstrap !== 'undefined') {
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    bsModal.show();
+  }
+};
+
+window.handleAdminSaveItemChanges = async function(e) {
+  if (e) e.preventDefault();
+
+  const user = window.probaktronicCurrentUser;
+  if (!user || user.email !== 'prueba@probak.com') {
+    alert('Acceso exclusivo para el Administrador.');
+    return;
+  }
+
+  const type = document.getElementById('adminEditItemType').value;
+  const id = document.getElementById('adminEditItemId').value;
+  const newName = document.getElementById('adminEditItemNameInput').value.trim();
+  const parentBrand = document.getElementById('adminEditItemParentBrand').value;
+  const parentModel = document.getElementById('adminEditItemParentModel').value;
+  const parentAnio = document.getElementById('adminEditItemParentAnio').value;
+  const parentMotor = document.getElementById('adminEditItemParentMotor').value;
+  const motorVal = document.getElementById('adminEditItemMotorInput')?.value.trim();
+  const fuelVal = document.getElementById('adminEditItemFuelSelect')?.value;
+  const statusMsg = document.getElementById('adminEditItemStatusMsg');
+
+  if (!newName) {
+    alert('Por favor ingrese un nombre o título válido.');
+    return;
+  }
+
+  try {
+    ensureFirebaseInitialized();
+    const db = firebase.firestore();
+    if (statusMsg) {
+      statusMsg.className = 'small text-center fw-bold text-danger mb-2';
+      statusMsg.textContent = 'Guardando cambios en Firestore...';
+    }
+
+    if (type === 'brand') {
+      const cleanBrand = id.toLowerCase().trim();
+      await db.collection('diagramas').doc(cleanBrand).set({
+        nombre: newName.toUpperCase(),
+        marca: newName.toUpperCase()
+      }, { merge: true });
+
+      if (typeof window.showGlobalToast === 'function') {
+        window.showGlobalToast(`Marca actualizada a "${newName}".`);
+      }
+      setTimeout(() => {
+        bootstrap.Modal.getInstance(document.getElementById('adminEditItemModal'))?.hide();
+        const grid = document.getElementById('vehiculosBrandGrid');
+        if (grid) loadFirestoreDiagramasBrands(grid);
+      }, 600);
+
+    } else if (type === 'model') {
+      const cleanBrand = (parentBrand || currentSelectedBrandId || '').toLowerCase().trim();
+      const cleanModel = id.toLowerCase().trim();
+
+      await db.collection('diagramas').doc(cleanBrand).collection('modelos').doc(cleanModel).set({
+        nombre: `${parentBrand} ${newName}`.toUpperCase(),
+        modelo: newName,
+        motor: motorVal || 'Estándar',
+        combustible: fuelVal || 'gasolina'
+      }, { merge: true });
+
+      if (typeof window.showGlobalToast === 'function') {
+        window.showGlobalToast(`Modelo "${newName}" actualizado con éxito.`);
+      }
+      setTimeout(() => {
+        bootstrap.Modal.getInstance(document.getElementById('adminEditItemModal'))?.hide();
+        const modelsListGrid = document.getElementById('brandModelsListGrid');
+        if (modelsListGrid) {
+          const loader = safeCreateCenteredLoader(modelsListGrid, 'Actualizando lista de modelos...');
+          db.collection('diagramas').doc(cleanBrand).collection('modelos').get()
+            .then(snap => renderModelCardsFromSnapshot(snap, parentBrand, modelsListGrid, loader))
+            .catch(() => renderFallbackModelsForBrand(cleanBrand, parentBrand, modelsListGrid, loader));
+        }
+      }, 600);
+
+    } else if (type === 'diagram') {
+      const cleanBrand = (parentBrand || '').toLowerCase().trim();
+      const cleanModel = (parentModel || '').toLowerCase().trim();
+
+      if (cleanBrand && cleanModel && parentAnio && parentMotor && id) {
+        await db.collection('diagramas').doc(cleanBrand)
+          .collection('modelos').doc(cleanModel)
+          .collection('anios').doc(parentAnio)
+          .collection('motores').doc(parentMotor)
+          .collection('archivos').doc(id).set({
+            titulo: newName
+          }, { merge: true });
+      }
+
+      if (typeof window.showGlobalToast === 'function') {
+        window.showGlobalToast(`Título de diagrama actualizado a "${newName}".`);
+      }
+      setTimeout(() => {
+        bootstrap.Modal.getInstance(document.getElementById('adminEditItemModal'))?.hide();
+        if (cleanModel) {
+          window.openModelEcuInfo(cleanModel, cleanModel, parentMotor);
+        }
+      }, 600);
+    }
+
+  } catch (err) {
+    console.error('Error guardando cambios:', err);
+    if (statusMsg) {
+      statusMsg.className = 'small text-center fw-bold text-danger mb-2';
+      statusMsg.textContent = `Error al guardar: ${err.message}`;
+    }
+  }
+};
+
+window.handleAdminTriggerDeleteFromModal = function() {
+  if (!currentEditingItemContext) return;
+
+  const { type, id, name, brand, model, anio, motor, fileUrl } = currentEditingItemContext;
+  const modalEl = document.getElementById('adminEditItemModal');
+  const bsModal = modalEl ? bootstrap.Modal.getInstance(modalEl) : null;
+
+  if (type === 'brand') {
+    if (confirm(`¿CONFIRMACIÓN DE SEGURIDAD:\n\n¿Está totalmente seguro de eliminar la marca "${name}" de Firestore?`)) {
+      if (bsModal) bsModal.hide();
+      window.handleAdminDeleteBrand(null, id, name);
+    }
+  } else if (type === 'model') {
+    if (confirm(`¿CONFIRMACIÓN DE SEGURIDAD:\n\n¿Está totalmente seguro de eliminar el modelo "${name}" (${brand}) de Firestore?`)) {
+      if (bsModal) bsModal.hide();
+      window.handleAdminDeleteModel(null, brand, id, name);
+    }
+  } else if (type === 'diagram') {
+    if (confirm(`¿CONFIRMACIÓN DE SEGURIDAD:\n\n¿Está totalmente seguro de eliminar el diagrama "${name}" de Firestore y Storage?`)) {
+      if (bsModal) bsModal.hide();
+      window.handleAdminDeleteDiagramFile(null, brand, model, anio, motor, id, name, fileUrl);
+    }
+  }
+};

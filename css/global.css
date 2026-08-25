@@ -537,6 +537,7 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
   max-height: 95px;
   width: auto;
   object-fit: contain;
+  mix-blend-mode: multiply;
 }
 
 .action-card:hover .card-illustration-container img,
@@ -567,6 +568,7 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
   height: auto;
   object-fit: contain;
   object-position: right center;
+  mix-blend-mode: multiply;
   transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
