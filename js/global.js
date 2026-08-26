@@ -109,6 +109,18 @@ function setupMobileDrawer() {
       if (backdrop) backdrop.classList.remove('active');
     }
   });
+
+  // Handle window resize / device orientation changes
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (window.innerWidth >= 768 && sidebar && sidebar.classList.contains('mobile-open')) {
+        sidebar.classList.remove('mobile-open');
+        if (backdrop) backdrop.classList.remove('active');
+      }
+    }, 150);
+  });
 }
 
 function updateActiveNavLink() {

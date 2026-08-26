@@ -1168,17 +1168,18 @@ a.sensor-card .sensor-desc {
   }
 
   .main-content {
-    margin-left: var(--sidebar-collapsed-width);
+    margin-left: 0;
     padding: 20px 24px;
   }
 
   .cards-container {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
   }
 
   .action-card {
-    height: 310px;
+    min-height: 280px;
+    height: auto;
   }
 
   .viewer-layout {
