@@ -1291,7 +1291,12 @@
               <img id="selectedBrandLogo" src="logo_probaktronic_solo.png" height="42" alt="Brand Logo">
               <h3 class="font-rajdhani fw-bold mb-0 text-uppercase" id="selectedBrandTitle">Modelos Disponibles</h3>
             </div>
-            <button class="btn btn-outline-secondary btn-sm" onclick="showBrandsView()"><i class="bi bi-arrow-left me-1"></i> Cambiar Marca</button>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-outline-danger btn-sm rounded-pill fw-bold shadow-sm font-rajdhani d-none" id="btnAdminTopAddModel" onclick="openAdminAddModelModal(currentSelectedBrandName)" title="Agregar nuevo modelo a esta marca">
+                <i class="bi bi-car-front-fill me-1"></i> + AGREGAR MODELO
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="showBrandsView()"><i class="bi bi-arrow-left me-1"></i> Cambiar Marca</button>
+            </div>
           </div>
           
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-2">
@@ -1453,6 +1458,14 @@
                   </button>
                   <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1" id="btnAdminUndoEcuHotspot" onclick="undoLastAdminEcuHotspot()" title="Deshacer último componente dibujado">
                     <i class="bi bi-arrow-counterclockwise"></i>
+                  </button>
+                  <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminReorderGallery" onclick="openAdminGalleryReorderModal()" title="Elegir y organizar el orden de las fotos (Foto 1, Foto 2, etc.)">
+                    <i class="bi bi-arrow-down-up"></i>
+                    <span>ORDENAR FOTOS</span>
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminAddPhotoToComponent" onclick="openAdminAddPhotoDirectModal()" title="Subir y agregar una nueva foto directamente a este componente">
+                    <i class="bi bi-cloud-arrow-up-fill"></i>
+                    <span>+ AGREGAR FOTO</span>
                   </button>
 
                   <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnToggleZoomPan" onclick="toggleHandZoom()" title="Hacer clic para ampliar o reducir con la mano">
@@ -1652,8 +1665,8 @@
               <div class="border border-2 border-dashed rounded-3 p-3 text-center bg-light" id="adminUploadDropArea">
                 <i class="bi bi-file-earmark-arrow-up-fill text-danger fs-1 d-block mb-1"></i>
                 <span class="small fw-bold text-dark d-block">Selecciona el PDF o Imagen del Esquema</span>
-                <span class="text-muted" style="font-size: 0.72rem;">Formatos admitidos: PDF, PNG, JPG, WEBP</span>
-                <input type="file" id="adminModalFileInput" class="form-control form-control-sm mt-2" accept=".pdf,image/*" required onchange="handleAdminModalFileChange(this)">
+                <span class="text-muted" style="font-size: 0.72rem;">Formatos admitidos: PDF, PNG, JPG, WEBP, SVG</span>
+                <input type="file" id="adminModalFileInput" class="form-control form-control-sm mt-2" accept=".pdf,image/*,.svg" required onchange="handleAdminModalFileChange(this)">
                 <div id="adminModalFilePreviewWrap" class="mt-2 d-none">
                   <span class="badge bg-success" id="adminModalFileNameBadge"></span>
                 </div>
@@ -1891,6 +1904,296 @@
               </div>
             </div>
 
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Editor y Ordenador de Galería de Fotos -->
+  <div class="modal fade" id="adminGalleryReorderModal" tabindex="-1" aria-labelledby="adminGalleryReorderModalLabel" aria-hidden="true" style="z-index: 1075;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+        <div class="modal-header bg-dark text-white border-0 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-warning text-dark rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-images fs-5"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0" id="adminGalleryReorderModalLabel">EDITOR Y ORDENADOR DE FOTOS</h5>
+              <div class="text-muted" style="font-size: 0.75rem;">Reorganiza el orden de las imágenes (Foto 1, Foto 2, etc.) o sube nuevas fotos</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="small fw-bold text-dark font-rajdhani text-uppercase">Lista de Fotos en este Componente (<span id="adminGalleryTotalCount">0</span>)</span>
+            <label class="btn btn-sm btn-outline-danger rounded-pill fw-bold cursor-pointer mb-0">
+              <i class="bi bi-cloud-arrow-up-fill me-1"></i> + Subir Otra Foto
+              <input type="file" class="d-none" id="adminGalleryUploadInput" accept="image/*,.svg" onchange="handleAdminUploadNewGalleryPhoto(this)">
+            </label>
+          </div>
+
+          <div id="adminGalleryReorderListContainer" class="d-flex flex-column gap-3">
+            <!-- Dynamic list of photo cards with previews, up/down arrows, make primary, delete -->
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" onclick="saveAdminGalleryOrder()">
+            <i class="bi bi-check2-circle me-1"></i> Guardar Nuevo Orden
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Subir Nueva Foto Directamente a este Componente -->
+  <div class="modal fade" id="adminAddPhotoDirectModal" tabindex="-1" aria-labelledby="adminAddPhotoDirectModalLabel" aria-hidden="true" style="z-index: 1080;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+        <div class="modal-header bg-danger text-white border-0 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-white text-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-cloud-arrow-up-fill fs-5"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0" id="adminAddPhotoDirectModalLabel">SUBIR FOTO A ESTE COMPONENTE</h5>
+              <div class="text-white opacity-75" style="font-size: 0.75rem;">Sube una imagen manteniendo el orden jerárquico exacto en Firebase</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form id="formAdminAddPhotoDirect" onsubmit="handleAdminSubmitDirectPhoto(event)">
+          <div class="modal-body p-4">
+            <!-- Context Summary Info Box -->
+            <div class="p-3 mb-3 rounded-3" style="background: #F8FAFC; border: 1px solid #E2E8F0;">
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <span class="badge bg-danger rounded-pill px-2 py-1 font-rajdhani fw-bold" id="adminAddPhotoContextFuel">DIÉSEL</span>
+                <span class="small text-muted font-rajdhani fw-bold" id="adminAddPhotoContextCurrentCount">2 fotos actualmente</span>
+              </div>
+              <div class="fw-bold text-dark font-rajdhani" id="adminAddPhotoContextVehicle">TOYOTA HILUX 2011-2015</div>
+              <div class="text-danger small fw-bold font-rajdhani" id="adminAddPhotoContextComponent">IMAGEN DE LA ECU</div>
+            </div>
+
+            <!-- Position Selector (Port / Secundaria) -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1">POSICIÓN EN LA GALERÍA</label>
+              <div class="d-flex gap-2">
+                <label class="form-check border p-2 rounded-3 flex-fill cursor-pointer bg-white" style="font-size: 0.82rem;">
+                  <input class="form-check-input ms-0 me-2" type="radio" name="adminPhotoPosition" id="adminPhotoPosEnd" value="end" checked>
+                  <span class="fw-bold text-dark d-block">Añadir al final</span>
+                  <span class="text-muted small d-block" id="adminPhotoPosEndDesc">Como nueva Foto</span>
+                </label>
+                <label class="form-check border p-2 rounded-3 flex-fill cursor-pointer bg-white" style="font-size: 0.82rem;">
+                  <input class="form-check-input ms-0 me-2" type="radio" name="adminPhotoPosition" id="adminPhotoPosFirst" value="first">
+                  <span class="fw-bold text-dark d-block">⭐ Como Portada</span>
+                  <span class="text-muted small d-block">Será la Foto 1 principal</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- File Upload Drop Zone -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1">SELECCIONAR ARCHIVO DE IMAGEN (JPG, PNG, WEBP, SVG)</label>
+              <div class="border-dashed p-3 rounded-3 text-center bg-light cursor-pointer" onclick="document.getElementById('adminDirectPhotoFileInput').click()" style="border: 2px dashed #CBD5E1;">
+                <i class="bi bi-images fs-2 text-danger d-block mb-1"></i>
+                <span class="small fw-bold text-dark d-block" id="adminDirectPhotoFileNameText">Haz clic para elegir una imagen</span>
+                <span class="text-muted" style="font-size: 0.72rem;">Imágenes HD optimizadas de la placa, pedal o conectores</span>
+                <input type="file" id="adminDirectPhotoFileInput" class="d-none" accept="image/*,.svg" onchange="handleAdminDirectPhotoFileChange(this)" required>
+              </div>
+            </div>
+
+            <!-- Live Image Thumbnail Preview -->
+            <div class="d-none text-center mb-3 p-2 bg-dark rounded-3" id="adminDirectPhotoPreviewWrap">
+              <img id="adminDirectPhotoPreviewImg" src="" alt="Preview" style="max-height: 140px; max-width: 100%; object-fit: contain;">
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="d-none mb-3" id="adminDirectPhotoProgressWrap">
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger" id="adminDirectPhotoProgressBar" role="progressbar" style="width: 0%;"></div>
+              </div>
+              <div class="small text-center text-muted mt-1 font-rajdhani fw-bold" id="adminDirectPhotoStatusText">Subiendo imagen a Firebase Storage...</div>
+            </div>
+          </div>
+
+          <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnAdminSubmitDirectPhoto">
+              <i class="bi bi-cloud-arrow-up-fill me-1"></i> Subir y Guardar en Firebase
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Agregar Nueva Marca -->
+  <div class="modal fade" id="adminAddBrandModal" tabindex="-1" aria-labelledby="adminAddBrandModalLabel" aria-hidden="true" style="z-index: 1075;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+        <div class="modal-header bg-dark text-white border-0 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-danger text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-tag-fill fs-5"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0" id="adminAddBrandModalLabel">AGREGAR NUEVA MARCA</h5>
+              <div class="text-white opacity-75" style="font-size: 0.75rem;">Crea una nueva marca con detección automática de Logo SVG</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form id="formAdminAddBrand" onsubmit="handleAdminSubmitNewBrand(event)">
+          <div class="modal-body p-4">
+            <!-- Nombre de la Marca -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1">NOMBRE DE LA MARCA</label>
+              <input type="text" id="adminNewBrandNameInput" class="form-control form-control-lg fw-bold font-rajdhani text-uppercase" placeholder="Ej: NISSAN, MITSUBISHI, ISUZU, FORD" oninput="handleAdminBrandNameLiveSearch(this.value)" required>
+            </div>
+
+            <!-- Segmento / Motorización -->
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">COMBUSTIBLE</label>
+                <select id="adminNewBrandFuelSelect" class="form-select font-rajdhani fw-bold">
+                  <option value="diesel" selected>DIÉSEL</option>
+                  <option value="gasolina">GASOLINA</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">CATEGORÍA</label>
+                <select id="adminNewBrandCategorySelect" class="form-select font-rajdhani fw-bold">
+                  <option value="pickup" selected>PICKUP / CAMIONETAS</option>
+                  <option value="furgon">FURGÓN / VAN</option>
+                  <option value="camiones">CAMIONES / PESADO</option>
+                  <option value="maquinaria">MAQUINARIA</option>
+                  <option value="sedan">SEDÁN / HATCHBACK</option>
+                  <option value="suv">SUV / CROSSOVER</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Logo Detection Box & Custom Upload -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
+                <span>LOGO DE LA MARCA</span>
+                <span class="badge bg-success small font-rajdhani" id="adminNewBrandLogoStatusBadge">Detección automática activa</span>
+              </label>
+              <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 border">
+                <div class="border rounded-2 p-2 bg-white d-flex align-items-center justify-content-center shadow-sm" style="width: 80px; height: 60px; flex-shrink: 0;">
+                  <img id="adminNewBrandLogoPreview" src="imagenes svg/ico_logo_toyota.svg" alt="Logo" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                </div>
+                <div class="d-flex flex-column flex-grow-1">
+                  <span class="small text-muted" id="adminNewBrandLogoSourceText">Logo oficial sugerido</span>
+                  <label class="btn btn-sm btn-outline-secondary rounded-pill mt-1 cursor-pointer align-self-start">
+                    <i class="bi bi-folder-plus me-1"></i> Elegir Logo Personalizado (SVG/PNG)
+                    <input type="file" id="adminNewBrandLogoFileInput" class="d-none" accept="image/*,.svg" onchange="handleAdminNewBrandLogoFileChange(this)">
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div id="adminNewBrandStatusMsg" class="small text-center fw-bold mb-2"></div>
+          </div>
+
+          <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnAdminSubmitNewBrand">
+              <i class="bi bi-check2-circle me-1"></i> Registrar Marca en Firebase
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Agregar Nuevo Modelo -->
+  <div class="modal fade" id="adminAddModelModal" tabindex="-1" aria-labelledby="adminAddModelModalLabel" aria-hidden="true" style="z-index: 1075;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+        <div class="modal-header bg-dark text-white border-0 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-danger text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-car-front-fill fs-5"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0" id="adminAddModelModalLabel">AGREGAR NUEVO MODELO</h5>
+              <div class="text-white opacity-75" style="font-size: 0.75rem;">Registra una nueva versión de vehículo para esta marca</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form id="formAdminAddModel" onsubmit="handleAdminSubmitNewModel(event)">
+          <div class="modal-body p-4">
+            <!-- Marca Info -->
+            <div class="p-2 px-3 mb-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
+              <span class="small text-muted font-rajdhani fw-bold">MARCA SELECCIONADA:</span>
+              <span class="fw-bold text-danger font-rajdhani fs-6" id="adminNewModelParentBrandText">TOYOTA</span>
+            </div>
+
+            <!-- Nombre del Modelo -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1">NOMBRE DEL MODELO</label>
+              <input type="text" id="adminNewModelNameInput" class="form-control form-control-lg fw-bold font-rajdhani text-uppercase" placeholder="Ej: FORTUNER, HILUX REVO, FRONTIER" oninput="handleAdminModelNameLiveSearch(this.value)" required>
+            </div>
+
+            <!-- Años y Motor -->
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">RANGO DE AÑOS</label>
+                <input type="text" id="adminNewModelYearsInput" class="form-control font-rajdhani fw-bold" placeholder="Ej: 2016 - 2021" oninput="handleAdminModelNameLiveSearch(document.getElementById('adminNewModelNameInput').value)">
+              </div>
+              <div class="col-6">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">CÓDIGO DE MOTOR / PARTE</label>
+                <input type="text" id="adminNewModelMotorInput" class="form-control font-rajdhani fw-bold" placeholder="Ej: 1GD-FTV 2.8L (o Estándar)">
+              </div>
+            </div>
+
+            <!-- Combustible -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1">SISTEMA DE COMBUSTIBLE</label>
+              <select id="adminNewModelFuelSelect" class="form-select font-rajdhani fw-bold">
+                <option value="diesel" selected>DIÉSEL (Common Rail / EDC)</option>
+                <option value="gasolina">GASOLINA (MPFI / GDI / Otto)</option>
+              </select>
+            </div>
+
+            <!-- Foto del Vehículo -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
+                <span>FOTO DEL VEHÍCULO</span>
+                <span class="badge bg-success small font-rajdhani" id="adminNewModelPhotoStatusBadge">Detección automática activa</span>
+              </label>
+              <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 border">
+                <div class="border rounded-2 p-1 bg-white d-flex align-items-center justify-content-center shadow-sm" style="width: 85px; height: 65px; flex-shrink: 0;">
+                  <img id="adminNewModelPhotoPreview" src="imagenes autos/ic_car_toyota_hilux.JPG" alt="Car" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                </div>
+                <div class="d-flex flex-column flex-grow-1">
+                  <span class="small text-muted" id="adminNewModelPhotoSourceText">Foto sugerida de la biblioteca</span>
+                  <label class="btn btn-sm btn-outline-secondary rounded-pill mt-1 cursor-pointer align-self-start">
+                    <i class="bi bi-camera-fill me-1"></i> Subir Foto Propia
+                    <input type="file" id="adminNewModelCarFileInput" class="d-none" accept="image/*,.svg" onchange="handleAdminNewModelCarFileChange(this)">
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div id="adminNewModelStatusMsg" class="small text-center fw-bold mb-2"></div>
+          </div>
+
+          <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnAdminSubmitNewModel">
+              <i class="bi bi-check2-circle me-1"></i> Registrar Modelo en Firebase
+            </button>
           </div>
         </form>
       </div>

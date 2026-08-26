@@ -7,6 +7,53 @@
   margin-bottom: 20px;
 }
 
+/* Persistent Floating Upload Diagram Button for Admin */
+#btnAdminAddDiagram,
+.btn-admin-floating-upload {
+  position: fixed !important;
+  top: 24px !important;
+  right: 36px !important;
+  z-index: 1040 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px !important;
+  font-size: 0.85rem !important;
+  background: linear-gradient(135deg, #D32F2F 0%, #B71C1C 100%) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 18px rgba(211, 47, 47, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  backdrop-filter: blur(8px);
+}
+
+#btnAdminAddDiagram.d-none,
+.btn-admin-floating-upload.d-none {
+  display: none !important;
+}
+
+#btnAdminAddDiagram:hover,
+.btn-admin-floating-upload:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #EF4444 0%, #C62828 100%) !important;
+  box-shadow: 0 8px 25px rgba(211, 47, 47, 0.55), 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+}
+
+#btnAdminAddDiagram:active,
+.btn-admin-floating-upload:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  #btnAdminAddDiagram,
+  .btn-admin-floating-upload {
+    top: 14px !important;
+    right: 14px !important;
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
+  }
+}
+
 .btn-back-square {
   width: 42px;
   height: 42px;

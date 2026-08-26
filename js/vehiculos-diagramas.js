@@ -491,6 +491,31 @@ function renderOnlyActiveBrands(grid, loader, brandList) {
 
       grid.appendChild(card);
     });
+
+    // Admin Card: + AGREGAR MARCA
+    const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
+      ? window.isProbaktronicAdmin() 
+      : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+
+    if (isAdmin) {
+      const addBrandCard = document.createElement('div');
+      addBrandCard.className = 'brand-card border-dashed d-flex flex-column align-items-center justify-content-center text-center cursor-pointer';
+      addBrandCard.style.border = '2px dashed rgba(211, 47, 47, 0.45)';
+      addBrandCard.style.backgroundColor = 'rgba(211, 47, 47, 0.03)';
+      addBrandCard.style.minHeight = '140px';
+      addBrandCard.innerHTML = `
+        <div class="text-danger mb-2">
+          <i class="bi bi-plus-circle-fill fs-1"></i>
+        </div>
+        <h4 class="brand-name-title text-danger fw-bold" style="font-size: 0.95rem;">+ AGREGAR MARCA</h4>
+        <span class="text-muted small" style="font-size: 0.72rem;">Registrar nueva marca</span>
+      `;
+      addBrandCard.onclick = (e) => {
+        if (e) e.stopPropagation();
+        window.openAdminAddBrandModal();
+      };
+      grid.appendChild(addBrandCard);
+    }
   };
 
   if (loader && typeof loader.finish === 'function') {
@@ -516,6 +541,20 @@ window.openBrandDiagramModels = function(brandDocId, brandName, logoSrc, collect
   if (brandsView) brandsView.classList.add('d-none');
   if (diagramView) diagramView.classList.add('d-none');
   if (modelsView) modelsView.classList.remove('d-none');
+
+  if (typeof window.checkAdminButtonVisibility === 'function') {
+    window.checkAdminButtonVisibility();
+  }
+
+  const topAddModelBtn = document.getElementById('btnAdminTopAddModel');
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
+    ? window.isProbaktronicAdmin() 
+    : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+
+  if (topAddModelBtn) {
+    if (isAdmin) topAddModelBtn.classList.remove('d-none');
+    else topAddModelBtn.classList.add('d-none');
+  }
 
   if (brandLogo) brandLogo.src = logoSrc || 'logo_probaktronic_solo.png';
   if (brandTitle) brandTitle.textContent = `${brandName} - Diagramas de Vehículos`;
@@ -635,11 +674,24 @@ async function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid,
     }
 
     if (filteredEntries.length === 0) {
+      const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
+        ? window.isProbaktronicAdmin() 
+        : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+
+      const adminAddBtnHtml = isAdmin ? `
+        <div class="mt-4">
+          <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm font-rajdhani" onclick="openAdminAddModelModal('${brandName}')">
+            <i class="bi bi-car-front-fill me-1"></i> + AGREGAR PRIMER MODELO A ${brandName.toUpperCase()}
+          </button>
+        </div>
+      ` : '';
+
       modelsListGrid.innerHTML = `
         <div class="w-100 text-center py-5" style="grid-column: 1 / -1;">
           <div style="color: #DC2626; font-size: 2.5rem; margin-bottom: 10px;"><i class="bi bi-info-circle"></i></div>
           <h5 class="fw-bold text-dark">No hay modelos de ${currentSelectedFuelType ? currentSelectedFuelType.toUpperCase() : ''} disponibles</h5>
-          <p class="text-muted small">No se encontraron modelos registrados en esta categoría para ${brandName}.</p>
+          <p class="text-muted small mb-2">No se encontraron modelos registrados en esta categoría para ${brandName}.</p>
+          ${adminAddBtnHtml}
         </div>
       `;
       return;
@@ -689,6 +741,31 @@ async function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid,
       card.onclick = () => openModelEcuInfo(docId, modelName, motor);
       modelsListGrid.appendChild(card);
     });
+
+    // Admin Card: + AGREGAR MODELO
+    const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
+      ? window.isProbaktronicAdmin() 
+      : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+
+    if (isAdmin) {
+      const addModelCard = document.createElement('div');
+      addModelCard.className = 'model-item-card border-dashed d-flex flex-column align-items-center justify-content-center text-center p-3 cursor-pointer';
+      addModelCard.style.border = '2px dashed rgba(211, 47, 47, 0.45)';
+      addModelCard.style.backgroundColor = 'rgba(211, 47, 47, 0.03)';
+      addModelCard.style.minHeight = '140px';
+      addModelCard.innerHTML = `
+        <div class="text-danger mb-2">
+          <i class="bi bi-car-front-fill fs-1"></i>
+        </div>
+        <h4 class="model-card-title text-danger fw-bold" style="font-size: 0.95rem;">+ AGREGAR MODELO</h4>
+        <p class="model-card-subtitle text-muted small" style="font-size: 0.72rem;">Registrar nuevo modelo para ${brandName}</p>
+      `;
+      addModelCard.onclick = (e) => {
+        if (e) e.stopPropagation();
+        window.openAdminAddModelModal(brandName);
+      };
+      modelsListGrid.appendChild(addModelCard);
+    }
 
     setupModelSearchFilter();
   });
@@ -777,6 +854,31 @@ function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loa
       modelsListGrid.appendChild(card);
     });
 
+    // Admin Card: + AGREGAR MODELO
+    const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
+      ? window.isProbaktronicAdmin() 
+      : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+
+    if (isAdmin) {
+      const addModelCard = document.createElement('div');
+      addModelCard.className = 'model-item-card border-dashed d-flex flex-column align-items-center justify-content-center text-center p-3 cursor-pointer';
+      addModelCard.style.border = '2px dashed rgba(211, 47, 47, 0.45)';
+      addModelCard.style.backgroundColor = 'rgba(211, 47, 47, 0.03)';
+      addModelCard.style.minHeight = '140px';
+      addModelCard.innerHTML = `
+        <div class="text-danger mb-2">
+          <i class="bi bi-car-front-fill fs-1"></i>
+        </div>
+        <h4 class="model-card-title text-danger fw-bold" style="font-size: 0.95rem;">+ AGREGAR MODELO</h4>
+        <p class="model-card-subtitle text-muted small" style="font-size: 0.72rem;">Registrar nuevo modelo para ${brandName}</p>
+      `;
+      addModelCard.onclick = (e) => {
+        if (e) e.stopPropagation();
+        window.openAdminAddModelModal(brandName);
+      };
+      modelsListGrid.appendChild(addModelCard);
+    }
+
     setupModelSearchFilter();
   });
 }
@@ -793,6 +895,10 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
   if (modelsView) modelsView.classList.add('d-none');
   if (diagramView) diagramView.classList.add('d-none');
   if (ecuView) ecuView.classList.remove('d-none');
+
+  if (typeof window.checkAdminButtonVisibility === 'function') {
+    window.checkAdminButtonVisibility();
+  }
 
   // Populate Selected Vehicle Segmented Bar
   const logoEl = document.getElementById('selectedVehicleBrandLogo');
@@ -1057,6 +1163,31 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
       connectionListContainer.appendChild(card);
     });
 
+    // Dedicated Admin Card: + Subir Diagrama a este vehículo
+    if (isAdmin) {
+      const addCard = document.createElement('div');
+      addCard.className = 'connection-type-card border-dashed d-flex flex-column align-items-center justify-content-center text-center p-3 cursor-pointer';
+      addCard.style.border = '2px dashed rgba(211, 47, 47, 0.45)';
+      addCard.style.backgroundColor = 'rgba(211, 47, 47, 0.03)';
+      addCard.style.minHeight = '120px';
+      addCard.innerHTML = `
+        <div class="conn-icon text-danger mb-2">
+          <i class="bi bi-cloud-plus-fill fs-2"></i>
+        </div>
+        <div class="conn-label fw-bold text-danger" style="font-size: 0.84rem;">+ SUBIR DIAGRAMA</div>
+        <div class="text-muted small" style="font-size: 0.7rem;">Agregar nuevo SVG/PDF a este vehículo</div>
+      `;
+      addCard.onclick = (ev) => {
+        ev.stopPropagation();
+        window.openAdminAddDiagramModal(ev, {
+          brand: brandName,
+          model: modelName || docId,
+          motor: motorCode
+        });
+      };
+      connectionListContainer.appendChild(addCard);
+    }
+
     if (btnNext) {
       btnNext.onclick = () => {
         if (selectedArchDoc) {
@@ -1164,16 +1295,33 @@ window.renderGalleryPagination = function(imagesList) {
   currentGalleryImages = imagesList || [];
   currentGalleryIndex = 0;
 
-  if (currentGalleryImages.length > 1) {
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') ? window.isProbaktronicAdmin() : false;
+
+  if (currentGalleryImages.length > 1 || (currentGalleryImages.length === 1 && isAdmin)) {
     paginationEl.classList.remove('d-none');
-    if (prevBtn) prevBtn.classList.remove('d-none');
-    if (nextBtn) nextBtn.classList.remove('d-none');
+    if (prevBtn) {
+      if (currentGalleryImages.length > 1) prevBtn.classList.remove('d-none');
+      else prevBtn.classList.add('d-none');
+    }
+    if (nextBtn) {
+      if (currentGalleryImages.length > 1) nextBtn.classList.remove('d-none');
+      else nextBtn.classList.add('d-none');
+    }
+
+    const reorderBtnHtml = isAdmin ? `
+      <button class="btn-photo-pill border border-warning text-warning fw-bold ms-2 shadow-sm" onclick="openAdminGalleryReorderModal(event)" title="Elegir y organizar el orden de las fotos">
+        <i class="bi bi-arrow-down-up me-1"></i> Ordenar Fotos
+      </button>
+      <button class="btn-photo-pill border border-danger text-danger fw-bold ms-1 shadow-sm" onclick="openAdminAddPhotoDirectModal(event)" title="Subir y agregar una nueva foto a este componente">
+        <i class="bi bi-cloud-arrow-up-fill me-1"></i> + Agregar Foto
+      </button>
+    ` : '';
 
     paginationEl.innerHTML = currentGalleryImages.map((_, idx) => `
       <button class="btn-photo-pill ${idx === 0 ? 'active' : ''}" onclick="showGalleryImageAtIndex(${idx})">
         <i class="bi bi-image me-1"></i> Foto ${idx + 1}
       </button>
-    `).join('');
+    `).join('') + reorderBtnHtml;
   } else {
     paginationEl.classList.add('d-none');
     if (prevBtn) prevBtn.classList.add('d-none');
@@ -1665,6 +1813,9 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
   if (ecuView) ecuView.classList.add('d-none');
   if (diagramView) diagramView.classList.remove('d-none');
 
+  const btnAdmin = document.getElementById('btnAdminAddDiagram');
+  if (btnAdmin) btnAdmin.classList.add('d-none');
+
   // Populate Console Meta Header
   const brandId = (currentSelectedBrandId || 'toyota').toLowerCase();
   let manufacturerName = 'DENSO';
@@ -1755,6 +1906,10 @@ window.showFuelSelectorView = function(e) {
   if (ecuView) ecuView.classList.add('d-none');
   if (diagramView) diagramView.classList.add('d-none');
 
+  if (typeof window.checkAdminButtonVisibility === 'function') {
+    window.checkAdminButtonVisibility();
+  }
+
   updateBreadcrumbUI('fuel');
 
   const headerTitle = document.getElementById('vehiculosHeaderTitle');
@@ -1779,6 +1934,10 @@ window.selectFuelType = function(fuelType) {
   if (modelsView) modelsView.classList.add('d-none');
   if (ecuView) ecuView.classList.add('d-none');
   if (diagramView) diagramView.classList.add('d-none');
+
+  if (typeof window.checkAdminButtonVisibility === 'function') {
+    window.checkAdminButtonVisibility();
+  }
 
   if (fuelType === 'diesel') {
     if (dieselCatView) dieselCatView.classList.remove('d-none');
@@ -1839,6 +1998,10 @@ window.selectVehicleCategory = function(catKey, fuelType, catTitle, count = 1) {
   if (modelsView) modelsView.classList.add('d-none');
   if (ecuView) ecuView.classList.add('d-none');
   if (diagramView) diagramView.classList.add('d-none');
+
+  if (typeof window.checkAdminButtonVisibility === 'function') {
+    window.checkAdminButtonVisibility();
+  }
 
   updateBreadcrumbUI('category', fuelType === 'diesel' ? 'Diesel' : 'Gasolina', catTitle);
 
@@ -1911,6 +2074,10 @@ window.showBrandsView = function() {
   if (ecuView) ecuView.classList.add('d-none');
   if (diagramView) diagramView.classList.add('d-none');
 
+  if (typeof window.checkAdminButtonVisibility === 'function') {
+    window.checkAdminButtonVisibility();
+  }
+
   const headerTitle = document.getElementById('vehiculosHeaderTitle');
   const headerSubtitle = document.getElementById('vehiculosHeaderSubtitle');
   if (headerTitle) headerTitle.textContent = 'SELECCIONAR MARCA DE VEHÍCULO';
@@ -1927,6 +2094,10 @@ window.showModelsView = function() {
   if (modelsView) modelsView.classList.remove('d-none');
   if (ecuView) ecuView.classList.add('d-none');
   if (diagramView) diagramView.classList.add('d-none');
+
+  if (typeof window.checkAdminButtonVisibility === 'function') {
+    window.checkAdminButtonVisibility();
+  }
 };
 
 window.showEcuInfoView = function() {
@@ -1939,6 +2110,10 @@ window.showEcuInfoView = function() {
   if (modelsView) modelsView.classList.add('d-none');
   if (ecuView) ecuView.classList.remove('d-none');
   if (diagramView) diagramView.classList.add('d-none');
+
+  if (typeof window.checkAdminButtonVisibility === 'function') {
+    window.checkAdminButtonVisibility();
+  }
 };
 
 let pdfResizeTimer = null;
@@ -2259,13 +2434,13 @@ if (typeof firebase !== 'undefined' && firebase.auth) {
   });
 }
 
-// --- ADMIN DIAGRAM UPLOAD CONTROLLER ---
-
-window.openAdminAddDiagramModal = function(e) {
+window.openAdminAddDiagramModal = function(e, context = null) {
   if (e) e.preventDefault();
 
   const user = window.probaktronicCurrentUser;
-  const isAdmin = user && (user.email === 'prueba@probak.com');
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
+    ? window.isProbaktronicAdmin() 
+    : (user && (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true));
 
   if (!isAdmin) {
     if (typeof window.showGlobalToast === 'function') {
@@ -2276,11 +2451,53 @@ window.openAdminAddDiagramModal = function(e) {
     return;
   }
 
-  // Pre-fill defaults based on current selection
-  if (currentSelectedFuelType) {
-    window.setAdminModalFuel(currentSelectedFuelType);
-  } else {
-    window.setAdminModalFuel('diesel');
+  // Pre-fill inputs based on context or current screen
+  const brandInput = document.getElementById('adminModalBrandInput');
+  const modelInput = document.getElementById('adminModalModelInput');
+  const yearInput = document.getElementById('adminModalYearInput');
+  const motorInput = document.getElementById('adminModalMotorInput');
+  const titleInput = document.getElementById('adminModalDiagramTitleInput');
+
+  const ecuView = document.getElementById('ecuInfoViewContainer');
+  const isEcuViewActive = ecuView && !ecuView.classList.contains('d-none');
+
+  let curBrand = (context && context.brand) || currentSelectedBrandName || (isEcuViewActive ? document.getElementById('selectedVehicleBrandText')?.textContent : '') || '';
+  let curModelRaw = (context && context.model) || (isEcuViewActive ? document.getElementById('selectedVehicleModelText')?.textContent : '') || '';
+  let curMotor = (context && context.motor) || (isEcuViewActive ? document.getElementById('selectedVehicleSpecText')?.textContent : '') || '';
+
+  // Extract year range if present in model string (e.g. "HILUX 2011 - 2015" or "2011 - 2015")
+  let extractedYears = '';
+  let extractedModel = curModelRaw;
+  const yearMatch = curModelRaw.match(/(\d{4}\s*-\s*\d{4}|\d{4})/);
+  if (yearMatch) {
+    extractedYears = yearMatch[0].trim();
+    extractedModel = curModelRaw.replace(yearMatch[0], '').trim();
+  }
+
+  if (brandInput && curBrand) brandInput.value = curBrand.toUpperCase().trim();
+  if (modelInput && extractedModel) modelInput.value = extractedModel.trim();
+  if (yearInput && extractedYears) yearInput.value = extractedYears;
+  if (motorInput && curMotor && curMotor !== 'Estándar') motorInput.value = curMotor.trim();
+
+  // Set Fuel Type & Category
+  const fuel = (context && context.fuel) || currentSelectedFuelType || 'diesel';
+  window.setAdminModalFuel(fuel);
+
+  if (currentSelectedCategoryKey) {
+    const catSelect = document.getElementById('adminModalCategorySelect');
+    if (catSelect) catSelect.value = currentSelectedCategoryKey;
+  }
+
+  // Pre-fill suggested diagram title
+  if (titleInput) {
+    const b = (brandInput ? brandInput.value : '').trim();
+    const m = (modelInput ? modelInput.value : '').trim();
+    const y = (yearInput ? yearInput.value : '').trim();
+    const mot = (motorInput ? motorInput.value : '').trim();
+    const parts = [b, m, y, mot].filter(Boolean);
+    if (parts.length > 0) {
+      titleInput.value = `${parts.join(' ')} ECU`.trim();
+    }
   }
 
   const modalEl = document.getElementById('adminAddDiagramModal');
@@ -2329,9 +2546,11 @@ window.setDiagramTitlePreset = function(preset) {
   const brand = (document.getElementById('adminModalBrandInput')?.value || '').trim().toUpperCase();
   const model = (document.getElementById('adminModalModelInput')?.value || '').trim().toUpperCase();
   const year = (document.getElementById('adminModalYearInput')?.value || '').trim();
+  const motor = (document.getElementById('adminModalMotorInput')?.value || '').trim();
   const titleInput = document.getElementById('adminModalDiagramTitleInput');
 
-  let base = `${brand} ${model} ${year}`.trim();
+  const parts = [brand, model, year].filter(Boolean);
+  let base = parts.join(' ');
   if (!base) base = 'VEHÍCULO';
 
   if (titleInput) {
@@ -2399,6 +2618,7 @@ window.handleAdminSubmitNewDiagram = async function(e) {
 
     const brandUpper = rawBrand.toUpperCase().trim();
     const brandDocId = rawBrand.toLowerCase().trim();
+    const modelDocId = rawModel.toLowerCase().trim();
     const modelLower = rawModel.toLowerCase().trim();
     const cleanFileName = adminSelectedDiagramFile.name;
     const motorFolder = `${rawYear} motor ${modelLower} ${rawMotor}`.trim();
@@ -2411,8 +2631,12 @@ window.handleAdminSubmitNewDiagram = async function(e) {
         const uploadPath = `diagramas/${brandUpper}/${modelLower}/${motorFolder}/${cleanFileName}`;
         const fileRef = storageRef.child(uploadPath);
 
+        const metadata = {
+          contentType: adminSelectedDiagramFile.type || (cleanFileName.toLowerCase().endsWith('.svg') ? 'image/svg+xml' : undefined)
+        };
+
         if (progressBar) progressBar.style.width = '50%';
-        const uploadSnapshot = await fileRef.put(adminSelectedDiagramFile);
+        const uploadSnapshot = await fileRef.put(adminSelectedDiagramFile, metadata);
         fileDownloadUrl = await uploadSnapshot.ref.getDownloadURL();
       }
     } catch (storageErr) {
@@ -2510,21 +2734,32 @@ window.handleAdminSubmitNewDiagram = async function(e) {
   }
 };
 
-// Check admin button visibility on Auth change
-function checkAdminButtonVisibility() {
+// Check admin button visibility on Auth change and current active view
+window.checkAdminButtonVisibility = function() {
   const btn = document.getElementById('btnAdminAddDiagram');
   if (!btn) return;
-  const user = window.probaktronicCurrentUser;
-  if (user && user.email === 'prueba@probak.com') {
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
+    ? window.isProbaktronicAdmin() 
+    : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+  
+  const ecuView = document.getElementById('ecuInfoViewContainer');
+  const isEcuViewActive = ecuView && !ecuView.classList.contains('d-none');
+
+  // ONLY display when viewing the specific vehicle's connection/diagram cards
+  if (isAdmin && isEcuViewActive) {
     btn.classList.remove('d-none');
   } else {
     btn.classList.add('d-none');
   }
-}
+};
 
-document.addEventListener('DOMContentLoaded', checkAdminButtonVisibility);
+document.addEventListener('DOMContentLoaded', window.checkAdminButtonVisibility);
 if (typeof firebase !== 'undefined' && firebase.auth) {
-  firebase.auth().onAuthStateChanged(() => checkAdminButtonVisibility());
+  firebase.auth().onAuthStateChanged(() => {
+    if (typeof window.checkAdminButtonVisibility === 'function') {
+      window.checkAdminButtonVisibility();
+    }
+  });
 }
 
 // --- ADMIN DELETE DIAGRAM / FILE CONTROLLER ---
@@ -2957,6 +3192,8 @@ window.updateEcuAdminUI = function() {
   const toggleBtn = document.getElementById('btnAdminToggleEcuEditor');
   const undoBtn = document.getElementById('btnAdminUndoEcuHotspot');
   const delBtn = document.getElementById('btnAdminDeleteSelectedHotspot');
+  const reorderBtn = document.getElementById('btnAdminReorderGallery');
+  const addPhotoBtn = document.getElementById('btnAdminAddPhotoToComponent');
 
   if (toggleBtn) {
     if (isAdmin && window.currentActiveDiagramSection === 'pcb') {
@@ -2965,6 +3202,26 @@ window.updateEcuAdminUI = function() {
     } else {
       toggleBtn.classList.add('d-none');
       toggleBtn.classList.remove('d-flex');
+    }
+  }
+
+  if (reorderBtn) {
+    if (isAdmin && window.currentActiveDiagramSection === 'pcb') {
+      reorderBtn.classList.remove('d-none');
+      reorderBtn.classList.add('d-flex');
+    } else {
+      reorderBtn.classList.add('d-none');
+      reorderBtn.classList.remove('d-flex');
+    }
+  }
+
+  if (addPhotoBtn) {
+    if (isAdmin && window.currentActiveDiagramSection === 'pcb') {
+      addPhotoBtn.classList.remove('d-none');
+      addPhotoBtn.classList.add('d-flex');
+    } else {
+      addPhotoBtn.classList.add('d-none');
+      addPhotoBtn.classList.remove('d-flex');
     }
   }
 
@@ -3679,5 +3936,697 @@ function setupEcuSvgEventListeners(svg) {
     }
   });
 }
+
+// --- ADMIN GALLERY REORDER & MULTI-PHOTO MANAGEMENT CONTROLLER ---
+
+let currentEditingGalleryList = [];
+
+window.openAdminGalleryReorderModal = function(e) {
+  if (e) e.preventDefault();
+
+  const user = window.probaktronicCurrentUser;
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
+    ? window.isProbaktronicAdmin() 
+    : (user && (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true));
+
+  if (!isAdmin) {
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('Acceso exclusivo para administradores.');
+    }
+    return;
+  }
+
+  currentEditingGalleryList = [...(currentGalleryImages || [])];
+  if (currentEditingGalleryList.length === 0 && window._currentActiveDiagramData) {
+    const single = window._currentActiveDiagramData.imageUrl || window._currentActiveDiagramData.url;
+    if (single) currentEditingGalleryList = [single];
+  }
+
+  renderAdminGalleryReorderList();
+
+  const modalEl = document.getElementById('adminGalleryReorderModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    bsModal.show();
+  }
+};
+
+function renderAdminGalleryReorderList() {
+  const container = document.getElementById('adminGalleryReorderListContainer');
+  const countEl = document.getElementById('adminGalleryTotalCount');
+  if (!container) return;
+
+  if (countEl) countEl.textContent = currentEditingGalleryList.length;
+
+  if (currentEditingGalleryList.length === 0) {
+    container.innerHTML = `
+      <div class="text-center text-muted p-4 border rounded-3 bg-light">
+        <i class="bi bi-images fs-2 d-block mb-1 text-secondary"></i>
+        <div class="fw-bold">No hay fotos en esta galería</div>
+        <div class="small">Sube fotos usando el botón superior "+ Subir Otra Foto".</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = currentEditingGalleryList.map((src, idx) => {
+    const isFirst = idx === 0;
+    const isLast = idx === currentEditingGalleryList.length - 1;
+    const fileName = (src.includes('/') ? src.split('/').pop() : src).split('?')[0];
+    return `
+      <div class="d-flex align-items-center justify-content-between p-3 border rounded-3 bg-white shadow-sm gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="badge ${isFirst ? 'bg-danger' : 'bg-secondary'} rounded-pill px-3 py-2 font-rajdhani fw-bold" style="font-size: 0.85rem; min-width: 85px; text-align: center;">
+            ${isFirst ? '⭐ Foto 1' : `Foto ${idx + 1}`}
+          </div>
+          <div class="border rounded-2 p-1 bg-dark d-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 60px; flex-shrink: 0; overflow: hidden;">
+            <img src="${src}" alt="Preview" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+          </div>
+          <div class="d-flex flex-column">
+            <span class="fw-bold text-dark font-rajdhani small">${isFirst ? 'FOTO PRINCIPAL (PORTADA)' : `FOTO SECUNDARIA #${idx + 1}`}</span>
+            <span class="text-muted text-truncate" style="font-size: 0.72rem; max-width: 220px;">${fileName}</span>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          ${!isFirst ? `
+            <button type="button" class="btn btn-outline-warning btn-sm fw-bold font-rajdhani" onclick="makeGalleryPhotoPrimary(${idx})" title="Establecer como Foto 1 / Portada">
+              <i class="bi bi-star-fill me-1"></i> Portada
+            </button>
+          ` : ''}
+          <button type="button" class="btn btn-outline-secondary btn-sm ${isFirst ? 'disabled' : ''}" onclick="moveGalleryPhoto(${idx}, -1)" title="Mover hacia arriba / antes">
+            <i class="bi bi-arrow-up"></i>
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm ${isLast ? 'disabled' : ''}" onclick="moveGalleryPhoto(${idx}, 1)" title="Mover hacia abajo / después">
+            <i class="bi bi-arrow-down"></i>
+          </button>
+          <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeGalleryPhoto(${idx})" title="Eliminar foto de este componente">
+            <i class="bi bi-trash-fill"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.moveGalleryPhoto = function(idx, delta) {
+  const targetIdx = idx + delta;
+  if (targetIdx < 0 || targetIdx >= currentEditingGalleryList.length) return;
+  const temp = currentEditingGalleryList[idx];
+  currentEditingGalleryList[idx] = currentEditingGalleryList[targetIdx];
+  currentEditingGalleryList[targetIdx] = temp;
+  renderAdminGalleryReorderList();
+};
+
+window.makeGalleryPhotoPrimary = function(idx) {
+  if (idx <= 0 || idx >= currentEditingGalleryList.length) return;
+  const item = currentEditingGalleryList.splice(idx, 1)[0];
+  currentEditingGalleryList.unshift(item);
+  renderAdminGalleryReorderList();
+};
+
+window.removeGalleryPhoto = function(idx) {
+  if (idx < 0 || idx >= currentEditingGalleryList.length) return;
+  if (confirm(`¿Deseas quitar esta foto (Foto ${idx + 1}) de la galería?`)) {
+    currentEditingGalleryList.splice(idx, 1);
+    renderAdminGalleryReorderList();
+  }
+};
+
+window.handleAdminUploadNewGalleryPhoto = function(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      currentEditingGalleryList.push(e.target.result);
+      renderAdminGalleryReorderList();
+      input.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+window.saveAdminGalleryOrder = async function() {
+  if (currentEditingGalleryList.length === 0) {
+    alert('Debe haber al menos 1 imagen en la galería.');
+    return;
+  }
+
+  const newOrder = [...currentEditingGalleryList];
+  currentGalleryImages = newOrder;
+
+  if (window._currentActiveDiagramData) {
+    window._currentActiveDiagramData.allImages = newOrder;
+    window._currentActiveDiagramData.imagenes = newOrder;
+    window._currentActiveDiagramData.imageUrl = newOrder[0];
+    window._currentActiveDiagramData.url = newOrder[0];
+  }
+
+  // Update in Firestore
+  try {
+    const db = firebase.firestore();
+    const active = window._currentActiveDiagramData || {};
+    const archDoc = active._selectedArchDoc || {};
+
+    if (archDoc.brandDocId && archDoc.modelDocId && archDoc.anioDocId && archDoc.motorDocId && archDoc.archDocId) {
+      await db.collection('diagramas').doc(archDoc.brandDocId.toLowerCase().trim())
+        .collection('modelos').doc(archDoc.modelDocId.toLowerCase().trim())
+        .collection('anios').doc(archDoc.anioDocId)
+        .collection('motores').doc(archDoc.motorDocId)
+        .collection('archivos').doc(archDoc.archDocId).set({
+          imagenes: newOrder,
+          allImages: newOrder,
+          imageUrl: newOrder[0],
+          url: newOrder[0]
+        }, { merge: true });
+    }
+  } catch (e) {
+    console.warn('Nota guardando orden en Firestore:', e);
+  }
+
+  // Live reload on viewer
+  window.renderGalleryPagination(newOrder);
+  window.showGalleryImageAtIndex(0);
+
+  // Close Modal
+  const modalEl = document.getElementById('adminGalleryReorderModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const bsModal = bootstrap.Modal.getInstance(modalEl);
+    if (bsModal) bsModal.hide();
+  }
+
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast('¡Orden de fotos actualizado y guardado correctamente!');
+  }
+};
+
+// --- ADMIN DIRECT PHOTO UPLOAD & FIREBASE HIERARCHICAL SYNC CONTROLLER ---
+
+let adminDirectSelectedPhotoFile = null;
+
+window.openAdminAddPhotoDirectModal = function(e) {
+  if (e) e.preventDefault();
+
+  const user = window.probaktronicCurrentUser;
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
+    ? window.isProbaktronicAdmin() 
+    : (user && (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true));
+
+  if (!isAdmin) {
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('Acceso exclusivo para administradores.');
+    }
+    return;
+  }
+
+  const active = window._currentActiveDiagramData || {};
+  const archDoc = active._selectedArchDoc || {};
+  const currentCount = (currentGalleryImages && currentGalleryImages.length) || 1;
+
+  // Set modal UI labels
+  const fuelEl = document.getElementById('adminAddPhotoContextFuel');
+  const countEl = document.getElementById('adminAddPhotoContextCurrentCount');
+  const vehicleEl = document.getElementById('adminAddPhotoContextVehicle');
+  const compEl = document.getElementById('adminAddPhotoContextComponent');
+  const endDescEl = document.getElementById('adminPhotoPosEndDesc');
+  const fileNameText = document.getElementById('adminDirectPhotoFileNameText');
+  const previewWrap = document.getElementById('adminDirectPhotoPreviewWrap');
+  const progressWrap = document.getElementById('adminDirectPhotoProgressWrap');
+  const form = document.getElementById('formAdminAddPhotoDirect');
+
+  if (form) form.reset();
+  if (fileNameText) fileNameText.textContent = 'Haz clic para elegir una imagen';
+  if (previewWrap) previewWrap.classList.add('d-none');
+  if (progressWrap) progressWrap.classList.add('d-none');
+  adminDirectSelectedPhotoFile = null;
+
+  if (fuelEl) fuelEl.textContent = (currentSelectedFuelType || 'diesel').toUpperCase();
+  if (countEl) countEl.textContent = `${currentCount} foto${currentCount > 1 ? 's' : ''} registrada${currentCount > 1 ? 's' : ''} actualmente`;
+  
+  const b = currentSelectedBrandName || archDoc.brandDocId || 'Toyota';
+  const m = document.getElementById('selectedVehicleModelText')?.textContent || archDoc.modelDocId || 'Vehículo';
+  const y = document.getElementById('selectedVehicleSpecText')?.textContent || archDoc.motorDocId || '';
+  if (vehicleEl) vehicleEl.textContent = `${b.toUpperCase()} ${m.toUpperCase()} ${y.toUpperCase()}`.trim();
+
+  const compTitle = active.tituloArchivo || archDoc.titulo || 'IMAGEN DEL COMPONENTE / ECU';
+  if (compEl) compEl.textContent = compTitle.toUpperCase();
+
+  if (endDescEl) endDescEl.textContent = `Se guardará como Foto ${currentCount + 1}`;
+
+  const modalEl = document.getElementById('adminAddPhotoDirectModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    bsModal.show();
+  }
+};
+
+window.handleAdminDirectPhotoFileChange = function(input) {
+  const fileNameText = document.getElementById('adminDirectPhotoFileNameText');
+  const previewWrap = document.getElementById('adminDirectPhotoPreviewWrap');
+  const previewImg = document.getElementById('adminDirectPhotoPreviewImg');
+
+  if (input.files && input.files[0]) {
+    adminDirectSelectedPhotoFile = input.files[0];
+    if (fileNameText) fileNameText.textContent = input.files[0].name;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (previewImg) previewImg.src = e.target.result;
+      if (previewWrap) previewWrap.classList.remove('d-none');
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+};
+
+window.handleAdminSubmitDirectPhoto = async function(e) {
+  if (e) e.preventDefault();
+
+  if (!adminDirectSelectedPhotoFile) {
+    alert('Por favor selecciona una imagen primero.');
+    return;
+  }
+
+  const btnSubmit = document.getElementById('btnAdminSubmitDirectPhoto');
+  const progressWrap = document.getElementById('adminDirectPhotoProgressWrap');
+  const progressBar = document.getElementById('adminDirectPhotoProgressBar');
+  const statusText = document.getElementById('adminDirectPhotoStatusText');
+
+  if (btnSubmit) btnSubmit.disabled = true;
+  if (progressWrap) progressWrap.classList.remove('d-none');
+  if (progressBar) progressBar.style.width = '15%';
+  if (statusText) statusText.textContent = 'Subiendo a Firebase Storage...';
+
+  try {
+    const active = window._currentActiveDiagramData || {};
+    const archDoc = active._selectedArchDoc || {};
+
+    const brandDocId = (archDoc.brandDocId || currentSelectedBrandId || 'toyota').toLowerCase().trim();
+    const modelDocId = (archDoc.modelDocId || currentSelectedModelDocId || 'modelo').toLowerCase().trim();
+    const anioDocId = archDoc.anioDocId || 'estandar';
+    const motorDocId = (archDoc.motorDocId || 'estandar').toLowerCase().trim();
+    const archDocId = archDoc.archDocId || active.id || 'ecu';
+
+    // 1. Upload to Firebase Storage with clean structured path
+    const timestamp = Date.now();
+    const cleanFileName = adminDirectSelectedPhotoFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    const storagePath = `diagramas/${brandDocId}/${modelDocId}/${motorDocId}/fotos_galeria/${timestamp}_${cleanFileName}`;
+    
+    let fileDownloadUrl = '';
+    const storage = firebase.storage();
+    const storageRef = storage.ref(storagePath);
+    
+    const isSvg = adminDirectSelectedPhotoFile.name.toLowerCase().endsWith('.svg');
+    const metadata = isSvg ? { contentType: 'image/svg+xml' } : {};
+
+    const uploadTask = storageRef.put(adminDirectSelectedPhotoFile, metadata);
+
+    await new Promise((resolve, reject) => {
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 75) + 15;
+          if (progressBar) progressBar.style.width = `${progress}%`;
+        },
+        (error) => reject(error),
+        async () => {
+          fileDownloadUrl = await uploadTask.snapshot.ref.getDownloadURL();
+          resolve();
+        }
+      );
+    });
+
+    if (progressBar) progressBar.style.width = '90%';
+    if (statusText) statusText.textContent = 'Actualizando documento en Firestore...';
+
+    // 2. Determine Position: Add to End or Make Primary Cover (Foto 1)
+    const posChoice = document.querySelector('input[name="adminPhotoPosition"]:checked')?.value || 'end';
+    let newGallery = [...(currentGalleryImages || [])];
+    if (newGallery.length === 0 && (active.imageUrl || active.url)) {
+      newGallery = [active.imageUrl || active.url];
+    }
+
+    if (posChoice === 'first') {
+      newGallery.unshift(fileDownloadUrl);
+    } else {
+      newGallery.push(fileDownloadUrl);
+    }
+
+    // 3. Save to Firestore under exact hierarchical path
+    const db = firebase.firestore();
+    const docRef = db.collection('diagramas').doc(brandDocId)
+      .collection('modelos').doc(modelDocId)
+      .collection('anios').doc(anioDocId)
+      .collection('motores').doc(motorDocId)
+      .collection('archivos').doc(archDocId);
+
+    const updatePayload = {
+      imagenes: newGallery,
+      allImages: newGallery,
+      ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (posChoice === 'first') {
+      updatePayload.imageUrl = fileDownloadUrl;
+      updatePayload.url = fileDownloadUrl;
+    }
+
+    await docRef.set(updatePayload, { merge: true });
+
+    if (progressBar) progressBar.style.width = '100%';
+    if (statusText) statusText.textContent = '¡Foto vinculada con éxito!';
+
+    // 4. Update live state & reload gallery in viewer
+    currentGalleryImages = newGallery;
+    if (window._currentActiveDiagramData) {
+      window._currentActiveDiagramData.allImages = newGallery;
+      window._currentActiveDiagramData.imagenes = newGallery;
+      if (posChoice === 'first') {
+        window._currentActiveDiagramData.imageUrl = fileDownloadUrl;
+        window._currentActiveDiagramData.url = fileDownloadUrl;
+      }
+    }
+
+    window.renderGalleryPagination(newGallery);
+    const newActiveIndex = (posChoice === 'first') ? 0 : (newGallery.length - 1);
+    window.showGalleryImageAtIndex(newActiveIndex);
+
+    // 5. Close Modal & Reset Form
+    setTimeout(() => {
+      const modalEl = document.getElementById('adminAddPhotoDirectModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        const bsModal = bootstrap.Modal.getInstance(modalEl);
+        if (bsModal) bsModal.hide();
+      }
+      if (form) form.reset();
+      adminDirectSelectedPhotoFile = null;
+      if (btnSubmit) btnSubmit.disabled = false;
+      if (progressWrap) progressWrap.classList.add('d-none');
+    }, 600);
+
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('¡Nueva foto agregada y organizada con éxito en Firebase!');
+    }
+  } catch (err) {
+    console.error('Error subiendo foto directa:', err);
+    alert('Error al subir la foto a Firebase: ' + err.message);
+    if (btnSubmit) btnSubmit.disabled = false;
+    if (progressWrap) progressWrap.classList.add('d-none');
+  }
+};
+
+// --- ADMIN ADD BRAND CONTROLLER ---
+let adminNewBrandCustomLogoData = null;
+
+window.openAdminAddBrandModal = function() {
+  const form = document.getElementById('formAdminAddBrand');
+  const preview = document.getElementById('adminNewBrandLogoPreview');
+  const statusBadge = document.getElementById('adminNewBrandLogoStatusBadge');
+  const sourceText = document.getElementById('adminNewBrandLogoSourceText');
+  const fuelSelect = document.getElementById('adminNewBrandFuelSelect');
+  const catSelect = document.getElementById('adminNewBrandCategorySelect');
+
+  if (form) form.reset();
+  adminNewBrandCustomLogoData = null;
+
+  if (fuelSelect && currentSelectedFuelType) fuelSelect.value = currentSelectedFuelType;
+  if (catSelect && currentSelectedCategoryKey) catSelect.value = currentSelectedCategoryKey;
+
+  if (preview) preview.src = 'logo_probaktronic_solo.png';
+  if (statusBadge) { statusBadge.className = 'badge bg-secondary small font-rajdhani'; statusBadge.textContent = 'Escribe un nombre para detectar logo'; }
+  if (sourceText) sourceText.textContent = 'Logo por defecto';
+
+  const modalEl = document.getElementById('adminAddBrandModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  }
+};
+
+window.handleAdminBrandNameLiveSearch = function(brandName) {
+  if (adminNewBrandCustomLogoData) return; // Custom logo uploaded, don't overwrite
+
+  const preview = document.getElementById('adminNewBrandLogoPreview');
+  const statusBadge = document.getElementById('adminNewBrandLogoStatusBadge');
+  const sourceText = document.getElementById('adminNewBrandLogoSourceText');
+
+  const clean = (brandName || '').trim().toLowerCase();
+  const logoUrl = getBrandLogoUrl(clean);
+
+  if (preview) preview.src = logoUrl;
+  if (logoUrl !== 'logo_probaktronic_solo.png') {
+    if (statusBadge) { statusBadge.className = 'badge bg-success small font-rajdhani'; statusBadge.textContent = '✓ Logo oficial detectado'; }
+    if (sourceText) sourceText.textContent = `Logo oficial SVG de ${brandName.toUpperCase()}`;
+  } else {
+    if (statusBadge) { statusBadge.className = 'badge bg-warning text-dark small font-rajdhani'; statusBadge.textContent = 'Sin logo oficial (Usa logo genérico o sube uno)'; }
+    if (sourceText) sourceText.textContent = 'Logo genérico Probaktronic';
+  }
+};
+
+window.handleAdminNewBrandLogoFileChange = function(input) {
+  const preview = document.getElementById('adminNewBrandLogoPreview');
+  const statusBadge = document.getElementById('adminNewBrandLogoStatusBadge');
+  const sourceText = document.getElementById('adminNewBrandLogoSourceText');
+
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      adminNewBrandCustomLogoData = e.target.result;
+      if (preview) preview.src = adminNewBrandCustomLogoData;
+      if (statusBadge) { statusBadge.className = 'badge bg-primary small font-rajdhani'; statusBadge.textContent = '★ Logo personalizado cargado'; }
+      if (sourceText) sourceText.textContent = `Archivo: ${file.name}`;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+window.handleAdminSubmitNewBrand = async function(e) {
+  if (e) e.preventDefault();
+
+  const brandName = (document.getElementById('adminNewBrandNameInput')?.value || '').trim();
+  if (!brandName) {
+    alert('Ingresa el nombre de la marca.');
+    return;
+  }
+
+  const fuel = document.getElementById('adminNewBrandFuelSelect')?.value || 'diesel';
+  const category = document.getElementById('adminNewBrandCategorySelect')?.value || 'pickup';
+  const btn = document.getElementById('btnAdminSubmitNewBrand');
+  const statusMsg = document.getElementById('adminNewBrandStatusMsg');
+
+  if (btn) btn.disabled = true;
+  if (statusMsg) { statusMsg.className = 'small text-center fw-bold text-primary'; statusMsg.textContent = 'Guardando marca en Firebase Firestore...'; }
+
+  try {
+    const cleanDocId = brandName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    let finalLogoUrl = adminNewBrandCustomLogoData || getBrandLogoUrl(cleanDocId);
+
+    // If custom SVG/PNG was chosen, optionally upload to storage
+    const fileInput = document.getElementById('adminNewBrandLogoFileInput');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      const file = fileInput.files[0];
+      const storageRef = firebase.storage().ref(`diagramas/logos_marcas/${cleanDocId}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`);
+      const isSvg = file.name.toLowerCase().endsWith('.svg');
+      const snap = await storageRef.put(file, isSvg ? { contentType: 'image/svg+xml' } : {});
+      finalLogoUrl = await snap.ref.getDownloadURL();
+    }
+
+    const db = firebase.firestore();
+    await db.collection('diagramas').doc(cleanDocId).set({
+      nombre: brandName.toUpperCase(),
+      marca: brandName.toUpperCase(),
+      logo: finalLogoUrl,
+      combustible: fuel,
+      categoria: category,
+      fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    if (statusMsg) { statusMsg.className = 'small text-center fw-bold text-success'; statusMsg.textContent = '¡Marca registrada con éxito!'; }
+
+    setTimeout(() => {
+      const modalEl = document.getElementById('adminAddBrandModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+      }
+      if (btn) btn.disabled = false;
+
+      // Reload brands grid
+      const grid = document.getElementById('vehiculosBrandGrid');
+      if (grid) loadFirestoreDiagramasBrands(grid);
+
+      if (typeof window.showGlobalToast === 'function') {
+        window.showGlobalToast(`¡Marca ${brandName.toUpperCase()} registrada con éxito!`);
+      }
+    }, 600);
+  } catch (err) {
+    console.error('Error creando marca:', err);
+    alert('Error al guardar la marca en Firebase: ' + err.message);
+    if (btn) btn.disabled = false;
+  }
+};
+
+
+// --- ADMIN ADD MODEL CONTROLLER ---
+let adminNewModelCustomPhotoData = null;
+
+window.openAdminAddModelModal = function(brandName) {
+  const form = document.getElementById('formAdminAddModel');
+  const brandText = document.getElementById('adminNewModelParentBrandText');
+  const fuelSelect = document.getElementById('adminNewModelFuelSelect');
+  const preview = document.getElementById('adminNewModelPhotoPreview');
+  const statusBadge = document.getElementById('adminNewModelPhotoStatusBadge');
+  const sourceText = document.getElementById('adminNewModelPhotoSourceText');
+
+  if (form) form.reset();
+  adminNewModelCustomPhotoData = null;
+
+  const targetBrand = brandName || currentSelectedBrandName || 'TOYOTA';
+  if (brandText) brandText.textContent = targetBrand.toUpperCase();
+
+  if (fuelSelect && currentSelectedFuelType) fuelSelect.value = currentSelectedFuelType;
+
+  // Set default photo
+  const detectedPhoto = getVehicleCarPhotoUrl(targetBrand, '', '') || 'imagenes autos/ic_car_toyota_hilux.JPG';
+  if (preview) preview.src = detectedPhoto;
+  if (statusBadge) { statusBadge.className = 'badge bg-success small font-rajdhani'; statusBadge.textContent = 'Foto sugerida lista'; }
+  if (sourceText) sourceText.textContent = 'Foto sugerida para la marca';
+
+  const modalEl = document.getElementById('adminAddModelModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  }
+};
+
+window.handleAdminModelNameLiveSearch = function(modelName) {
+  if (adminNewModelCustomPhotoData) return;
+
+  const targetBrand = (document.getElementById('adminNewModelParentBrandText')?.textContent || currentSelectedBrandName || 'TOYOTA').trim();
+  const years = (document.getElementById('adminNewModelYearsInput')?.value || '').trim();
+  const preview = document.getElementById('adminNewModelPhotoPreview');
+  const statusBadge = document.getElementById('adminNewModelPhotoStatusBadge');
+  const sourceText = document.getElementById('adminNewModelPhotoSourceText');
+
+  const detectedPhoto = getVehicleCarPhotoUrl(targetBrand, `${modelName} ${years}`, modelName);
+  if (detectedPhoto) {
+    if (preview) preview.src = detectedPhoto;
+    if (statusBadge) { statusBadge.className = 'badge bg-success small font-rajdhani'; statusBadge.textContent = '✓ Foto oficial detectada'; }
+    if (sourceText) sourceText.textContent = `Foto oficial encontrada para ${modelName.toUpperCase()}`;
+  }
+};
+
+window.handleAdminNewModelCarFileChange = function(input) {
+  const preview = document.getElementById('adminNewModelPhotoPreview');
+  const statusBadge = document.getElementById('adminNewModelPhotoStatusBadge');
+  const sourceText = document.getElementById('adminNewModelPhotoSourceText');
+
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      adminNewModelCustomPhotoData = e.target.result;
+      if (preview) preview.src = adminNewModelCustomPhotoData;
+      if (statusBadge) { statusBadge.className = 'badge bg-primary small font-rajdhani'; statusBadge.textContent = '★ Foto personalizada cargada'; }
+      if (sourceText) sourceText.textContent = `Archivo: ${file.name}`;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+window.handleAdminSubmitNewModel = async function(e) {
+  if (e) e.preventDefault();
+
+  const brandName = (document.getElementById('adminNewModelParentBrandText')?.textContent || currentSelectedBrandName || 'TOYOTA').trim();
+  const modelName = (document.getElementById('adminNewModelNameInput')?.value || '').trim();
+  const years = (document.getElementById('adminNewModelYearsInput')?.value || '').trim();
+  const motor = (document.getElementById('adminNewModelMotorInput')?.value || 'Estándar').trim();
+  const fuel = document.getElementById('adminNewModelFuelSelect')?.value || 'diesel';
+
+  if (!modelName) {
+    alert('Ingresa el nombre del modelo.');
+    return;
+  }
+
+  const btn = document.getElementById('btnAdminSubmitNewModel');
+  const statusMsg = document.getElementById('adminNewModelStatusMsg');
+
+  if (btn) btn.disabled = true;
+  if (statusMsg) { statusMsg.className = 'small text-center fw-bold text-primary'; statusMsg.textContent = 'Guardando modelo en Firebase Firestore...'; }
+
+  try {
+    const brandDocId = brandName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const modelDocId = modelName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const anioDocId = years ? years.trim() : 'estandar';
+    const motorDocId = motor.toLowerCase().replace(/[^a-z0-9]/g, '') || 'estandar';
+    const fullModelTitle = `${brandName.toUpperCase()} ${modelName.toUpperCase()} ${years}`.trim();
+
+    let finalCarPhotoUrl = adminNewModelCustomPhotoData || getVehicleCarPhotoUrl(brandName, `${modelName} ${years}`, modelDocId) || 'imagenes autos/ic_car_toyota_hilux.JPG';
+
+    // Upload custom photo if selected
+    const fileInput = document.getElementById('adminNewModelCarFileInput');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      const file = fileInput.files[0];
+      const storageRef = firebase.storage().ref(`diagramas/fotos_modelos/${brandDocId}_${modelDocId}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`);
+      const isSvg = file.name.toLowerCase().endsWith('.svg');
+      const snap = await storageRef.put(file, isSvg ? { contentType: 'image/svg+xml' } : {});
+      finalCarPhotoUrl = await snap.ref.getDownloadURL();
+    }
+
+    const db = firebase.firestore();
+
+    // 1. Ensure Brand Doc exists
+    await db.collection('diagramas').doc(brandDocId).set({
+      nombre: brandName.toUpperCase(),
+      marca: brandName.toUpperCase(),
+      logo: getBrandLogoUrl(brandDocId),
+      combustible: fuel
+    }, { merge: true });
+
+    // 2. Set Model Doc
+    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).set({
+      modelo: fullModelTitle,
+      nombre: modelName.toUpperCase(),
+      motor: motor,
+      combustible: fuel,
+      imagen: finalCarPhotoUrl,
+      anios: years,
+      fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    // 3. Set Year & Motor Doc
+    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId)
+      .collection('anios').doc(anioDocId).set({ anio: anioDocId }, { merge: true });
+
+    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId)
+      .collection('anios').doc(anioDocId).collection('motores').doc(motorDocId).set({
+        motor: motor,
+        combustible: fuel,
+        modelo: fullModelTitle,
+        imagen: finalCarPhotoUrl
+      }, { merge: true });
+
+    if (statusMsg) { statusMsg.className = 'small text-center fw-bold text-success'; statusMsg.textContent = '¡Modelo registrado con éxito!'; }
+
+    setTimeout(() => {
+      const modalEl = document.getElementById('adminAddModelModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+      }
+      if (btn) btn.disabled = false;
+
+      // Reload models list for this brand
+      const modelsListGrid = document.getElementById('modelsListGrid');
+      if (modelsListGrid) {
+        window.openBrandDiagramModels(brandDocId, brandName, getBrandLogoUrl(brandDocId), 'diagramas');
+      }
+
+      if (typeof window.showGlobalToast === 'function') {
+        window.showGlobalToast(`¡Modelo ${fullModelTitle} registrado con éxito!`);
+      }
+    }, 600);
+  } catch (err) {
+    console.error('Error creando modelo:', err);
+    alert('Error al guardar el modelo en Firebase: ' + err.message);
+    if (btn) btn.disabled = false;
+  }
+};
+
+
 
 

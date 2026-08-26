@@ -23,6 +23,34 @@ ensureFirebaseInitialized();
 // Current User State in Window Context
 window.probaktronicCurrentUser = null;
 
+// Instant sync check before DOM ready to prevent theme flash
+try {
+  const _rawCached = localStorage.getItem('probaktronic_cached_user');
+  if (_rawCached) {
+    const _cachedUser = JSON.parse(_rawCached);
+    if (_cachedUser && (_cachedUser.email === 'prueba@probak.com' || _cachedUser.rol === 'admin' || _cachedUser.isAdmin === true)) {
+      document.documentElement.classList.add('is-admin');
+    }
+  }
+} catch (e) {}
+
+// Dynamic Sidebar & Slide Theme updater for Administrator
+window.updateAdminSidebarTheme = function(userData) {
+  const user = userData || window.probaktronicCurrentUser;
+  const isAdmin = user && (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true);
+  if (isAdmin) {
+    document.documentElement.classList.add('is-admin');
+    if (document.body) document.body.classList.add('is-admin');
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) sidebar.classList.add('sidebar-gold');
+  } else {
+    document.documentElement.classList.remove('is-admin');
+    if (document.body) document.body.classList.remove('is-admin');
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) sidebar.classList.remove('sidebar-gold');
+  }
+};
+
 // Render instant cached profile if available before network response
 function initCachedUserProfile() {
   try {
@@ -32,6 +60,10 @@ function initCachedUserProfile() {
       window.probaktronicCurrentUser = cachedData;
       renderLoggedInHeaderUI(cachedData);
       updateStatusFooterUI(cachedData);
+      updateAdminSidebarTheme(cachedData);
+      if (typeof window.checkAdminButtonVisibility === 'function') {
+        window.checkAdminButtonVisibility();
+      }
     }
   } catch (e) {
     console.warn('Error al leer caché de usuario local:', e);
@@ -158,6 +190,10 @@ window.isProbaktronicAdmin = function() {
 
 // Render User Header UI when Logged In
 function renderLoggedInHeaderUI(userData) {
+  updateAdminSidebarTheme(userData);
+  if (typeof window.checkAdminButtonVisibility === 'function') {
+    window.checkAdminButtonVisibility();
+  }
   const profileSection = document.querySelector('.user-profile-section');
   if (!profileSection) return;
 
@@ -173,9 +209,9 @@ function renderLoggedInHeaderUI(userData) {
   let typeBadge = '<span class="badge bg-secondary ms-1" style="font-size:0.65rem;">FREE</span>';
 
   if (isAdmin) {
-    roleText = 'Administrador';
+    roleText = '<span style="color: #D97706; font-weight: 700;">Administrador</span>';
     greetingText = 'BIENVENIDO AL SISTEMA, ADMINISTRADOR';
-    typeBadge = '<span class="badge bg-danger ms-1" style="font-size:0.65rem;">ADMIN</span>';
+    typeBadge = '<span class="badge badge-gold-admin ms-1" style="font-size:0.65rem;"><i class="bi bi-shield-fill-check me-1"></i>ADMIN</span>';
   } else if (isPremium) {
     roleText = 'Técnico Premium';
     greetingText = 'BIENVENIDO AL SISTEMA, USUARIO PREMIUM';
@@ -183,7 +219,7 @@ function renderLoggedInHeaderUI(userData) {
   }
 
   const initial = (userData.nombre || userData.email || 'U').charAt(0).toUpperCase();
-  const avatarBg = userData.avatarColor || (isAdmin || isPremium ? 'var(--brand-red, #D32F2F)' : '#475569');
+  const avatarBg = userData.avatarColor || (isAdmin ? '#D97706' : isPremium ? 'var(--brand-red, #D32F2F)' : '#475569');
   const avatarIcon = userData.avatarIcon || 'bi-person-fill';
   const avatarPhoto = userData.avatarPhotoURL || '';
   const avatarSvg = userData.avatarSvg || '';
@@ -237,12 +273,12 @@ function renderLoggedInHeaderUI(userData) {
           <span class="user-role text-muted small">${roleText} <i class="bi bi-chevron-down ms-1 fs-7"></i></span>
         </div>
       </div>
-      <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2" aria-labelledby="userProfileDropdown" style="min-width: 250px; border-radius: 10px;">
+      <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2" aria-labelledby="userProfileDropdown" style="min-width: 260px; border-radius: 10px;">
         <li class="px-3 py-2 border-bottom">
           <div class="fw-bold text-dark fs-6">${userData.nombre}</div>
           <div class="text-muted small">${userData.email}</div>
           <div class="mt-1">
-            <span class="badge ${isAdmin ? 'bg-danger' : isPremium ? 'bg-warning text-dark' : 'bg-secondary'}">${isAdmin ? 'Acceso Administrador' : isPremium ? 'Acceso Premium' : 'Acceso Free'}</span>
+            <span class="badge ${isAdmin ? 'badge-gold-admin' : isPremium ? 'bg-warning text-dark' : 'bg-secondary'}">${isAdmin ? '<i class="bi bi-shield-fill-check me-1"></i>Acceso Total Administrador' : isPremium ? 'Acceso Premium' : 'Acceso Free'}</span>
           </div>
         </li>
         <li>
@@ -282,6 +318,10 @@ function renderLoggedInHeaderUI(userData) {
 
 // Render User Header UI when Logged Out
 function renderLoggedOutHeaderUI() {
+  updateAdminSidebarTheme(null);
+  if (typeof window.checkAdminButtonVisibility === 'function') {
+    window.checkAdminButtonVisibility();
+  }
   const profileSection = document.querySelector('.user-profile-section');
   if (!profileSection) return;
 
@@ -305,23 +345,28 @@ function renderLoggedOutHeaderUI() {
 // Update bottom footer bar status dynamically
 function updateStatusFooterUI(userData) {
   const userTypeStatus = document.querySelector('.dark-status-bar .status-value');
+  const userLed = document.querySelector('.dark-status-bar .status-led-green, .dark-status-bar .status-led-gold, .dark-status-bar .status-led-gray');
   if (userTypeStatus) {
     if (userData) {
-      const isAdmin = (userData.email === 'prueba@probak.com');
+      const isAdmin = (userData.email === 'prueba@probak.com' || userData.rol === 'admin' || userData.isAdmin === true);
       const isPremium = !!userData.esPremium;
       if (isAdmin) {
         userTypeStatus.textContent = 'Administrador (Premium)';
-        userTypeStatus.className = 'status-value text-success fw-bold';
+        userTypeStatus.className = 'status-value text-gold fw-bold';
+        if (userLed) userLed.className = 'status-led-gold';
       } else if (isPremium) {
         userTypeStatus.textContent = 'Premium';
         userTypeStatus.className = 'status-value text-success fw-bold';
+        if (userLed) userLed.className = 'status-led-green';
       } else {
         userTypeStatus.textContent = 'Free';
         userTypeStatus.className = 'status-value text-info fw-bold';
+        if (userLed) userLed.className = 'status-led-green';
       }
     } else {
       userTypeStatus.textContent = 'Invitado (Sin Sesión)';
       userTypeStatus.className = 'status-value text-muted';
+      if (userLed) userLed.className = 'status-led-gray';
     }
   }
 }

@@ -183,6 +183,79 @@ body {
   box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
 }
 
+/* ==========================================================================
+   ADMINISTRATOR GOLD THEME (SLIDE / BARRA LATERAL DORADA PARA ADMINISTRADOR)
+   ========================================================================== */
+
+/* Gold Sidebar Container for Administrator */
+html.is-admin .sidebar,
+body.is-admin .sidebar,
+.sidebar.sidebar-gold {
+  border-right: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 4px 0 24px rgba(212, 175, 55, 0.12), 4px 0 16px rgba(0, 0, 0, 0.25);
+}
+
+/* Gold Active Slide / Nav Item for Administrator */
+html.is-admin .sidebar .nav-link-item.active,
+body.is-admin .sidebar .nav-link-item.active,
+.sidebar.sidebar-gold .nav-link-item.active {
+  background: linear-gradient(135deg, #FFE066 0%, #F59E0B 45%, #B45309 100%) !important;
+  color: #1A1300 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 240, 150, 0.5) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+html.is-admin .sidebar .nav-link-item.active i,
+body.is-admin .sidebar .nav-link-item.active i,
+.sidebar.sidebar-gold .nav-link-item.active i {
+  color: #1A1300 !important;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.3));
+}
+
+html.is-admin .sidebar .nav-link-item.active span,
+body.is-admin .sidebar .nav-link-item.active span,
+.sidebar.sidebar-gold .nav-link-item.active span {
+  color: #1A1300 !important;
+  font-weight: 700 !important;
+}
+
+/* Admin Sidebar Hover State */
+html.is-admin .sidebar .nav-link-item:hover:not(.active),
+body.is-admin .sidebar .nav-link-item:hover:not(.active),
+.sidebar.sidebar-gold .nav-link-item:hover:not(.active) {
+  color: #FDE047 !important;
+  background-color: rgba(212, 175, 55, 0.12) !important;
+}
+
+html.is-admin .sidebar .nav-link-item:hover:not(.active) i,
+body.is-admin .sidebar .nav-link-item:hover:not(.active) i,
+.sidebar.sidebar-gold .nav-link-item:hover:not(.active) i {
+  color: #FBBF24 !important;
+}
+
+/* Admin Sidebar Divider */
+html.is-admin .sidebar .sidebar-divider,
+body.is-admin .sidebar .sidebar-divider,
+.sidebar.sidebar-gold .sidebar-divider {
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.4), transparent);
+}
+
+/* Admin Minimize button hover */
+html.is-admin .sidebar .btn-sidebar-minimize:hover,
+body.is-admin .sidebar .btn-sidebar-minimize:hover,
+.sidebar.sidebar-gold .btn-sidebar-minimize:hover {
+  color: #FDE047;
+}
+
+/* Mobile Open Sidebar with Gold Border */
+html.is-admin .sidebar.mobile-open,
+body.is-admin .sidebar.mobile-open,
+.sidebar.sidebar-gold.mobile-open {
+  border-right: 2px solid rgba(212, 175, 55, 0.5) !important;
+}
+
 .sidebar-footer {
   padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -393,6 +466,37 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
   border-radius: 50%;
   background-color: #2ECC71;
   box-shadow: 0 0 8px #2ECC71;
+}
+
+.status-led-gold {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #F59E0B;
+  box-shadow: 0 0 10px #F59E0B, 0 0 4px #FDE047;
+}
+
+.status-led-gray {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #64748B;
+  box-shadow: none;
+}
+
+.text-gold {
+  color: #F59E0B !important;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.45);
+}
+
+.badge-gold-admin {
+  background: linear-gradient(135deg, #FFE066 0%, #F59E0B 50%, #B45309 100%) !important;
+  color: #1A1300 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 240, 150, 0.6);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .status-info-block {
