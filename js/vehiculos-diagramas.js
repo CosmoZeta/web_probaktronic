@@ -614,8 +614,8 @@ function getFuelTypeInfo(data, modelName, motor) {
     return { name: 'GASOLINA', isDiesel: false, cssClass: 'badge-gasolina' };
   }
 
-  const combined = ((modelName || '') + ' ' + (motor || '') + ' ' + (data.modelo || '') + ' ' + (data.nombre || '') + ' ' + (data.id || '')).toLowerCase();
-  const isDiesel = /\b(diesel|diésel|d-4d|d4d|crdi|tdi|hdi|dci|tdci|cdti|jtd|multijet|1kd|2kd|1gd|2gd)\b/i.test(combined);
+  const combined = ((modelName || '') + ' ' + (motor || '') + ' ' + (data.modelo || '') + ' ' + (data.nombre || '') + ' ' + (data.id || '') + ' ' + (data.anio || '') + ' ' + (data.titulo || '')).toLowerCase();
+  const isDiesel = /\b(diesel|diésel|hilux|fortuner|hiace|d-4d|d4d|1kd|2kd|1gd|2gd|crdi|tdi|hdi|dci|tdci|cdti|jtd|multijet|amarok|ranger|frontier|navara|dmax|d-max|l200|triton|bt-50|bt50|terracan|h1|h-1|h100|porter|canter|isuzu|fuso|hino|cummins|powerstroke|duramax)\b/i.test(combined);
   if (isDiesel) {
     return { name: 'DIÉSEL', isDiesel: true, cssClass: 'badge-diesel' };
   }
@@ -623,14 +623,51 @@ function getFuelTypeInfo(data, modelName, motor) {
   return { name: 'GASOLINA', isDiesel: false, cssClass: 'badge-gasolina' };
 }
 
-function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid, loader, cacheKey) {
+async function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid, loader, cacheKey) {
   const modelEntries = [];
-  snapshot.forEach(doc => {
+
+  for (const doc of snapshot.docs) {
     const data = doc.data() || {};
     const docId = doc.id;
+
+    // Deep subcollection inspection if combustible or motor is not explicitly on model doc
+    if (!data.combustible || !data.motor) {
+      try {
+        const aniosSnap = await doc.ref.collection('anios').get().catch(() => null);
+        if (aniosSnap && !aniosSnap.empty) {
+          for (const anioDoc of aniosSnap.docs) {
+            if (!data.anio) data.anio = anioDoc.id;
+            const aData = anioDoc.data() || {};
+            if (aData.combustible && !data.combustible) data.combustible = aData.combustible;
+
+            const motoresSnap = await anioDoc.ref.collection('motores').get().catch(() => null);
+            if (motoresSnap && !motoresSnap.empty) {
+              for (const mDoc of motoresSnap.docs) {
+                const mData = mDoc.data() || {};
+                if (!data.motor) data.motor = mData.motor || mDoc.id;
+                if (!data.combustible && mData.combustible) data.combustible = mData.combustible;
+                if (mData.imagenUrl) data.ecuImageUrl = mData.imagenUrl;
+                if (!data.titulo && mData.titulo) data.titulo = mData.titulo;
+              }
+            }
+          }
+        }
+      } catch (errSub) {
+        console.warn('Subcollection scan notice:', errSub);
+      }
+    }
+
+    // Auto-fill fuelInfo if still missing from intelligent heuristics
+    const modelName = data.modelo || data.nombre || docId;
+    const motor = data.motor || 'Estándar';
+    const fuelInfo = getFuelTypeInfo(data, modelName, motor);
+    if (!data.combustible) {
+      data.combustible = fuelInfo.isDiesel ? 'diesel' : 'gasolina';
+    }
+
     window.currentModelsDataStore[docId] = data;
     modelEntries.push({ docId, data });
-  });
+  }
 
   if (cacheKey) {
     window._modelsCacheByBrand[cacheKey] = modelEntries;
@@ -692,7 +729,7 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
     const motor = data.motor || 'Estándar';
     const fuelInfo = getFuelTypeInfo(data, modelName, motor);
 
-    const carPhotoUrl = getVehicleCarPhotoUrl(brandName, modelName, docId);
+    const carPhotoUrl = getVehicleCarPhotoUrl(brandName, modelName, docId) || data.fotoAuto || data.carPhoto || data.imagen;
     const thumbHtml = carPhotoUrl ? `
       <div class="model-car-thumb-wrap">
         <img src="${carPhotoUrl}" alt="${modelName}" class="model-car-thumb-img" onerror="this.parentElement.innerHTML='<div class=\\\'model-car-thumb-placeholder\\\'><i class=\\\'bi bi-question-lg\\\'></i></div>'">
@@ -758,7 +795,6 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
     }
 
     setupModelSearchFilter();
-  });
 }
 
 function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader) {
@@ -825,7 +861,7 @@ function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loa
       const card = document.createElement('div');
       card.className = 'model-item-card position-relative';
       card.innerHTML = `
-        ${deleteModelBtn}
+        ${editModelBtn}
         <div class="model-card-header">
           ${thumbHtml}
           <div class="model-card-info">
