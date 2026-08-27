@@ -1692,6 +1692,7 @@ window.printConsoleDiagram = function() {
 };
 
 let isSpacePanning = false;
+let lastViewerPanTime = 0;
 
 function setupViewerDragPan() {
   const wrap = document.getElementById('consoleImgViewerWrap');
@@ -1746,6 +1747,7 @@ function setupViewerDragPan() {
     wrap.classList.remove('grabbing');
     wrap.style.cursor = isEcuEditorMode ? (isSpacePanning ? 'grab' : 'crosshair') : 'grab';
     if (hasMoved) {
+      lastViewerPanTime = Date.now();
       window.updateStageTransform(true);
     }
   });
@@ -1792,6 +1794,7 @@ function setupViewerDragPan() {
       isDown = false;
       wrap.classList.remove('grabbing');
       if (hasMoved) {
+        lastViewerPanTime = Date.now();
         window.updateStageTransform(true);
       }
     }
@@ -4319,13 +4322,73 @@ window.positionActiveEcuDrawerAndLine = function(comp, theme) {
 window.closeEcuInfoDrawer = function() {
   const drawer = document.getElementById('consoleEcuInfoDrawer');
   const line = document.getElementById('consoleEcuActiveLeaderLine');
-  if (drawer) drawer.classList.add('d-none');
+  if (drawer) {
+    drawer.classList.add('d-none');
+    drawer.style.display = 'none';
+  }
   if (line) line.style.display = 'none';
-  document.querySelectorAll('.ecu-hotspot-box').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.ecu-hotspot-pin').forEach(el => el.classList.remove('active'));
+
+  // Reset active classes and restore baseline color themes on both boxes and zones
+  document.querySelectorAll('.ecu-hotspot-box, .ecu-hotspot-zone').forEach(el => {
+    el.classList.remove('active');
+    const compId = el.id.replace('ecu-box-', '');
+    const c = currentEcuHotspots.find(item => item.id === compId);
+    if (c) {
+      const t = window.getEcuComponentTheme(c);
+      el.style.stroke = t.color;
+      el.style.fill = (c.isZone || c.type === 'polygon' || c.pathD) ? (t.color + '26') : t.fill;
+      el.style.filter = `drop-shadow(0 0 6px ${t.color})`;
+      el.style.strokeWidth = (c.isZone || c.type === 'polygon' || c.pathD) ? '2px' : '2.5px';
+    }
+  });
+
+  document.querySelectorAll('.ecu-hotspot-pin').forEach(el => {
+    el.classList.remove('active');
+    const compId = el.id.replace('ecu-pin-', '');
+    const c = currentEcuHotspots.find(item => item.id === compId);
+    if (c) {
+      const t = window.getEcuComponentTheme(c);
+      const r = el.querySelector('.outer-ring');
+      const d = el.querySelector('.inner-dot');
+      if (r) r.style.stroke = t.color;
+      if (d) d.style.fill = t.color;
+    }
+  });
+
   activeEcuComponentId = null;
   window.updateEcuAdminUI();
 };
+
+// Auto-hide ECU Component Info Drawer when clicking anywhere outside
+document.addEventListener('click', (e) => {
+  const drawer = document.getElementById('consoleEcuInfoDrawer');
+  if (!drawer || drawer.classList.contains('d-none') || drawer.style.display === 'none') {
+    return;
+  }
+  // Don't close if drawing/editing mode is active
+  if (typeof isEcuEditorMode !== 'undefined' && isEcuEditorMode) {
+    return;
+  }
+  // Ignore if user was dragging/panning the viewer
+  if (typeof lastViewerPanTime !== 'undefined' && (Date.now() - lastViewerPanTime < 180)) {
+    return;
+  }
+  // Ignore clicks inside the drawer
+  if (e.target.closest('#consoleEcuInfoDrawer')) {
+    return;
+  }
+  // Ignore clicks on hotspots/pins/zones as they select components
+  if (e.target.closest('.ecu-hotspot-box') || e.target.closest('.ecu-hotspot-zone') || e.target.closest('.ecu-hotspot-pin') || e.target.closest('#consoleEcuHotspotsGroup')) {
+    return;
+  }
+  // Ignore clicks inside modals, dropdowns, or toasts
+  if (e.target.closest('.modal') || e.target.closest('.modal-backdrop') || e.target.closest('.toast') || e.target.closest('.dropdown-menu')) {
+    return;
+  }
+
+  // Close info drawer
+  window.closeEcuInfoDrawer();
+});
 
 // Edit Active Component (Modificar datos de un componente existente)
 window.editActiveEcuComponent = function() {

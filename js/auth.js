@@ -75,6 +75,7 @@ function startAuthSystem() {
   initCachedUserProfile();
   initAuthObserver();
   injectAvatarModal();
+  injectUserProfileAndWorkshopModal();
 }
 
 if (document.readyState === 'loading') {
@@ -99,38 +100,65 @@ function initAuthObserver() {
         const userDocRef = db.collection('usuarios').doc(user.uid);
         let docRef = await userDocRef.get();
 
-        // If user document does not exist in Firestore, create it automatically
-        if (!docRef.exists) {
-          console.log('Documento de usuario no encontrado en Firestore, creando:', user.email);
-          const newUserData = {
-            nombre: user.displayName || user.email.split('@')[0],
-            email: user.email,
-            esPremium: (user.email === 'prueba@probak.com'),
-            aprobado: true,
-            fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+        const userEmailClean = (user.email || '').toLowerCase().trim();
+        const isHardcodedAdmin = (userEmailClean === 'prueba@probak.com' || userEmailClean === 'jhanzeta@gmail.com');
+
+        // Check if there was an existing record created by email (e.g. jhanzeta_gmail_com)
+        let existingByEmailData = null;
+        try {
+          const emailSnap = await db.collection('usuarios').where('email', '==', userEmailClean).get();
+          emailSnap.forEach(d => {
+            if (d.id !== user.uid) {
+              existingByEmailData = d.data();
+              // Clean up duplicate non-UID doc
+              db.collection('usuarios').doc(d.id).delete().catch(() => {});
+            }
+          });
+        } catch (e) {}
+
+        // If user document does not exist in Firestore, or if admin data needs merge
+        if (!docRef.exists || existingByEmailData || isHardcodedAdmin) {
+          const currentDocData = (docRef && docRef.exists) ? docRef.data() : {};
+          const isDocAdmin = isHardcodedAdmin || (existingByEmailData && (existingByEmailData.rol === 'admin' || existingByEmailData.isAdmin)) || currentDocData.rol === 'admin';
+          const isDocPremium = isDocAdmin || (existingByEmailData && existingByEmailData.esPremium) || currentDocData.esPremium;
+
+          const mergedUserData = {
+            ...existingByEmailData,
+            ...currentDocData,
+            nombre: currentDocData.nombre || (existingByEmailData && existingByEmailData.nombre) || user.displayName || user.email.split('@')[0],
+            nombreTecnico: currentDocData.nombreTecnico || (existingByEmailData && existingByEmailData.nombreTecnico) || user.displayName || user.email.split('@')[0],
+            nombreTaller: currentDocData.nombreTaller || (existingByEmailData && existingByEmailData.nombreTaller) || 'Taller Automotriz',
+            email: userEmailClean,
+            esPremium: isDocPremium,
+            rol: isDocAdmin ? 'admin' : (currentDocData.rol || (existingByEmailData && existingByEmailData.rol) || 'user'),
+            aprobado: true
           };
+
           try {
-            await userDocRef.set(newUserData, { merge: true });
+            await userDocRef.set(mergedUserData, { merge: true });
             docRef = await userDocRef.get();
           } catch (writeErr) {
-            console.warn('Error al escribir en Firestore (Revise Reglas de Seguridad en Firebase Console):', writeErr);
+            console.warn('Error al sincronizar usuario en Firestore:', writeErr);
           }
         }
 
         let userData = {
           uid: user.uid,
-          email: user.email,
+          email: userEmailClean,
           nombre: user.displayName || user.email.split('@')[0],
-          esPremium: (user.email === 'prueba@probak.com'),
+          esPremium: isHardcodedAdmin,
+          rol: isHardcodedAdmin ? 'admin' : 'user',
           aprobado: true
         };
 
         if (docRef && docRef.exists) {
           const data = docRef.data();
-          const isPremium = (data.esPremium === true || data.esPremium === 'true' || data.tipo === 'premium' || user.email === 'prueba@probak.com');
+          const isAdminRole = isHardcodedAdmin || (data.rol === 'admin' || data.isAdmin === true);
+          const isPremium = (isAdminRole || data.esPremium === true || data.esPremium === 'true' || data.tipo === 'premium');
           userData = {
             ...userData,
             ...data,
+            rol: isAdminRole ? 'admin' : (data.rol || 'user'),
             esPremium: isPremium
           };
         }
@@ -180,12 +208,12 @@ window.isProbaktronicAdmin = function() {
       const raw = localStorage.getItem('probaktronic_cached_user');
       if (raw) {
         const u = JSON.parse(raw);
-        return (u.email === 'prueba@probak.com' || u.rol === 'admin' || u.isAdmin === true);
+        return (u.email === 'prueba@probak.com' || u.email === 'jhanzeta@gmail.com' || u.rol === 'admin' || u.isAdmin === true);
       }
     } catch(e) {}
     return false;
   }
-  return (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true);
+  return (user.email === 'prueba@probak.com' || user.email === 'jhanzeta@gmail.com' || user.rol === 'admin' || user.isAdmin === true);
 };
 
 // Render User Header UI when Logged In
@@ -197,7 +225,7 @@ function renderLoggedInHeaderUI(userData) {
   const profileSection = document.querySelector('.user-profile-section');
   if (!profileSection) return;
 
-  const isAdmin = (userData.email === 'prueba@probak.com' || userData.rol === 'admin' || userData.isAdmin === true);
+  const isAdmin = (userData.email === 'prueba@probak.com' || userData.email === 'jhanzeta@gmail.com' || userData.rol === 'admin' || userData.isAdmin === true);
   const isPremium = !!userData.esPremium;
 
   if (typeof window.updateEcuAdminUI === 'function') {
@@ -282,9 +310,21 @@ function renderLoggedInHeaderUI(userData) {
           </div>
         </li>
         <li>
+          <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-dark" href="#" onclick="openUserProfileAndWorkshopModal(event)">
+            <i class="bi bi-person-vcard fs-5 text-primary"></i>
+            <span class="fw-semibold">Mi Perfil & Taller</span>
+          </a>
+        </li>
+        <li>
           <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-dark" href="#" onclick="openAvatarCustomizerModal(event)">
             <i class="bi bi-person-badge fs-5 text-danger"></i>
             <span>Personalizar Avatar</span>
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-dark" href="configuracion.html">
+            <i class="bi bi-gear-fill fs-5 text-secondary"></i>
+            <span>Configuración del Sistema</span>
           </a>
         </li>
         ${isAdmin ? `
@@ -373,14 +413,14 @@ function updateStatusFooterUI(userData) {
 
 // Global Auth Action Functions
 
-// 1. Login User Function
+// 1. Login User Function (With Smart Auto-Activation for Pre-registered Users)
 window.loginUser = async function(identifier, password) {
   ensureFirebaseInitialized();
   if (typeof firebase === 'undefined' || typeof firebase.auth !== 'function') {
     throw new Error('El servicio de autenticación no está disponible.');
   }
 
-  let email = identifier ? identifier.trim() : '';
+  let email = identifier ? identifier.trim().toLowerCase() : '';
   const db = firebase.firestore();
 
   // Resolve username to email if identifier does not contain '@'
@@ -388,15 +428,49 @@ window.loginUser = async function(identifier, password) {
     try {
       const snap = await db.collection('usuarios').where('nombre', '==', email).get();
       if (!snap.empty) {
-        email = snap.docs[0].data().email || email;
+        email = (snap.docs[0].data().email || email).toLowerCase().trim();
       }
     } catch (e) {
       console.warn('Nota: No se pudo resolver nombre de usuario sin previa sesión:', e);
     }
   }
 
-  const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-  return userCredential.user;
+  try {
+    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+    return userCredential.user;
+  } catch (err) {
+    // Smart auto-activation: If user was pre-registered in Firestore by Admin, activate Auth account on first login!
+    if (err.code === 'auth/invalid-login-credentials' || err.code === 'auth/user-not-found') {
+      try {
+        const userDocSnap = await db.collection('usuarios').where('email', '==', email).get();
+        if (!userDocSnap.empty) {
+          const uDoc = userDocSnap.docs[0];
+          const uData = uDoc.data();
+
+          const newCred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+          if (newCred && newCred.user) {
+            await newCred.user.updateProfile({ displayName: uData.nombre || uData.nombreTecnico || email });
+            // Link UID in Firestore
+            await db.collection('usuarios').doc(newCred.user.uid).set({
+              ...uData,
+              email: email,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            // Clean old non-UID doc if different
+            if (uDoc.id !== newCred.user.uid) {
+              db.collection('usuarios').doc(uDoc.id).delete().catch(() => {});
+            }
+
+            return newCred.user;
+          }
+        }
+      } catch (autoErr) {
+        console.warn('Auto-activation error:', autoErr);
+      }
+    }
+    throw err;
+  }
 };
 
 // 2. Register User Function (Immediate Free Account Creation)
@@ -847,5 +921,223 @@ window.markNotificationsAsRead = function() {
         <div class="text-muted" style="font-size: 0.75rem;">Estás al día con todos los diagramas del sistema.</div>
       </li>
     `;
+  }
+};
+
+// ==========================================
+// MODAL: PERFIL DEL TÉCNICO & TALLER
+// ==========================================
+function injectUserProfileAndWorkshopModal() {
+  if (document.getElementById('userProfileAndWorkshopModal')) return;
+
+  const modalHtml = `
+    <div class="modal fade" id="userProfileAndWorkshopModal" tabindex="-1" aria-hidden="true" style="z-index: 1080;">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content text-white" style="background: #0E131F; border: 1px solid #00F0FF; border-radius: 16px; box-shadow: 0 0 45px rgba(0, 240, 255, 0.35); overflow: hidden;">
+          
+          <div class="modal-header border-secondary py-3 px-4" style="background: linear-gradient(90deg, rgba(0, 240, 255, 0.15) 0%, rgba(17, 24, 39, 0.9) 100%);">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle p-1 bg-black border border-info d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                <i class="bi bi-person-vcard text-info fs-3"></i>
+              </div>
+              <div>
+                <h5 class="modal-title font-rajdhani fw-bold text-white mb-0">PERFIL DEL TÉCNICO & TALLER</h5>
+                <span class="small text-white-50">Gestiona los datos de tu taller y el estado de tu membresía</span>
+              </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+
+          <form id="formUserProfileAndWorkshop" onsubmit="saveUserProfileAndWorkshop(event)">
+            <div class="modal-body p-4">
+              
+              <!-- Tarjeta de Membresía Destacada -->
+              <div class="p-3 mb-4 rounded-3 border" id="membershipCardContainer" style="background: rgba(15, 23, 42, 0.85); border-color: rgba(255, 215, 0, 0.3) !important;">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                  <div>
+                    <span class="badge bg-warning text-dark fw-bold font-rajdhani px-2 py-1 mb-1" id="profileMembershipBadge" style="font-size: 0.8rem;">
+                      <i class="bi bi-patch-check-fill me-1"></i>MEMBRESÍA TÉCNICO PREMIUM
+                    </span>
+                    <div class="fw-bold text-white font-rajdhani fs-5" id="profileDisplayEmail">usuario@taller.com</div>
+                    <span class="small text-success d-flex align-items-center gap-1 mt-1">
+                      <i class="bi bi-check-circle-fill"></i> Acceso Ilimitado a Diagramas, Pinouts y Dumps de Tableros
+                    </span>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline-info rounded-pill" onclick="openAvatarCustomizerModal(event)">
+                    <i class="bi bi-pencil-fill me-1"></i> Cambiar Avatar
+                  </button>
+                </div>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small text-info fw-bold mb-1">Nombre Completo del Técnico <span class="text-danger">*</span></label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-dark text-white border-secondary"><i class="bi bi-person-fill"></i></span>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" id="profileWorkshopTechName" placeholder="Ej: Juan Carlos Pérez" required>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small text-info fw-bold mb-1">Nombre del Taller Automotriz</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-dark text-white border-secondary"><i class="bi bi-building"></i></span>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" id="profileWorkshopName" placeholder="Ej: Taller Mecatrónico Pérez">
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small text-info fw-bold mb-1">Teléfono / WhatsApp de Contacto</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-dark text-white border-secondary"><i class="bi bi-whatsapp text-success"></i></span>
+                    <input type="tel" class="form-control bg-dark text-white border-secondary" id="profileWorkshopPhone" placeholder="Ej: +51 987 654 321">
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small text-info fw-bold mb-1">Ciudad y País</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-dark text-white border-secondary"><i class="bi bi-geo-alt-fill text-danger"></i></span>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" id="profileWorkshopLocation" placeholder="Ej: Lima, Perú">
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label small text-info fw-bold mb-1">Especialidad Principal del Taller</label>
+                  <select class="form-select form-select-sm bg-dark text-white border-secondary" id="profileWorkshopSpecialty">
+                    <option value="Diagnóstico Electrónico & Scanner">Diagnóstico Electrónico & Scanner Automotriz</option>
+                    <option value="Reparación de Computadoras ECU / ECM">Reparación de Computadoras ECU / ECM / Módulos</option>
+                    <option value="Inyección Diésel Common Rail & Gasolina">Inyección Diésel Common Rail & Gasolina</option>
+                    <option value="Inmovilizadores, Llaves & Programación EEPROM">Inmovilizadores, Llaves & Programación EEPROM / MCU</option>
+                    <option value="Mecatrónica Automotriz General">Mecatrónica Automotriz General</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="profileWorkshopSaveNotice" class="small text-center fw-bold mt-3 d-none"></div>
+            </div>
+
+            <div class="modal-footer border-secondary py-3 px-4 d-flex justify-content-between">
+              <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+              <button type="submit" class="btn btn-info rounded-pill px-4 fw-bold shadow-sm" id="btnSaveWorkshopProfile">
+                <i class="bi bi-check-circle-fill me-1"></i> Guardar Datos del Perfil
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+window.openUserProfileAndWorkshopModal = function(e) {
+  if (e) e.preventDefault();
+  injectUserProfileAndWorkshopModal();
+
+  const user = window.probaktronicCurrentUser || {};
+  const isAdmin = (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true);
+  const isPremium = !!user.esPremium;
+
+  const emailEl = document.getElementById('profileDisplayEmail');
+  const badgeEl = document.getElementById('profileMembershipBadge');
+  const techNameEl = document.getElementById('profileWorkshopTechName');
+  const workshopNameEl = document.getElementById('profileWorkshopName');
+  const phoneEl = document.getElementById('profileWorkshopPhone');
+  const locEl = document.getElementById('profileWorkshopLocation');
+  const specEl = document.getElementById('profileWorkshopSpecialty');
+
+  if (emailEl) emailEl.textContent = user.email || 'usuario@probak.com';
+  if (badgeEl) {
+    if (isAdmin) {
+      badgeEl.className = 'badge badge-gold-admin px-2 py-1 mb-1';
+      badgeEl.innerHTML = '<i class="bi bi-shield-fill-check me-1"></i>ADMINISTRADOR PROBAKTRONIC';
+    } else if (isPremium) {
+      badgeEl.className = 'badge bg-warning text-dark fw-bold font-rajdhani px-2 py-1 mb-1';
+      badgeEl.innerHTML = '<i class="bi bi-patch-check-fill me-1"></i>MEMBRESÍA TÉCNICO PREMIUM';
+    } else {
+      badgeEl.className = 'badge bg-secondary text-white fw-bold font-rajdhani px-2 py-1 mb-1';
+      badgeEl.innerHTML = '<i class="bi bi-person me-1"></i>ACCESO TÉCNICO BÁSICO';
+    }
+  }
+
+  if (techNameEl) techNameEl.value = user.nombre || user.nombreTecnico || '';
+  if (workshopNameEl) workshopNameEl.value = user.nombreTaller || '';
+  if (phoneEl) phoneEl.value = user.telefono || '';
+  if (locEl) locEl.value = user.ubicacion || '';
+  if (specEl && user.especialidad) specEl.value = user.especialidad;
+
+  const modalEl = document.getElementById('userProfileAndWorkshopModal');
+  if (modalEl) {
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  }
+};
+
+window.saveUserProfileAndWorkshop = async function(e) {
+  if (e) e.preventDefault();
+
+  const techName = document.getElementById('profileWorkshopTechName')?.value.trim();
+  const workshopName = document.getElementById('profileWorkshopName')?.value.trim();
+  const phone = document.getElementById('profileWorkshopPhone')?.value.trim();
+  const location = document.getElementById('profileWorkshopLocation')?.value.trim();
+  const specialty = document.getElementById('profileWorkshopSpecialty')?.value;
+  const noticeEl = document.getElementById('profileWorkshopSaveNotice');
+
+  if (!techName) return;
+
+  const current = window.probaktronicCurrentUser || {};
+  const updatedUser = {
+    ...current,
+    nombre: techName,
+    nombreTecnico: techName,
+    nombreTaller: workshopName,
+    telefono: phone,
+    ubicacion: location,
+    especialidad: specialty
+  };
+
+  window.probaktronicCurrentUser = updatedUser;
+  try {
+    localStorage.setItem('probaktronic_cached_user', JSON.stringify(updatedUser));
+  } catch (err) {}
+
+  renderLoggedInHeaderUI(updatedUser);
+
+  // Sync to Firestore if logged in
+  if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+    try {
+      const uid = firebase.auth().currentUser.uid;
+      await firebase.firestore().collection('usuarios').doc(uid).set({
+        nombre: techName,
+        nombreTecnico: techName,
+        nombreTaller: workshopName,
+        telefono: phone,
+        ubicacion: location,
+        especialidad: specialty,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } catch (dbErr) {
+      console.warn('Error syncing workshop profile to Firestore:', dbErr);
+    }
+  }
+
+  if (noticeEl) {
+    noticeEl.className = 'small text-center fw-bold mt-3 text-success';
+    noticeEl.textContent = '✅ ¡Datos del taller actualizados correctamente!';
+    noticeEl.classList.remove('d-none');
+    setTimeout(() => {
+      noticeEl.classList.add('d-none');
+      const modalEl = document.getElementById('userProfileAndWorkshopModal');
+      if (modalEl) {
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+      }
+    }, 1200);
+  }
+
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast('✅ ¡Perfil del técnico y taller guardado!');
   }
 };
