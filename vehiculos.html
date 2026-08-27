@@ -1456,6 +1456,10 @@
                     <i class="bi bi-bounding-box"></i>
                     <span id="adminEcuEditorBtnText">DIBUJAR ESPACIOS</span>
                   </button>
+                  <button class="btn btn-outline-success btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminLockEcuHotspots" onclick="lockAndSaveEcuHotspots()" title="Fijar y asegurar permanentemente todas las áreas marcadas">
+                    <i class="bi bi-shield-lock-fill"></i>
+                    <span>ASEGURAR ÁREAS</span>
+                  </button>
                   <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1" id="btnAdminUndoEcuHotspot" onclick="undoLastAdminEcuHotspot()" title="Deshacer último componente dibujado">
                     <i class="bi bi-arrow-counterclockwise"></i>
                   </button>
@@ -1885,6 +1889,42 @@
               <div class="col-md-4">
                 <label class="form-label small text-light fw-bold mb-1">Encapsulado</label>
                 <input type="text" id="adminEcuCompPackage" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: SOIC-8, QFP-64 (Opcional)">
+              </div>
+            </div>
+
+            <!-- SECCIÓN COORDENADAS Y LÍNEA INDICADORA -->
+            <div class="p-2 mb-3 rounded-3" style="background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.2);">
+              <div class="d-flex align-items-center justify-content-between text-warning font-rajdhani fw-bold pb-1 mb-2 border-bottom border-secondary border-opacity-50">
+                <div><i class="bi bi-crosshair2 me-1"></i> COORDENADAS DEL ÁREA & LÍNEA GUÍA (EDICIÓN EXACTA)</div>
+                <span class="badge bg-dark text-info border border-info border-opacity-50 font-monospace" style="font-size: 0.7rem;">Píxeles SVG</span>
+              </div>
+              <div class="row g-2 mb-2">
+                <div class="col-3">
+                  <label class="form-label small text-white-50 mb-0" style="font-size: 0.72rem;">Posición X</label>
+                  <input type="number" id="adminEcuCoordX" class="form-control form-control-sm bg-dark text-warning border-secondary font-monospace" oninput="if(typeof updateModalCoordsPreview==='function') updateModalCoordsPreview();">
+                </div>
+                <div class="col-3">
+                  <label class="form-label small text-white-50 mb-0" style="font-size: 0.72rem;">Posición Y</label>
+                  <input type="number" id="adminEcuCoordY" class="form-control form-control-sm bg-dark text-warning border-secondary font-monospace" oninput="if(typeof updateModalCoordsPreview==='function') updateModalCoordsPreview();">
+                </div>
+                <div class="col-3">
+                  <label class="form-label small text-white-50 mb-0" style="font-size: 0.72rem;">Ancho (W)</label>
+                  <input type="number" id="adminEcuCoordW" class="form-control form-control-sm bg-dark text-warning border-secondary font-monospace" oninput="if(typeof updateModalCoordsPreview==='function') updateModalCoordsPreview();">
+                </div>
+                <div class="col-3">
+                  <label class="form-label small text-white-50 mb-0" style="font-size: 0.72rem;">Alto (H)</label>
+                  <input type="number" id="adminEcuCoordH" class="form-control form-control-sm bg-dark text-warning border-secondary font-monospace" oninput="if(typeof updateModalCoordsPreview==='function') updateModalCoordsPreview();">
+                </div>
+              </div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label small text-info mb-0" style="font-size: 0.72rem;"><i class="bi bi-pin-angle-fill me-1"></i>Pin / Inicio Línea X</label>
+                  <input type="number" id="adminEcuCoordPinX" class="form-control form-control-sm bg-dark text-info border-secondary font-monospace" placeholder="Centro auto" oninput="if(typeof updateModalCoordsPreview==='function') updateModalCoordsPreview();">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small text-info mb-0" style="font-size: 0.72rem;"><i class="bi bi-pin-angle-fill me-1"></i>Pin / Inicio Línea Y</label>
+                  <input type="number" id="adminEcuCoordPinY" class="form-control form-control-sm bg-dark text-info border-secondary font-monospace" placeholder="Centro auto" oninput="if(typeof updateModalCoordsPreview==='function') updateModalCoordsPreview();">
+                </div>
               </div>
             </div>
 

@@ -1373,6 +1373,13 @@ window.updateStageTransform = function(animate = true) {
   if (!stageEl) return;
   stageEl.style.transition = animate ? 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
   stageEl.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentConsoleZoom})`;
+
+  if (activeEcuComponentId && typeof window.positionActiveEcuDrawerAndLine === 'function') {
+    const comp = currentEcuHotspots.find(c => c.id === activeEcuComponentId);
+    if (comp) {
+      window.positionActiveEcuDrawerAndLine(comp, window.getEcuComponentTheme(comp));
+    }
+  }
 };
 
 window.toggleHandZoom = function() {
@@ -3445,6 +3452,17 @@ window.updateEcuAdminUI = function() {
     }
   }
 
+  const lockBtn = document.getElementById('btnAdminLockEcuHotspots');
+  if (lockBtn) {
+    if (isAdmin && window.currentActiveDiagramSection === 'pcb') {
+      lockBtn.classList.remove('d-none');
+      lockBtn.classList.add('d-flex');
+    } else {
+      lockBtn.classList.add('d-none');
+      lockBtn.classList.remove('d-flex');
+    }
+  }
+
   if (undoBtn) {
     if (isAdmin && window.currentActiveDiagramSection === 'pcb' && isEcuEditorMode) {
       undoBtn.classList.remove('d-none');
@@ -3472,13 +3490,32 @@ window.updateEcuAdminUI = function() {
   }
 };
 
-// Generate Storage Document Key for current vehicle / ECU
+// Explicit Lock and Save Hotspots Controller
+window.lockAndSaveEcuHotspots = async function() {
+  if (!currentEcuHotspots || currentEcuHotspots.length === 0) {
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('No hay componentes para asegurar.', 'warning');
+    } else {
+      alert('No hay componentes para asegurar.');
+    }
+    return;
+  }
+  await saveEcuHotspotsToStorage();
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast(`🔒 ¡${currentEcuHotspots.length} áreas marcadas y aseguradas permanentemente!`);
+  } else {
+    alert(`🔒 ¡${currentEcuHotspots.length} áreas marcadas y aseguradas permanentemente!`);
+  }
+};
+
+// Generate Storage Document Key for current vehicle / ECU (locked per photo index)
 function getActiveEcuStorageKey() {
   const brand = (window.currentSelectedBrandId || 'brand').toLowerCase();
   const model = (window.currentSelectedModelId || 'model').toLowerCase().replace(/[^a-z0-9]/g, '_');
   const active = window._currentActiveDiagramData || {};
   const title = (active.tituloArchivo || active.motor || active.id || 'ecu').toLowerCase().replace(/[^a-z0-9]/g, '_');
-  return `ecu_hotspots_${brand}_${model}_${title}`;
+  const photoIdx = (typeof currentGalleryIndex === 'number') ? `_f${currentGalleryIndex}` : '_f0';
+  return `ecu_hotspots_${brand}_${model}_${title}${photoIdx}`;
 }
 
 // Initialize Interactive ECU Layer
@@ -3672,14 +3709,52 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
     currentEcuHotspots = getDefaultHiluxHotspots(imgW, imgH);
   }
 
+  // Calibrate and lock proportional dimensions to ensure areas never shift
+  currentEcuHotspots = currentEcuHotspots.map(c => {
+    const srcW = c.baseWidth || 1000;
+    const srcH = c.baseHeight || 1094;
+    const pinX = (typeof c.pinX === 'number' && !isNaN(c.pinX)) ? c.pinX : Math.round(c.x + c.width / 2);
+    const pinY = (typeof c.pinY === 'number' && !isNaN(c.pinY)) ? c.pinY : Math.round(c.y + c.height / 2);
+
+    if (srcW !== imgW || srcH !== imgH) {
+      const rx = imgW / srcW;
+      const ry = imgH / srcH;
+      return {
+        ...c,
+        x: Math.round(c.x * rx),
+        y: Math.round(c.y * ry),
+        width: Math.round(c.width * rx),
+        height: Math.round(c.height * ry),
+        pinX: Math.round(pinX * rx),
+        pinY: Math.round(pinY * ry),
+        baseWidth: imgW,
+        baseHeight: imgH
+      };
+    }
+    return {
+      ...c,
+      baseWidth: imgW,
+      baseHeight: imgH,
+      pinX: pinX,
+      pinY: pinY
+    };
+  });
+
   renderEcuHotspots();
 }
 
 // Save to Firestore and LocalStorage (Multi-Layer Zero-Fail Sync con Seguro de Trazos)
 async function saveEcuHotspotsToStorage() {
-  // Add lock signature to all saved components
+  const svg = document.getElementById('consoleEcuSvgOverlay');
+  const vb = svg ? svg.viewBox.baseVal : null;
+  const baseW = (vb && vb.width > 0) ? vb.width : (document.getElementById('consoleMainDiagramImg')?.naturalWidth || 1000);
+  const baseH = (vb && vb.height > 0) ? vb.height : (document.getElementById('consoleMainDiagramImg')?.naturalHeight || 1094);
+
+  // Add permanent lock signature and base calibration coordinates to all saved components
   currentEcuHotspots = currentEcuHotspots.map(c => ({
     ...c,
+    baseWidth: c.baseWidth || baseW,
+    baseHeight: c.baseHeight || baseH,
     isLocked: true,
     userDefined: true,
     lastSaved: Date.now()
@@ -3887,44 +3962,6 @@ window.selectEcuComponent = function(comp) {
   const pinX = (typeof comp.pinX === 'number' && !isNaN(comp.pinX)) ? comp.pinX : Math.round((comp.x || 0) + (comp.width || 100) / 2);
   const pinY = (typeof comp.pinY === 'number' && !isNaN(comp.pinY)) ? comp.pinY : Math.round((comp.y || 0) + (comp.height || 100) / 2);
 
-  // Smart Closest-Side Positioning (Left vs Right):
-  const svg = document.getElementById('consoleEcuSvgOverlay');
-  const vb = svg ? svg.viewBox.baseVal : { width: 1000, height: 1094 };
-  const vbWidth = (vb && vb.width > 0) ? vb.width : 1000;
-  const vbHeight = (vb && vb.height > 0) ? vb.height : 1094;
-  const isLeftSide = pinX < (vbWidth / 2);
-
-  // Position Drawer on closest side on desktop
-  if (drawer) {
-    drawer.classList.remove('d-none');
-    drawer.style.display = 'flex';
-    if (window.innerWidth > 768) {
-      drawer.style.top = '15px';
-      drawer.style.bottom = 'auto';
-      if (isLeftSide) {
-        drawer.style.left = '15px';
-        drawer.style.right = 'auto';
-      } else {
-        drawer.style.right = '15px';
-        drawer.style.left = 'auto';
-      }
-    }
-  }
-
-  // Draw Leader Line in Component Category Color to closest edge
-  if (line) {
-    const startX = pinX;
-    const startY = pinY;
-    const targetX = isLeftSide ? Math.round(vbWidth * 0.02) : Math.round(vbWidth * 0.98);
-    const targetY = Math.max(60, Math.min(pinY, vbHeight - 60));
-    const midX = Math.round(startX + (targetX - startX) * 0.5);
-
-    line.setAttribute('d', `M ${startX} ${startY} L ${midX} ${startY} L ${targetX} ${targetY}`);
-    line.style.stroke = theme.color;
-    line.style.filter = `drop-shadow(0 0 8px ${theme.glow})`;
-    line.style.display = 'block';
-  }
-
   // Populate Rich Technical Drawer with Title Subtitle and Conditional Section Rendering
   if (drawer && drawerTitle && drawerContent) {
     const cat = window.normalizeEcuCategory(comp.category || comp.tipo || comp.name);
@@ -4011,7 +4048,89 @@ window.selectEcuComponent = function(comp) {
     drawer.style.display = 'flex';
   }
 
+  // Dynamically position drawer and connect leader line directly to drawer header
+  window.positionActiveEcuDrawerAndLine(comp, theme);
+
   window.updateEcuAdminUI();
+};
+
+// Dynamically align drawer vertically with chip pin and connect leader line seamlessly
+window.positionActiveEcuDrawerAndLine = function(comp, theme) {
+  if (!comp) return;
+  const line = document.getElementById('consoleEcuActiveLeaderLine');
+  const drawer = document.getElementById('consoleEcuInfoDrawer');
+  const svg = document.getElementById('consoleEcuSvgOverlay');
+  const wrap = document.getElementById('consoleImgViewerWrap');
+  if (!drawer || !svg) return;
+
+  const vb = svg.viewBox.baseVal || { width: 1000, height: 1094 };
+  const vbWidth = (vb && vb.width > 0) ? vb.width : 1000;
+  const vbHeight = (vb && vb.height > 0) ? vb.height : 1094;
+
+  const pinX = (typeof comp.pinX === 'number' && !isNaN(comp.pinX)) ? comp.pinX : Math.round((comp.x || 0) + (comp.width || 100) / 2);
+  const pinY = (typeof comp.pinY === 'number' && !isNaN(comp.pinY)) ? comp.pinY : Math.round((comp.y || 0) + (comp.height || 100) / 2);
+
+  const wrapRect = wrap ? wrap.getBoundingClientRect() : { top: 0, left: 0, width: 1000, height: 600 };
+  const matrix = svg.getScreenCTM();
+
+  let pinScreenX = pinX;
+  let pinScreenY = pinY;
+  if (matrix) {
+    const pt = svg.createSVGPoint();
+    pt.x = pinX;
+    pt.y = pinY;
+    const transformed = pt.matrixTransform(matrix);
+    pinScreenX = transformed.x - wrapRect.left;
+    pinScreenY = transformed.y - wrapRect.top;
+  }
+
+  const isLeftSide = pinScreenX < (wrapRect.width / 2);
+
+  drawer.classList.remove('d-none');
+  drawer.style.display = 'flex';
+
+  if (window.innerWidth > 768) {
+    const drawerHeight = drawer.offsetHeight || 260;
+    // Align top of drawer with pin level
+    let targetTop = Math.round(pinScreenY - 26);
+    const maxTop = Math.max(10, wrapRect.height - drawerHeight - 15);
+    targetTop = Math.max(10, Math.min(targetTop, maxTop));
+
+    drawer.style.top = `${targetTop}px`;
+    drawer.style.bottom = 'auto';
+    if (isLeftSide) {
+      drawer.style.left = '12px';
+      drawer.style.right = 'auto';
+    } else {
+      drawer.style.right = '12px';
+      drawer.style.left = 'auto';
+    }
+  }
+
+  // Draw Leader Line directly to the drawer's header anchor
+  if (line) {
+    const startX = pinX;
+    const startY = pinY;
+    let targetX = isLeftSide ? 0 : vbWidth;
+    let targetY = pinY;
+
+    if (matrix && window.innerWidth > 768) {
+      const drawerRect = drawer.getBoundingClientRect();
+      const anchorScreenPt = svg.createSVGPoint();
+      anchorScreenPt.x = isLeftSide ? drawerRect.right : drawerRect.left;
+      anchorScreenPt.y = drawerRect.top + 24; // Align with header
+      const anchorSvgPt = anchorScreenPt.matrixTransform(matrix.inverse());
+
+      targetX = isLeftSide ? Math.max(0, Math.min(vbWidth * 0.05, anchorSvgPt.x)) : Math.min(vbWidth, Math.max(vbWidth * 0.95, anchorSvgPt.x));
+      targetY = Math.max(10, Math.min(vbHeight - 10, Math.round(anchorSvgPt.y)));
+    }
+
+    const midX = Math.round(startX + (targetX - startX) * 0.45);
+    line.setAttribute('d', `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${targetY} L ${targetX} ${targetY}`);
+    line.style.stroke = theme.color;
+    line.style.filter = `drop-shadow(0 0 8px ${theme.glow})`;
+    line.style.display = 'block';
+  }
 };
 
 window.closeEcuInfoDrawer = function() {
@@ -4078,6 +4197,19 @@ window.editActiveEcuComponent = function() {
   if (dtcEl) dtcEl.value = comp.dtcs || '';
   if (failEl) failEl.value = comp.fallas_comunes || '';
   if (colorEl) colorEl.value = comp.customColor || window.getEcuComponentTheme(comp).color;
+
+  const coordX = document.getElementById('adminEcuCoordX');
+  const coordY = document.getElementById('adminEcuCoordY');
+  const coordW = document.getElementById('adminEcuCoordW');
+  const coordH = document.getElementById('adminEcuCoordH');
+  const coordPinX = document.getElementById('adminEcuCoordPinX');
+  const coordPinY = document.getElementById('adminEcuCoordPinY');
+  if (coordX) coordX.value = comp.x;
+  if (coordY) coordY.value = comp.y;
+  if (coordW) coordW.value = comp.width;
+  if (coordH) coordH.value = comp.height;
+  if (coordPinX) coordPinX.value = (comp.pinX !== undefined) ? comp.pinX : Math.round(comp.x + comp.width / 2);
+  if (coordPinY) coordPinY.value = (comp.pinY !== undefined) ? comp.pinY : Math.round(comp.y + comp.height / 2);
 
   window.updateEcuColorPickerPreview();
 
@@ -4356,9 +4488,41 @@ window.deleteActiveEcuComponent = async function() {
   }
 };
 
+window.updateModalCoordsPreview = function() {
+  const inputX = parseInt(document.getElementById('adminEcuCoordX')?.value);
+  const inputY = parseInt(document.getElementById('adminEcuCoordY')?.value);
+  const inputW = parseInt(document.getElementById('adminEcuCoordW')?.value);
+  const inputH = parseInt(document.getElementById('adminEcuCoordH')?.value);
+  if (!isNaN(inputX) && !isNaN(inputY) && !isNaN(inputW) && !isNaN(inputH) && inputW > 0 && inputH > 0) {
+    drawChipPreviewSnapshot(inputX, inputY, inputW, inputH);
+  }
+};
+
 window.handleAdminSubmitEcuComponent = async function(e) {
   e.preventDefault();
-  if (!tempEcuBoxData) return;
+
+  const inputX = parseInt(document.getElementById('adminEcuCoordX')?.value);
+  const inputY = parseInt(document.getElementById('adminEcuCoordY')?.value);
+  const inputW = parseInt(document.getElementById('adminEcuCoordW')?.value);
+  const inputH = parseInt(document.getElementById('adminEcuCoordH')?.value);
+  const inputPinX = parseInt(document.getElementById('adminEcuCoordPinX')?.value);
+  const inputPinY = parseInt(document.getElementById('adminEcuCoordPinY')?.value);
+
+  const finalX = !isNaN(inputX) ? inputX : (tempEcuBoxData ? tempEcuBoxData.x : 0);
+  const finalY = !isNaN(inputY) ? inputY : (tempEcuBoxData ? tempEcuBoxData.y : 0);
+  const finalW = !isNaN(inputW) ? Math.max(8, inputW) : (tempEcuBoxData ? tempEcuBoxData.width : 50);
+  const finalH = !isNaN(inputH) ? Math.max(8, inputH) : (tempEcuBoxData ? tempEcuBoxData.height : 50);
+  const finalPinX = !isNaN(inputPinX) ? inputPinX : (tempEcuBoxData && !isNaN(tempEcuBoxData.pinX) ? tempEcuBoxData.pinX : Math.round(finalX + finalW / 2));
+  const finalPinY = !isNaN(inputPinY) ? inputPinY : (tempEcuBoxData && !isNaN(tempEcuBoxData.pinY) ? tempEcuBoxData.pinY : Math.round(finalY + finalH / 2));
+
+  tempEcuBoxData = {
+    x: finalX,
+    y: finalY,
+    width: finalW,
+    height: finalH,
+    pinX: finalPinX,
+    pinY: finalPinY
+  };
 
   const customColorVal = document.getElementById('adminEcuCompCustomColor') ? document.getElementById('adminEcuCompCustomColor').value : null;
   const catVal = document.getElementById('adminEcuCompCategory').value;
@@ -4393,7 +4557,7 @@ window.handleAdminSubmitEcuComponent = async function(e) {
   let targetComp = null;
 
   if (editingEcuHotspotId) {
-    // Update existing component while strictly preserving exact coordinates
+    // Update existing component with any modified coordinates
     const idx = currentEcuHotspots.findIndex(c => c.id === editingEcuHotspotId);
     if (idx !== -1) {
       currentEcuHotspots[idx] = {
@@ -4554,6 +4718,19 @@ function setupEcuSvgEventListeners(svg) {
 
       const form = document.getElementById('formAdminAddEcuComponent');
       if (form) form.reset();
+
+      const coordX = document.getElementById('adminEcuCoordX');
+      const coordY = document.getElementById('adminEcuCoordY');
+      const coordW = document.getElementById('adminEcuCoordW');
+      const coordH = document.getElementById('adminEcuCoordH');
+      const coordPinX = document.getElementById('adminEcuCoordPinX');
+      const coordPinY = document.getElementById('adminEcuCoordPinY');
+      if (coordX) coordX.value = boxX;
+      if (coordY) coordY.value = boxY;
+      if (coordW) coordW.value = boxW;
+      if (coordH) coordH.value = boxH;
+      if (coordPinX) coordPinX.value = Math.round(boxX + boxW / 2);
+      if (coordPinY) coordPinY.value = Math.round(boxY + boxH / 2);
 
       const catEl = document.getElementById('adminEcuCompCategory');
       const tipoEl = document.getElementById('adminEcuCompTipo');
