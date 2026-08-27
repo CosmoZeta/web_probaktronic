@@ -1534,7 +1534,69 @@ window.loadSpecificDiagramSection = async function(type) {
     }
     if (stageLoader) stageLoader.classList.remove('d-none');
 
-    let targetPdfOrImg = active.url || active.archivoUrl || active.pdfUrl || active.downloadUrl || active.imageUrl || active.imagen;
+    // Priority check for PDF schema / connector file
+    const candidatePdfUrls = [
+      active.pdfUrl,
+      active._selectedArchDoc?.pdfUrl,
+      active.diagramaUrl,
+      active._selectedArchDoc?.diagramaUrl,
+      active.archivoPdf,
+      active._selectedArchDoc?.archivoPdf,
+      active.archivoUrl,
+      active._selectedArchDoc?.archivoUrl,
+      active.url,
+      active._selectedArchDoc?.url,
+      active.downloadUrl
+    ];
+
+    let targetPdfOrImg = candidatePdfUrls.find(u => typeof u === 'string' && (u.toLowerCase().includes('.pdf') || u.toLowerCase().includes('%2epdf')));
+
+    // If target is not a PDF, search in Firebase Storage for the matching vehicle PDF
+    if (!targetPdfOrImg && typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
+      try {
+        const brand = (currentSelectedBrandName || currentSelectedBrandId || 'toyota').toUpperCase().trim();
+        const model = (currentSelectedModelId || 'hilux').toLowerCase().trim();
+        const storage = firebase.storage();
+        
+        const folderCandidates = [
+          `diagramas/${brand}/${model}`,
+          `diagramas/${brand}`,
+          `diagramas`
+        ];
+
+        for (const fPath of folderCandidates) {
+          const listRes = await storage.ref(fPath).listAll().catch(() => null);
+          if (listRes) {
+            // Check direct items in folder
+            const pdfItem = listRes.items.find(item => item.name.toLowerCase().endsWith('.pdf'));
+            if (pdfItem) {
+              targetPdfOrImg = await pdfItem.getDownloadURL();
+              active.pdfUrl = targetPdfOrImg;
+              break;
+            }
+            // Check subfolders
+            for (const prefix of listRes.prefixes) {
+              const subList = await prefix.listAll().catch(() => null);
+              if (subList) {
+                const subPdf = subList.items.find(item => item.name.toLowerCase().endsWith('.pdf'));
+                if (subPdf) {
+                  targetPdfOrImg = await subPdf.getDownloadURL();
+                  active.pdfUrl = targetPdfOrImg;
+                  break;
+                }
+              }
+            }
+            if (targetPdfOrImg) break;
+          }
+        }
+      } catch (errSearch) {
+        console.warn('Storage PDF auto-discovery notice:', errSearch);
+      }
+    }
+
+    if (!targetPdfOrImg) {
+      targetPdfOrImg = active.pdfUrl || active.archivoUrl || active.diagramaUrl || active.url || active.downloadUrl || active.imageUrl || active.imagen;
+    }
 
     // Resolve gs:// storage URLs if necessary
     if (typeof targetPdfOrImg === 'string' && targetPdfOrImg.startsWith('gs://')) {
@@ -1934,11 +1996,17 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
     const fileUrl = selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.pdfUrl || selectedArchDoc.downloadUrl || selectedArchDoc.imageUrl || selectedArchDoc.imagen;
     if (fileUrl) {
       activeData.url = fileUrl;
-      activeData.imageUrl = fileUrl;
+    }
+    if (selectedArchDoc.pdfUrl) {
+      activeData.pdfUrl = selectedArchDoc.pdfUrl;
+    } else if (fileUrl && (fileUrl.toLowerCase().includes('.pdf') || fileUrl.toLowerCase().includes('%2epdf'))) {
+      activeData.pdfUrl = fileUrl;
     }
     if (Array.isArray(selectedArchDoc.imagenes) && selectedArchDoc.imagenes.length > 0) {
       activeData.allImages = selectedArchDoc.imagenes;
       activeData.imageUrl = selectedArchDoc.imagenes[0];
+    } else if (selectedArchDoc.imageUrl) {
+      activeData.imageUrl = selectedArchDoc.imageUrl;
     }
     activeData._selectedArchDoc = selectedArchDoc;
   }
@@ -5250,7 +5318,9 @@ window.saveAdminGalleryOrder = async function() {
     window._currentActiveDiagramData.allImages = newOrder;
     window._currentActiveDiagramData.imagenes = newOrder;
     window._currentActiveDiagramData.imageUrl = newOrder[0];
-    window._currentActiveDiagramData.url = newOrder[0];
+    if (!window._currentActiveDiagramData.url || !window._currentActiveDiagramData.url.toLowerCase().includes('.pdf')) {
+      window._currentActiveDiagramData.imageUrl = newOrder[0];
+    }
   }
 
   // Update in Firestore
@@ -5260,16 +5330,16 @@ window.saveAdminGalleryOrder = async function() {
     const archDoc = active._selectedArchDoc || {};
 
     if (archDoc.brandDocId && archDoc.modelDocId && archDoc.anioDocId && archDoc.motorDocId && archDoc.archDocId) {
+      const updateData = {
+        imagenes: newOrder,
+        allImages: newOrder,
+        imageUrl: newOrder[0]
+      };
       await db.collection('diagramas').doc(archDoc.brandDocId.toLowerCase().trim())
         .collection('modelos').doc(archDoc.modelDocId.toLowerCase().trim())
         .collection('anios').doc(archDoc.anioDocId)
         .collection('motores').doc(archDoc.motorDocId)
-        .collection('archivos').doc(archDoc.archDocId).set({
-          imagenes: newOrder,
-          allImages: newOrder,
-          imageUrl: newOrder[0],
-          url: newOrder[0]
-        }, { merge: true });
+        .collection('archivos').doc(archDoc.archDocId).set(updateData, { merge: true });
     }
   } catch (e) {
     console.warn('Nota guardando orden en Firestore:', e);
@@ -5456,7 +5526,6 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
     };
     if (posChoice === 'first') {
       updatePayload.imageUrl = fileDownloadUrl;
-      updatePayload.url = fileDownloadUrl;
     }
 
     await docRef.set(updatePayload, { merge: true });
@@ -5471,7 +5540,6 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
       window._currentActiveDiagramData.imagenes = newGallery;
       if (posChoice === 'first') {
         window._currentActiveDiagramData.imageUrl = fileDownloadUrl;
-        window._currentActiveDiagramData.url = fileDownloadUrl;
       }
     }
 
