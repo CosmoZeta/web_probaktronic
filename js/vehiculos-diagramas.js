@@ -3552,6 +3552,17 @@ window.updateEcuAdminUI = function() {
     }
   }
 
+  const exportBtn = document.getElementById('btnAdminExportEcuJson');
+  if (exportBtn) {
+    if (isAdmin && window.currentActiveDiagramSection === 'pcb') {
+      exportBtn.classList.remove('d-none');
+      exportBtn.classList.add('d-flex');
+    } else {
+      exportBtn.classList.add('d-none');
+      exportBtn.classList.remove('d-flex');
+    }
+  }
+
   if (undoBtn) {
     if (isAdmin && window.currentActiveDiagramSection === 'pcb' && isEcuEditorMode) {
       undoBtn.classList.remove('d-none');
@@ -3595,6 +3606,36 @@ window.lockAndSaveEcuHotspots = async function() {
   } else {
     alert(`🔒 ¡${currentEcuHotspots.length} áreas marcadas y aseguradas permanentemente!`);
   }
+};
+
+// Open Export JSON Modal for Codebase & GitHub permanence
+window.openAdminExportEcuJsonModal = function() {
+  const modalEl = document.getElementById('modalAdminExportEcuJson');
+  const area = document.getElementById('adminExportEcuJsonArea');
+  if (!modalEl || !area) return;
+
+  const jsonStr = JSON.stringify(currentEcuHotspots || [], null, 2);
+  area.value = jsonStr;
+
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+};
+
+// Copy Export JSON to Clipboard
+window.copyAdminExportEcuJson = function() {
+  const area = document.getElementById('adminExportEcuJsonArea');
+  if (!area) return;
+  area.select();
+  navigator.clipboard.writeText(area.value).then(() => {
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('📋 ¡JSON copiado al portapapeles! Puedes pegarlo en el código.');
+    } else {
+      alert('📋 ¡JSON copiado al portapapeles! Puedes pegarlo en el código.');
+    }
+  }).catch(() => {
+    document.execCommand('copy');
+    alert('📋 ¡JSON copiado!');
+  });
 };
 
 // Generate Storage Document Key for current vehicle / ECU (locked per photo index)

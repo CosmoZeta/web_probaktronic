@@ -1460,6 +1460,10 @@
                     <i class="bi bi-shield-lock-fill"></i>
                     <span>ASEGURAR ÁREAS</span>
                   </button>
+                  <button class="btn btn-outline-info btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminExportEcuJson" onclick="openAdminExportEcuJsonModal()" title="Exportar JSON para que quede fijo en GitHub y en el código">
+                    <i class="bi bi-filetype-json"></i>
+                    <span>EXPORTAR JSON</span>
+                  </button>
                   <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1" id="btnAdminUndoEcuHotspot" onclick="undoLastAdminEcuHotspot()" title="Deshacer último componente dibujado">
                     <i class="bi bi-arrow-counterclockwise"></i>
                   </button>
@@ -2298,6 +2302,35 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Exportar JSON de Componentes ECU para GitHub / Código Permanente -->
+  <div class="modal fade" id="modalAdminExportEcuJson" tabindex="-1" aria-hidden="true" style="z-index: 1075;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content text-white" style="background: #0E131F; border: 1px solid #00F0FF; border-radius: 16px; box-shadow: 0 0 45px rgba(0, 240, 255, 0.35);">
+        <div class="modal-header border-secondary py-3 px-4" style="background: linear-gradient(90deg, rgba(0, 240, 255, 0.1) 0%, rgba(17, 24, 39, 0.8) 100%);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-filetype-json text-info fs-4"></i>
+            <h5 class="modal-title font-rajdhani fw-bold text-white mb-0">EXPORTAR COMPONENTES ECU (JSON)</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="alert alert-dark border border-info border-opacity-25 small text-light mb-3">
+            <i class="bi bi-info-circle-fill text-info me-2"></i>
+            <strong>¿Para qué sirve?</strong> Al subir tu proyecto a <strong>GitHub / GitHub Pages</strong>, otros usuarios no tienen acceso al <em>LocalStorage</em> de tu máquina. Con este botón puedes copiar el JSON generado y pegarlo como predeterminado en el archivo <code>js/vehiculos-diagramas.js</code> para que el dibujo se muestre idéntico en cualquier dispositivo y sin necesidad de iniciar sesión.
+          </div>
+          <label class="form-label small text-info fw-bold mb-1">Estructura JSON (Coordenadas y Datos 1:1):</label>
+          <textarea id="adminExportEcuJsonArea" class="form-control bg-black text-info font-monospace small" rows="12" readonly style="font-size: 0.78rem; border-color: rgba(0, 240, 255, 0.3);"></textarea>
+        </div>
+        <div class="modal-footer border-secondary py-2 px-4 d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+          <button type="button" class="btn btn-info rounded-pill px-4 fw-bold shadow-sm" onclick="copyAdminExportEcuJson()">
+            <i class="bi bi-clipboard-check me-1"></i> Copiar al Portapapeles
+          </button>
+        </div>
       </div>
     </div>
   </div>
