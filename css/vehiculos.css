@@ -1599,3 +1599,52 @@
   font-family: 'JetBrains Mono', monospace;
 }
 
+/* ECU Color Habit Legend Bar */
+.ecu-color-legend {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.ecu-color-legend .badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ecu-color-legend .badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 768px) {
+  .console-ecu-info-drawer {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 12px !important;
+    right: 10px !important;
+    left: 10px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: 58vh !important;
+    z-index: 1050 !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), 0 0 15px rgba(0, 240, 255, 0.3) !important;
+  }
+  #consoleEcuActiveLeaderLine {
+    display: none !important;
+  }
+  .ecu-color-legend {
+    font-size: 0.7rem;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 4px 8px !important;
+  }
+}
+
+.console-ecu-svg-overlay.drawing-mode {
+  touch-action: none !important;
+}
+

@@ -3179,6 +3179,7 @@ window.handleAdminTriggerDeleteFromModal = function() {
 
 let currentEcuHotspots = [];
 let activeEcuComponentId = null;
+let editingEcuHotspotId = null;
 let isEcuEditorMode = false;
 let isEcuDrawing = false;
 let ecuDrawStartX = 0;
@@ -3186,11 +3187,149 @@ let ecuDrawStartY = 0;
 let tempEcuBoxData = null;
 let currentEcuStorageKey = 'default_ecu_2kd';
 
+// Standardized Automotive Color Habit Mapping for ECU Components
+const ECU_CATEGORY_THEMES = {
+  'Almacenamiento & Seguridad': {
+    name: 'Memoria EEPROM / Flash / Inmo',
+    color: '#A855F7',
+    glow: '#C084FC',
+    fill: 'rgba(168, 85, 247, 0.16)',
+    badgeClass: 'badge-eeprom',
+    icon: 'bi-memory'
+  },
+  'Procesamiento Central': {
+    name: 'Microprocesador / MCU Principal',
+    color: '#F59E0B',
+    glow: '#FCD34D',
+    fill: 'rgba(245, 158, 11, 0.16)',
+    badgeClass: 'badge-mcu',
+    icon: 'bi-cpu-fill'
+  },
+  'Actuadores de Potencia': {
+    name: 'Actuador / Driver de Potencia',
+    color: '#EF4444',
+    glow: '#F87171',
+    fill: 'rgba(239, 68, 68, 0.16)',
+    badgeClass: 'badge-driver',
+    icon: 'bi-lightning-charge-fill'
+  },
+  'Alimentación Interna': {
+    name: 'Regulador / Power IC',
+    color: '#10B981',
+    glow: '#34D399',
+    fill: 'rgba(16, 185, 129, 0.16)',
+    badgeClass: 'badge-power',
+    icon: 'bi-battery-charging'
+  },
+  'Comunicaciones': {
+    name: 'Transceiver CAN / K-Line',
+    color: '#06B6D4',
+    glow: '#38BDF8',
+    fill: 'rgba(6, 182, 212, 0.16)',
+    badgeClass: 'badge-comms',
+    icon: 'bi-broadcast'
+  },
+  'Sensores & Entradas': {
+    name: 'Entradas de Sensores',
+    color: '#F97316',
+    glow: '#FB923C',
+    fill: 'rgba(249, 115, 22, 0.16)',
+    badgeClass: 'badge-sensors',
+    icon: 'bi-activity'
+  },
+  'Conexionado': {
+    name: 'Pines / Conexionado',
+    color: '#94A3B8',
+    glow: '#E2E8F0',
+    fill: 'rgba(148, 163, 184, 0.16)',
+    badgeClass: 'badge-conn',
+    icon: 'bi-plug-fill'
+  }
+};
+
+// Standardized Technical Display Labels for Component Categories
+const ECU_FRIENDLY_TYPES = {
+  'Almacenamiento & Seguridad': 'MEMORIA EEPROM / FLASH',
+  'Procesamiento Central': 'MICROCONTROLADOR (MCU)',
+  'Actuadores de Potencia': 'DRIVER DE POTENCIA',
+  'Alimentación Interna': 'REGULADOR DE VOLTAJE',
+  'Comunicaciones': 'TRANSCEIVER CAN-BUS',
+  'Sensores & Entradas': 'ENTRADA DE SENSORES',
+  'Conexionado': 'CONEXIONADO / PINES'
+};
+window.ECU_FRIENDLY_TYPES = ECU_FRIENDLY_TYPES;
+
+window.onAdminEcuCategoryChange = function() {
+  const catEl = document.getElementById('adminEcuCompCategory');
+  const tipoEl = document.getElementById('adminEcuCompTipo');
+  if (catEl && tipoEl) {
+    const friendly = ECU_FRIENDLY_TYPES[catEl.value] || '';
+    const currentVal = (tipoEl.value || '').trim().toUpperCase();
+    // If empty or matches any existing standard category default, auto-update
+    if (!currentVal || Object.values(ECU_FRIENDLY_TYPES).includes(currentVal) || Object.keys(ECU_FRIENDLY_TYPES).includes(currentVal)) {
+      tipoEl.value = friendly;
+    }
+  }
+};
+
+window.getEcuComponentTheme = function(comp) {
+  if (!comp) {
+    return {
+      name: 'Componente',
+      color: '#00F0FF',
+      glow: '#00F0FF',
+      fill: 'rgba(0, 240, 255, 0.16)',
+      icon: 'bi-cpu-fill'
+    };
+  }
+
+  if (comp.customColor && comp.customColor !== 'auto') {
+    return {
+      name: comp.category || 'Componente',
+      color: comp.customColor,
+      glow: comp.customColor,
+      fill: comp.customColor + '26',
+      icon: (ECU_CATEGORY_THEMES[comp.category] && ECU_CATEGORY_THEMES[comp.category].icon) || 'bi-cpu-fill'
+    };
+  }
+
+  const cat = comp.category || 'Almacenamiento & Seguridad';
+  return ECU_CATEGORY_THEMES[cat] || {
+    name: cat,
+    color: '#00F0FF',
+    glow: '#00F0FF',
+    fill: 'rgba(0, 240, 255, 0.16)',
+    icon: 'bi-cpu-fill'
+  };
+};
+
+window.updateEcuColorPickerPreview = function() {
+  const catEl = document.getElementById('adminEcuCompCategory');
+  const colorEl = document.getElementById('adminEcuCompCustomColor');
+  const previewEl = document.getElementById('adminEcuColorPreviewBox');
+  if (!catEl) return;
+
+  const cat = catEl.value;
+  const theme = ECU_CATEGORY_THEMES[cat] || { color: '#00F0FF', glow: '#00F0FF', fill: 'rgba(0,240,255,0.15)' };
+
+  if (colorEl) {
+    colorEl.value = theme.color;
+  }
+  if (previewEl) {
+    const friendlyName = ECU_FRIENDLY_TYPES[cat] || cat;
+    previewEl.style.backgroundColor = theme.fill;
+    previewEl.style.borderColor = theme.color;
+    previewEl.style.color = theme.glow;
+    previewEl.textContent = `HÁBITO: ${friendlyName}`;
+  }
+};
+
 // Check & Update Admin UI Controls
 window.updateEcuAdminUI = function() {
   const isAdmin = (typeof window.isProbaktronicAdmin === 'function') ? window.isProbaktronicAdmin() : false;
   const toggleBtn = document.getElementById('btnAdminToggleEcuEditor');
   const undoBtn = document.getElementById('btnAdminUndoEcuHotspot');
+  const editBtn = document.getElementById('btnAdminEditSelectedHotspot');
   const delBtn = document.getElementById('btnAdminDeleteSelectedHotspot');
   const reorderBtn = document.getElementById('btnAdminReorderGallery');
   const addPhotoBtn = document.getElementById('btnAdminAddPhotoToComponent');
@@ -3235,6 +3374,14 @@ window.updateEcuAdminUI = function() {
     }
   }
 
+  if (editBtn) {
+    if (isAdmin && activeEcuComponentId) {
+      editBtn.classList.remove('d-none');
+    } else {
+      editBtn.classList.add('d-none');
+    }
+  }
+
   if (delBtn) {
     if (isAdmin && activeEcuComponentId) {
       delBtn.classList.remove('d-none');
@@ -3257,9 +3404,15 @@ function getActiveEcuStorageKey() {
 window.initInteractiveEcuLayer = async function() {
   const svg = document.getElementById('consoleEcuSvgOverlay');
   const img = document.getElementById('consoleMainDiagramImg');
+  const legend = document.getElementById('consoleEcuColorLegend');
   if (!svg || !img) return;
 
   svg.classList.remove('d-none');
+  if (legend) {
+    legend.classList.remove('d-none');
+    legend.style.display = 'flex';
+  }
+
   currentEcuStorageKey = getActiveEcuStorageKey();
 
   // Set SVG ViewBox matching Image Natural Dimensions
@@ -3289,10 +3442,12 @@ window.hideInteractiveEcuLayer = function() {
   const banner = document.getElementById('consoleEcuEditorBanner');
   const toggleBtn = document.getElementById('btnAdminToggleEcuEditor');
   const undoBtn = document.getElementById('btnAdminUndoEcuHotspot');
+  const legend = document.getElementById('consoleEcuColorLegend');
 
   if (svg) svg.classList.add('d-none');
   if (drawer) drawer.classList.add('d-none');
   if (banner) banner.classList.add('d-none');
+  if (legend) legend.style.display = 'none';
   if (toggleBtn) {
     toggleBtn.classList.add('d-none');
     toggleBtn.classList.remove('d-flex', 'btn-warning');
@@ -3303,6 +3458,7 @@ window.hideInteractiveEcuLayer = function() {
   isEcuEditorMode = false;
   isEcuDrawing = false;
   activeEcuComponentId = null;
+  editingEcuHotspotId = null;
 };
 
 // Default Hilux 2KD Denso ECU Hotspots (3 main circuits)
@@ -3353,19 +3509,30 @@ function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
   ];
 }
 
-// Load from Firestore with fallback to LocalStorage
+// Load from Firestore with fallback to LocalStorage (Seguro de Trazos & Bloqueo Persistente)
 async function loadEcuHotspotsFromStorage(imgW, imgH) {
   currentEcuHotspots = [];
 
   const active = window._currentActiveDiagramData || {};
   const archDoc = active._selectedArchDoc || {};
 
-  // 1. Check if the diagram document already had componentes_ecu
-  if (Array.isArray(archDoc.componentes_ecu) && archDoc.componentes_ecu.length > 0) {
+  // 1. Check local storage first for custom user modifications
+  const rawLocal = localStorage.getItem(currentEcuStorageKey) || localStorage.getItem('probaktronic_ecu_hotspots_master_' + currentEcuStorageKey);
+  if (rawLocal) {
+    try {
+      const parsed = JSON.parse(rawLocal);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        currentEcuHotspots = parsed;
+      }
+    } catch (e) {}
+  }
+
+  // 2. Check if the diagram document in memory already had componentes_ecu
+  if (currentEcuHotspots.length === 0 && Array.isArray(archDoc.componentes_ecu) && archDoc.componentes_ecu.length > 0) {
     currentEcuHotspots = archDoc.componentes_ecu;
   }
 
-  // 2. Fetch directly from the specific Firestore diagram document
+  // 3. Fetch directly from the specific Firestore diagram document
   if (currentEcuHotspots.length === 0 && archDoc.brandDocId && archDoc.modelDocId && archDoc.anioDocId && archDoc.motorDocId && archDoc.archDocId) {
     try {
       if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
@@ -3378,33 +3545,33 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
           .collection('motores').doc(archDoc.motorDocId)
           .collection('archivos').doc(archDoc.archDocId).get().catch(() => null);
 
-        if (docSnap && docSnap.exists && Array.isArray(docSnap.data().componentes_ecu)) {
+        if (docSnap && docSnap.exists && Array.isArray(docSnap.data().componentes_ecu) && docSnap.data().componentes_ecu.length > 0) {
           currentEcuHotspots = docSnap.data().componentes_ecu;
         }
       }
     } catch (e) {}
   }
 
-  // 3. Fetch from collection 'diagramas' > 'ecu_hotspots'
+  // 4. Fetch from collection 'diagramas' > 'ecu_hotspots'
   if (currentEcuHotspots.length === 0) {
     try {
       if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
         const db = firebase.firestore();
         const docSnap = await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(currentEcuStorageKey).get().catch(() => null);
-        if (docSnap && docSnap.exists && Array.isArray(docSnap.data().componentes)) {
+        if (docSnap && docSnap.exists && Array.isArray(docSnap.data().componentes) && docSnap.data().componentes.length > 0) {
           currentEcuHotspots = docSnap.data().componentes;
         }
       }
     } catch (e) {}
   }
 
-  // 4. Fetch from collection 'ecu_interactive_hotspots'
+  // 5. Fetch from collection 'ecu_interactive_hotspots'
   if (currentEcuHotspots.length === 0) {
     try {
       if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
         const db = firebase.firestore();
         const doc = await db.collection('ecu_interactive_hotspots').doc(currentEcuStorageKey).get().catch(() => null);
-        if (doc && doc.exists && Array.isArray(doc.data().componentes)) {
+        if (doc && doc.exists && Array.isArray(doc.data().componentes) && doc.data().componentes.length > 0) {
           currentEcuHotspots = doc.data().componentes;
         }
       }
@@ -3413,15 +3580,7 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
     }
   }
 
-  // 5. Fallback to LocalStorage
-  if (currentEcuHotspots.length === 0) {
-    const rawLocal = localStorage.getItem(currentEcuStorageKey);
-    if (rawLocal) {
-      try { currentEcuHotspots = JSON.parse(rawLocal); } catch (e) {}
-    }
-  }
-
-  // 6. Default fallback for initial Hilux ECU
+  // 6. Default fallback for initial Hilux ECU only if absolutely no data exists
   if (currentEcuHotspots.length === 0) {
     currentEcuHotspots = getDefaultHiluxHotspots(imgW, imgH);
   }
@@ -3429,9 +3588,18 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
   renderEcuHotspots();
 }
 
-// Save to Firestore and LocalStorage (Multi-Layer Zero-Fail Sync)
+// Save to Firestore and LocalStorage (Multi-Layer Zero-Fail Sync con Seguro de Trazos)
 async function saveEcuHotspotsToStorage() {
+  // Add lock signature to all saved components
+  currentEcuHotspots = currentEcuHotspots.map(c => ({
+    ...c,
+    isLocked: true,
+    userDefined: true,
+    lastSaved: Date.now()
+  }));
+
   localStorage.setItem(currentEcuStorageKey, JSON.stringify(currentEcuHotspots));
+  localStorage.setItem('probaktronic_ecu_hotspots_master_' + currentEcuStorageKey, JSON.stringify(currentEcuHotspots));
 
   const active = window._currentActiveDiagramData || {};
   const archDoc = active._selectedArchDoc || {};
@@ -3478,15 +3646,17 @@ async function saveEcuHotspotsToStorage() {
   }
 }
 
-// Render SVG Hotspot Nodes
+// Render SVG Hotspot Nodes with Color Habit Theme
 function renderEcuHotspots() {
   const group = document.getElementById('consoleEcuHotspotsGroup');
   if (!group) return;
   group.innerHTML = '';
 
   currentEcuHotspots.forEach(comp => {
+    const theme = window.getEcuComponentTheme(comp);
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('data-id', comp.id);
+    g.style.cursor = 'pointer';
 
     // Box
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -3494,9 +3664,12 @@ function renderEcuHotspots() {
     rect.setAttribute('y', comp.y);
     rect.setAttribute('width', comp.width);
     rect.setAttribute('height', comp.height);
-    rect.setAttribute('rx', '4');
+    rect.setAttribute('rx', '5');
     rect.setAttribute('class', 'ecu-hotspot-box');
     rect.id = `ecu-box-${comp.id}`;
+    rect.style.stroke = theme.color;
+    rect.style.fill = theme.fill;
+    rect.style.filter = `drop-shadow(0 0 6px ${theme.color})`;
 
     // Pin
     const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -3507,10 +3680,12 @@ function renderEcuHotspots() {
     const outerRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     outerRing.setAttribute('class', 'outer-ring');
     outerRing.setAttribute('r', '14');
+    outerRing.style.stroke = theme.color;
 
     const innerDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     innerDot.setAttribute('class', 'inner-dot');
     innerDot.setAttribute('r', '5');
+    innerDot.style.fill = theme.color;
 
     pinG.appendChild(outerRing);
     pinG.appendChild(innerDot);
@@ -3531,20 +3706,55 @@ function renderEcuHotspots() {
 // Select Component & Show Details + Animated Leader Line
 window.selectEcuComponent = function(comp) {
   activeEcuComponentId = comp.id;
+  const theme = window.getEcuComponentTheme(comp);
+
   const line = document.getElementById('consoleEcuActiveLeaderLine');
   const drawer = document.getElementById('consoleEcuInfoDrawer');
   const drawerTitle = document.getElementById('ecuDrawerTitle');
+  const drawerHeaderIcon = document.getElementById('ecuDrawerHeaderIcon');
   const drawerContent = document.getElementById('ecuDrawerContent');
 
-  document.querySelectorAll('.ecu-hotspot-box').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.ecu-hotspot-pin').forEach(el => el.classList.remove('active'));
+  // Reset active classes and restore baseline color themes
+  document.querySelectorAll('.ecu-hotspot-box').forEach(el => {
+    el.classList.remove('active');
+    const compId = el.id.replace('ecu-box-', '');
+    const c = currentEcuHotspots.find(item => item.id === compId);
+    const t = window.getEcuComponentTheme(c);
+    el.style.stroke = t.color;
+    el.style.fill = t.fill;
+    el.style.filter = `drop-shadow(0 0 6px ${t.color})`;
+    el.style.strokeWidth = '2px';
+  });
+
+  document.querySelectorAll('.ecu-hotspot-pin').forEach(el => {
+    el.classList.remove('active');
+    const compId = el.id.replace('ecu-pin-', '');
+    const c = currentEcuHotspots.find(item => item.id === compId);
+    const t = window.getEcuComponentTheme(c);
+    const r = el.querySelector('.outer-ring');
+    const d = el.querySelector('.inner-dot');
+    if (r) r.style.stroke = t.color;
+    if (d) d.style.fill = t.color;
+  });
 
   const box = document.getElementById(`ecu-box-${comp.id}`);
   const pin = document.getElementById(`ecu-pin-${comp.id}`);
-  if (box) box.classList.add('active');
-  if (pin) pin.classList.add('active');
+  if (box) {
+    box.classList.add('active');
+    box.style.stroke = theme.color;
+    box.style.fill = theme.color + '4D'; // 30% fill
+    box.style.strokeWidth = '3.5px';
+    box.style.filter = `drop-shadow(0 0 14px ${theme.glow})`;
+  }
+  if (pin) {
+    pin.classList.add('active');
+    const r = pin.querySelector('.outer-ring');
+    const d = pin.querySelector('.inner-dot');
+    if (r) r.style.stroke = theme.glow;
+    if (d) d.style.fill = theme.glow;
+  }
 
-  // Draw Leader Line
+  // Draw Leader Line in Component Category Color
   if (line) {
     const svg = document.getElementById('consoleEcuSvgOverlay');
     const vb = svg ? svg.viewBox.baseVal : { width: 1000, height: 1094 };
@@ -3555,52 +3765,89 @@ window.selectEcuComponent = function(comp) {
     const midX = Math.round(startX + (targetX - startX) * 0.5);
 
     line.setAttribute('d', `M ${startX} ${startY} L ${midX} ${startY} L ${targetX} ${targetY}`);
+    line.style.stroke = theme.color;
+    line.style.filter = `drop-shadow(0 0 8px ${theme.glow})`;
     line.style.display = 'block';
   }
 
-  // Populate Rich Technical Drawer
+  // Populate Rich Technical Drawer with Title Subtitle and Conditional Section Rendering
   if (drawer && drawerTitle && drawerContent) {
-    drawerTitle.textContent = comp.name;
+    const defaultFriendly = window.ECU_FRIENDLY_TYPES[comp.category] || comp.category || 'COMPONENTE';
+    const rawSubLabel = (comp.tipo && comp.tipo.trim() !== '') ? comp.tipo.trim() : defaultFriendly;
+    const subLabel = rawSubLabel.toUpperCase();
+    drawerTitle.innerHTML = `<span class="text-white font-rajdhani fw-bold me-1">${comp.name || 'COMPONENTE'}</span> <span class="text-white-50 mx-1">&bull;</span> <span class="font-rajdhani fw-bold" style="color: ${theme.glow}; font-size: 0.95rem;">${subLabel}</span>`;
+    drawer.style.borderColor = theme.color;
+    drawer.style.boxShadow = `0 10px 30px rgba(0, 0, 0, 0.7), 0 0 25px ${theme.fill}`;
 
-    const dtcBadges = comp.dtcs ? comp.dtcs.split(',').map(d => `<span class="badge bg-danger bg-opacity-25 text-danger border border-danger me-1 font-monospace">${d.trim()}</span>`).join(' ') : '';
-    const mfgBadge = comp.manufacturer ? `<span class="badge bg-secondary me-1"><i class="bi bi-building me-1"></i>${comp.manufacturer}</span>` : '';
-    const pkgBadge = comp.package ? `<span class="badge bg-dark border border-secondary text-info me-1 font-monospace">${comp.package}</span>` : '';
+    if (drawerHeaderIcon) {
+      drawerHeaderIcon.className = `bi ${theme.icon} fs-5`;
+      drawerHeaderIcon.style.color = theme.color;
+    }
+
+    const dtcBadges = (comp.dtcs && comp.dtcs.trim() !== '') ? comp.dtcs.split(',').map(d => `<span class="badge bg-danger bg-opacity-25 text-danger border border-danger me-1 font-monospace">${d.trim()}</span>`).join(' ') : '';
+    const mfgBadge = (comp.manufacturer && comp.manufacturer.trim() !== '') ? `<span class="badge bg-secondary me-1"><i class="bi bi-building me-1"></i>${comp.manufacturer}</span>` : '';
+    const pkgBadge = (comp.package && comp.package.trim() !== '') ? `<span class="badge bg-dark border border-secondary text-info me-1 font-monospace">${comp.package}</span>` : '';
+    const codeLine = (comp.code && comp.code.trim() !== '' && comp.code !== 'N/A') ? `<div class="font-monospace small mb-2 fw-bold fs-6" style="color: ${theme.glow};">${comp.code}</div>` : '';
+
+    // SECCIÓN 2: Función (Condicional)
+    const hasControla = comp.show_controla !== false && comp.controla && comp.controla.trim() !== '';
+    const controlaHtml = hasControla ? `
+      <div class="tech-box" style="border-left: 3px solid ${theme.color};">
+        <div class="spec-label mb-1 fw-bold" style="color: ${theme.glow};"><i class="bi bi-gear-wide-connected me-1"></i>¿Qué Controla en el Motor?</div>
+        <div class="text-light small" style="line-height: 1.45;">${comp.controla}</div>
+      </div>
+    ` : '';
+
+    // SECCIÓN 3: Parámetros Eléctricos / Voltajes / Pines (Condicional)
+    const hasVoltajes = comp.show_voltajes !== false && ((comp.voltajes && comp.voltajes.trim() !== '') || (comp.pines_clave && comp.pines_clave.trim() !== ''));
+    let voltajesHtml = '';
+    if (hasVoltajes) {
+      let rows = '';
+      if (comp.voltajes && comp.voltajes.trim() !== '') {
+        rows += `
+          <div class="d-flex justify-content-between mb-1 pb-1 ${comp.pines_clave && comp.pines_clave.trim() !== '' ? 'border-bottom border-secondary border-opacity-25' : ''}">
+            <span class="spec-label">Voltaje Operación:</span>
+            <span class="spec-val" style="color: ${theme.glow};">${comp.voltajes}</span>
+          </div>
+        `;
+      }
+      if (comp.pines_clave && comp.pines_clave.trim() !== '') {
+        rows += `
+          <div class="mt-1">
+            <span class="spec-label d-block mb-1">Pines Críticos (Medición):</span>
+            <span class="spec-val text-warning small font-monospace d-block">${comp.pines_clave}</span>
+          </div>
+        `;
+      }
+      voltajesHtml = `<div class="tech-box">${rows}</div>`;
+    }
+
+    // SECCIÓN 4: Síntomas de Falla y DTCs (Condicional)
+    const hasFallas = comp.show_fallas !== false && ((comp.fallas_comunes && comp.fallas_comunes.trim() !== '') || (comp.dtcs && comp.dtcs.trim() !== ''));
+    let fallasHtml = '';
+    if (hasFallas) {
+      fallasHtml = `
+        <div class="alert alert-danger bg-opacity-10 border-danger text-white small p-2 mb-2">
+          <div class="fw-bold mb-1 text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i> Síntomas de Falla:</div>
+          ${comp.fallas_comunes && comp.fallas_comunes.trim() !== '' ? `<div class="text-light" style="font-size: 0.82rem;">${comp.fallas_comunes}</div>` : ''}
+          ${dtcBadges ? `<div class="mt-2 pt-1 border-top border-danger border-opacity-25"><strong class="small text-danger me-1">DTCs:</strong> ${dtcBadges}</div>` : ''}
+        </div>
+      `;
+    }
 
     drawerContent.innerHTML = `
-      <div class="d-flex flex-wrap gap-1 mb-2">
-        <span class="badge bg-info bg-opacity-25 text-info border border-info font-monospace" style="font-size: 0.75rem;">
-          <i class="bi bi-tag-fill me-1"></i> ${comp.category || 'Componente'}
+      <div class="d-flex flex-wrap align-items-center gap-1 mb-2">
+        <span class="badge" style="background: ${theme.fill}; color: ${theme.glow}; border: 1px solid ${theme.color}; font-size: 0.78rem; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.5px;">
+          <i class="bi ${theme.icon} me-1"></i> ${comp.category || 'Componente'}
         </span>
         ${mfgBadge}
         ${pkgBadge}
       </div>
 
-      <div class="text-info font-monospace small mb-2 fw-bold fs-6">${comp.code || 'N/A'}</div>
-
-      <!-- Función Principal -->
-      <div class="tech-box">
-        <div class="spec-label mb-1 text-info fw-bold"><i class="bi bi-gear-wide-connected me-1"></i>¿Qué Controla en el Motor?</div>
-        <div class="text-light small" style="line-height: 1.45;">${comp.controla}</div>
-      </div>
-
-      <!-- Parámetros Eléctricos -->
-      <div class="tech-box">
-        <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-secondary border-opacity-25">
-          <span class="spec-label">Voltaje Operación:</span>
-          <span class="spec-val">${comp.voltajes || '12V / 5V'}</span>
-        </div>
-        <div class="mt-1">
-          <span class="spec-label d-block mb-1">Pines Críticos (Medición):</span>
-          <span class="spec-val text-warning small font-monospace d-block">${comp.pines_clave || 'N/D'}</span>
-        </div>
-      </div>
-
-      <!-- Diagnóstico de Fallas -->
-      <div class="alert alert-danger bg-opacity-10 border-danger text-white small p-2 mb-2">
-        <div class="fw-bold mb-1 text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i> Síntomas de Falla:</div>
-        <div class="text-light" style="font-size: 0.82rem;">${comp.fallas_comunes || 'Sin respuesta o señal no emitida.'}</div>
-        ${dtcBadges ? `<div class="mt-2 pt-1 border-top border-danger border-opacity-25"><strong class="small text-danger me-1">DTCs:</strong> ${dtcBadges}</div>` : ''}
-      </div>
+      ${codeLine}
+      ${controlaHtml}
+      ${voltajesHtml}
+      ${fallasHtml}
     `;
 
     drawer.classList.remove('d-none');
@@ -3620,91 +3867,166 @@ window.closeEcuInfoDrawer = function() {
   window.updateEcuAdminUI();
 };
 
-// Quick Template Preset Loader for Fast & Detailed Mapping
-window.applyEcuTemplate = function(type) {
+// Edit Active Component (Modificar datos de un componente existente)
+window.editActiveEcuComponent = function() {
+  if (!activeEcuComponentId) return;
+  const comp = currentEcuHotspots.find(c => c.id === activeEcuComponentId);
+  if (!comp) return;
+
+  editingEcuHotspotId = comp.id;
+  tempEcuBoxData = {
+    x: comp.x,
+    y: comp.y,
+    width: comp.width,
+    height: comp.height,
+    pinX: comp.pinX || Math.round(comp.x + comp.width / 2),
+    pinY: comp.pinY || Math.round(comp.y + comp.height / 2)
+  };
+
+  drawChipPreviewSnapshot(comp.x, comp.y, comp.width, comp.height);
+
   const nameEl = document.getElementById('adminEcuCompName');
+  const tipoEl = document.getElementById('adminEcuCompTipo');
   const codeEl = document.getElementById('adminEcuCompCode');
   const catEl = document.getElementById('adminEcuCompCategory');
   const mfgEl = document.getElementById('adminEcuCompManufacturer');
   const pkgEl = document.getElementById('adminEcuCompPackage');
+  const checkCtrl = document.getElementById('adminEcuCheckControla');
   const funEl = document.getElementById('adminEcuCompControla');
+  const checkVolt = document.getElementById('adminEcuCheckVoltajes');
   const voltEl = document.getElementById('adminEcuCompVoltajes');
   const pinEl = document.getElementById('adminEcuCompPines');
+  const checkFail = document.getElementById('adminEcuCheckFallas');
+  const dtcEl = document.getElementById('adminEcuCompDtcs');
+  const failEl = document.getElementById('adminEcuCompFallas');
+  const colorEl = document.getElementById('adminEcuCompCustomColor');
+
+  const defaultFriendly = window.ECU_FRIENDLY_TYPES[comp.category] || '';
+  if (nameEl) nameEl.value = comp.name || '';
+  if (tipoEl) tipoEl.value = comp.tipo || defaultFriendly;
+  if (codeEl) codeEl.value = (comp.code === 'N/A' ? '' : comp.code) || '';
+  if (catEl) catEl.value = comp.category || 'Almacenamiento & Seguridad';
+  if (mfgEl) mfgEl.value = comp.manufacturer || '';
+  if (pkgEl) pkgEl.value = comp.package || '';
+  if (checkCtrl) checkCtrl.checked = (comp.show_controla !== false);
+  if (funEl) funEl.value = comp.controla || '';
+  if (checkVolt) checkVolt.checked = (comp.show_voltajes !== false);
+  if (voltEl) voltEl.value = comp.voltajes || '';
+  if (pinEl) pinEl.value = comp.pines_clave || '';
+  if (checkFail) checkFail.checked = (comp.show_fallas !== false);
+  if (dtcEl) dtcEl.value = comp.dtcs || '';
+  if (failEl) failEl.value = comp.fallas_comunes || '';
+  if (colorEl) colorEl.value = comp.customColor || window.getEcuComponentTheme(comp).color;
+
+  window.updateEcuColorPickerPreview();
+
+  const modalTitle = document.querySelector('#modalAdminAddEcuComponent .modal-title');
+  const submitBtn = document.querySelector('#formAdminAddEcuComponent button[type="submit"]');
+  if (modalTitle) modalTitle.textContent = `EDITAR FICHA TÉCNICA: ${comp.name}`;
+  if (submitBtn) submitBtn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> ACTUALIZAR Y GUARDAR CAMBIOS';
+
+  const modalEl = document.getElementById('modalAdminAddEcuComponent');
+  if (modalEl) {
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    bsModal.show();
+  }
+};
+
+// Quick Template Preset Loader for Fast & Detailed Mapping
+window.applyEcuTemplate = function(type) {
+  const nameEl = document.getElementById('adminEcuCompName');
+  const tipoEl = document.getElementById('adminEcuCompTipo');
+  const codeEl = document.getElementById('adminEcuCompCode');
+  const catEl = document.getElementById('adminEcuCompCategory');
+  const mfgEl = document.getElementById('adminEcuCompManufacturer');
+  const pkgEl = document.getElementById('adminEcuCompPackage');
+  const checkCtrl = document.getElementById('adminEcuCheckControla');
+  const funEl = document.getElementById('adminEcuCompControla');
+  const checkVolt = document.getElementById('adminEcuCheckVoltajes');
+  const voltEl = document.getElementById('adminEcuCompVoltajes');
+  const pinEl = document.getElementById('adminEcuCompPines');
+  const checkFail = document.getElementById('adminEcuCheckFallas');
   const dtcEl = document.getElementById('adminEcuCompDtcs');
   const failEl = document.getElementById('adminEcuCompFallas');
 
   const templates = {
     driver_inyectores: {
-      name: 'Driver de Inyectores Common Rail',
+      name: 'Driver Inyectores',
+      tipo: 'DRIVER DE POTENCIA',
       code: 'SE555 / MOSFET Array',
       cat: 'Actuadores de Potencia',
       mfg: 'Denso / Bosch',
       pkg: 'Power SOIC / QFP',
-      fun: 'Comanda los pulsos de apertura y cierre de los inyectores electrohidráulicos mediante descarga de alta tensión (80V) y mantenimiento de corriente PWM.',
-      volt: 'Disparo: 80V DC &bull; Retorno PWM: 12V',
-      pin: 'Gate: 5V Lógica &bull; Drain: Señal a Inyector &bull; Source: Masa Shunt',
+      fun: 'Comanda los pulsos de apertura y cierre de los inyectores electrohidráulicos mediante descarga de alta tensión y mantenimiento de corriente PWM.',
+      volt: 'Disparo: 80V DC &bull; Retorno: 12V',
+      pin: 'Gate: 5V Lógica &bull; Drain: Señal a Inyector',
       dtcs: 'P0201, P0202, P0203, P0204',
-      fail: 'Fallo de cilindro (Misfire), motor sin fuerza, humo negro denso, inyector queda abierto o bloqueado.'
+      fail: 'Fallo de cilindro (Misfire), motor sin fuerza, humo negro denso, inyector bloqueado.'
     },
     mcu_procesador: {
-      name: 'Microprocesador Principal (MCU)',
+      name: 'Microprocesador Principal',
+      tipo: 'MICROCONTROLADOR (MCU)',
       code: 'DENSO 32-Bit / Renesas SH7058',
       cat: 'Procesamiento Central',
       mfg: 'Renesas / Toshiba',
       pkg: 'QFP-144 / QFP-176',
-      fun: 'Unidad central de cálculo de la ECU. Procesa señales de sensores en tiempo real (CKP, CMP, MAP, TPS) y ejecuta las cartografías de inyección y avance.',
-      volt: 'VCC Digital: 5.00V ±0.05V &bull; Núcleo Lógico: 3.3V',
-      pin: 'Pin 1, 36, 72: VCC (+5V) &bull; Cristal: 20.00 MHz &bull; Reset: 5V activo alto',
+      fun: 'Unidad central de cálculo de la ECU. Procesa señales de sensores en tiempo real (CKP, CMP, MAP, TPS) y comanda inyección y avance.',
+      volt: 'VCC: 5.00V ±0.05V / Núcleo: 3.3V',
+      pin: 'Pines 1, 36, 72: VCC (+5V) &bull; Cristal: 20MHz',
       dtcs: 'P0606, P0607, P1600',
-      fail: 'Vehículo no arranca, no enciende testigo Check Engine, sin comunicación OBD2 con el escáner.'
+      fail: 'Vehículo no arranca, no enciende testigo Check Engine, sin comunicación OBD2.'
     },
     eeprom_immo: {
-      name: 'Memoria Flash / Inmovilizador (EEPROM)',
+      name: 'Memoria Inmovilizador',
+      tipo: 'MEMORIA EEPROM / FLASH',
       code: '93C86 / 25Cxxx SPI',
       cat: 'Almacenamiento & Seguridad',
       mfg: 'ST / Microchip',
       pkg: 'SOIC-8',
-      fun: 'Almacena la codificación del transponder (Llaves/Inmovilizador), VIN del vehículo, odómetro y mapas de compensación de inyección.',
+      fun: 'Almacena la codificación del transponder (Llaves/Inmovilizador), VIN del vehículo y mapas de calibración.',
       volt: 'VCC: +5.0V en Pin 8',
-      pin: 'Pin 1: CS (Chip Select) &bull; Pin 4: GND &bull; Pin 5: DI &bull; Pin 6: DO &bull; Pin 8: VCC 5V',
+      pin: 'Pin 1: CS &bull; Pin 4: GND &bull; Pin 8: VCC 5V',
       dtcs: 'B2799, P1600, B2796',
-      fail: 'Bloqueo de arranque del motor, testigo de seguridad parpadea, pérdida de sincronización de llaves.'
+      fail: 'Bloqueo de arranque del motor, testigo de seguridad parpadea, pérdida de llaves.'
     },
     power_regulator: {
-      name: 'Regulador Multi-Voltaje & Power IC',
-      code: 'SE587 / System Power Management',
+      name: 'Regulador Multi-Voltaje',
+      tipo: 'REGULADOR DE VOLTAJE',
+      code: 'SE587 / System Power IC',
       cat: 'Alimentación Interna',
       mfg: 'Denso / Infineon',
       pkg: 'Power QFP-44',
-      fun: 'Convierte los +12V de batería en fuentes reguladas ultra-estables de +5.0V para sensores externos del motor y +3.3V para procesador digital.',
-      volt: 'Entrada: +12V BATT &bull; Salida VREF: +5.00V ±0.02V &bull; 3.3V',
-      pin: 'V_IN: 12V Ignición &bull; VREF: 5.0V Sensores &bull; V_RESET: 5V',
+      fun: 'Convierte +12V de batería en fuentes reguladas ultra-estables de +5.0V para sensores de motor y +3.3V para procesador.',
+      volt: 'Entrada: +12V BATT &bull; Salida: +5.00V ±0.02V',
+      pin: 'V_IN: 12V Ignición &bull; VREF: 5.0V Sensores',
       dtcs: 'P0641, P0651, P0685',
-      fail: 'Sensores de motor marcan 0V o 5V fijo, códigos de sobretensión, cortes intermitentes de motor.'
+      fail: 'Sensores de motor marcan 0V o 5V fijo, códigos de sobretensión.'
     },
     transceiver_can: {
-      name: 'Transceiver de Comunicación CAN-Bus',
+      name: 'Transceiver CAN-Bus',
+      tipo: 'TRANSCEIVER CAN-BUS',
       code: 'PCA82C250 / TJA1050',
       cat: 'Comunicaciones',
       mfg: 'NXP / Texas Instruments',
       pkg: 'SOIC-8',
-      fun: 'Convierte las tramas lógicas del microprocesador en señales diferenciales de alta velocidad para la red CAN del vehículo y puerto OBD2.',
-      volt: 'VCC: 5.0V &bull; CAN-H: 2.5V - 3.5V &bull; CAN-L: 1.5V - 2.5V',
-      pin: 'Pin 1: TXD &bull; Pin 3: VCC 5V &bull; Pin 6: CAN-L &bull; Pin 7: CAN-H',
+      fun: 'Convierte tramas lógicas del microprocesador en señales diferenciales para la red CAN del vehículo y puerto OBD2.',
+      volt: 'VCC: 5.0V &bull; CAN-H: 2.5V-3.5V &bull; CAN-L: 1.5V-2.5V',
+      pin: 'Pin 1: TXD &bull; Pin 6: CAN-L &bull; Pin 7: CAN-H',
       dtcs: 'U0100, U0001, U1000',
-      fail: 'Sin comunicación entre ECU y ABS/Tablero, escáner marca "Error de Enlace", testigo de comunicación encendido.'
+      fail: 'Sin comunicación entre módulos, escáner marca "Error de Enlace".'
     },
     scv_mosfet: {
-      name: 'MOSFET de Potencia Válvula SCV / EGR',
+      name: 'MOSFET Válvula SCV',
+      tipo: 'DRIVER DE POTENCIA',
       code: 'Power MOSFET N-Channel',
       cat: 'Actuadores de Potencia',
       mfg: 'Toshiba / Vishay',
       pkg: 'SOT-223 / D2PAK',
-      fun: 'Controla la modulación PWM de la válvula de control de succión (SCV) de la bomba diésel de alta presión y la válvula EGR.',
-      volt: 'Alimentación: 12V &bull; Señal PWM: 250Hz a 1kHz',
-      pin: 'Pin 1: Gate (Control) &bull; Pin 2/Tab: Drain (Salida SCV) &bull; Pin 3: Source (GND)',
-      dtcs: 'P0087, P0088, P0093, P0403',
-      fail: 'Falta de presión en el riel Common Rail, motor entra en modo de emergencia (Limp Mode) o se apaga al acelerar.'
+      fun: 'Controla la modulación PWM de la válvula de control de succión (SCV) de la bomba diésel de alta presión.',
+      volt: 'Alimentación: 12V &bull; Señal PWM: 250Hz - 1kHz',
+      pin: 'Pin 1: Gate &bull; Pin 2: Drain (Salida SCV) &bull; Pin 3: Source',
+      dtcs: 'P0087, P0088, P0093',
+      fail: 'Falta de presión en Common Rail, motor entra en modo de emergencia (Limp Mode).'
     }
   };
 
@@ -3712,15 +4034,21 @@ window.applyEcuTemplate = function(type) {
   if (!t) return;
 
   if (nameEl) nameEl.value = t.name;
+  if (tipoEl) tipoEl.value = t.tipo;
   if (codeEl) codeEl.value = t.code;
   if (catEl) catEl.value = t.cat;
   if (mfgEl) mfgEl.value = t.mfg;
   if (pkgEl) pkgEl.value = t.pkg;
+  if (checkCtrl) checkCtrl.checked = true;
   if (funEl) funEl.value = t.fun;
+  if (checkVolt) checkVolt.checked = true;
   if (voltEl) voltEl.value = t.volt;
   if (pinEl) pinEl.value = t.pin;
+  if (checkFail) checkFail.checked = true;
   if (dtcEl) dtcEl.value = t.dtcs;
   if (failEl) failEl.value = t.fail;
+
+  window.updateEcuColorPickerPreview();
 };
 
 // Admin Editor Controls
@@ -3730,6 +4058,7 @@ window.toggleAdminEcuEditorMode = function() {
   const btnText = document.getElementById('adminEcuEditorBtnText');
   const banner = document.getElementById('consoleEcuEditorBanner');
   const wrap = document.getElementById('consoleImgViewerWrap');
+  const svg = document.getElementById('consoleEcuSvgOverlay');
 
   if (isEcuEditorMode) {
     if (toggleBtn) {
@@ -3739,6 +4068,7 @@ window.toggleAdminEcuEditorMode = function() {
     if (btnText) btnText.textContent = 'FINALIZAR DIBUJO';
     if (banner) banner.classList.remove('d-none');
     if (wrap) wrap.style.cursor = 'crosshair';
+    if (svg) svg.classList.add('drawing-mode');
   } else {
     if (toggleBtn) {
       toggleBtn.classList.add('btn-outline-warning');
@@ -3747,6 +4077,7 @@ window.toggleAdminEcuEditorMode = function() {
     if (btnText) btnText.textContent = 'DIBUJAR ESPACIOS';
     if (banner) banner.classList.add('d-none');
     if (wrap) wrap.style.cursor = 'grab';
+    if (svg) svg.classList.remove('drawing-mode');
   }
 
   window.updateEcuAdminUI();
@@ -3754,9 +4085,15 @@ window.toggleAdminEcuEditorMode = function() {
 
 window.cancelAdminEcuDrawing = function() {
   isEcuDrawing = false;
+  editingEcuHotspotId = null;
   const box = document.getElementById('consoleEcuDrawingBox');
   if (box) box.style.display = 'none';
   tempEcuBoxData = null;
+
+  const modalTitle = document.querySelector('#modalAdminAddEcuComponent .modal-title');
+  const submitBtn = document.querySelector('#formAdminAddEcuComponent button[type="submit"]');
+  if (modalTitle) modalTitle.textContent = 'DESIGNAR FICHA TÉCNICA DEL COMPONENTE';
+  if (submitBtn) submitBtn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> GUARDAR COMPONENTE EN FIREBASE';
 };
 
 window.undoLastAdminEcuHotspot = async function() {
@@ -3784,37 +4121,89 @@ window.handleAdminSubmitEcuComponent = async function(e) {
   e.preventDefault();
   if (!tempEcuBoxData) return;
 
-  const newComp = {
-    id: 'ecu_comp_' + Date.now(),
-    name: document.getElementById('adminEcuCompName').value,
-    code: document.getElementById('adminEcuCompCode').value || 'N/A',
-    category: document.getElementById('adminEcuCompCategory').value,
-    manufacturer: document.getElementById('adminEcuCompManufacturer').value || '',
-    package: document.getElementById('adminEcuCompPackage').value || '',
-    controla: document.getElementById('adminEcuCompControla').value,
-    voltajes: document.getElementById('adminEcuCompVoltajes').value || '12V / 5V',
-    pines_clave: document.getElementById('adminEcuCompPines').value || 'N/D',
-    dtcs: document.getElementById('adminEcuCompDtcs').value || '',
-    fallas_comunes: document.getElementById('adminEcuCompFallas').value || 'Fallo de operación o señal ausente.',
+  const customColorVal = document.getElementById('adminEcuCompCustomColor') ? document.getElementById('adminEcuCompCustomColor').value : null;
+  const catVal = document.getElementById('adminEcuCompCategory').value;
+  const defaultFriendly = window.ECU_FRIENDLY_TYPES[catVal] || '';
+  const tipoVal = (document.getElementById('adminEcuCompTipo') && document.getElementById('adminEcuCompTipo').value.trim() !== '') ? document.getElementById('adminEcuCompTipo').value.trim() : defaultFriendly;
+  const codeVal = document.getElementById('adminEcuCompCode') ? document.getElementById('adminEcuCompCode').value.trim() : '';
+  const checkCtrl = document.getElementById('adminEcuCheckControla') ? document.getElementById('adminEcuCheckControla').checked : true;
+  const checkVolt = document.getElementById('adminEcuCheckVoltajes') ? document.getElementById('adminEcuCheckVoltajes').checked : true;
+  const checkFail = document.getElementById('adminEcuCheckFallas') ? document.getElementById('adminEcuCheckFallas').checked : true;
+
+  const compData = {
+    name: document.getElementById('adminEcuCompName').value.trim(),
+    tipo: tipoVal,
+    code: codeVal,
+    category: catVal,
+    customColor: customColorVal,
+    manufacturer: document.getElementById('adminEcuCompManufacturer') ? document.getElementById('adminEcuCompManufacturer').value.trim() : '',
+    package: document.getElementById('adminEcuCompPackage') ? document.getElementById('adminEcuCompPackage').value.trim() : '',
+    show_controla: checkCtrl,
+    controla: document.getElementById('adminEcuCompControla') ? document.getElementById('adminEcuCompControla').value.trim() : '',
+    show_voltajes: checkVolt,
+    voltajes: document.getElementById('adminEcuCompVoltajes') ? document.getElementById('adminEcuCompVoltajes').value.trim() : '',
+    pines_clave: document.getElementById('adminEcuCompPines') ? document.getElementById('adminEcuCompPines').value.trim() : '',
+    show_fallas: checkFail,
+    dtcs: document.getElementById('adminEcuCompDtcs') ? document.getElementById('adminEcuCompDtcs').value.trim() : '',
+    fallas_comunes: document.getElementById('adminEcuCompFallas') ? document.getElementById('adminEcuCompFallas').value.trim() : '',
+    isLocked: true,
+    userDefined: true,
     ...tempEcuBoxData
   };
 
-  currentEcuHotspots.push(newComp);
+  let targetComp = null;
+
+  if (editingEcuHotspotId) {
+    // Update existing component while strictly preserving exact coordinates
+    const idx = currentEcuHotspots.findIndex(c => c.id === editingEcuHotspotId);
+    if (idx !== -1) {
+      currentEcuHotspots[idx] = {
+        ...currentEcuHotspots[idx],
+        ...compData,
+        id: editingEcuHotspotId
+      };
+      targetComp = currentEcuHotspots[idx];
+    }
+    editingEcuHotspotId = null;
+  } else {
+    // Add new component
+    const newComp = {
+      id: 'ecu_comp_' + Date.now(),
+      ...compData
+    };
+    currentEcuHotspots.push(newComp);
+    targetComp = newComp;
+  }
+
   await saveEcuHotspotsToStorage();
 
   const modalEl = document.getElementById('modalAdminAddEcuComponent');
   const bsModal = modalEl ? bootstrap.Modal.getInstance(modalEl) : null;
   if (bsModal) bsModal.hide();
 
+  // Reset modal state
+  window.cancelAdminEcuDrawing();
+
   renderEcuHotspots();
-  window.selectEcuComponent(newComp);
+  if (targetComp) {
+    window.selectEcuComponent(targetComp);
+  }
 };
 
 // SVG Mouse / Touch Coordinate Helper via Standard Inverse Matrix
 function getEcuSvgCoordinates(svg, e) {
   const pt = svg.createSVGPoint();
-  pt.x = e.clientX;
-  pt.y = e.clientY;
+  if (e.touches && e.touches.length > 0) {
+    pt.x = e.touches[0].clientX;
+    pt.y = e.touches[0].clientY;
+  } else if (e.changedTouches && e.changedTouches.length > 0) {
+    pt.x = e.changedTouches[0].clientX;
+    pt.y = e.changedTouches[0].clientY;
+  } else {
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+  }
+
   const matrix = svg.getScreenCTM();
   if (!matrix) return { x: 0, y: 0 };
   const transformed = pt.matrixTransform(matrix.inverse());
@@ -3864,8 +4253,11 @@ function setupEcuSvgEventListeners(svg) {
 
   const box = document.getElementById('consoleEcuDrawingBox');
 
-  svg.addEventListener('mousedown', (e) => {
+  function handleStart(e) {
     if (!isEcuEditorMode) return;
+    if (e.type === 'touchstart') {
+      e.preventDefault();
+    }
     e.stopPropagation();
 
     const p = getEcuSvgCoordinates(svg, e);
@@ -3880,10 +4272,13 @@ function setupEcuSvgEventListeners(svg) {
       box.setAttribute('height', 0);
       box.style.display = 'block';
     }
-  });
+  }
 
-  window.addEventListener('mousemove', (e) => {
+  function handleMove(e) {
     if (!isEcuDrawing || !isEcuEditorMode || !box) return;
+    if (e.type === 'touchmove') {
+      e.preventDefault();
+    }
     const p = getEcuSvgCoordinates(svg, e);
     const curX = Math.min(ecuDrawStartX, p.x);
     const curY = Math.min(ecuDrawStartY, p.y);
@@ -3894,9 +4289,9 @@ function setupEcuSvgEventListeners(svg) {
     box.setAttribute('y', curY);
     box.setAttribute('width', curW);
     box.setAttribute('height', curH);
-  });
+  }
 
-  window.addEventListener('mouseup', (e) => {
+  function handleEnd(e) {
     if (!isEcuDrawing || !isEcuEditorMode || !box) return;
     isEcuDrawing = false;
     box.style.display = 'none';
@@ -3916,11 +4311,16 @@ function setupEcuSvgEventListeners(svg) {
         pinY: Math.round(boxY + boxH / 2)
       };
 
-      // Draw mini snapshot of the selected chip into the modal
       drawChipPreviewSnapshot(boxX, boxY, boxW, boxH);
 
       const form = document.getElementById('formAdminAddEcuComponent');
       if (form) form.reset();
+
+      const catEl = document.getElementById('adminEcuCompCategory');
+      const tipoEl = document.getElementById('adminEcuCompTipo');
+      if (catEl && tipoEl) {
+        tipoEl.value = window.ECU_FRIENDLY_TYPES[catEl.value] || '';
+      }
 
       const modalEl = document.getElementById('modalAdminAddEcuComponent');
       if (modalEl) {
@@ -3928,7 +4328,16 @@ function setupEcuSvgEventListeners(svg) {
         bsModal.show();
       }
     }
-  });
+  }
+
+  svg.addEventListener('mousedown', handleStart);
+  svg.addEventListener('touchstart', handleStart, { passive: false });
+
+  window.addEventListener('mousemove', handleMove);
+  window.addEventListener('touchmove', handleMove, { passive: false });
+
+  window.addEventListener('mouseup', handleEnd);
+  window.addEventListener('touchend', handleEnd, { passive: false });
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isEcuEditorMode) {

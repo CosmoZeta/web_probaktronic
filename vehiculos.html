@@ -1497,6 +1497,17 @@
                   <div class="console-watermark-overlay" id="consoleWatermarkOverlay"></div>
                   <div class="security-shield-overlay" id="consoleSecurityShield" title="Protección de diagrama Probaktronic"></div>
 
+                  <!-- Interactive Color Legend Bar for ECU Components -->
+                  <div class="ecu-color-legend d-none flex-wrap align-items-center gap-2 p-1 px-3 mb-2 rounded border border-secondary border-opacity-25" id="consoleEcuColorLegend" style="background: rgba(15, 23, 42, 0.75);">
+                    <span class="text-white-50 small fw-bold font-rajdhani me-1"><i class="bi bi-palette-fill text-warning me-1"></i>GUÍA DE COLORES:</span>
+                    <span class="badge" style="background: rgba(168, 85, 247, 0.2); border: 1px solid #A855F7; color: #C084FC;"><i class="bi bi-square-fill me-1" style="color: #A855F7;"></i>Memoria EEPROM / Flash</span>
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.2); border: 1px solid #F59E0B; color: #FCD34D;"><i class="bi bi-square-fill me-1" style="color: #F59E0B;"></i>Microprocesador MCU</span>
+                    <span class="badge" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #EF4444; color: #F87171;"><i class="bi bi-square-fill me-1" style="color: #EF4444;"></i>Drivers / Potencia</span>
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10B981; color: #6EE7B7;"><i class="bi bi-square-fill me-1" style="color: #10B981;"></i>Regulador 5V / Power IC</span>
+                    <span class="badge" style="background: rgba(6, 182, 212, 0.2); border: 1px solid #06B6D4; color: #38BDF8;"><i class="bi bi-square-fill me-1" style="color: #06B6D4;"></i>CAN-Bus / Redes</span>
+                    <span class="badge" style="background: rgba(249, 115, 22, 0.2); border: 1px solid #F97316; color: #FB923C;"><i class="bi bi-square-fill me-1" style="color: #F97316;"></i>Sensores / Entradas</span>
+                  </div>
+
                   <!-- Visual Media Targets -->
                   <img id="consoleMainDiagramImg" src="" alt="Diagrama Probaktronic" class="console-diagram-img hand-cursor" draggable="false">
                   
@@ -1515,10 +1526,13 @@
                 <div class="console-ecu-info-drawer d-none" id="consoleEcuInfoDrawer">
                   <div class="drawer-header d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-2">
-                      <i class="bi bi-cpu-fill text-info fs-5"></i>
+                      <i class="bi bi-cpu-fill text-info fs-5" id="ecuDrawerHeaderIcon"></i>
                       <h6 class="mb-0 font-rajdhani fw-bold text-white" id="ecuDrawerTitle">COMPONENTE ECU</h6>
                     </div>
                     <div class="d-flex align-items-center gap-1">
+                      <button class="btn btn-sm btn-outline-warning p-0 px-2 d-none" id="btnAdminEditSelectedHotspot" onclick="editActiveEcuComponent()" title="Modificar datos del componente">
+                        <i class="bi bi-pencil-square"></i> <span class="d-none d-sm-inline ms-1 small">Editar</span>
+                      </button>
                       <button class="btn btn-sm btn-outline-danger p-0 px-2 d-none" id="btnAdminDeleteSelectedHotspot" onclick="deleteActiveEcuComponent()" title="Eliminar componente (Admin)">
                         <i class="bi bi-trash"></i>
                       </button>
@@ -1813,81 +1827,113 @@
             </div>
             
             <div class="row g-2 mb-3">
+              <div class="col-md-4">
+                <label class="form-label small text-light fw-bold mb-1">Identificador / Nombre <span class="text-danger">*</span></label>
+                <input type="text" id="adminEcuCompName" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: IC 901 / MCU Principal" required>
+                <div class="text-muted" style="font-size: 0.72rem;">Código o etiqueta visible en la placa</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small text-light fw-bold mb-1">¿Qué es? (Subtítulo en Título)</label>
+                <input type="text" id="adminEcuCompTipo" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: Memoria EEPROM / Microcontrolador">
+                <div class="text-muted" style="font-size: 0.72rem;">Aparecerá al costado del nombre en el título</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small text-light fw-bold mb-1">Categoría (Hábito de Color) <span class="text-danger">*</span></label>
+                <select id="adminEcuCompCategory" class="form-select form-select-sm bg-dark text-white border-secondary" onchange="updateEcuColorPickerPreview(); if (typeof onAdminEcuCategoryChange === 'function') onAdminEcuCategoryChange();">
+                  <option value="Almacenamiento & Seguridad">🟣 Memoria EEPROM / Flash / Inmo (Púrpura)</option>
+                  <option value="Procesamiento Central">🟡 Microprocesador / MCU Principal (Amarillo/Oro)</option>
+                  <option value="Actuadores de Potencia">🔴 Actuador / Driver de Potencia (Rojo)</option>
+                  <option value="Alimentación Interna">🟢 Regulador de Voltaje / Power IC (Verde)</option>
+                  <option value="Comunicaciones">🔵 Transceiver CAN-Bus / K-Line (Cyan/Azul)</option>
+                  <option value="Sensores & Entradas">🟠 Entrada Señal Sensor CKP/CMP (Naranja)</option>
+                  <option value="Conexionado">⚪ Peine de Conexión / Pines (Gris)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-2 mb-3 align-items-center">
               <div class="col-md-7">
-                <label class="form-label small text-light fw-bold mb-1">Nombre Técnico del Componente <span class="text-danger">*</span></label>
-                <input type="text" id="adminEcuCompName" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: Driver de Inyección Cilindros 1 y 4" required>
-                <div class="text-muted" style="font-size: 0.72rem;">Nombre descriptivo que verá el técnico en el visor</div>
+                <label class="form-label small text-light fw-bold mb-1">Color Distintivo del Recuadro y Marcador:</label>
+                <div class="d-flex align-items-center gap-2">
+                  <input type="color" id="adminEcuCompCustomColor" class="form-control form-control-color bg-dark border-secondary p-0" value="#A855F7" title="Personalizar color del recuadro" style="width: 42px; height: 32px;">
+                  <span class="small text-muted" id="adminEcuColorNotice" style="font-size: 0.75rem;">Color asociado automáticamente según la categoría.</span>
+                </div>
               </div>
               <div class="col-md-5">
-                <label class="form-label small text-light fw-bold mb-1">Categoría del Sistema <span class="text-danger">*</span></label>
-                <select id="adminEcuCompCategory" class="form-select form-select-sm bg-dark text-white border-secondary">
-                  <option value="Actuadores de Potencia">Actuador / Driver de Potencia</option>
-                  <option value="Procesamiento Central">Microprocesador / MCU Principal</option>
-                  <option value="Almacenamiento & Seguridad">Memoria EEPROM / Flash / Inmo</option>
-                  <option value="Alimentación Interna">Regulador de Voltaje / Power IC</option>
-                  <option value="Comunicaciones">Transceiver CAN-Bus / K-Line</option>
-                  <option value="Sensores & Entradas">Entrada Señal Sensor (CKP/CMP/MAP)</option>
-                  <option value="Conexionado">Peine de Conexión / Pines</option>
-                </select>
+                <div class="p-1 px-2 rounded border border-secondary border-opacity-50 text-center" id="adminEcuColorPreviewBox" style="background: rgba(168, 85, 247, 0.15); border-color: #A855F7 !important; color: #C084FC; font-size: 0.75rem; font-weight: bold;">
+                  VISTA PREVIA DEL COLOR
+                </div>
               </div>
             </div>
 
             <div class="row g-2 mb-3">
               <div class="col-md-4">
                 <label class="form-label small text-light fw-bold mb-1">Código de Serigrafía / Chip</label>
-                <input type="text" id="adminEcuCompCode" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: TLE6244X / SE555 / 93C86">
-                <div class="text-muted" style="font-size: 0.72rem;">Código grabado en el lomo del integrado</div>
+                <input type="text" id="adminEcuCompCode" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: 93C86 / SE555 (Opcional)">
+                <div class="text-muted" style="font-size: 0.72rem;">Opcional: código grabado en el lomo</div>
               </div>
               <div class="col-md-4">
                 <label class="form-label small text-light fw-bold mb-1">Fabricante del Integrado</label>
-                <input type="text" id="adminEcuCompManufacturer" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: Bosch, Denso, Toshiba, ST">
+                <input type="text" id="adminEcuCompManufacturer" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: Bosch, Denso, ST (Opcional)">
               </div>
               <div class="col-md-4">
                 <label class="form-label small text-light fw-bold mb-1">Encapsulado</label>
-                <input type="text" id="adminEcuCompPackage" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: QFP-64, SOIC-8, SOT-223, SMD">
+                <input type="text" id="adminEcuCompPackage" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: SOIC-8, QFP-64 (Opcional)">
               </div>
             </div>
 
             <!-- SECCIÓN 2: Función y Diagnóstico -->
-            <div class="text-info font-rajdhani fw-bold border-bottom border-secondary pb-1 mb-2 mt-3">
-              <i class="bi bi-gear-wide-connected me-1"></i> 2. FUNCIÓN EN EL MOTOR (¿QUÉ CONTROLA?)
+            <div class="d-flex align-items-center justify-content-between text-info font-rajdhani fw-bold border-bottom border-secondary pb-1 mb-2 mt-3">
+              <div><i class="bi bi-gear-wide-connected me-1"></i> 2. FUNCIÓN EN EL MOTOR (¿QUÉ CONTROLA?)</div>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="adminEcuCheckControla" checked>
+                <label class="form-check-label text-white small" for="adminEcuCheckControla">Incluir</label>
+              </div>
             </div>
 
             <div class="mb-3">
-              <label class="form-label small text-light fw-bold mb-1">Descripción de la Función y Control <span class="text-danger">*</span></label>
-              <textarea id="adminEcuCompControla" class="form-control form-control-sm bg-dark text-white border-secondary" rows="2" placeholder="Ej: Controla los pulsos de apertura de inyectores diésel de alta presión mediante modulación PWM. Al recibir disparo del MCU conmuta la etapa de potencia hacia el ramal..." required></textarea>
-              <div class="text-muted" style="font-size: 0.72rem;">Explica detalladamente qué actuador o sensor comanda y cómo opera</div>
+              <label class="form-label small text-light fw-bold mb-1">Descripción de la Función y Control (Opcional)</label>
+              <textarea id="adminEcuCompControla" class="form-control form-control-sm bg-dark text-white border-secondary" rows="2" placeholder="Ej: Memoria EEPROM que almacena codificación de llaves inmovilizador..."></textarea>
+              <div class="text-muted" style="font-size: 0.72rem;">Si se deja en blanco o se desmarca, no se mostrará esta sección</div>
             </div>
 
             <!-- SECCIÓN 3: Mediciones Eléctricas y Pruebas -->
-            <div class="text-info font-rajdhani fw-bold border-bottom border-secondary pb-1 mb-2 mt-3">
-              <i class="bi bi-speedometer me-1"></i> 3. PARÁMETROS DE MEDICIÓN & VOLTAJES
+            <div class="d-flex align-items-center justify-content-between text-info font-rajdhani fw-bold border-bottom border-secondary pb-1 mb-2 mt-3">
+              <div><i class="bi bi-speedometer me-1"></i> 3. PARÁMETROS DE MEDICIÓN & VOLTAJES</div>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="adminEcuCheckVoltajes" checked>
+                <label class="form-check-label text-white small" for="adminEcuCheckVoltajes">Incluir</label>
+              </div>
             </div>
 
             <div class="row g-2 mb-3">
               <div class="col-md-6">
-                <label class="form-label small text-light fw-bold mb-1">Voltajes de Operación y Señales</label>
-                <input type="text" id="adminEcuCompVoltajes" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: VCC: 5.0V ±0.05V / Disparo: 12V PWM">
+                <label class="form-label small text-light fw-bold mb-1">Voltajes de Operación y Señales (Opcional)</label>
+                <input type="text" id="adminEcuCompVoltajes" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: 12V / 5V">
               </div>
               <div class="col-md-6">
-                <label class="form-label small text-light fw-bold mb-1">Pines Críticos de Prueba (Multímetro / Osciloscopio)</label>
-                <input type="text" id="adminEcuCompPines" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: Pin 1: Masa (GND) &bull; Pin 4: Señal PWM &bull; Pin 8: VCC +5V">
+                <label class="form-label small text-light fw-bold mb-1">Pines Críticos de Prueba (Opcional)</label>
+                <input type="text" id="adminEcuCompPines" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: Pin 1: GND &bull; Pin 8: VCC 5V">
               </div>
             </div>
 
             <!-- SECCIÓN 4: Fallas Comunes y DTCs -->
-            <div class="text-info font-rajdhani fw-bold border-bottom border-secondary pb-1 mb-2 mt-3">
-              <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> 4. SÍNTOMAS DE FALLA Y CÓDIGOS DTC
+            <div class="d-flex align-items-center justify-content-between text-info font-rajdhani fw-bold border-bottom border-secondary pb-1 mb-2 mt-3">
+              <div><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> 4. SÍNTOMAS DE FALLA Y CÓDIGOS DTC</div>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="adminEcuCheckFallas" checked>
+                <label class="form-check-label text-white small" for="adminEcuCheckFallas">Incluir</label>
+              </div>
             </div>
 
             <div class="row g-2 mb-2">
               <div class="col-md-5">
-                <label class="form-label small text-light fw-bold mb-1">Códigos DTC Relacionados</label>
-                <input type="text" id="adminEcuCompDtcs" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: P0201, P0204, P0087">
+                <label class="form-label small text-light fw-bold mb-1">Códigos DTC Relacionados (Opcional)</label>
+                <input type="text" id="adminEcuCompDtcs" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace" placeholder="Ej: P0606, P1600">
               </div>
               <div class="col-md-7">
-                <label class="form-label small text-light fw-bold mb-1">Síntomas en el Vehículo</label>
-                <input type="text" id="adminEcuCompFallas" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: Pérdida de potencia, cilindro 1 inactivo, humo negro, motor no acelera">
+                <label class="form-label small text-light fw-bold mb-1">Síntomas en el Vehículo (Opcional)</label>
+                <input type="text" id="adminEcuCompFallas" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Ej: Bloqueo de arranque, parpadeo de luz inmovilizador">
               </div>
             </div>
 

@@ -521,12 +521,17 @@
     <aside class="side-info-panel" id="infoPanel">
       <div class="panel-header">
         <h2 class="panel-title">
-          <i class="bi bi-diagram-3-fill text-info"></i>
+          <i class="bi bi-diagram-3-fill text-info" id="panelHeaderIcon"></i>
           <span>DATOS DEL COMPONENTE</span>
         </h2>
-        <button class="btn btn-sm btn-outline-danger p-1 px-2 d-none" id="btnDeleteActive" title="Eliminar este componente">
-          <i class="bi bi-trash me-1"></i> Eliminar
-        </button>
+        <div class="d-flex align-items-center gap-1">
+          <button class="btn btn-sm btn-outline-warning p-1 px-2 d-none" id="btnEditActive" title="Modificar datos de este componente">
+            <i class="bi bi-pencil-square me-1"></i> Modificar
+          </button>
+          <button class="btn btn-sm btn-outline-danger p-1 px-2 d-none" id="btnDeleteActive" title="Eliminar este componente">
+            <i class="bi bi-trash me-1"></i> Eliminar
+          </button>
+        </div>
       </div>
 
       <div class="panel-body" id="panelContent">
@@ -549,53 +554,78 @@
         </div>
         <div class="modal-body">
           <form id="newComponentForm">
-            <div class="mb-2">
-              <label class="form-label small text-muted">Nombre del Componente</label>
-              <input type="text" id="compName" class="form-control form-control-sm custom-form-control" placeholder="Ej: Driver Motor Mariposa (Throttle)" required>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small text-muted">Identificador / Nombre</label>
+                <input type="text" id="compName" class="form-control form-control-sm custom-form-control" placeholder="Ej: IC 901 / Driver Motor" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">¿Qué es? (Subtítulo en Título)</label>
+                <input type="text" id="compTipo" class="form-control form-control-sm custom-form-control" placeholder="Ej: Memoria EEPROM / Microcontrolador">
+              </div>
             </div>
 
             <div class="row g-2 mb-2">
               <div class="col-6">
-                <label class="form-label small text-muted">Código / Serigrafía</label>
-                <input type="text" id="compCode" class="form-control form-control-sm custom-form-control" placeholder="Ej: TLE6244X / Denso IC">
+                <label class="form-label small text-muted">Código / Serigrafía (Opcional)</label>
+                <input type="text" id="compCode" class="form-control form-control-sm custom-form-control" placeholder="Ej: 93C86 / TLE6244X">
               </div>
               <div class="col-6">
                 <label class="form-label small text-muted">Categoría</label>
                 <select id="compCategory" class="form-select form-select-sm custom-form-control">
-                  <option value="Actuadores de Potencia">Actuador / Driver</option>
-                  <option value="Procesamiento Central">Microprocesador / MCU</option>
-                  <option value="Almacenamiento & Seguridad">Memoria EEPROM / Flash</option>
-                  <option value="Alimentación Interna">Regulador / Power IC</option>
-                  <option value="Comunicaciones">Transceiver CAN / K-Line</option>
-                  <option value="Conexionado">Pines / Conector</option>
+                  <option value="Almacenamiento & Seguridad">🟣 Memoria EEPROM / Flash</option>
+                  <option value="Procesamiento Central">🟡 Microprocesador / MCU</option>
+                  <option value="Actuadores de Potencia">🔴 Actuador / Driver</option>
+                  <option value="Alimentación Interna">🟢 Regulador / Power IC</option>
+                  <option value="Comunicaciones">🔵 Transceiver CAN / K-Line</option>
+                  <option value="Conexionado">⚪ Pines / Conector</option>
                 </select>
               </div>
             </div>
 
             <div class="mb-2">
-              <label class="form-label small text-muted">¿Qué controla? (Función)</label>
-              <textarea id="compControla" class="form-control form-control-sm custom-form-control" rows="2" placeholder="Ej: Controla la apertura del cuerpo de aceleración y respuesta del pedal acelerador..." required></textarea>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small text-muted mb-0">¿Qué controla? (Función)</label>
+                <div class="form-check form-switch mb-0">
+                  <input class="form-check-input" type="checkbox" id="checkControla" checked>
+                  <label class="form-check-label text-muted small" for="checkControla">Incluir</label>
+                </div>
+              </div>
+              <textarea id="compControla" class="form-control form-control-sm custom-form-control" rows="2" placeholder="Ej: Memoria EEPROM que almacena llaves y mapa de inyección..."></textarea>
             </div>
 
-            <div class="row g-2 mb-2">
-              <div class="col-6">
-                <label class="form-label small text-muted">Voltajes de Operación</label>
-                <input type="text" id="compVoltajes" class="form-control form-control-sm custom-form-control" placeholder="Ej: 12V BATT / PWM 5V">
+            <div class="mb-2">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small text-muted mb-0">Parámetros Eléctricos y Pines</label>
+                <div class="form-check form-switch mb-0">
+                  <input class="form-check-input" type="checkbox" id="checkVoltajes" checked>
+                  <label class="form-check-label text-muted small" for="checkVoltajes">Incluir</label>
+                </div>
               </div>
-              <div class="col-6">
-                <label class="form-label small text-muted">Pines Críticos</label>
-                <input type="text" id="compPines" class="form-control form-control-sm custom-form-control" placeholder="Ej: Pin 4: GND, Pin 12: Señal">
+              <div class="row g-2">
+                <div class="col-6">
+                  <input type="text" id="compVoltajes" class="form-control form-control-sm custom-form-control" placeholder="Voltaje: 12V / 5V (Opcional)">
+                </div>
+                <div class="col-6">
+                  <input type="text" id="compPines" class="form-control form-control-sm custom-form-control" placeholder="Pines: Pin 8 VCC (Opcional)">
+                </div>
               </div>
             </div>
 
             <div class="mb-3">
-              <label class="form-label small text-muted">Síntomas comunes de falla</label>
-              <input type="text" id="compFallas" class="form-control form-control-sm custom-form-control" placeholder="Ej: Sin aceleración, código DTC P2101">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small text-muted mb-0">Síntomas comunes de falla</label>
+                <div class="form-check form-switch mb-0">
+                  <input class="form-check-input" type="checkbox" id="checkFallas" checked>
+                  <label class="form-check-label text-muted small" for="checkFallas">Incluir</label>
+                </div>
+              </div>
+              <input type="text" id="compFallas" class="form-control form-control-sm custom-form-control" placeholder="Ej: Bloqueo de arranque, código DTC P1600 (Opcional)">
             </div>
 
             <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-secondary">
               <button type="button" class="btn btn-sm btn-outline-danger" id="btnDiscardTrazo" data-bs-dismiss="modal">
-                <i class="bi bi-trash me-1"></i> Descartar Mal Trazo
+                <i class="bi bi-trash me-1"></i> Descartar Trazo
               </button>
               <div class="d-flex gap-2">
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -747,6 +777,75 @@
       coordsBadge.innerHTML = `Zoom: <strong>${scale.toFixed(2)}x</strong> &bull; Modo: <span style="color:${isEditorMode ? '#FFD000' : '#00F0FF'}">${isEditorMode ? 'DIBUJO DE ESPACIOS' : 'VISOR ACTIVO'}</span>`;
     }
 
+    let editingComponentId = null;
+
+    // Standardized Technical Display Labels for Component Categories
+    const ECU_FRIENDLY_TYPES = {
+      'Almacenamiento & Seguridad': 'MEMORIA EEPROM / FLASH',
+      'Procesamiento Central': 'MICROCONTROLADOR (MCU)',
+      'Actuadores de Potencia': 'DRIVER DE POTENCIA',
+      'Alimentación Interna': 'REGULADOR DE VOLTAJE',
+      'Comunicaciones': 'TRANSCEIVER CAN-BUS',
+      'Sensores & Entradas': 'ENTRADA DE SENSORES',
+      'Conexionado': 'CONEXIONADO / PINES'
+    };
+
+    // Standardized Automotive Color Habit Mapping
+    const ECU_CATEGORY_THEMES = {
+      'Almacenamiento & Seguridad': {
+        name: 'Memoria EEPROM / Flash',
+        color: '#A855F7',
+        glow: '#C084FC',
+        fill: 'rgba(168, 85, 247, 0.16)',
+        icon: 'bi-memory'
+      },
+      'Procesamiento Central': {
+        name: 'Microprocesador / MCU',
+        color: '#F59E0B',
+        glow: '#FCD34D',
+        fill: 'rgba(245, 158, 11, 0.16)',
+        icon: 'bi-cpu-fill'
+      },
+      'Actuadores de Potencia': {
+        name: 'Driver / Potencia',
+        color: '#EF4444',
+        glow: '#F87171',
+        fill: 'rgba(239, 68, 68, 0.16)',
+        icon: 'bi-lightning-charge-fill'
+      },
+      'Alimentación Interna': {
+        name: 'Regulador / Power IC',
+        color: '#10B981',
+        glow: '#34D399',
+        fill: 'rgba(16, 185, 129, 0.16)',
+        icon: 'bi-battery-charging'
+      },
+      'Comunicaciones': {
+        name: 'Transceiver CAN / K-Line',
+        color: '#06B6D4',
+        glow: '#38BDF8',
+        fill: 'rgba(6, 182, 212, 0.16)',
+        icon: 'bi-broadcast'
+      },
+      'Conexionado': {
+        name: 'Pines / Conector',
+        color: '#94A3B8',
+        glow: '#E2E8F0',
+        fill: 'rgba(148, 163, 184, 0.16)',
+        icon: 'bi-plug-fill'
+      }
+    };
+
+    function getCategoryTheme(category) {
+      return ECU_CATEGORY_THEMES[category] || {
+        name: category || 'Componente',
+        color: '#00F0FF',
+        glow: '#00F0FF',
+        fill: 'rgba(0, 240, 255, 0.16)',
+        icon: 'bi-cpu-fill'
+      };
+    }
+
     // Mathematical W3C Standard Inverse Matrix Conversion (100% Zero-Offset Tracking)
     function getSVGPoint(e) {
       const pt = svgOverlay.createSVGPoint();
@@ -783,6 +882,7 @@
     // Cancel current drawing stroke
     function cancelCurrentDrawing() {
       isDrawing = false;
+      editingComponentId = null;
       drawingBox.style.display = 'none';
       tempBoxData = null;
     }
@@ -866,37 +966,96 @@
             pinY: Math.round(boxY + boxH / 2)
           };
 
+          editingComponentId = null;
           document.getElementById('newComponentForm').reset();
+          const modalTitle = document.querySelector('#modalAddComponent .modal-title');
+          if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-plus-circle-fill me-2"></i>Designar Nuevo Componente';
           modalAddComponent.show();
         }
       }
       isDragging = false;
     });
 
-    // Form Submit: Save New Component
+    // Form Submit: Save or Edit Component
     document.getElementById('newComponentForm').addEventListener('submit', (e) => {
       e.preventDefault();
       if (!tempBoxData) return;
 
-      const newComp = {
-        id: 'comp_' + Date.now(),
-        name: document.getElementById('compName').value,
-        code: document.getElementById('compCode').value || 'N/A',
+      const compData = {
+        name: document.getElementById('compName').value.trim(),
+        tipo: document.getElementById('compTipo') ? document.getElementById('compTipo').value.trim() : '',
+        code: document.getElementById('compCode') ? document.getElementById('compCode').value.trim() : '',
         category: document.getElementById('compCategory').value,
-        controla: document.getElementById('compControla').value,
-        voltajes: document.getElementById('compVoltajes').value || '12V / 5V',
-        pines_clave: document.getElementById('compPines').value || 'N/D',
-        fallas_comunes: document.getElementById('compFallas').value || 'Fallo de operación o señal ausente.',
+        show_controla: document.getElementById('checkControla') ? document.getElementById('checkControla').checked : true,
+        controla: document.getElementById('compControla') ? document.getElementById('compControla').value.trim() : '',
+        show_voltajes: document.getElementById('checkVoltajes') ? document.getElementById('checkVoltajes').checked : true,
+        voltajes: document.getElementById('compVoltajes') ? document.getElementById('compVoltajes').value.trim() : '',
+        pines_clave: document.getElementById('compPines') ? document.getElementById('compPines').value.trim() : '',
+        show_fallas: document.getElementById('checkFallas') ? document.getElementById('checkFallas').checked : true,
+        fallas_comunes: document.getElementById('compFallas') ? document.getElementById('compFallas').value.trim() : '',
         ...tempBoxData
       };
 
-      ecuComponents.push(newComp);
+      let targetComp = null;
+
+      if (editingComponentId) {
+        const idx = ecuComponents.findIndex(c => c.id === editingComponentId);
+        if (idx !== -1) {
+          ecuComponents[idx] = { ...ecuComponents[idx], ...compData, id: editingComponentId };
+          targetComp = ecuComponents[idx];
+        }
+        editingComponentId = null;
+      } else {
+        const newComp = {
+          id: 'comp_' + Date.now(),
+          ...compData
+        };
+        ecuComponents.push(newComp);
+        targetComp = newComp;
+      }
+
       localStorage.setItem('ecu_custom_components', JSON.stringify(ecuComponents));
       
       modalAddComponent.hide();
       renderHotspots();
-      selectComponent(newComp);
+      if (targetComp) selectComponent(targetComp);
     });
+
+    // Edit Active Component Button
+    const btnEditActive = document.getElementById('btnEditActive');
+    if (btnEditActive) {
+      btnEditActive.addEventListener('click', () => {
+        if (!activeComponentId) return;
+        const comp = ecuComponents.find(c => c.id === activeComponentId);
+        if (!comp) return;
+
+        editingComponentId = comp.id;
+        tempBoxData = {
+          x: comp.x,
+          y: comp.y,
+          width: comp.width,
+          height: comp.height,
+          pinX: comp.pinX,
+          pinY: comp.pinY
+        };
+
+        document.getElementById('compName').value = comp.name || '';
+        if (document.getElementById('compTipo')) document.getElementById('compTipo').value = comp.tipo || '';
+        document.getElementById('compCode').value = (comp.code === 'N/A' ? '' : comp.code) || '';
+        document.getElementById('compCategory').value = comp.category || 'Almacenamiento & Seguridad';
+        if (document.getElementById('checkControla')) document.getElementById('checkControla').checked = (comp.show_controla !== false);
+        document.getElementById('compControla').value = comp.controla || '';
+        if (document.getElementById('checkVoltajes')) document.getElementById('checkVoltajes').checked = (comp.show_voltajes !== false);
+        document.getElementById('compVoltajes').value = comp.voltajes || '';
+        document.getElementById('compPines').value = comp.pines_clave || '';
+        if (document.getElementById('checkFallas')) document.getElementById('checkFallas').checked = (comp.show_fallas !== false);
+        document.getElementById('compFallas').value = comp.fallas_comunes || '';
+
+        const modalTitle = document.querySelector('#modalAddComponent .modal-title');
+        if (modalTitle) modalTitle.innerHTML = `<i class="bi bi-pencil-square me-2 text-warning"></i>Modificar: ${comp.name}`;
+        modalAddComponent.show();
+      });
+    }
 
     // Toggle Editor Mode
     btnToggleEditor.addEventListener('click', () => {
@@ -925,6 +1084,7 @@
       localStorage.setItem('ecu_custom_components', JSON.stringify(ecuComponents));
       activeLeaderLine.style.display = 'none';
       btnDeleteActive.classList.add('d-none');
+      if (btnEditActive) btnEditActive.classList.add('d-none');
       renderHotspots();
       panelContent.innerHTML = `
         <div class="alert alert-warning text-dark small">
@@ -952,6 +1112,7 @@
         localStorage.setItem('ecu_custom_components', JSON.stringify(ecuComponents));
         activeLeaderLine.style.display = 'none';
         btnDeleteActive.classList.add('d-none');
+        if (btnEditActive) btnEditActive.classList.add('d-none');
         renderHotspots();
         panelContent.innerHTML = `
           <div class="text-center py-5 text-muted">
@@ -968,13 +1129,15 @@
     document.getElementById('btnZoomOut').addEventListener('click', () => zoomTo(scale * 0.8));
     document.getElementById('btnResetView').addEventListener('click', () => initView());
 
-    // Render Hotspots onto SVG
+    // Render Hotspots onto SVG with Color Habit
     function renderHotspots() {
       hotspotsGroup.innerHTML = '';
       
       ecuComponents.forEach(comp => {
+        const theme = getCategoryTheme(comp.category);
         const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         g.setAttribute('data-id', comp.id);
+        g.style.cursor = 'pointer';
 
         // Bounding Box on chip
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -982,9 +1145,12 @@
         rect.setAttribute('y', comp.y);
         rect.setAttribute('width', comp.width);
         rect.setAttribute('height', comp.height);
-        rect.setAttribute('rx', '4');
+        rect.setAttribute('rx', '5');
         rect.setAttribute('class', 'hotspot-box');
         rect.id = `box-${comp.id}`;
+        rect.style.stroke = theme.color;
+        rect.style.fill = theme.fill;
+        rect.style.filter = `drop-shadow(0 0 6px ${theme.color})`;
 
         // Pin Glow Marker
         const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -995,10 +1161,12 @@
         const outerRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         outerRing.setAttribute('class', 'outer-ring');
         outerRing.setAttribute('r', '14');
+        outerRing.style.stroke = theme.color;
 
         const innerDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         innerDot.setAttribute('class', 'inner-dot');
         innerDot.setAttribute('r', '5');
+        innerDot.style.fill = theme.color;
 
         pinG.appendChild(outerRing);
         pinG.appendChild(innerDot);
@@ -1016,18 +1184,50 @@
       });
     }
 
-    // Select Component & Draw Dynamic Leader Line
+    // Select Component & Draw Dynamic Leader Line with Category Color
     function selectComponent(comp) {
       activeComponentId = comp.id;
-      btnDeleteActive.classList.remove('d-none');
+      const theme = getCategoryTheme(comp.category);
 
-      document.querySelectorAll('.hotspot-box').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.hotspot-pin').forEach(el => el.classList.remove('active'));
+      btnDeleteActive.classList.remove('d-none');
+      if (btnEditActive) btnEditActive.classList.remove('d-none');
+
+      document.querySelectorAll('.hotspot-box').forEach(el => {
+        el.classList.remove('active');
+        const cId = el.id.replace('box-', '');
+        const c = ecuComponents.find(item => item.id === cId);
+        const t = getCategoryTheme(c ? c.category : '');
+        el.style.stroke = t.color;
+        el.style.fill = t.fill;
+        el.style.filter = `drop-shadow(0 0 6px ${t.color})`;
+      });
+
+      document.querySelectorAll('.hotspot-pin').forEach(el => {
+        el.classList.remove('active');
+        const cId = el.id.replace('pin-', '');
+        const c = ecuComponents.find(item => item.id === cId);
+        const t = getCategoryTheme(c ? c.category : '');
+        const r = el.querySelector('.outer-ring');
+        const d = el.querySelector('.inner-dot');
+        if (r) r.style.stroke = t.color;
+        if (d) d.style.fill = t.color;
+      });
       
       const box = document.getElementById(`box-${comp.id}`);
       const pin = document.getElementById(`pin-${comp.id}`);
-      if (box) box.classList.add('active');
-      if (pin) pin.classList.add('active');
+      if (box) {
+        box.classList.add('active');
+        box.style.stroke = theme.color;
+        box.style.fill = theme.color + '4D';
+        box.style.filter = `drop-shadow(0 0 14px ${theme.glow})`;
+      }
+      if (pin) {
+        pin.classList.add('active');
+        const r = pin.querySelector('.outer-ring');
+        const d = pin.querySelector('.inner-dot');
+        if (r) r.style.stroke = theme.glow;
+        if (d) d.style.fill = theme.glow;
+      }
 
       // Draw SVG Leader Line from chip to the right edge of stage
       const startX = comp.pinX;
@@ -1038,36 +1238,66 @@
 
       const pathData = `M ${startX} ${startY} L ${midX} ${startY} L ${targetX} ${targetY}`;
       activeLeaderLine.setAttribute('d', pathData);
+      activeLeaderLine.style.stroke = theme.color;
+      activeLeaderLine.style.filter = `drop-shadow(0 0 8px ${theme.glow})`;
       activeLeaderLine.style.display = 'block';
 
-      // Update Side Info Panel Content
-      panelContent.innerHTML = `
-        <span class="info-card-badge"><i class="bi bi-tag-fill me-1"></i> ${comp.category}</span>
-        <h3 class="component-title-text">${comp.name}</h3>
-        <div class="text-info font-monospace small mb-3 fw-bold">${comp.code}</div>
+      const defaultFriendly = ECU_FRIENDLY_TYPES[comp.category] || comp.category || 'COMPONENTE';
+      const rawSubLabel = (comp.tipo && comp.tipo.trim() !== '') ? comp.tipo.trim() : defaultFriendly;
+      const subLabel = rawSubLabel.toUpperCase();
+      const codeLine = (comp.code && comp.code.trim() !== '' && comp.code !== 'N/A') ? `<div class="font-monospace small mb-3 fw-bold" style="color: ${theme.glow};">${comp.code}</div>` : '';
 
-        <div class="tech-specs-box">
+      const hasControla = comp.show_controla !== false && comp.controla && comp.controla.trim() !== '';
+      const controlaHtml = hasControla ? `
+        <div class="tech-specs-box" style="border-left: 3px solid ${theme.color};">
           <div class="spec-row">
-            <span class="spec-label">Función Principal:</span>
+            <span class="spec-label" style="color: ${theme.glow};">Función Principal:</span>
           </div>
           <p class="component-desc mb-2 mt-1 text-light">${comp.controla}</p>
         </div>
+      ` : '';
 
-        <div class="tech-specs-box">
-          <div class="spec-row">
-            <span class="spec-label">Voltajes de Operación:</span>
-            <span class="spec-value">${comp.voltajes}</span>
-          </div>
-          <div class="spec-row">
-            <span class="spec-label">Pines Críticos:</span>
-            <span class="spec-value text-warning">${comp.pines_clave}</span>
-          </div>
-        </div>
+      const hasVoltajes = comp.show_voltajes !== false && ((comp.voltajes && comp.voltajes.trim() !== '') || (comp.pines_clave && comp.pines_clave.trim() !== ''));
+      let voltajesHtml = '';
+      if (hasVoltajes) {
+        let rows = '';
+        if (comp.voltajes && comp.voltajes.trim() !== '') {
+          rows += `
+            <div class="spec-row mb-1">
+              <span class="spec-label">Voltajes de Operación:</span>
+              <span class="spec-value" style="color: ${theme.glow};">${comp.voltajes}</span>
+            </div>
+          `;
+        }
+        if (comp.pines_clave && comp.pines_clave.trim() !== '') {
+          rows += `
+            <div class="spec-row">
+              <span class="spec-label">Pines Críticos:</span>
+              <span class="spec-value text-warning">${comp.pines_clave}</span>
+            </div>
+          `;
+        }
+        voltajesHtml = `<div class="tech-specs-box">${rows}</div>`;
+      }
 
+      const hasFallas = comp.show_fallas !== false && comp.fallas_comunes && comp.fallas_comunes.trim() !== '';
+      const fallasHtml = hasFallas ? `
         <div class="alert alert-danger bg-opacity-10 border-danger text-white small mt-3">
           <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> Síntomas de Falla:</div>
           <div>${comp.fallas_comunes}</div>
         </div>
+      ` : '';
+
+      // Update Side Info Panel Content
+      panelContent.innerHTML = `
+        <span class="info-card-badge" style="background: ${theme.fill}; color: ${theme.glow}; border: 1px solid ${theme.color};">
+          <i class="bi ${theme.icon} me-1"></i> ${comp.category}
+        </span>
+        <h3 class="component-title-text">${comp.name} <span class="text-white-50 mx-1">&bull;</span> <span class="small font-rajdhani fw-bold text-uppercase" style="color: ${theme.glow};">${subLabel}</span></h3>
+        ${codeLine}
+        ${controlaHtml}
+        ${voltajesHtml}
+        ${fallasHtml}
 
         <div class="d-grid gap-2 mt-4">
           <button class="btn btn-outline-info btn-sm font-rajdhani fw-bold" onclick="alert('Abriendo Pinout Detallado...')">
