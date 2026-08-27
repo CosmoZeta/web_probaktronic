@@ -1667,39 +1667,67 @@ window.printConsoleDiagram = function() {
   }, 100);
 };
 
+let isSpacePanning = false;
+
 function setupViewerDragPan() {
   const wrap = document.getElementById('consoleImgViewerWrap');
   if (!wrap || wrap.dataset.panSetup === 'true') return;
   wrap.dataset.panSetup = 'true';
 
   let isDown = false;
+  let isMiddleDown = false;
   let startX = 0, startY = 0;
   let initialPanX = 0, initialPanY = 0;
   let hasMoved = false;
 
+  // Spacebar pan shortcut
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+      isSpacePanning = true;
+      if (wrap) wrap.style.cursor = 'grab';
+    }
+  });
+
+  window.addEventListener('keyup', (e) => {
+    if (e.code === 'Space') {
+      isSpacePanning = false;
+      if (wrap) wrap.style.cursor = isEcuEditorMode ? 'crosshair' : 'grab';
+    }
+  });
+
   wrap.addEventListener('mousedown', (e) => {
-    if (isEcuEditorMode) return;
     if (e.target.closest('button') || e.target.closest('.console-gallery-pagination') || e.target.closest('.console-ecu-info-drawer') || e.target.closest('.console-ecu-editor-banner')) return;
-    isDown = true;
-    hasMoved = false;
-    wrap.classList.add('grabbing');
-    startX = e.clientX;
-    startY = e.clientY;
-    initialPanX = currentPanX;
-    initialPanY = currentPanY;
+
+    const isMiddle = (e.button === 1);
+    const isLeftAndCanPan = (e.button === 0 && (!isEcuEditorMode || isSpacePanning));
+
+    if (isMiddle || isLeftAndCanPan) {
+      if (isMiddle) e.preventDefault();
+      isDown = true;
+      isMiddleDown = isMiddle;
+      hasMoved = false;
+      wrap.classList.add('grabbing');
+      wrap.style.cursor = 'grabbing';
+      startX = e.clientX;
+      startY = e.clientY;
+      initialPanX = currentPanX;
+      initialPanY = currentPanY;
+    }
   });
 
   window.addEventListener('mouseup', () => {
     if (!isDown) return;
     isDown = false;
+    isMiddleDown = false;
     wrap.classList.remove('grabbing');
+    wrap.style.cursor = isEcuEditorMode ? (isSpacePanning ? 'grab' : 'crosshair') : 'grab';
     if (hasMoved) {
       window.updateStageTransform(true);
     }
   });
 
-  wrap.addEventListener('mousemove', (e) => {
-    if (!isDown || isEcuEditorMode) return;
+  window.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
@@ -1712,9 +1740,8 @@ function setupViewerDragPan() {
 
   // Touch Support
   wrap.addEventListener('touchstart', (e) => {
-    if (isEcuEditorMode) return;
     if (e.target.closest('button') || e.target.closest('.console-gallery-pagination') || e.target.closest('.console-ecu-info-drawer') || e.target.closest('.console-ecu-editor-banner')) return;
-    if (e.touches.length === 1) {
+    if (e.touches.length === 1 && !isEcuEditorMode) {
       isDown = true;
       hasMoved = false;
       startX = e.touches[0].clientX;
@@ -1725,7 +1752,7 @@ function setupViewerDragPan() {
   }, { passive: true });
 
   wrap.addEventListener('touchmove', (e) => {
-    if (!isDown || isEcuEditorMode || e.touches.length !== 1) return;
+    if (!isDown || e.touches.length !== 1) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
@@ -1739,7 +1766,10 @@ function setupViewerDragPan() {
   wrap.addEventListener('touchend', () => {
     if (isDown) {
       isDown = false;
-      window.updateStageTransform(true);
+      wrap.classList.remove('grabbing');
+      if (hasMoved) {
+        window.updateStageTransform(true);
+      }
     }
   });
 
@@ -3202,10 +3232,45 @@ let activeEcuComponentId = null;
 let editingEcuHotspotId = null;
 let isEcuEditorMode = false;
 let isEcuDrawing = false;
+let currentEcuDrawShape = 'rect'; // 'rect' | 'lasso'
+let ecuLassoPoints = [];
 let ecuDrawStartX = 0;
 let ecuDrawStartY = 0;
 let tempEcuBoxData = null;
 let currentEcuStorageKey = 'default_ecu_2kd';
+
+window.setEcuDrawShape = function(shape) {
+  currentEcuDrawShape = shape;
+  const btnRect = document.getElementById('btnEcuDrawModeRect');
+  const btnLasso = document.getElementById('btnEcuDrawModeLasso');
+  const textEl = document.getElementById('ecuDrawInstructionText');
+
+  if (shape === 'lasso') {
+    if (btnRect) {
+      btnRect.classList.remove('border-warning', 'text-warning', 'active');
+      btnRect.classList.add('border-secondary', 'text-white-50');
+    }
+    if (btnLasso) {
+      btnLasso.classList.remove('border-secondary', 'text-white-50');
+      btnLasso.classList.add('border-info', 'text-info', 'active');
+    }
+    if (textEl) {
+      textEl.innerHTML = '<i class="bi bi-brush-fill me-1 text-info"></i> <strong>Modo Zona Libre:</strong> Mantén presionado y rodea la etapa/circuito con curvas (ESC para cancelar)';
+    }
+  } else {
+    if (btnRect) {
+      btnRect.classList.remove('border-secondary', 'text-white-50');
+      btnRect.classList.add('border-warning', 'text-warning', 'active');
+    }
+    if (btnLasso) {
+      btnLasso.classList.remove('border-info', 'text-info', 'active');
+      btnLasso.classList.add('border-secondary', 'text-white-50');
+    }
+    if (textEl) {
+      textEl.innerHTML = '<i class="bi bi-pencil-fill me-1 text-warning"></i> <strong>Modo Chip:</strong> Arrastra sobre el chip para marcarlo (ESC para cancelar)';
+    }
+  }
+};
 
 // Standardized Automotive Color Habit Mapping for ECU Components (12 Categorías Profesionales)
 const ECU_CATEGORY_THEMES = {
@@ -3719,6 +3784,14 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
     if (srcW !== imgW || srcH !== imgH) {
       const rx = imgW / srcW;
       const ry = imgH / srcH;
+
+      let scaledPoints = c.points;
+      let scaledPathD = c.pathD;
+      if (Array.isArray(c.points) && c.points.length > 0) {
+        scaledPoints = c.points.map(pt => ({ x: Math.round(pt.x * rx), y: Math.round(pt.y * ry) }));
+        scaledPathD = 'M ' + scaledPoints.map(pt => `${pt.x} ${pt.y}`).join(' L ') + ' Z';
+      }
+
       return {
         ...c,
         x: Math.round(c.x * rx),
@@ -3727,6 +3800,8 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
         height: Math.round(c.height * ry),
         pinX: Math.round(pinX * rx),
         pinY: Math.round(pinY * ry),
+        points: scaledPoints,
+        pathD: scaledPathD,
         baseWidth: imgW,
         baseHeight: imgH
       };
@@ -3848,58 +3923,80 @@ window.renderEcuColorLegend = function() {
   container.style.display = 'flex';
 };
 
-// Render SVG Hotspot Nodes with Color Habit Theme
+// Render SVG Hotspot Nodes with Color Habit Theme (Zones on base layer, Chips on top layer)
 function renderEcuHotspots() {
   const group = document.getElementById('consoleEcuHotspotsGroup');
   if (!group) return;
   group.innerHTML = '';
 
-  currentEcuHotspots.forEach(comp => {
+  // Sort: Freeform Zones on bottom layer, Chips on top layer
+  const zones = (currentEcuHotspots || []).filter(c => c.isZone || c.type === 'polygon' || c.pathD);
+  const chips = (currentEcuHotspots || []).filter(c => !(c.isZone || c.type === 'polygon' || c.pathD));
+  const sorted = [...zones, ...chips];
+
+  sorted.forEach(comp => {
     const theme = window.getEcuComponentTheme(comp);
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('data-id', comp.id);
     g.style.cursor = 'pointer';
 
-    // Box
-    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    rect.setAttribute('x', comp.x);
-    rect.setAttribute('y', comp.y);
-    rect.setAttribute('width', comp.width);
-    rect.setAttribute('height', comp.height);
-    rect.setAttribute('rx', '5');
-    rect.setAttribute('class', 'ecu-hotspot-box');
-    rect.id = `ecu-box-${comp.id}`;
-    rect.style.stroke = theme.color;
-    rect.style.fill = theme.fill;
-    rect.style.filter = `drop-shadow(0 0 6px ${theme.color})`;
+    const isZone = comp.isZone || comp.type === 'polygon' || comp.pathD;
 
-    // Pin
+    if (isZone && comp.pathD) {
+      // Freeform Zone / Stage Path
+      const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathEl.setAttribute('d', comp.pathD);
+      pathEl.setAttribute('class', 'ecu-hotspot-zone');
+      pathEl.id = `ecu-box-${comp.id}`;
+      pathEl.style.stroke = theme.color;
+      pathEl.style.fill = theme.color + '26'; // 15% soft fill
+      pathEl.style.filter = `drop-shadow(0 0 8px ${theme.color})`;
+      g.appendChild(pathEl);
+    } else {
+      // Individual IC Chip Box
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', comp.x);
+      rect.setAttribute('y', comp.y);
+      rect.setAttribute('width', comp.width);
+      rect.setAttribute('height', comp.height);
+      rect.setAttribute('rx', '5');
+      rect.setAttribute('class', 'ecu-hotspot-box');
+      rect.id = `ecu-box-${comp.id}`;
+      rect.style.stroke = theme.color;
+      rect.style.fill = theme.fill;
+      rect.style.filter = `drop-shadow(0 0 6px ${theme.color})`;
+      g.appendChild(rect);
+    }
+
+    // Pin indicator
+    const pinX = (typeof comp.pinX === 'number' && !isNaN(comp.pinX)) ? comp.pinX : Math.round((comp.x || 0) + (comp.width || 100) / 2);
+    const pinY = (typeof comp.pinY === 'number' && !isNaN(comp.pinY)) ? comp.pinY : Math.round((comp.y || 0) + (comp.height || 100) / 2);
+
     const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     pinG.setAttribute('class', 'ecu-hotspot-pin');
-    pinG.setAttribute('transform', `translate(${comp.pinX}, ${comp.pinY})`);
+    pinG.setAttribute('transform', `translate(${pinX}, ${pinY})`);
     pinG.id = `ecu-pin-${comp.id}`;
 
     const outerRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     outerRing.setAttribute('class', 'outer-ring');
-    outerRing.setAttribute('r', '14');
+    outerRing.setAttribute('r', isZone ? '16' : '14');
     outerRing.style.stroke = theme.color;
 
     const innerDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     innerDot.setAttribute('class', 'inner-dot');
-    innerDot.setAttribute('r', '5');
+    innerDot.setAttribute('r', isZone ? '6' : '5');
     innerDot.style.fill = theme.color;
 
     pinG.appendChild(outerRing);
     pinG.appendChild(innerDot);
 
-    // Click handler
+    // Click handler with propagation stop so chips on top intercept click first
     g.addEventListener('click', (e) => {
       if (isEcuEditorMode) return;
       e.stopPropagation();
       window.selectEcuComponent(comp);
     });
 
-    g.appendChild(rect);
     g.appendChild(pinG);
     group.appendChild(g);
   });
@@ -3913,20 +4010,19 @@ window.selectEcuComponent = function(comp) {
   activeEcuComponentId = comp.id;
   const theme = window.getEcuComponentTheme(comp);
 
-  const line = document.getElementById('consoleEcuActiveLeaderLine');
   const drawer = document.getElementById('consoleEcuInfoDrawer');
   const drawerTitle = document.getElementById('ecuDrawerTitle');
   const drawerHeaderIcon = document.getElementById('ecuDrawerHeaderIcon');
   const drawerContent = document.getElementById('ecuDrawerContent');
 
-  // Reset active classes and restore baseline color themes
-  document.querySelectorAll('.ecu-hotspot-box').forEach(el => {
+  // Reset active classes and restore baseline color themes on both boxes and zones
+  document.querySelectorAll('.ecu-hotspot-box, .ecu-hotspot-zone').forEach(el => {
     el.classList.remove('active');
     const compId = el.id.replace('ecu-box-', '');
     const c = currentEcuHotspots.find(item => item.id === compId);
     const t = window.getEcuComponentTheme(c);
     el.style.stroke = t.color;
-    el.style.fill = t.fill;
+    el.style.fill = (c && (c.isZone || c.type === 'polygon' || c.pathD)) ? (t.color + '26') : t.fill;
     el.style.filter = `drop-shadow(0 0 6px ${t.color})`;
     el.style.strokeWidth = '2px';
   });
@@ -4432,6 +4528,7 @@ window.toggleAdminEcuEditorMode = function() {
   const svg = document.getElementById('consoleEcuSvgOverlay');
 
   if (isEcuEditorMode) {
+    window.closeEcuInfoDrawer();
     if (toggleBtn) {
       toggleBtn.classList.remove('btn-outline-warning');
       toggleBtn.classList.add('btn-warning', 'text-dark');
@@ -4441,6 +4538,7 @@ window.toggleAdminEcuEditorMode = function() {
     if (wrap) wrap.style.cursor = 'crosshair';
     if (svg) svg.classList.add('drawing-mode');
   } else {
+    window.closeEcuInfoDrawer();
     if (toggleBtn) {
       toggleBtn.classList.add('btn-outline-warning');
       toggleBtn.classList.remove('btn-warning', 'text-dark');
@@ -4456,9 +4554,12 @@ window.toggleAdminEcuEditorMode = function() {
 
 window.cancelAdminEcuDrawing = function() {
   isEcuDrawing = false;
+  ecuLassoPoints = [];
   editingEcuHotspotId = null;
   const box = document.getElementById('consoleEcuDrawingBox');
   if (box) box.style.display = 'none';
+  const lassoPreview = document.getElementById('consoleEcuLassoPreview');
+  if (lassoPreview) lassoPreview.style.display = 'none';
   tempEcuBoxData = null;
 
   const modalTitle = document.querySelector('#modalAdminAddEcuComponent .modal-title');
@@ -4516,6 +4617,7 @@ window.handleAdminSubmitEcuComponent = async function(e) {
   const finalPinY = !isNaN(inputPinY) ? inputPinY : (tempEcuBoxData && !isNaN(tempEcuBoxData.pinY) ? tempEcuBoxData.pinY : Math.round(finalY + finalH / 2));
 
   tempEcuBoxData = {
+    ...(tempEcuBoxData || {}),
     x: finalX,
     y: finalY,
     width: finalW,
@@ -4655,10 +4757,13 @@ function setupEcuSvgEventListeners(svg) {
   svg.dataset.ecuEventsAttached = 'true';
 
   const box = document.getElementById('consoleEcuDrawingBox');
+  const lassoPreview = document.getElementById('consoleEcuLassoPreview');
 
   function handleStart(e) {
-    if (!isEcuEditorMode) return;
+    if (!isEcuEditorMode || isSpacePanning) return;
+    if (e.button === 1 || e.button === 2) return; // Middle click and right click do not draw
     if (e.type === 'touchstart') {
+      if (e.touches && e.touches.length > 1) return; // Multi-touch does not draw
       e.preventDefault();
     }
     e.stopPropagation();
@@ -4668,80 +4773,166 @@ function setupEcuSvgEventListeners(svg) {
     ecuDrawStartX = p.x;
     ecuDrawStartY = p.y;
 
-    if (box) {
-      box.setAttribute('x', ecuDrawStartX);
-      box.setAttribute('y', ecuDrawStartY);
-      box.setAttribute('width', 0);
-      box.setAttribute('height', 0);
-      box.style.display = 'block';
+    if (currentEcuDrawShape === 'lasso') {
+      ecuLassoPoints = [{ x: p.x, y: p.y }];
+      if (lassoPreview) {
+        lassoPreview.setAttribute('d', `M ${p.x} ${p.y}`);
+        lassoPreview.style.display = 'block';
+      }
+      if (box) box.style.display = 'none';
+    } else {
+      if (box) {
+        box.setAttribute('x', ecuDrawStartX);
+        box.setAttribute('y', ecuDrawStartY);
+        box.setAttribute('width', 0);
+        box.setAttribute('height', 0);
+        box.style.display = 'block';
+      }
+      if (lassoPreview) lassoPreview.style.display = 'none';
     }
   }
 
   function handleMove(e) {
-    if (!isEcuDrawing || !isEcuEditorMode || !box) return;
+    if (!isEcuDrawing || !isEcuEditorMode) return;
     if (e.type === 'touchmove') {
       e.preventDefault();
     }
     const p = getEcuSvgCoordinates(svg, e);
-    const curX = Math.min(ecuDrawStartX, p.x);
-    const curY = Math.min(ecuDrawStartY, p.y);
-    const curW = Math.abs(p.x - ecuDrawStartX);
-    const curH = Math.abs(p.y - ecuDrawStartY);
 
-    box.setAttribute('x', curX);
-    box.setAttribute('y', curY);
-    box.setAttribute('width', curW);
-    box.setAttribute('height', curH);
+    if (currentEcuDrawShape === 'lasso') {
+      const lastPt = ecuLassoPoints[ecuLassoPoints.length - 1];
+      if (!lastPt || Math.hypot(p.x - lastPt.x, p.y - lastPt.y) >= 4) {
+        ecuLassoPoints.push({ x: p.x, y: p.y });
+        if (lassoPreview) {
+          const pathD = 'M ' + ecuLassoPoints.map(pt => `${pt.x} ${pt.y}`).join(' L ');
+          lassoPreview.setAttribute('d', pathD);
+        }
+      }
+    } else if (box) {
+      const curX = Math.min(ecuDrawStartX, p.x);
+      const curY = Math.min(ecuDrawStartY, p.y);
+      const curW = Math.abs(p.x - ecuDrawStartX);
+      const curH = Math.abs(p.y - ecuDrawStartY);
+
+      box.setAttribute('x', curX);
+      box.setAttribute('y', curY);
+      box.setAttribute('width', curW);
+      box.setAttribute('height', curH);
+    }
   }
 
   function handleEnd(e) {
-    if (!isEcuDrawing || !isEcuEditorMode || !box) return;
+    if (!isEcuDrawing || !isEcuEditorMode) return;
     isEcuDrawing = false;
-    box.style.display = 'none';
+    if (box) box.style.display = 'none';
+    if (lassoPreview) lassoPreview.style.display = 'none';
 
-    const boxX = parseInt(box.getAttribute('x') || 0);
-    const boxY = parseInt(box.getAttribute('y') || 0);
-    const boxW = parseInt(box.getAttribute('width') || 0);
-    const boxH = parseInt(box.getAttribute('height') || 0);
+    if (currentEcuDrawShape === 'lasso') {
+      if (ecuLassoPoints.length >= 4) {
+        const pathD = 'M ' + ecuLassoPoints.map(pt => `${pt.x} ${pt.y}`).join(' L ') + ' Z';
+        const xs = ecuLassoPoints.map(pt => pt.x);
+        const ys = ecuLassoPoints.map(pt => pt.y);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        const boxW = maxX - minX;
+        const boxH = maxY - minY;
+        const pinX = Math.round(xs.reduce((a, b) => a + b, 0) / xs.length);
+        const pinY = Math.round(ys.reduce((a, b) => a + b, 0) / ys.length);
 
-    if (boxW > 12 && boxH > 12) {
-      tempEcuBoxData = {
-        x: boxX,
-        y: boxY,
-        width: boxW,
-        height: boxH,
-        pinX: Math.round(boxX + boxW / 2),
-        pinY: Math.round(boxY + boxH / 2)
-      };
+        if (boxW > 12 && boxH > 12) {
+          tempEcuBoxData = {
+            isZone: true,
+            type: 'polygon',
+            pathD: pathD,
+            points: ecuLassoPoints,
+            x: minX,
+            y: minY,
+            width: boxW,
+            height: boxH,
+            pinX: pinX,
+            pinY: pinY
+          };
 
-      drawChipPreviewSnapshot(boxX, boxY, boxW, boxH);
+          drawChipPreviewSnapshot(minX, minY, boxW, boxH);
 
-      const form = document.getElementById('formAdminAddEcuComponent');
-      if (form) form.reset();
+          const form = document.getElementById('formAdminAddEcuComponent');
+          if (form) form.reset();
 
-      const coordX = document.getElementById('adminEcuCoordX');
-      const coordY = document.getElementById('adminEcuCoordY');
-      const coordW = document.getElementById('adminEcuCoordW');
-      const coordH = document.getElementById('adminEcuCoordH');
-      const coordPinX = document.getElementById('adminEcuCoordPinX');
-      const coordPinY = document.getElementById('adminEcuCoordPinY');
-      if (coordX) coordX.value = boxX;
-      if (coordY) coordY.value = boxY;
-      if (coordW) coordW.value = boxW;
-      if (coordH) coordH.value = boxH;
-      if (coordPinX) coordPinX.value = Math.round(boxX + boxW / 2);
-      if (coordPinY) coordPinY.value = Math.round(boxY + boxH / 2);
+          const coordX = document.getElementById('adminEcuCoordX');
+          const coordY = document.getElementById('adminEcuCoordY');
+          const coordW = document.getElementById('adminEcuCoordW');
+          const coordH = document.getElementById('adminEcuCoordH');
+          const coordPinX = document.getElementById('adminEcuCoordPinX');
+          const coordPinY = document.getElementById('adminEcuCoordPinY');
+          if (coordX) coordX.value = minX;
+          if (coordY) coordY.value = minY;
+          if (coordW) coordW.value = boxW;
+          if (coordH) coordH.value = boxH;
+          if (coordPinX) coordPinX.value = pinX;
+          if (coordPinY) coordPinY.value = pinY;
 
-      const catEl = document.getElementById('adminEcuCompCategory');
-      const tipoEl = document.getElementById('adminEcuCompTipo');
-      if (catEl && tipoEl) {
-        tipoEl.value = window.ECU_FRIENDLY_TYPES[catEl.value] || '';
+          const catEl = document.getElementById('adminEcuCompCategory');
+          const tipoEl = document.getElementById('adminEcuCompTipo');
+          if (catEl && tipoEl) {
+            tipoEl.value = window.ECU_FRIENDLY_TYPES[catEl.value] || '';
+          }
+
+          const modalEl = document.getElementById('modalAdminAddEcuComponent');
+          if (modalEl) {
+            const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            bsModal.show();
+          }
+        }
       }
+    } else {
+      const boxX = parseInt(box?.getAttribute('x') || 0);
+      const boxY = parseInt(box?.getAttribute('y') || 0);
+      const boxW = parseInt(box?.getAttribute('width') || 0);
+      const boxH = parseInt(box?.getAttribute('height') || 0);
 
-      const modalEl = document.getElementById('modalAdminAddEcuComponent');
-      if (modalEl) {
-        const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        bsModal.show();
+      if (boxW > 12 && boxH > 12) {
+        tempEcuBoxData = {
+          isZone: false,
+          type: 'rect',
+          x: boxX,
+          y: boxY,
+          width: boxW,
+          height: boxH,
+          pinX: Math.round(boxX + boxW / 2),
+          pinY: Math.round(boxY + boxH / 2)
+        };
+
+        drawChipPreviewSnapshot(boxX, boxY, boxW, boxH);
+
+        const form = document.getElementById('formAdminAddEcuComponent');
+        if (form) form.reset();
+
+        const coordX = document.getElementById('adminEcuCoordX');
+        const coordY = document.getElementById('adminEcuCoordY');
+        const coordW = document.getElementById('adminEcuCoordW');
+        const coordH = document.getElementById('adminEcuCoordH');
+        const coordPinX = document.getElementById('adminEcuCoordPinX');
+        const coordPinY = document.getElementById('adminEcuCoordPinY');
+        if (coordX) coordX.value = boxX;
+        if (coordY) coordY.value = boxY;
+        if (coordW) coordW.value = boxW;
+        if (coordH) coordH.value = boxH;
+        if (coordPinX) coordPinX.value = Math.round(boxX + boxW / 2);
+        if (coordPinY) coordPinY.value = Math.round(boxY + boxH / 2);
+
+        const catEl = document.getElementById('adminEcuCompCategory');
+        const tipoEl = document.getElementById('adminEcuCompTipo');
+        if (catEl && tipoEl) {
+          tipoEl.value = window.ECU_FRIENDLY_TYPES[catEl.value] || '';
+        }
+
+        const modalEl = document.getElementById('modalAdminAddEcuComponent');
+        if (modalEl) {
+          const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          bsModal.show();
+        }
       }
     }
   }

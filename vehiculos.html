@@ -1492,8 +1492,17 @@
 
                 <!-- Admin Instruction Banner when drawing -->
                 <div class="console-ecu-editor-banner d-none" id="consoleEcuEditorBanner">
-                  <span><i class="bi bi-pencil-fill me-1 text-warning"></i> <strong>Modo Dibujo Admin:</strong> Arrastra sobre el chip para marcarlo (ESC para cancelar)</span>
-                  <button class="btn btn-sm btn-dark py-0 px-2 rounded-pill ms-2" onclick="cancelAdminEcuDrawing()"><i class="bi bi-x-circle me-1"></i>Cancelar</button>
+                  <div class="d-flex align-items-center gap-1">
+                    <button type="button" class="btn btn-sm btn-dark py-0 px-2 rounded-pill border border-warning text-warning fw-bold font-rajdhani active" id="btnEcuDrawModeRect" onclick="setEcuDrawShape('rect')" title="Recuadro para Chips / Integrados">
+                      <i class="bi bi-bounding-box me-1"></i>Chip (Rectángulo)
+                    </button>
+                    <button type="button" class="btn btn-sm btn-dark py-0 px-2 rounded-pill border border-secondary text-white-50 fw-bold font-rajdhani" id="btnEcuDrawModeLasso" onclick="setEcuDrawShape('lasso')" title="Trazo libre / Curvas para Etapas y Zonas">
+                      <i class="bi bi-brush-fill me-1 text-info"></i>Zona / Lazo Libre
+                    </button>
+                  </div>
+                  <span id="ecuDrawInstructionText" class="small text-light ms-1"><i class="bi bi-pencil-fill me-1 text-warning"></i> <strong>Modo Chip:</strong> Arrastra sobre el chip</span>
+                  <span class="badge bg-dark text-info border border-secondary border-opacity-50 small ms-1 font-monospace" style="font-size: 0.68rem;" title="Presiona la rueda de desplazamiento del ratón o la barra Espacio para arrastrar la imagen libremente"><i class="bi bi-mouse2 me-1"></i>Scroll/Espacio: Mover</span>
+                  <button class="btn btn-sm btn-dark py-0 px-2 rounded-pill ms-1 text-danger border border-danger font-rajdhani" onclick="cancelAdminEcuDrawing()"><i class="bi bi-x-circle me-1"></i>Salir</button>
                 </div>
 
                 <!-- Interactive Color Legend Bar for ECU Components (Dynamic Adaptive Floating Strip) -->
@@ -1515,6 +1524,7 @@
                     <path id="consoleEcuActiveLeaderLine" class="console-ecu-leader-line" d="" style="display: none;"></path>
                     <g id="consoleEcuHotspotsGroup"></g>
                     <rect id="consoleEcuDrawingBox" class="console-ecu-drawing-box" x="0" y="0" width="0" height="0" rx="4" style="display: none;"></rect>
+                    <path id="consoleEcuLassoPreview" class="console-ecu-lasso-preview" d="" style="display: none;"></path>
                   </svg>
 
                   <iframe id="consolePdfFrame" src="" class="console-pdf-frame d-none" frameborder="0"></iframe>

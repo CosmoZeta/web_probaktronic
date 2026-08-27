@@ -1525,22 +1525,54 @@
   pointer-events: none;
 }
 
-/* Admin Banner */
+.console-ecu-lasso-preview {
+  fill: rgba(0, 240, 255, 0.18);
+  stroke: #00F0FF;
+  stroke-width: 2.5px;
+  stroke-dasharray: 6 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.ecu-hotspot-zone {
+  cursor: pointer;
+  vector-effect: non-scaling-stroke;
+  stroke-width: 2.2px;
+  stroke-dasharray: 6 3;
+  transition: fill 0.2s, stroke 0.2s, stroke-width 0.2s, filter 0.2s;
+}
+
+.ecu-hotspot-zone:hover {
+  stroke-width: 3.2px;
+  stroke-dasharray: none;
+}
+
+.ecu-hotspot-zone.active {
+  stroke-width: 3.8px;
+  stroke-dasharray: none;
+}
+
+/* Admin Banner - Compact Sleek Side HUD Bar (Never blocks PCB) */
 .console-ecu-editor-banner {
   position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 208, 0, 0.95);
-  color: #000;
-  padding: 6px 18px;
-  border-radius: 20px;
-  font-weight: 700;
-  font-size: 0.82rem;
-  box-shadow: 0 4px 15px rgba(255, 208, 0, 0.4);
+  top: 10px;
+  left: 12px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.76rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 240, 255, 0.15);
   z-index: 50;
   display: flex;
   align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+  flex-wrap: wrap;
 }
 
 /* Slide-in / Floating Info Drawer - Sleek, Compact & Space-Saving */
@@ -1653,5 +1685,18 @@
 
 .console-ecu-svg-overlay.drawing-mode {
   touch-action: none !important;
+}
+
+.console-ecu-svg-overlay.drawing-mode #consoleEcuHotspotsGroup {
+  pointer-events: none !important;
+}
+
+.console-ecu-svg-overlay.drawing-mode .ecu-hotspot-zone {
+  opacity: 0.45 !important;
+  stroke-dasharray: 4 4 !important;
+}
+
+.console-ecu-svg-overlay.drawing-mode #consoleEcuActiveLeaderLine {
+  pointer-events: none !important;
 }
 
