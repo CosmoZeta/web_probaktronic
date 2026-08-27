@@ -781,64 +781,123 @@
 
     // Standardized Technical Display Labels for Component Categories
     const ECU_FRIENDLY_TYPES = {
-      'Almacenamiento & Seguridad': 'MEMORIA EEPROM / FLASH',
-      'Procesamiento Central': 'MICROCONTROLADOR (MCU)',
-      'Actuadores de Potencia': 'DRIVER DE POTENCIA',
-      'Alimentación Interna': 'REGULADOR DE VOLTAJE',
-      'Comunicaciones': 'TRANSCEIVER CAN-BUS',
-      'Sensores & Entradas': 'ENTRADA DE SENSORES',
-      'Conexionado': 'CONEXIONADO / PINES'
+      'EEPROM / Memoria': 'MEMORIA EEPROM / FLASH',
+      'Microprocesador': 'MICROPROCESADOR (MCU)',
+      'Inyectores': 'DRIVER DE INYECTORES',
+      'Bobinas': 'DRIVER DE BOBINAS / IGNICIÓN',
+      'Voltaje': 'REGULADOR DE VOLTAJE',
+      'Diodos': 'DIODOS / PROTECCIÓN',
+      'EFI': 'ALIMENTACIÓN PRINCIPAL EFI',
+      'Driver Sensor': 'DRIVER DE SENSORES',
+      'Transistor': 'TRANSISTOR / MOSFET SMD',
+      'Resistencia': 'RESISTENCIA SMD',
+      'Cristal': 'CRISTAL OSCILADOR',
+      'Condensador': 'CONDENSADOR SMD'
+    };
+
+    const CATEGORY_ALIASES = {
+      'Almacenamiento & Seguridad': 'EEPROM / Memoria',
+      'Procesamiento Central': 'Microprocesador',
+      'Actuadores de Potencia': 'Inyectores',
+      'Alimentación Interna': 'Voltaje',
+      'Comunicaciones': 'Diodos',
+      'Sensores & Entradas': 'Driver Sensor',
+      'Conexionado': 'Microprocesador'
     };
 
     // Standardized Automotive Color Habit Mapping
     const ECU_CATEGORY_THEMES = {
-      'Almacenamiento & Seguridad': {
+      'EEPROM / Memoria': {
         name: 'Memoria EEPROM / Flash',
         color: '#A855F7',
         glow: '#C084FC',
-        fill: 'rgba(168, 85, 247, 0.16)',
+        fill: 'rgba(168, 85, 247, 0.18)',
         icon: 'bi-memory'
       },
-      'Procesamiento Central': {
+      'Microprocesador': {
         name: 'Microprocesador / MCU',
-        color: '#F59E0B',
-        glow: '#FCD34D',
-        fill: 'rgba(245, 158, 11, 0.16)',
+        color: '#94A3B8',
+        glow: '#CBD5E1',
+        fill: 'rgba(148, 163, 184, 0.18)',
         icon: 'bi-cpu-fill'
       },
-      'Actuadores de Potencia': {
-        name: 'Driver / Potencia',
-        color: '#EF4444',
-        glow: '#F87171',
-        fill: 'rgba(239, 68, 68, 0.16)',
-        icon: 'bi-lightning-charge-fill'
-      },
-      'Alimentación Interna': {
-        name: 'Regulador / Power IC',
+      'Inyectores': {
+        name: 'Driver Inyectores',
         color: '#10B981',
         glow: '#34D399',
-        fill: 'rgba(16, 185, 129, 0.16)',
+        fill: 'rgba(16, 185, 129, 0.18)',
+        icon: 'bi-fuel-pump-fill'
+      },
+      'Bobinas': {
+        name: 'Driver Bobinas / Ignición',
+        color: '#EAB308',
+        glow: '#FDE047',
+        fill: 'rgba(234, 179, 8, 0.18)',
+        icon: 'bi-lightning-charge-fill'
+      },
+      'Voltaje': {
+        name: 'Regulador / Voltaje Power',
+        color: '#EF4444',
+        glow: '#F87171',
+        fill: 'rgba(239, 68, 68, 0.18)',
         icon: 'bi-battery-charging'
       },
-      'Comunicaciones': {
-        name: 'Transceiver CAN / K-Line',
+      'Diodos': {
+        name: 'Diodos / Protección',
         color: '#06B6D4',
         glow: '#38BDF8',
-        fill: 'rgba(6, 182, 212, 0.16)',
-        icon: 'bi-broadcast'
+        fill: 'rgba(6, 182, 212, 0.18)',
+        icon: 'bi-shield-shaded'
       },
-      'Conexionado': {
-        name: 'Pines / Conector',
-        color: '#94A3B8',
-        glow: '#E2E8F0',
-        fill: 'rgba(148, 163, 184, 0.16)',
-        icon: 'bi-plug-fill'
+      'EFI': {
+        name: 'Alimentación Principal EFI',
+        color: '#2563EB',
+        glow: '#60A5FA',
+        fill: 'rgba(37, 99, 235, 0.20)',
+        icon: 'bi-power'
+      },
+      'Driver Sensor': {
+        name: 'Driver / Procesador de Sensores',
+        color: '#F97316',
+        glow: '#FB923C',
+        fill: 'rgba(249, 115, 22, 0.18)',
+        icon: 'bi-activity'
+      },
+      'Transistor': {
+        name: 'Transistor / MOSFET SMD',
+        color: '#F8FAFC',
+        glow: '#FFFFFF',
+        fill: 'rgba(248, 250, 252, 0.18)',
+        icon: 'bi-diagram-3-fill'
+      },
+      'Resistencia': {
+        name: 'Resistencia SMD / Shunt',
+        color: '#D97706',
+        glow: '#FBBF24',
+        fill: 'rgba(217, 119, 6, 0.18)',
+        icon: 'bi-slash-lg'
+      },
+      'Cristal': {
+        name: 'Cristal Oscilador / Reloj',
+        color: '#EC4899',
+        glow: '#F472B6',
+        fill: 'rgba(236, 72, 153, 0.18)',
+        icon: 'bi-gem'
+      },
+      'Condensador': {
+        name: 'Condensador / Filtro',
+        color: '#14B8A6',
+        glow: '#2DD4BF',
+        fill: 'rgba(20, 184, 166, 0.18)',
+        icon: 'bi-dash-lg'
       }
     };
 
     function getCategoryTheme(category) {
-      return ECU_CATEGORY_THEMES[category] || {
-        name: category || 'Componente',
+      let cat = category || 'EEPROM / Memoria';
+      if (CATEGORY_ALIASES[cat]) cat = CATEGORY_ALIASES[cat];
+      return ECU_CATEGORY_THEMES[cat] || {
+        name: cat,
         color: '#00F0FF',
         glow: '#00F0FF',
         fill: 'rgba(0, 240, 255, 0.16)',
@@ -1229,10 +1288,11 @@
         if (d) d.style.fill = theme.glow;
       }
 
-      // Draw SVG Leader Line from chip to the right edge of stage
+      // Draw SVG Leader Line from chip to the closest edge of stage
+      const isLeftSide = comp.pinX < 500;
       const startX = comp.pinX;
       const startY = comp.pinY;
-      const targetX = 990;
+      const targetX = isLeftSide ? 20 : 990;
       const targetY = Math.max(80, Math.min(comp.pinY, 1000));
       const midX = startX + (targetX - startX) * 0.5;
 

@@ -3187,75 +3187,120 @@ let ecuDrawStartY = 0;
 let tempEcuBoxData = null;
 let currentEcuStorageKey = 'default_ecu_2kd';
 
-// Standardized Automotive Color Habit Mapping for ECU Components
+// Standardized Automotive Color Habit Mapping for ECU Components (12 Categorías Profesionales)
 const ECU_CATEGORY_THEMES = {
-  'Almacenamiento & Seguridad': {
-    name: 'Memoria EEPROM / Flash / Inmo',
+  'EEPROM / Memoria': {
+    name: 'Memoria EEPROM / Flash',
     color: '#A855F7',
     glow: '#C084FC',
-    fill: 'rgba(168, 85, 247, 0.16)',
-    badgeClass: 'badge-eeprom',
+    fill: 'rgba(168, 85, 247, 0.18)',
     icon: 'bi-memory'
   },
-  'Procesamiento Central': {
-    name: 'Microprocesador / MCU Principal',
-    color: '#F59E0B',
-    glow: '#FCD34D',
-    fill: 'rgba(245, 158, 11, 0.16)',
-    badgeClass: 'badge-mcu',
+  'Microprocesador': {
+    name: 'Microprocesador / MCU',
+    color: '#94A3B8',
+    glow: '#CBD5E1',
+    fill: 'rgba(148, 163, 184, 0.18)',
     icon: 'bi-cpu-fill'
   },
-  'Actuadores de Potencia': {
-    name: 'Actuador / Driver de Potencia',
-    color: '#EF4444',
-    glow: '#F87171',
-    fill: 'rgba(239, 68, 68, 0.16)',
-    badgeClass: 'badge-driver',
-    icon: 'bi-lightning-charge-fill'
-  },
-  'Alimentación Interna': {
-    name: 'Regulador / Power IC',
+  'Inyectores': {
+    name: 'Driver Inyectores',
     color: '#10B981',
     glow: '#34D399',
-    fill: 'rgba(16, 185, 129, 0.16)',
-    badgeClass: 'badge-power',
+    fill: 'rgba(16, 185, 129, 0.18)',
+    icon: 'bi-fuel-pump-fill'
+  },
+  'Bobinas': {
+    name: 'Driver Bobinas / Ignición',
+    color: '#EAB308',
+    glow: '#FDE047',
+    fill: 'rgba(234, 179, 8, 0.18)',
+    icon: 'bi-lightning-charge-fill'
+  },
+  'Voltaje': {
+    name: 'Regulador / Voltaje Power',
+    color: '#EF4444',
+    glow: '#F87171',
+    fill: 'rgba(239, 68, 68, 0.18)',
     icon: 'bi-battery-charging'
   },
-  'Comunicaciones': {
-    name: 'Transceiver CAN / K-Line',
+  'Diodos': {
+    name: 'Diodos / Protección',
     color: '#06B6D4',
     glow: '#38BDF8',
-    fill: 'rgba(6, 182, 212, 0.16)',
-    badgeClass: 'badge-comms',
-    icon: 'bi-broadcast'
+    fill: 'rgba(6, 182, 212, 0.18)',
+    icon: 'bi-shield-shaded'
   },
-  'Sensores & Entradas': {
-    name: 'Entradas de Sensores',
+  'EFI': {
+    name: 'Alimentación Principal EFI',
+    color: '#2563EB',
+    glow: '#60A5FA',
+    fill: 'rgba(37, 99, 235, 0.20)',
+    icon: 'bi-power'
+  },
+  'Driver Sensor': {
+    name: 'Driver / Procesador de Sensores',
     color: '#F97316',
     glow: '#FB923C',
-    fill: 'rgba(249, 115, 22, 0.16)',
-    badgeClass: 'badge-sensors',
+    fill: 'rgba(249, 115, 22, 0.18)',
     icon: 'bi-activity'
   },
-  'Conexionado': {
-    name: 'Pines / Conexionado',
-    color: '#94A3B8',
-    glow: '#E2E8F0',
-    fill: 'rgba(148, 163, 184, 0.16)',
-    badgeClass: 'badge-conn',
-    icon: 'bi-plug-fill'
+  'Transistor': {
+    name: 'Transistor / MOSFET SMD',
+    color: '#F8FAFC',
+    glow: '#FFFFFF',
+    fill: 'rgba(248, 250, 252, 0.18)',
+    icon: 'bi-diagram-3-fill'
+  },
+  'Resistencia': {
+    name: 'Resistencia SMD / Shunt',
+    color: '#D97706',
+    glow: '#FBBF24',
+    fill: 'rgba(217, 119, 6, 0.18)',
+    icon: 'bi-slash-lg'
+  },
+  'Cristal': {
+    name: 'Cristal Oscilador / Reloj',
+    color: '#EC4899',
+    glow: '#F472B6',
+    fill: 'rgba(236, 72, 153, 0.18)',
+    icon: 'bi-gem'
+  },
+  'Condensador': {
+    name: 'Condensador / Filtro',
+    color: '#14B8A6',
+    glow: '#2DD4BF',
+    fill: 'rgba(20, 184, 166, 0.18)',
+    icon: 'bi-dash-lg'
   }
 };
+window.ECU_CATEGORY_THEMES = ECU_CATEGORY_THEMES;
+
+const CATEGORY_ALIASES = {
+  'Almacenamiento & Seguridad': 'EEPROM / Memoria',
+  'Procesamiento Central': 'Microprocesador',
+  'Actuadores de Potencia': 'Inyectores',
+  'Alimentación Interna': 'Voltaje',
+  'Comunicaciones': 'Diodos',
+  'Sensores & Entradas': 'Driver Sensor',
+  'Conexionado': 'Microprocesador'
+};
+window.CATEGORY_ALIASES = CATEGORY_ALIASES;
 
 // Standardized Technical Display Labels for Component Categories
 const ECU_FRIENDLY_TYPES = {
-  'Almacenamiento & Seguridad': 'MEMORIA EEPROM / FLASH',
-  'Procesamiento Central': 'MICROCONTROLADOR (MCU)',
-  'Actuadores de Potencia': 'DRIVER DE POTENCIA',
-  'Alimentación Interna': 'REGULADOR DE VOLTAJE',
-  'Comunicaciones': 'TRANSCEIVER CAN-BUS',
-  'Sensores & Entradas': 'ENTRADA DE SENSORES',
-  'Conexionado': 'CONEXIONADO / PINES'
+  'EEPROM / Memoria': 'MEMORIA EEPROM / FLASH',
+  'Microprocesador': 'MICROPROCESADOR (MCU)',
+  'Inyectores': 'DRIVER DE INYECTORES',
+  'Bobinas': 'DRIVER DE BOBINAS / IGNICIÓN',
+  'Voltaje': 'REGULADOR DE VOLTAJE',
+  'Diodos': 'DIODOS / PROTECCIÓN',
+  'EFI': 'ALIMENTACIÓN PRINCIPAL EFI',
+  'Driver Sensor': 'DRIVER DE SENSORES',
+  'Transistor': 'TRANSISTOR / MOSFET SMD',
+  'Resistencia': 'RESISTENCIA SMD',
+  'Cristal': 'CRISTAL OSCILADOR',
+  'Condensador': 'CONDENSADOR SMD'
 };
 window.ECU_FRIENDLY_TYPES = ECU_FRIENDLY_TYPES;
 
@@ -3263,9 +3308,9 @@ window.onAdminEcuCategoryChange = function() {
   const catEl = document.getElementById('adminEcuCompCategory');
   const tipoEl = document.getElementById('adminEcuCompTipo');
   if (catEl && tipoEl) {
-    const friendly = ECU_FRIENDLY_TYPES[catEl.value] || '';
+    const canonicalCat = CATEGORY_ALIASES[catEl.value] || catEl.value;
+    const friendly = ECU_FRIENDLY_TYPES[canonicalCat] || '';
     const currentVal = (tipoEl.value || '').trim().toUpperCase();
-    // If empty or matches any existing standard category default, auto-update
     if (!currentVal || Object.values(ECU_FRIENDLY_TYPES).includes(currentVal) || Object.keys(ECU_FRIENDLY_TYPES).includes(currentVal)) {
       tipoEl.value = friendly;
     }
@@ -3283,17 +3328,19 @@ window.getEcuComponentTheme = function(comp) {
     };
   }
 
+  let cat = comp.category || 'EEPROM / Memoria';
+  if (CATEGORY_ALIASES[cat]) cat = CATEGORY_ALIASES[cat];
+
   if (comp.customColor && comp.customColor !== 'auto') {
     return {
-      name: comp.category || 'Componente',
+      name: cat,
       color: comp.customColor,
       glow: comp.customColor,
       fill: comp.customColor + '26',
-      icon: (ECU_CATEGORY_THEMES[comp.category] && ECU_CATEGORY_THEMES[comp.category].icon) || 'bi-cpu-fill'
+      icon: (ECU_CATEGORY_THEMES[cat] && ECU_CATEGORY_THEMES[cat].icon) || 'bi-cpu-fill'
     };
   }
 
-  const cat = comp.category || 'Almacenamiento & Seguridad';
   return ECU_CATEGORY_THEMES[cat] || {
     name: cat,
     color: '#00F0FF',
@@ -3309,7 +3356,8 @@ window.updateEcuColorPickerPreview = function() {
   const previewEl = document.getElementById('adminEcuColorPreviewBox');
   if (!catEl) return;
 
-  const cat = catEl.value;
+  let cat = catEl.value;
+  if (CATEGORY_ALIASES[cat]) cat = CATEGORY_ALIASES[cat];
   const theme = ECU_CATEGORY_THEMES[cat] || { color: '#00F0FF', glow: '#00F0FF', fill: 'rgba(0,240,255,0.15)' };
 
   if (colorEl) {
@@ -3471,7 +3519,7 @@ function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
       id: 'ecu_comp_mcu',
       name: 'Microcontrolador Principal (MCU)',
       code: 'DENSO / TOSHIBA 32-Bit QFP',
-      category: 'Procesamiento Central',
+      category: 'Microprocesador',
       x: Math.round(580 * scaleX), y: Math.round(155 * scaleY),
       width: Math.round(220 * scaleX), height: Math.round(230 * scaleY),
       pinX: Math.round(690 * scaleX), pinY: Math.round(270 * scaleY),
@@ -3484,7 +3532,7 @@ function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
       id: 'ecu_comp_eeprom',
       name: 'Memoria Flash / EEPROM',
       code: '93C86 / 25Cxxx SPI',
-      category: 'Almacenamiento & Seguridad',
+      category: 'EEPROM / Memoria',
       x: Math.round(260 * scaleX), y: Math.round(170 * scaleY),
       width: Math.round(170 * scaleX), height: Math.round(130 * scaleY),
       pinX: Math.round(345 * scaleX), pinY: Math.round(235 * scaleY),
@@ -3497,7 +3545,7 @@ function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
       id: 'ecu_comp_drivers',
       name: 'Driver Etapa Inyectores Common Rail',
       code: 'SE555 / MOSFET Driver Array',
-      category: 'Actuadores de Potencia',
+      category: 'Inyectores',
       x: Math.round(235 * scaleX), y: Math.round(535 * scaleY),
       width: Math.round(170 * scaleX), height: Math.round(100 * scaleY),
       pinX: Math.round(320 * scaleX), pinY: Math.round(585 * scaleY),
@@ -3646,6 +3694,37 @@ async function saveEcuHotspotsToStorage() {
   }
 }
 
+// Dynamic Adaptive Legend for ECU Components (Only show present categories)
+window.renderEcuColorLegend = function() {
+  const container = document.getElementById('consoleEcuColorLegend');
+  const itemsContainer = document.getElementById('consoleEcuColorLegendItems');
+  if (!container || !itemsContainer) return;
+
+  const presentCategories = new Set();
+  currentEcuHotspots.forEach(comp => {
+    let cat = comp.category;
+    if (CATEGORY_ALIASES[cat]) cat = CATEGORY_ALIASES[cat];
+    if (cat && ECU_CATEGORY_THEMES[cat]) {
+      presentCategories.add(cat);
+    }
+  });
+
+  if (presentCategories.size === 0) {
+    itemsContainer.innerHTML = '<span class="text-white-50 small fst-italic" style="font-size: 0.75rem;">Sin componentes registrados</span>';
+    return;
+  }
+
+  itemsContainer.innerHTML = Array.from(presentCategories).map(cat => {
+    const theme = ECU_CATEGORY_THEMES[cat];
+    const friendlyName = ECU_FRIENDLY_TYPES[cat] || cat;
+    return `
+      <span class="badge" style="background: ${theme.fill}; border: 1px solid ${theme.color}; color: ${theme.glow}; font-size: 0.72rem; font-weight: 600; padding: 4px 8px; border-radius: 6px;">
+        <i class="bi bi-square-fill me-1" style="color: ${theme.color};"></i>${friendlyName}
+      </span>
+    `;
+  }).join('');
+};
+
 // Render SVG Hotspot Nodes with Color Habit Theme
 function renderEcuHotspots() {
   const group = document.getElementById('consoleEcuHotspotsGroup');
@@ -3701,9 +3780,12 @@ function renderEcuHotspots() {
     g.appendChild(pinG);
     group.appendChild(g);
   });
+
+  // Dynamically update adaptive legend
+  window.renderEcuColorLegend();
 }
 
-// Select Component & Show Details + Animated Leader Line
+// Select Component & Show Details + Animated Leader Line (Smart Closest-Side Placement)
 window.selectEcuComponent = function(comp) {
   activeEcuComponentId = comp.id;
   const theme = window.getEcuComponentTheme(comp);
@@ -3754,13 +3836,27 @@ window.selectEcuComponent = function(comp) {
     if (d) d.style.fill = theme.glow;
   }
 
-  // Draw Leader Line in Component Category Color
+  // Smart Closest-Side Positioning (Left vs Right):
+  const svg = document.getElementById('consoleEcuSvgOverlay');
+  const vb = svg ? svg.viewBox.baseVal : { width: 1000, height: 1094 };
+  const isLeftSide = comp.pinX < (vb.width / 2);
+
+  // Position Drawer on closest side on desktop
+  if (drawer && window.innerWidth > 768) {
+    if (isLeftSide) {
+      drawer.style.left = '15px';
+      drawer.style.right = 'auto';
+    } else {
+      drawer.style.right = '15px';
+      drawer.style.left = 'auto';
+    }
+  }
+
+  // Draw Leader Line in Component Category Color to closest edge
   if (line) {
-    const svg = document.getElementById('consoleEcuSvgOverlay');
-    const vb = svg ? svg.viewBox.baseVal : { width: 1000, height: 1094 };
     const startX = comp.pinX;
     const startY = comp.pinY;
-    const targetX = Math.round(vb.width * 0.98);
+    const targetX = isLeftSide ? Math.round(vb.width * 0.02) : Math.round(vb.width * 0.98);
     const targetY = Math.max(60, Math.min(comp.pinY, vb.height - 60));
     const midX = Math.round(startX + (targetX - startX) * 0.5);
 
@@ -3772,7 +3868,9 @@ window.selectEcuComponent = function(comp) {
 
   // Populate Rich Technical Drawer with Title Subtitle and Conditional Section Rendering
   if (drawer && drawerTitle && drawerContent) {
-    const defaultFriendly = window.ECU_FRIENDLY_TYPES[comp.category] || comp.category || 'COMPONENTE';
+    let cat = comp.category || 'EEPROM / Memoria';
+    if (CATEGORY_ALIASES[cat]) cat = CATEGORY_ALIASES[cat];
+    const defaultFriendly = window.ECU_FRIENDLY_TYPES[cat] || cat;
     const rawSubLabel = (comp.tipo && comp.tipo.trim() !== '') ? comp.tipo.trim() : defaultFriendly;
     const subLabel = rawSubLabel.toUpperCase();
     drawerTitle.innerHTML = `<span class="text-white font-rajdhani fw-bold me-1">${comp.name || 'COMPONENTE'}</span> <span class="text-white-50 mx-1">&bull;</span> <span class="font-rajdhani fw-bold" style="color: ${theme.glow}; font-size: 0.95rem;">${subLabel}</span>`;
@@ -3838,7 +3936,7 @@ window.selectEcuComponent = function(comp) {
     drawerContent.innerHTML = `
       <div class="d-flex flex-wrap align-items-center gap-1 mb-2">
         <span class="badge" style="background: ${theme.fill}; color: ${theme.glow}; border: 1px solid ${theme.color}; font-size: 0.78rem; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.5px;">
-          <i class="bi ${theme.icon} me-1"></i> ${comp.category || 'Componente'}
+          <i class="bi ${theme.icon} me-1"></i> ${defaultFriendly}
         </span>
         ${mfgBadge}
         ${pkgBadge}
@@ -3901,11 +3999,14 @@ window.editActiveEcuComponent = function() {
   const failEl = document.getElementById('adminEcuCompFallas');
   const colorEl = document.getElementById('adminEcuCompCustomColor');
 
-  const defaultFriendly = window.ECU_FRIENDLY_TYPES[comp.category] || '';
+  let cat = comp.category || 'EEPROM / Memoria';
+  if (CATEGORY_ALIASES[cat]) cat = CATEGORY_ALIASES[cat];
+  const defaultFriendly = window.ECU_FRIENDLY_TYPES[cat] || '';
+
   if (nameEl) nameEl.value = comp.name || '';
   if (tipoEl) tipoEl.value = comp.tipo || defaultFriendly;
   if (codeEl) codeEl.value = (comp.code === 'N/A' ? '' : comp.code) || '';
-  if (catEl) catEl.value = comp.category || 'Almacenamiento & Seguridad';
+  if (catEl) catEl.value = cat;
   if (mfgEl) mfgEl.value = comp.manufacturer || '';
   if (pkgEl) pkgEl.value = comp.package || '';
   if (checkCtrl) checkCtrl.checked = (comp.show_controla !== false);
@@ -3932,7 +4033,7 @@ window.editActiveEcuComponent = function() {
   }
 };
 
-// Quick Template Preset Loader for Fast & Detailed Mapping
+// Quick Template Preset Loader for Fast & Detailed Mapping (12 Plantillas Específicas)
 window.applyEcuTemplate = function(type) {
   const nameEl = document.getElementById('adminEcuCompName');
   const tipoEl = document.getElementById('adminEcuCompTipo');
@@ -3950,83 +4051,161 @@ window.applyEcuTemplate = function(type) {
   const failEl = document.getElementById('adminEcuCompFallas');
 
   const templates = {
-    driver_inyectores: {
-      name: 'Driver Inyectores',
-      tipo: 'DRIVER DE POTENCIA',
+    eeprom: {
+      name: 'Memoria EEPROM / Inmovilizador',
+      tipo: 'MEMORIA EEPROM / FLASH',
+      code: '93C86 / 25Cxxx SPI',
+      cat: 'EEPROM / Memoria',
+      mfg: 'ST / Microchip',
+      pkg: 'SOIC-8',
+      fun: 'Almacena codificación de llaves transponder (Inmovilizador), VIN del vehículo y tablas de calibración.',
+      volt: 'VCC: +5.0V en Pin 8',
+      pin: 'Pin 1: CS &bull; Pin 4: GND &bull; Pin 8: VCC 5V',
+      dtcs: 'B2799, P1600, B2796',
+      fail: 'Bloqueo de arranque del motor, testigo de seguridad parpadea, pérdida de sincronización de llaves.'
+    },
+    microprocesador: {
+      name: 'Microprocesador Principal (MCU)',
+      tipo: 'MICROPROCESADOR (MCU)',
+      code: 'DENSO 32-Bit / Renesas SH7058',
+      cat: 'Microprocesador',
+      mfg: 'Renesas / Toshiba',
+      pkg: 'QFP-144 / QFP-176',
+      fun: 'Unidad central de cálculo de la computadora. Procesa señales de sensores en tiempo real y ejecuta mapas de inyección y avance.',
+      volt: 'VCC: 5.00V ±0.05V / Núcleo: 3.3V',
+      pin: 'Pines VCC (+5V) &bull; Cristal: 20MHz',
+      dtcs: 'P0606, P0607, P1600',
+      fail: 'Vehículo no arranca, no enciende Check Engine, sin comunicación con escáner OBD2.'
+    },
+    inyectores: {
+      name: 'Driver de Inyectores Common Rail',
+      tipo: 'DRIVER DE INYECTORES',
       code: 'SE555 / MOSFET Array',
-      cat: 'Actuadores de Potencia',
+      cat: 'Inyectores',
       mfg: 'Denso / Bosch',
       pkg: 'Power SOIC / QFP',
-      fun: 'Comanda los pulsos de apertura y cierre de los inyectores electrohidráulicos mediante descarga de alta tensión y mantenimiento de corriente PWM.',
-      volt: 'Disparo: 80V DC &bull; Retorno: 12V',
+      fun: 'Comanda los pulsos de apertura y cierre de los inyectores electrohidráulicos mediante descarga de alta tensión (80V) y mantenimiento de corriente PWM.',
+      volt: 'Disparo: 80V DC &bull; Retorno PWM: 12V',
       pin: 'Gate: 5V Lógica &bull; Drain: Señal a Inyector',
       dtcs: 'P0201, P0202, P0203, P0204',
       fail: 'Fallo de cilindro (Misfire), motor sin fuerza, humo negro denso, inyector bloqueado.'
     },
-    mcu_procesador: {
-      name: 'Microprocesador Principal',
-      tipo: 'MICROCONTROLADOR (MCU)',
-      code: 'DENSO 32-Bit / Renesas SH7058',
-      cat: 'Procesamiento Central',
-      mfg: 'Renesas / Toshiba',
-      pkg: 'QFP-144 / QFP-176',
-      fun: 'Unidad central de cálculo de la ECU. Procesa señales de sensores en tiempo real (CKP, CMP, MAP, TPS) y comanda inyección y avance.',
-      volt: 'VCC: 5.00V ±0.05V / Núcleo: 3.3V',
-      pin: 'Pines 1, 36, 72: VCC (+5V) &bull; Cristal: 20MHz',
-      dtcs: 'P0606, P0607, P1600',
-      fail: 'Vehículo no arranca, no enciende testigo Check Engine, sin comunicación OBD2.'
+    bobinas: {
+      name: 'Driver de Bobinas de Encendido',
+      tipo: 'DRIVER DE BOBINAS / IGNICIÓN',
+      code: 'IGBT Array / Power Driver',
+      cat: 'Bobinas',
+      mfg: 'ST / Infineon',
+      pkg: 'D2PAK / TO-252',
+      fun: 'Comanda el disparo de chispa de alta tensión hacia las bobinas de ignición.',
+      volt: 'Disparo: 5V Lógica &bull; Alimentación: 12V',
+      pin: 'Gate: Disparo 5V &bull; Colector: Salida Bobina',
+      dtcs: 'P0351, P0352, P0353, P0354',
+      fail: 'Sin chispa en cilindro, motor tiembla intensamente, explosiones en admisión.'
     },
-    eeprom_immo: {
-      name: 'Memoria Inmovilizador',
-      tipo: 'MEMORIA EEPROM / FLASH',
-      code: '93C86 / 25Cxxx SPI',
-      cat: 'Almacenamiento & Seguridad',
-      mfg: 'ST / Microchip',
-      pkg: 'SOIC-8',
-      fun: 'Almacena la codificación del transponder (Llaves/Inmovilizador), VIN del vehículo y mapas de calibración.',
-      volt: 'VCC: +5.0V en Pin 8',
-      pin: 'Pin 1: CS &bull; Pin 4: GND &bull; Pin 8: VCC 5V',
-      dtcs: 'B2799, P1600, B2796',
-      fail: 'Bloqueo de arranque del motor, testigo de seguridad parpadea, pérdida de llaves.'
-    },
-    power_regulator: {
-      name: 'Regulador Multi-Voltaje',
+    voltaje: {
+      name: 'Regulador Multi-Voltaje & Power IC',
       tipo: 'REGULADOR DE VOLTAJE',
-      code: 'SE587 / System Power IC',
-      cat: 'Alimentación Interna',
+      code: 'SE587 / System Power Management',
+      cat: 'Voltaje',
       mfg: 'Denso / Infineon',
       pkg: 'Power QFP-44',
-      fun: 'Convierte +12V de batería en fuentes reguladas ultra-estables de +5.0V para sensores de motor y +3.3V para procesador.',
-      volt: 'Entrada: +12V BATT &bull; Salida: +5.00V ±0.02V',
+      fun: 'Convierte +12V de batería en fuentes reguladas de +5.0V para sensores de motor y +3.3V para procesador.',
+      volt: 'Entrada: +12V BATT &bull; Salida VREF: +5.00V ±0.02V',
       pin: 'V_IN: 12V Ignición &bull; VREF: 5.0V Sensores',
       dtcs: 'P0641, P0651, P0685',
-      fail: 'Sensores de motor marcan 0V o 5V fijo, códigos de sobretensión.'
+      fail: 'Sensores de motor marcan 0V o 5V fijo, códigos de sobretensión, cortes intermitentes.'
     },
-    transceiver_can: {
-      name: 'Transceiver CAN-Bus',
-      tipo: 'TRANSCEIVER CAN-BUS',
-      code: 'PCA82C250 / TJA1050',
-      cat: 'Comunicaciones',
-      mfg: 'NXP / Texas Instruments',
-      pkg: 'SOIC-8',
-      fun: 'Convierte tramas lógicas del microprocesador en señales diferenciales para la red CAN del vehículo y puerto OBD2.',
-      volt: 'VCC: 5.0V &bull; CAN-H: 2.5V-3.5V &bull; CAN-L: 1.5V-2.5V',
-      pin: 'Pin 1: TXD &bull; Pin 6: CAN-L &bull; Pin 7: CAN-H',
-      dtcs: 'U0100, U0001, U1000',
-      fail: 'Sin comunicación entre módulos, escáner marca "Error de Enlace".'
+    diodos: {
+      name: 'Diodo de Protección / Transceiver CAN',
+      tipo: 'DIODOS / PROTECCIÓN',
+      code: 'TVS Diode Array / TJA1050',
+      cat: 'Diodos',
+      mfg: 'Vishay / NXP',
+      pkg: 'SMB / SOT-23',
+      fun: 'Protección contra picos de voltaje transitorios y supresión de sobretensiones en líneas de datos OBD2.',
+      volt: 'Tensión de ruptura: 18V - 24V',
+      pin: 'Ánodo: GND &bull; Cátodo: Línea 12V / CAN',
+      dtcs: 'U0100, P0685',
+      fail: 'Cortocircuito a masa, fusible principal quemado, error de enlace OBD2.'
     },
-    scv_mosfet: {
-      name: 'MOSFET Válvula SCV',
-      tipo: 'DRIVER DE POTENCIA',
-      code: 'Power MOSFET N-Channel',
-      cat: 'Actuadores de Potencia',
+    efi: {
+      name: 'Circuito de Alimentación Principal EFI',
+      tipo: 'ALIMENTACIÓN PRINCIPAL EFI',
+      code: 'EFI Main Relay Driver',
+      cat: 'EFI',
+      mfg: 'Denso / Toyota',
+      pkg: 'TO-263 / Power IC',
+      fun: 'Controla la activación del relé principal EFI y la alimentación general de la ECU tras el contacto de llave.',
+      volt: 'Entrada BATT: 12.6V &bull; Control: GND activo',
+      pin: 'M-REL: 12V &bull; IGSW: 12V',
+      dtcs: 'P0685, P0686',
+      fail: 'No activa relé principal, ECU completamente apagada sin respuesta.'
+    },
+    driver_sensor: {
+      name: 'Driver de Sensores CKP / CMP',
+      tipo: 'DRIVER DE SENSORES',
+      code: 'Sensor Interface IC',
+      cat: 'Driver Sensor',
+      mfg: 'Denso / ST',
+      pkg: 'SOIC-16',
+      fun: 'Acondiciona y digitaliza señales inductivas o Hall de cigüeñal y árbol de levas para el MCU.',
+      volt: 'VCC: 5.0V &bull; Señal: 0V - 5V Digital',
+      pin: 'NE+: Entrada CKP &bull; G+: Entrada CMP',
+      dtcs: 'P0335, P0340',
+      fail: 'Motor gira pero no arranca, sin pulso de inyección, tacómetro no marca RPM.'
+    },
+    transistor: {
+      name: 'Transistor MOSFET de Potencia SMD',
+      tipo: 'TRANSISTOR / MOSFET SMD',
+      code: 'N-Channel Power MOSFET',
+      cat: 'Transistor',
       mfg: 'Toshiba / Vishay',
-      pkg: 'SOT-223 / D2PAK',
-      fun: 'Controla la modulación PWM de la válvula de control de succión (SCV) de la bomba diésel de alta presión.',
-      volt: 'Alimentación: 12V &bull; Señal PWM: 250Hz - 1kHz',
-      pin: 'Pin 1: Gate &bull; Pin 2: Drain (Salida SCV) &bull; Pin 3: Source',
-      dtcs: 'P0087, P0088, P0093',
-      fail: 'Falta de presión en Common Rail, motor entra en modo de emergencia (Limp Mode).'
+      pkg: 'SOT-223 / DPAK',
+      fun: 'Conmutación de potencia para actuadores auxiliares (SCV, EGR, mariposa motorizada).',
+      volt: '12V / PWM',
+      pin: 'Gate: 5V &bull; Drain: Salida &bull; Source: Masa',
+      dtcs: 'P0087, P0403',
+      fail: 'Actuador no conmuta o queda permanentemente energizado.'
+    },
+    resistencia: {
+      name: 'Resistencia Shunt / Divisor de Tensión',
+      tipo: 'RESISTENCIA SMD',
+      code: 'Shunt Resistor 0.05Ω / SMD 2512',
+      cat: 'Resistencia',
+      mfg: 'Vishay / Panasonic',
+      pkg: 'SMD 2512 / 1206',
+      fun: 'Medición de corriente por caída de tensión en etapas de inyección y sensores analógicos.',
+      volt: 'Caída de mV según amperaje',
+      pin: 'Terminal A / Terminal B',
+      dtcs: 'P0200, P0606',
+      fail: 'Resistencia abierta, falso contacto, ECU detecta sobrecorriente errónea.'
+    },
+    cristal: {
+      name: 'Cristal Oscilador de Cuarzo',
+      tipo: 'CRISTAL OSCILADOR',
+      code: 'Crystal Resonator 20.000 MHz',
+      cat: 'Cristal',
+      mfg: 'Murata / NDK',
+      pkg: 'SMD Ceramic / HC-49',
+      fun: 'Genera la frecuencia de reloj maestro de sincronización para el microprocesador.',
+      volt: 'Señal Senoidal 2.5Vpp / 20.0 MHz',
+      pin: 'XTAL IN &bull; XTAL OUT &bull; GND',
+      dtcs: 'P0606, Sin Comunicación',
+      fail: 'Microprocesador no arranca (bloqueado), sin reloj del sistema.'
+    },
+    condensador: {
+      name: 'Condensador de Filtrado SMD / Tantalio',
+      tipo: 'CONDENSADOR SMD',
+      code: 'Capacitor 100uF 35V / 10uF Tantalum',
+      cat: 'Condensador',
+      mfg: 'Kemet / AVX',
+      pkg: 'SMD Case D / 1210',
+      fun: 'Filtrado de rizado de alta frecuencia y estabilización de voltaje en fuentes de alimentación.',
+      volt: 'Operación hasta 35V DC',
+      pin: 'Polo Positivo (+) &bull; Polo Negativo (-)',
+      dtcs: 'P0685, Reinicios intermitentes',
+      fail: 'Condensador en corto a masa, caídas de tensión bruscas.'
     }
   };
 
