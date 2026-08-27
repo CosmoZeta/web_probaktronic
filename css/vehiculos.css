@@ -1059,9 +1059,9 @@
 /* Diagram Stage Container (Fills the workspace with perfect watermark alignment) */
 .console-diagram-stage {
   position: relative;
-  display: block;
-  width: 96%;
-  max-width: 1300px;
+  display: inline-block;
+  max-width: 100%;
+  max-height: 100%;
   margin: auto;
   border-radius: 8px;
   overflow: hidden;
@@ -1073,8 +1073,9 @@
 
 .console-diagram-img {
   display: block;
-  width: 100%;
+  max-width: 100%;
   max-height: 78vh;
+  width: auto;
   height: auto;
   object-fit: contain;
   user-select: none;
@@ -1640,35 +1641,58 @@
   font-size: 0.76rem;
 }
 
-/* ECU Color Habit Legend Bar (Floating Adaptive Strip) */
+/* ECU Color Habit Legend Bar (Full Width Top Header Strip) */
 .ecu-color-legend {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 25;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background: rgba(15, 23, 42, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
-  border-radius: 8px;
-  max-width: calc(100% - 32px);
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 8px 16px !important;
+  background: #0d131f !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-left: none !important;
+  border-right: none !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 8px 12px !important;
+  z-index: 10;
+}
+
+.ecu-color-legend::-webkit-scrollbar {
+  display: none;
+}
+
+.ecu-color-legend #consoleEcuColorLegendItems {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 6px 10px !important;
+  flex: 1;
 }
 
 .ecu-color-legend .badge {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  padding: 4px 8px;
-  border-radius: 6px;
+  font-size: 0.76rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.4px !important;
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
-  white-space: nowrap;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
 }
 
 .ecu-color-legend .badge:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
 }
 
 /* Hide interactive ECU layer & info on mobile (<= 768px) to prevent framing/zoom issues */

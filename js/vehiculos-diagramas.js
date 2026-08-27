@@ -624,33 +624,31 @@ function getFuelTypeInfo(data, modelName, motor) {
 }
 
 async function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid, loader, cacheKey) {
-  const modelEntries = [];
-
-  for (const doc of snapshot.docs) {
+  const modelEntries = await Promise.all(snapshot.docs.map(async doc => {
     const data = doc.data() || {};
     const docId = doc.id;
 
-    // Deep subcollection inspection if combustible or motor is not explicitly on model doc
+    // Deep subcollection inspection in parallel if combustible or motor is not explicitly on model doc
     if (!data.combustible || !data.motor) {
       try {
         const aniosSnap = await doc.ref.collection('anios').get().catch(() => null);
         if (aniosSnap && !aniosSnap.empty) {
-          for (const anioDoc of aniosSnap.docs) {
+          await Promise.all(aniosSnap.docs.map(async anioDoc => {
             if (!data.anio) data.anio = anioDoc.id;
             const aData = anioDoc.data() || {};
             if (aData.combustible && !data.combustible) data.combustible = aData.combustible;
 
             const motoresSnap = await anioDoc.ref.collection('motores').get().catch(() => null);
             if (motoresSnap && !motoresSnap.empty) {
-              for (const mDoc of motoresSnap.docs) {
+              motoresSnap.docs.forEach(mDoc => {
                 const mData = mDoc.data() || {};
                 if (!data.motor) data.motor = mData.motor || mDoc.id;
                 if (!data.combustible && mData.combustible) data.combustible = mData.combustible;
                 if (mData.imagenUrl) data.ecuImageUrl = mData.imagenUrl;
                 if (!data.titulo && mData.titulo) data.titulo = mData.titulo;
-              }
+              });
             }
-          }
+          }));
         }
       } catch (errSub) {
         console.warn('Subcollection scan notice:', errSub);
@@ -666,8 +664,8 @@ async function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid,
     }
 
     window.currentModelsDataStore[docId] = data;
-    modelEntries.push({ docId, data });
-  }
+    return { docId, data };
+  }));
 
   if (cacheKey) {
     window._modelsCacheByBrand[cacheKey] = modelEntries;
@@ -3747,51 +3745,45 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
     currentEcuHotspots = archDoc.componentes_ecu;
   }
 
-  // 3. Fetch directly from the specific Firestore diagram document
-  if (currentEcuHotspots.length === 0 && archDoc.brandDocId && archDoc.modelDocId && archDoc.anioDocId && archDoc.motorDocId && archDoc.archDocId) {
+  // 3. Parallel Fetch across Firestore endpoints (Diagram doc, ecu_hotspots, ecu_interactive_hotspots)
+  if (currentEcuHotspots.length === 0 && typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
     try {
-      if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
-        const db = firebase.firestore();
+      const db = firebase.firestore();
+      const queries = [];
+
+      if (archDoc.brandDocId && archDoc.modelDocId && archDoc.anioDocId && archDoc.motorDocId && archDoc.archDocId) {
         const cleanBrand = (archDoc.brandDocId || '').toLowerCase().trim();
         const cleanModel = (archDoc.modelDocId || '').toLowerCase().trim();
-        const docSnap = await db.collection('diagramas').doc(cleanBrand)
-          .collection('modelos').doc(cleanModel)
-          .collection('anios').doc(archDoc.anioDocId)
-          .collection('motores').doc(archDoc.motorDocId)
-          .collection('archivos').doc(archDoc.archDocId).get().catch(() => null);
-
-        if (docSnap && docSnap.exists && Array.isArray(docSnap.data().componentes_ecu) && docSnap.data().componentes_ecu.length > 0) {
-          currentEcuHotspots = docSnap.data().componentes_ecu;
-        }
+        queries.push(
+          db.collection('diagramas').doc(cleanBrand)
+            .collection('modelos').doc(cleanModel)
+            .collection('anios').doc(archDoc.anioDocId)
+            .collection('motores').doc(archDoc.motorDocId)
+            .collection('archivos').doc(archDoc.archDocId).get()
+            .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu) && snap.data().componentes_ecu.length > 0) ? snap.data().componentes_ecu : null)
+            .catch(() => null)
+        );
       }
-    } catch (e) {}
-  }
 
-  // 4. Fetch from collection 'diagramas' > 'ecu_hotspots'
-  if (currentEcuHotspots.length === 0) {
-    try {
-      if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
-        const db = firebase.firestore();
-        const docSnap = await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(currentEcuStorageKey).get().catch(() => null);
-        if (docSnap && docSnap.exists && Array.isArray(docSnap.data().componentes) && docSnap.data().componentes.length > 0) {
-          currentEcuHotspots = docSnap.data().componentes;
-        }
-      }
-    } catch (e) {}
-  }
+      queries.push(
+        db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(currentEcuStorageKey).get()
+          .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
+          .catch(() => null)
+      );
 
-  // 5. Fetch from collection 'ecu_interactive_hotspots'
-  if (currentEcuHotspots.length === 0) {
-    try {
-      if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
-        const db = firebase.firestore();
-        const doc = await db.collection('ecu_interactive_hotspots').doc(currentEcuStorageKey).get().catch(() => null);
-        if (doc && doc.exists && Array.isArray(doc.data().componentes) && doc.data().componentes.length > 0) {
-          currentEcuHotspots = doc.data().componentes;
-        }
+      queries.push(
+        db.collection('ecu_interactive_hotspots').doc(currentEcuStorageKey).get()
+          .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
+          .catch(() => null)
+      );
+
+      const results = await Promise.all(queries);
+      const found = results.find(r => Array.isArray(r) && r.length > 0);
+      if (found) {
+        currentEcuHotspots = found;
       }
     } catch (err) {
-      console.warn('Firestore hotspots read warning:', err);
+      console.warn('Firestore hotspots parallel read notice:', err);
     }
   }
 
@@ -3909,7 +3901,7 @@ async function saveEcuHotspotsToStorage() {
   }
 }
 
-// Dynamic Adaptive Legend for ECU Components (Only show present categories)
+// Dynamic Adaptive Legend for ECU Components (Displays all present categories and custom colors)
 window.renderEcuColorLegend = function() {
   const container = document.getElementById('consoleEcuColorLegend');
   if (!container) return;
@@ -3918,29 +3910,44 @@ window.renderEcuColorLegend = function() {
   if (!itemsContainer) {
     itemsContainer = document.createElement('div');
     itemsContainer.id = 'consoleEcuColorLegendItems';
-    itemsContainer.className = 'd-flex flex-wrap align-items-center gap-1';
+    itemsContainer.className = 'd-flex flex-wrap align-items-center gap-2 flex-grow-1';
     container.appendChild(itemsContainer);
   }
 
-  const presentCategories = new Set();
+  const categoryMap = new Map();
   (currentEcuHotspots || []).forEach(comp => {
+    const theme = window.getEcuComponentTheme(comp);
     const cat = window.normalizeEcuCategory(comp.category || comp.tipo || comp.name);
-    if (cat && ECU_CATEGORY_THEMES[cat]) {
-      presentCategories.add(cat);
+    const friendlyName = ECU_FRIENDLY_TYPES[cat] || comp.category || comp.tipo || comp.name || cat;
+    const color = (comp.customColor && comp.customColor !== 'auto') ? comp.customColor : theme.color;
+    const fill = theme.fill || (color + '26');
+    const glow = theme.glow || color;
+    const key = `${cat}_${color}`;
+
+    if (!categoryMap.has(key)) {
+      categoryMap.set(key, {
+        categoryKey: cat,
+        label: friendlyName,
+        color: color,
+        fill: fill,
+        glow: glow,
+        icon: theme.icon || 'bi-square-fill'
+      });
     }
   });
 
-  if (presentCategories.size === 0) {
-    itemsContainer.innerHTML = '<span class="text-white-50 small fst-italic" style="font-size: 0.75rem;">Sin componentes registrados</span>';
+  if (categoryMap.size === 0) {
+    itemsContainer.innerHTML = '<span class="text-white-50 small fst-italic" style="font-size: 0.75rem;">Sin componentes registrados en esta placa</span>';
+    container.classList.remove('d-none');
+    container.style.display = 'flex';
     return;
   }
 
-  itemsContainer.innerHTML = Array.from(presentCategories).map(cat => {
-    const theme = ECU_CATEGORY_THEMES[cat];
-    const friendlyName = ECU_FRIENDLY_TYPES[cat] || cat;
+  itemsContainer.innerHTML = Array.from(categoryMap.values()).map(item => {
     return `
-      <span class="badge" style="background: ${theme.fill}; border: 1px solid ${theme.color}; color: ${theme.glow}; font-size: 0.72rem; font-weight: 600; padding: 4px 8px; border-radius: 6px; white-space: nowrap;">
-        <i class="bi bi-square-fill me-1" style="color: ${theme.color};"></i>${friendlyName}
+      <span class="badge ecu-legend-badge" data-category="${item.categoryKey}" style="background: ${item.fill}; border: 1px solid ${item.color}; color: ${item.glow}; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
+        <i class="bi bi-square-fill" style="color: ${item.color}; font-size: 0.7rem;"></i>
+        <span>${item.label}</span>
       </span>
     `;
   }).join('');
@@ -3949,37 +3956,45 @@ window.renderEcuColorLegend = function() {
   container.style.display = 'flex';
 };
 
-// Render SVG Hotspot Nodes with Color Habit Theme (Zones on base layer, Chips on top layer)
+// Render SVG Hotspot Nodes with Color Habit Theme (Strict Multi-Layer Z-Order & High Contrast)
 function renderEcuHotspots() {
   const group = document.getElementById('consoleEcuHotspotsGroup');
   if (!group) return;
   group.innerHTML = '';
 
-  // Sort: Freeform Zones on bottom layer, Chips on top layer
-  const zones = (currentEcuHotspots || []).filter(c => c.isZone || c.type === 'polygon' || c.pathD);
-  const chips = (currentEcuHotspots || []).filter(c => !(c.isZone || c.type === 'polygon' || c.pathD));
-  const sorted = [...zones, ...chips];
+  const zonesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  zonesLayer.id = 'ecuZonesBaseLayer';
+  const chipsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  chipsLayer.id = 'ecuChipsTopLayer';
+  const pinsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  pinsLayer.id = 'ecuPinsOverlayLayer';
 
-  sorted.forEach(comp => {
+  group.appendChild(zonesLayer);
+  group.appendChild(chipsLayer);
+  group.appendChild(pinsLayer);
+
+  (currentEcuHotspots || []).forEach(comp => {
     const theme = window.getEcuComponentTheme(comp);
+    const isZone = comp.isZone || comp.type === 'polygon' || comp.pathD;
+
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('data-id', comp.id);
     g.style.cursor = 'pointer';
 
-    const isZone = comp.isZone || comp.type === 'polygon' || comp.pathD;
-
     if (isZone && comp.pathD) {
-      // Freeform Zone / Stage Path
+      // 1. Freeform Zone / Stage Path (Base Layer)
       const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       pathEl.setAttribute('d', comp.pathD);
       pathEl.setAttribute('class', 'ecu-hotspot-zone');
       pathEl.id = `ecu-box-${comp.id}`;
       pathEl.style.stroke = theme.color;
-      pathEl.style.fill = theme.color + '26'; // 15% soft fill
-      pathEl.style.filter = `drop-shadow(0 0 8px ${theme.color})`;
+      pathEl.style.strokeWidth = '2px';
+      pathEl.style.fill = theme.color + '22'; // 13% soft translucent fill
+      pathEl.style.filter = `drop-shadow(0 0 6px ${theme.color})`;
       g.appendChild(pathEl);
+      zonesLayer.appendChild(g);
     } else {
-      // Individual IC Chip Box
+      // 2. Individual IC Chip Box (Top Layer with Solid High Contrast & Vibrant Glow)
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       rect.setAttribute('x', comp.x);
       rect.setAttribute('y', comp.y);
@@ -3989,12 +4004,14 @@ function renderEcuHotspots() {
       rect.setAttribute('class', 'ecu-hotspot-box');
       rect.id = `ecu-box-${comp.id}`;
       rect.style.stroke = theme.color;
-      rect.style.fill = theme.fill;
-      rect.style.filter = `drop-shadow(0 0 6px ${theme.color})`;
+      rect.style.strokeWidth = '2.5px';
+      rect.style.fill = theme.color + '44'; // 27% vivid fill so orange/chips stand out crisp over any background
+      rect.style.filter = `drop-shadow(0 0 8px ${theme.color})`;
       g.appendChild(rect);
+      chipsLayer.appendChild(g);
     }
 
-    // Pin indicator
+    // 3. Pin indicator (Upper Overlay Layer)
     const pinX = (typeof comp.pinX === 'number' && !isNaN(comp.pinX)) ? comp.pinX : Math.round((comp.x || 0) + (comp.width || 100) / 2);
     const pinY = (typeof comp.pinY === 'number' && !isNaN(comp.pinY)) ? comp.pinY : Math.round((comp.y || 0) + (comp.height || 100) / 2);
 
@@ -4007,6 +4024,7 @@ function renderEcuHotspots() {
     outerRing.setAttribute('class', 'outer-ring');
     outerRing.setAttribute('r', isZone ? '16' : '14');
     outerRing.style.stroke = theme.color;
+    outerRing.style.strokeWidth = '2px';
 
     const innerDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     innerDot.setAttribute('class', 'inner-dot');
@@ -4016,18 +4034,20 @@ function renderEcuHotspots() {
     pinG.appendChild(outerRing);
     pinG.appendChild(innerDot);
 
-    // Click handler with propagation stop so chips on top intercept click first
-    g.addEventListener('click', (e) => {
+    // Event listeners
+    const triggerSelect = (e) => {
       if (isEcuEditorMode) return;
       e.stopPropagation();
       window.selectEcuComponent(comp);
-    });
+    };
 
-    g.appendChild(pinG);
-    group.appendChild(g);
+    g.addEventListener('click', triggerSelect);
+    pinG.addEventListener('click', triggerSelect);
+
+    pinsLayer.appendChild(pinG);
   });
 
-  // Dynamically update adaptive legend
+  // Dynamically update adaptive legend in single line
   window.renderEcuColorLegend();
 }
 
