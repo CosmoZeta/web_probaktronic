@@ -565,7 +565,42 @@ window.openBrandDiagramModels = function(brandDocId, brandName, logoSrc, collect
   const noRes = document.getElementById('noModelSearchResults');
   if (noRes) noRes.style.display = 'none';
 
+window._modelsCacheByBrand = window._modelsCacheByBrand || {};
+
+function selectBrand(brandDocId, brandName, collectionName = 'diagramas') {
+  currentSelectedBrandId = brandDocId;
+  currentSelectedBrandName = brandName;
+  currentActiveCollection = collectionName;
+  currentSelectedFuelType = null;
+
+  updateBreadcrumb([
+    { label: 'Vehículos', url: 'vehiculos.html' },
+    { label: currentSelectedFuelType ? (currentSelectedFuelType === 'diesel' ? 'Diesel' : 'Gasolina') : 'Diesel', url: 'javascript:void(0)' },
+    { label: getVehicleCategoryName(currentVehicleCategory), url: 'javascript:void(0)' },
+    { label: brandName, url: 'javascript:void(0)', active: true }
+  ]);
+
+  hideAllViews();
+  const modelsSection = document.getElementById('modelsSelectionSection');
+  if (modelsSection) modelsSection.classList.remove('d-none');
+
+  const brandTitle = document.getElementById('selectedBrandTitle');
+  if (brandTitle) brandTitle.textContent = `${brandName} - Diagramas de Vehículos`;
+  const mSearch = document.getElementById('modelSearchInput');
+  if (mSearch) mSearch.value = '';
+  const mClear = document.getElementById('clearModelSearchBtn');
+  if (mClear) mClear.classList.add('d-none');
+  const noRes = document.getElementById('noModelSearchResults');
+  if (noRes) noRes.style.display = 'none';
+
+  const modelsListGrid = document.getElementById('modelsListGrid');
   if (modelsListGrid) {
+    const cacheKey = `${collectionName}_${brandDocId}`;
+    if (window._modelsCacheByBrand[cacheKey] && window._modelsCacheByBrand[cacheKey].length > 0) {
+      renderModelEntries(window._modelsCacheByBrand[cacheKey], brandName, modelsListGrid);
+      return;
+    }
+
     const loader = safeCreateCenteredLoader(modelsListGrid, `Conectando con Cloud Firestore para descargar diagramas de ${brandName}...`);
 
     if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
@@ -577,12 +612,11 @@ window.openBrandDiagramModels = function(brandDocId, brandName, logoSrc, collect
     db.collection(collectionName).doc(brandDocId).collection('modelos').get()
       .then(snapshot => {
         if (!snapshot.empty) {
-          renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid, loader);
+          renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid, loader, cacheKey);
         } else {
-          console.log(`Subcollection [diagramas/${brandDocId}/modelos] empty, trying [bobinas/${brandDocId}/modelos]...`);
           db.collection('bobinas').doc(brandDocId).collection('modelos').get().then(bobinasSnap => {
             if (!bobinasSnap.empty) {
-              renderModelCardsFromSnapshot(bobinasSnap, brandName, modelsListGrid, loader);
+              renderModelCardsFromSnapshot(bobinasSnap, brandName, modelsListGrid, loader, cacheKey);
             } else {
               renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader);
             }
@@ -594,7 +628,7 @@ window.openBrandDiagramModels = function(brandDocId, brandName, logoSrc, collect
         renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader);
       });
   }
-};
+}
 
 function getFuelTypeInfo(data, modelName, motor) {
   if (!data) data = {};
@@ -616,10 +650,7 @@ function getFuelTypeInfo(data, modelName, motor) {
   return { name: 'GASOLINA', isDiesel: false, cssClass: 'badge-gasolina' };
 }
 
-async function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid, loader) {
-  const brandId = (currentSelectedBrandId || brandName || 'toyota').toLowerCase();
-  const db = (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') ? firebase.firestore() : null;
-
+function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid, loader, cacheKey) {
   const modelEntries = [];
   snapshot.forEach(doc => {
     const data = doc.data() || {};
@@ -628,106 +659,92 @@ async function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid,
     modelEntries.push({ docId, data });
   });
 
-  if (db) {
-    await Promise.all(modelEntries.map(async (entry) => {
-      if (!entry.data.combustible) {
-        try {
-          const aniosSnap = await db.collection('diagramas').doc(brandId).collection('modelos').doc(entry.docId).collection('anios').get();
-          if (!aniosSnap.empty) {
-            for (const anioDoc of aniosSnap.docs) {
-              const motoresSnap = await anioDoc.ref.collection('motores').get();
-              if (!motoresSnap.empty) {
-                for (const motorDoc of motoresSnap.docs) {
-                  const mData = motorDoc.data() || {};
-                  if (mData.combustible) {
-                    entry.data.combustible = mData.combustible;
-                    return;
-                  }
-                }
-              }
-            }
-          }
-        } catch (err) {
-          console.warn('Subcollection fuel resolution:', err);
-        }
-      }
-    }));
+  if (cacheKey) {
+    window._modelsCacheByBrand[cacheKey] = modelEntries;
   }
 
-  loader.finish(() => {
-    modelsListGrid.innerHTML = '';
+  if (loader && typeof loader.finish === 'function') {
+    loader.finish(() => {
+      renderModelEntries(modelEntries, brandName, modelsListGrid);
+    });
+  } else {
+    renderModelEntries(modelEntries, brandName, modelsListGrid);
+  }
+}
 
-    // Filter model entries by selected fuel type (Diesel vs Gasolina) if active
-    let filteredEntries = modelEntries;
-    if (currentSelectedFuelType) {
-      filteredEntries = modelEntries.filter(({ docId, data }) => {
-        const modelName = data.modelo || data.nombre || docId;
-        const motor = data.motor || 'Estándar';
-        const fuelInfo = getFuelTypeInfo(data, modelName, motor);
-        if (currentSelectedFuelType === 'diesel') {
-          return fuelInfo.isDiesel;
-        } else if (currentSelectedFuelType === 'gasolina') {
-          return !fuelInfo.isDiesel;
-        }
-        return true;
-      });
-    }
+function renderModelEntries(modelEntries, brandName, modelsListGrid) {
+  modelsListGrid.innerHTML = '';
 
-    if (filteredEntries.length === 0) {
-      const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
-        ? window.isProbaktronicAdmin() 
-        : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
-
-      const adminAddBtnHtml = isAdmin ? `
-        <div class="mt-4">
-          <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm font-rajdhani" onclick="openAdminAddModelModal('${brandName}')">
-            <i class="bi bi-car-front-fill me-1"></i> + AGREGAR PRIMER MODELO A ${brandName.toUpperCase()}
-          </button>
-        </div>
-      ` : '';
-
-      modelsListGrid.innerHTML = `
-        <div class="w-100 text-center py-5" style="grid-column: 1 / -1;">
-          <div style="color: #DC2626; font-size: 2.5rem; margin-bottom: 10px;"><i class="bi bi-info-circle"></i></div>
-          <h5 class="fw-bold text-dark">No hay modelos de ${currentSelectedFuelType ? currentSelectedFuelType.toUpperCase() : ''} disponibles</h5>
-          <p class="text-muted small mb-2">No se encontraron modelos registrados en esta categoría para ${brandName}.</p>
-          ${adminAddBtnHtml}
-        </div>
-      `;
-      return;
-    }
-
-    filteredEntries.forEach(({ docId, data }) => {
+  let filteredEntries = modelEntries;
+  if (currentSelectedFuelType) {
+    filteredEntries = modelEntries.filter(({ docId, data }) => {
       const modelName = data.modelo || data.nombre || docId;
       const motor = data.motor || 'Estándar';
       const fuelInfo = getFuelTypeInfo(data, modelName, motor);
+      if (currentSelectedFuelType === 'diesel') {
+        return fuelInfo.isDiesel;
+      } else if (currentSelectedFuelType === 'gasolina') {
+        return !fuelInfo.isDiesel;
+      }
+      return true;
+    });
+  }
 
-      const carPhotoUrl = getVehicleCarPhotoUrl(brandName, modelName, docId);
-      const thumbHtml = carPhotoUrl ? `
-        <div class="model-car-thumb-wrap">
-          <img src="${carPhotoUrl}" alt="${modelName}" class="model-car-thumb-img" onerror="this.parentElement.innerHTML='<div class=\\\'model-car-thumb-placeholder\\\'><i class=\\\'bi bi-question-lg\\\'></i></div>'">
-        </div>
-      ` : `
-        <div class="model-car-thumb-wrap">
-          <div class="model-car-thumb-placeholder"><i class="bi bi-question-lg"></i></div>
-        </div>
-      `;
+  if (filteredEntries.length === 0) {
+    const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
+      ? window.isProbaktronicAdmin() 
+      : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
 
-      const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
-      const editModelBtn = isAdmin ? `
-        <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${docId}', name: '${modelName}', brand: '${brandName}', motor: '${motor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}' })">
-          <i class="bi bi-pencil-fill" style="font-size: 11px;"></i>
+    const adminAddBtnHtml = isAdmin ? `
+      <div class="mt-4">
+        <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm font-rajdhani" onclick="openAdminAddModelModal('${brandName}')">
+          <i class="bi bi-car-front-fill me-1"></i> + AGREGAR PRIMER MODELO A ${brandName.toUpperCase()}
         </button>
-      ` : '';
+      </div>
+    ` : '';
 
-      const card = document.createElement('div');
-      card.className = 'model-item-card position-relative';
-      card.innerHTML = `
-        ${editModelBtn}
-        <div class="model-card-header">
-          ${thumbHtml}
-          <div class="model-card-info">
-            <span class="model-card-badge ${fuelInfo.cssClass}">${fuelInfo.name}</span>
+    modelsListGrid.innerHTML = `
+      <div class="w-100 text-center py-5" style="grid-column: 1 / -1;">
+        <div style="color: #DC2626; font-size: 2.5rem; margin-bottom: 10px;"><i class="bi bi-info-circle"></i></div>
+        <h5 class="fw-bold text-dark">No hay modelos de ${currentSelectedFuelType ? currentSelectedFuelType.toUpperCase() : ''} disponibles</h5>
+        <p class="text-muted small mb-2">No se encontraron modelos registrados en esta categoría para ${brandName}.</p>
+        ${adminAddBtnHtml}
+      </div>
+    `;
+    return;
+  }
+
+  filteredEntries.forEach(({ docId, data }) => {
+    const modelName = data.modelo || data.nombre || docId;
+    const motor = data.motor || 'Estándar';
+    const fuelInfo = getFuelTypeInfo(data, modelName, motor);
+
+    const carPhotoUrl = getVehicleCarPhotoUrl(brandName, modelName, docId);
+    const thumbHtml = carPhotoUrl ? `
+      <div class="model-car-thumb-wrap">
+        <img src="${carPhotoUrl}" alt="${modelName}" class="model-car-thumb-img" onerror="this.parentElement.innerHTML='<div class=\\\'model-car-thumb-placeholder\\\'><i class=\\\'bi bi-question-lg\\\'></i></div>'">
+      </div>
+    ` : `
+      <div class="model-car-thumb-wrap">
+        <div class="model-car-thumb-placeholder"><i class="bi bi-question-lg"></i></div>
+      </div>
+    `;
+
+    const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
+    const editModelBtn = isAdmin ? `
+      <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${docId}', name: '${modelName}', brand: '${brandName}', motor: '${motor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}' })">
+        <i class="bi bi-pencil-fill" style="font-size: 11px;"></i>
+      </button>
+    ` : '';
+
+    const card = document.createElement('div');
+    card.className = 'model-item-card position-relative';
+    card.innerHTML = `
+      ${editModelBtn}
+      <div class="model-card-header">
+        ${thumbHtml}
+        <div class="model-card-info">
+          <span class="model-card-badge ${fuelInfo.cssClass}">${fuelInfo.name}</span>
             <h4 class="model-card-title" title="${docId}">${docId}</h4>
             <p class="model-card-subtitle" title="${modelName}">${modelName}</p>
           </div>
@@ -4248,12 +4265,17 @@ window.editActiveEcuComponent = function() {
 
   editingEcuHotspotId = comp.id;
   tempEcuBoxData = {
+    ...comp,
     x: comp.x,
     y: comp.y,
     width: comp.width,
     height: comp.height,
     pinX: comp.pinX || Math.round(comp.x + comp.width / 2),
-    pinY: comp.pinY || Math.round(comp.y + comp.height / 2)
+    pinY: comp.pinY || Math.round(comp.y + comp.height / 2),
+    isZone: !!(comp.isZone || comp.type === 'polygon' || comp.pathD),
+    type: comp.type || (comp.isZone ? 'polygon' : 'rect'),
+    pathD: comp.pathD || null,
+    points: comp.points || null
   };
 
   drawChipPreviewSnapshot(comp.x, comp.y, comp.width, comp.height);
