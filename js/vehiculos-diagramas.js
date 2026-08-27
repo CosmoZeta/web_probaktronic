@@ -3302,13 +3302,35 @@ const ECU_FRIENDLY_TYPES = {
   'Cristal': 'CRISTAL OSCILADOR',
   'Condensador': 'CONDENSADOR SMD'
 };
-window.ECU_FRIENDLY_TYPES = ECU_FRIENDLY_TYPES;
+// Robust Category Normalizer to guarantee zero-fail matching across all historical data & formats
+window.normalizeEcuCategory = function(rawCat) {
+  if (!rawCat || typeof rawCat !== 'string') return 'Microprocesador';
+  const c = rawCat.trim();
+  if (ECU_CATEGORY_THEMES[c]) return c;
+  if (CATEGORY_ALIASES[c]) return CATEGORY_ALIASES[c];
+
+  const lower = c.toLowerCase();
+  if (lower.includes('eeprom') || lower.includes('flash') || lower.includes('memoria') || lower.includes('inmo') || lower.includes('almacenamiento') || lower.includes('eprom')) return 'EEPROM / Memoria';
+  if (lower.includes('micro') || lower.includes('mcu') || lower.includes('procesador') || lower.includes('procesamiento')) return 'Microprocesador';
+  if (lower.includes('inyector') || lower.includes('actuador') || lower.includes('potencia') || lower.includes('driver iny')) return 'Inyectores';
+  if (lower.includes('bobina') || lower.includes('ignic') || lower.includes('chispa')) return 'Bobinas';
+  if (lower.includes('voltaje') || lower.includes('regulador') || lower.includes('alimentac') || lower.includes('power')) return 'Voltaje';
+  if (lower.includes('diodo') || lower.includes('comunic') || lower.includes('can') || lower.includes('redes') || lower.includes('transceiver')) return 'Diodos';
+  if (lower.includes('efi') || lower.includes('rele') || lower.includes('relay')) return 'EFI';
+  if (lower.includes('sensor') || lower.includes('ckp') || lower.includes('cmp') || lower.includes('entrada')) return 'Driver Sensor';
+  if (lower.includes('transistor') || lower.includes('mosfet') || lower.includes('igbt')) return 'Transistor';
+  if (lower.includes('resistencia') || lower.includes('shunt') || lower.includes('smd')) return 'Resistencia';
+  if (lower.includes('cristal') || lower.includes('reloj') || lower.includes('clock') || lower.includes('oscilador')) return 'Cristal';
+  if (lower.includes('condensador') || lower.includes('filtro') || lower.includes('capacit')) return 'Condensador';
+
+  return 'Microprocesador';
+};
 
 window.onAdminEcuCategoryChange = function() {
   const catEl = document.getElementById('adminEcuCompCategory');
   const tipoEl = document.getElementById('adminEcuCompTipo');
   if (catEl && tipoEl) {
-    const canonicalCat = CATEGORY_ALIASES[catEl.value] || catEl.value;
+    const canonicalCat = window.normalizeEcuCategory(catEl.value);
     const friendly = ECU_FRIENDLY_TYPES[canonicalCat] || '';
     const currentVal = (tipoEl.value || '').trim().toUpperCase();
     if (!currentVal || Object.values(ECU_FRIENDLY_TYPES).includes(currentVal) || Object.keys(ECU_FRIENDLY_TYPES).includes(currentVal)) {
@@ -3328,8 +3350,7 @@ window.getEcuComponentTheme = function(comp) {
     };
   }
 
-  let cat = comp.category || 'EEPROM / Memoria';
-  if (CATEGORY_ALIASES[cat]) cat = CATEGORY_ALIASES[cat];
+  const cat = window.normalizeEcuCategory(comp.category || comp.tipo || comp.name);
 
   if (comp.customColor && comp.customColor !== 'auto') {
     return {
@@ -3356,8 +3377,7 @@ window.updateEcuColorPickerPreview = function() {
   const previewEl = document.getElementById('adminEcuColorPreviewBox');
   if (!catEl) return;
 
-  let cat = catEl.value;
-  if (CATEGORY_ALIASES[cat]) cat = CATEGORY_ALIASES[cat];
+  const cat = window.normalizeEcuCategory(catEl.value);
   const theme = ECU_CATEGORY_THEMES[cat] || { color: '#00F0FF', glow: '#00F0FF', fill: 'rgba(0,240,255,0.15)' };
 
   if (colorEl) {
@@ -3697,13 +3717,19 @@ async function saveEcuHotspotsToStorage() {
 // Dynamic Adaptive Legend for ECU Components (Only show present categories)
 window.renderEcuColorLegend = function() {
   const container = document.getElementById('consoleEcuColorLegend');
-  const itemsContainer = document.getElementById('consoleEcuColorLegendItems');
-  if (!container || !itemsContainer) return;
+  if (!container) return;
+
+  let itemsContainer = document.getElementById('consoleEcuColorLegendItems');
+  if (!itemsContainer) {
+    itemsContainer = document.createElement('div');
+    itemsContainer.id = 'consoleEcuColorLegendItems';
+    itemsContainer.className = 'd-flex flex-wrap align-items-center gap-1';
+    container.appendChild(itemsContainer);
+  }
 
   const presentCategories = new Set();
-  currentEcuHotspots.forEach(comp => {
-    let cat = comp.category;
-    if (CATEGORY_ALIASES[cat]) cat = CATEGORY_ALIASES[cat];
+  (currentEcuHotspots || []).forEach(comp => {
+    const cat = window.normalizeEcuCategory(comp.category || comp.tipo || comp.name);
     if (cat && ECU_CATEGORY_THEMES[cat]) {
       presentCategories.add(cat);
     }
@@ -3718,11 +3744,14 @@ window.renderEcuColorLegend = function() {
     const theme = ECU_CATEGORY_THEMES[cat];
     const friendlyName = ECU_FRIENDLY_TYPES[cat] || cat;
     return `
-      <span class="badge" style="background: ${theme.fill}; border: 1px solid ${theme.color}; color: ${theme.glow}; font-size: 0.72rem; font-weight: 600; padding: 4px 8px; border-radius: 6px;">
+      <span class="badge" style="background: ${theme.fill}; border: 1px solid ${theme.color}; color: ${theme.glow}; font-size: 0.72rem; font-weight: 600; padding: 4px 8px; border-radius: 6px; white-space: nowrap;">
         <i class="bi bi-square-fill me-1" style="color: ${theme.color};"></i>${friendlyName}
       </span>
     `;
   }).join('');
+
+  container.classList.remove('d-none');
+  container.style.display = 'flex';
 };
 
 // Render SVG Hotspot Nodes with Color Habit Theme
@@ -3842,13 +3871,19 @@ window.selectEcuComponent = function(comp) {
   const isLeftSide = comp.pinX < (vb.width / 2);
 
   // Position Drawer on closest side on desktop
-  if (drawer && window.innerWidth > 768) {
-    if (isLeftSide) {
-      drawer.style.left = '15px';
-      drawer.style.right = 'auto';
-    } else {
-      drawer.style.right = '15px';
-      drawer.style.left = 'auto';
+  if (drawer) {
+    drawer.classList.remove('d-none');
+    drawer.style.display = 'flex';
+    if (window.innerWidth > 768) {
+      drawer.style.top = '15px';
+      drawer.style.bottom = 'auto';
+      if (isLeftSide) {
+        drawer.style.left = '15px';
+        drawer.style.right = 'auto';
+      } else {
+        drawer.style.right = '15px';
+        drawer.style.left = 'auto';
+      }
     }
   }
 
@@ -3868,8 +3903,7 @@ window.selectEcuComponent = function(comp) {
 
   // Populate Rich Technical Drawer with Title Subtitle and Conditional Section Rendering
   if (drawer && drawerTitle && drawerContent) {
-    let cat = comp.category || 'EEPROM / Memoria';
-    if (CATEGORY_ALIASES[cat]) cat = CATEGORY_ALIASES[cat];
+    const cat = window.normalizeEcuCategory(comp.category || comp.tipo || comp.name);
     const defaultFriendly = window.ECU_FRIENDLY_TYPES[cat] || cat;
     const rawSubLabel = (comp.tipo && comp.tipo.trim() !== '') ? comp.tipo.trim() : defaultFriendly;
     const subLabel = rawSubLabel.toUpperCase();
@@ -3949,6 +3983,7 @@ window.selectEcuComponent = function(comp) {
     `;
 
     drawer.classList.remove('d-none');
+    drawer.style.display = 'flex';
   }
 
   window.updateEcuAdminUI();
