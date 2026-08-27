@@ -1007,7 +1007,7 @@
               </div>
               <h3 class="font-rajdhani fw-bold text-dark fs-2 mb-2">GASOLINA</h3>
               <p class="text-muted small mb-3">Sistemas de inyección electrónica MPFI, GDI, cuerpos de aceleración TPS y sensores ciclo Otto.</p>
-              <button class="btn btn-outline-danger rounded-pill px-4 fw-bold">
+              <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold" onclick="selectFuelType('gasolina')">
                 Ingresar a Gasolina <i class="bi bi-arrow-right ms-1"></i>
               </button>
             </div>
@@ -1015,7 +1015,7 @@
 
           <!-- Card Diesel -->
           <div class="col-md-5">
-            <div class="fuel-type-card h-100 position-relative" onclick="selectFuelType('diesel')">
+            <div class="fuel-type-card h-100 position-relative cursor-pointer" onclick="selectFuelType('diesel')">
               <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'fuel_diesel', 'Diesel')" title="Personalizar ícono de Diésel">
                 <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
               </button>
@@ -1024,7 +1024,7 @@
               </div>
               <h3 class="font-rajdhani fw-bold text-dark fs-2 mb-2">DIESEL</h3>
               <p class="text-muted small mb-3">Sistemas Common Rail, inyectores piezoeléctricos, bombas EDC y unidades de control Heavy Duty.</p>
-              <button class="btn btn-outline-danger rounded-pill px-4 fw-bold">
+              <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold" onclick="selectFuelType('diesel')">
                 Ingresar a Diesel <i class="bi bi-arrow-right ms-1"></i>
               </button>
             </div>
@@ -2316,6 +2316,6 @@
   <script src="js/global.js?v=3.0"></script>
   <script src="js/firebase-catalog.js?v=3.0"></script>
   <script src="js/auth.js?v=3.0"></script>
-  <script src="js/vehiculos-diagramas.js?v=3.5"></script>
+  <script src="js/vehiculos-diagramas.js?v=3.6"></script>
 </body>
 </html>
