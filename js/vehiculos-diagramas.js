@@ -1671,7 +1671,8 @@ function setupViewerDragPan() {
   let hasMoved = false;
 
   wrap.addEventListener('mousedown', (e) => {
-    if (e.target.closest('button') || e.target.closest('.console-gallery-pagination')) return;
+    if (isEcuEditorMode) return;
+    if (e.target.closest('button') || e.target.closest('.console-gallery-pagination') || e.target.closest('.console-ecu-info-drawer') || e.target.closest('.console-ecu-editor-banner')) return;
     isDown = true;
     hasMoved = false;
     wrap.classList.add('grabbing');
@@ -1691,7 +1692,7 @@ function setupViewerDragPan() {
   });
 
   wrap.addEventListener('mousemove', (e) => {
-    if (!isDown) return;
+    if (!isDown || isEcuEditorMode) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
@@ -1704,6 +1705,8 @@ function setupViewerDragPan() {
 
   // Touch Support
   wrap.addEventListener('touchstart', (e) => {
+    if (isEcuEditorMode) return;
+    if (e.target.closest('button') || e.target.closest('.console-gallery-pagination') || e.target.closest('.console-ecu-info-drawer') || e.target.closest('.console-ecu-editor-banner')) return;
     if (e.touches.length === 1) {
       isDown = true;
       hasMoved = false;
@@ -1715,7 +1718,7 @@ function setupViewerDragPan() {
   }, { passive: true });
 
   wrap.addEventListener('touchmove', (e) => {
-    if (!isDown || e.touches.length !== 1) return;
+    if (!isDown || isEcuEditorMode || e.touches.length !== 1) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
@@ -2123,6 +2126,16 @@ window.addEventListener('resize', () => {
     const canvas = document.getElementById('consolePdfCanvas');
     if (currentPdfDoc && canvas && !canvas.classList.contains('d-none')) {
       window.renderPdfPageOnCanvas(currentPdfPageNum);
+    }
+
+    if (window.innerWidth <= 768) {
+      if (typeof window.hideInteractiveEcuLayer === 'function') {
+        window.hideInteractiveEcuLayer();
+      }
+    } else if (window.currentActiveDiagramSection === 'pcb') {
+      if (typeof window.initInteractiveEcuLayer === 'function') {
+        window.initInteractiveEcuLayer();
+      }
     }
   }, 150);
 });
@@ -3287,7 +3300,6 @@ const CATEGORY_ALIASES = {
 };
 window.CATEGORY_ALIASES = CATEGORY_ALIASES;
 
-// Standardized Technical Display Labels for Component Categories
 const ECU_FRIENDLY_TYPES = {
   'EEPROM / Memoria': 'MEMORIA EEPROM / FLASH',
   'Microprocesador': 'MICROPROCESADOR (MCU)',
@@ -3302,6 +3314,7 @@ const ECU_FRIENDLY_TYPES = {
   'Cristal': 'CRISTAL OSCILADOR',
   'Condensador': 'CONDENSADOR SMD'
 };
+window.ECU_FRIENDLY_TYPES = ECU_FRIENDLY_TYPES;
 // Robust Category Normalizer to guarantee zero-fail matching across all historical data & formats
 window.normalizeEcuCategory = function(rawCat) {
   if (!rawCat || typeof rawCat !== 'string') return 'Microprocesador';
@@ -3470,6 +3483,12 @@ function getActiveEcuStorageKey() {
 
 // Initialize Interactive ECU Layer
 window.initInteractiveEcuLayer = async function() {
+  // Mobile check: Disable interactive ECU hotspots on mobile view (<= 768px) temporarily
+  if (window.innerWidth <= 768) {
+    window.hideInteractiveEcuLayer();
+    return;
+  }
+
   const svg = document.getElementById('consoleEcuSvgOverlay');
   const img = document.getElementById('consoleMainDiagramImg');
   const legend = document.getElementById('consoleEcuColorLegend');
@@ -3865,10 +3884,15 @@ window.selectEcuComponent = function(comp) {
     if (d) d.style.fill = theme.glow;
   }
 
+  const pinX = (typeof comp.pinX === 'number' && !isNaN(comp.pinX)) ? comp.pinX : Math.round((comp.x || 0) + (comp.width || 100) / 2);
+  const pinY = (typeof comp.pinY === 'number' && !isNaN(comp.pinY)) ? comp.pinY : Math.round((comp.y || 0) + (comp.height || 100) / 2);
+
   // Smart Closest-Side Positioning (Left vs Right):
   const svg = document.getElementById('consoleEcuSvgOverlay');
   const vb = svg ? svg.viewBox.baseVal : { width: 1000, height: 1094 };
-  const isLeftSide = comp.pinX < (vb.width / 2);
+  const vbWidth = (vb && vb.width > 0) ? vb.width : 1000;
+  const vbHeight = (vb && vb.height > 0) ? vb.height : 1094;
+  const isLeftSide = pinX < (vbWidth / 2);
 
   // Position Drawer on closest side on desktop
   if (drawer) {
@@ -3889,10 +3913,10 @@ window.selectEcuComponent = function(comp) {
 
   // Draw Leader Line in Component Category Color to closest edge
   if (line) {
-    const startX = comp.pinX;
-    const startY = comp.pinY;
-    const targetX = isLeftSide ? Math.round(vb.width * 0.02) : Math.round(vb.width * 0.98);
-    const targetY = Math.max(60, Math.min(comp.pinY, vb.height - 60));
+    const startX = pinX;
+    const startY = pinY;
+    const targetX = isLeftSide ? Math.round(vbWidth * 0.02) : Math.round(vbWidth * 0.98);
+    const targetY = Math.max(60, Math.min(pinY, vbHeight - 60));
     const midX = Math.round(startX + (targetX - startX) * 0.5);
 
     line.setAttribute('d', `M ${startX} ${startY} L ${midX} ${startY} L ${targetX} ${targetY}`);
@@ -3904,7 +3928,8 @@ window.selectEcuComponent = function(comp) {
   // Populate Rich Technical Drawer with Title Subtitle and Conditional Section Rendering
   if (drawer && drawerTitle && drawerContent) {
     const cat = window.normalizeEcuCategory(comp.category || comp.tipo || comp.name);
-    const defaultFriendly = window.ECU_FRIENDLY_TYPES[cat] || cat;
+    const friendlyMap = window.ECU_FRIENDLY_TYPES || ECU_FRIENDLY_TYPES || {};
+    const defaultFriendly = friendlyMap[cat] || cat;
     const rawSubLabel = (comp.tipo && comp.tipo.trim() !== '') ? comp.tipo.trim() : defaultFriendly;
     const subLabel = rawSubLabel.toUpperCase();
     drawerTitle.innerHTML = `<span class="text-white font-rajdhani fw-bold me-1">${comp.name || 'COMPONENTE'}</span> <span class="text-white-50 mx-1">&bull;</span> <span class="font-rajdhani fw-bold" style="color: ${theme.glow}; font-size: 0.95rem;">${subLabel}</span>`;

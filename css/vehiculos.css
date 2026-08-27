@@ -1509,6 +1509,7 @@
   stroke-dasharray: 6 3;
   animation: ecuDashMove 1.5s linear infinite;
   filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.8));
+  pointer-events: none;
 }
 
 @keyframes ecuDashMove {
@@ -1521,6 +1522,7 @@
   stroke-width: 2.5px;
   stroke-dasharray: 5 3;
   vector-effect: non-scaling-stroke;
+  pointer-events: none;
 }
 
 /* Admin Banner */
@@ -1631,33 +1633,15 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
+/* Hide interactive ECU layer & info on mobile (<= 768px) to prevent framing/zoom issues */
 @media (max-width: 768px) {
-  .console-ecu-info-drawer {
-    position: fixed !important;
-    top: auto !important;
-    bottom: 12px !important;
-    right: 10px !important;
-    left: 10px !important;
-    width: auto !important;
-    max-width: none !important;
-    max-height: 58vh !important;
-    z-index: 1050 !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), 0 0 15px rgba(0, 240, 255, 0.3) !important;
-  }
-  #consoleEcuActiveLeaderLine {
+  .console-ecu-svg-overlay,
+  .console-ecu-info-drawer,
+  .ecu-color-legend,
+  .console-ecu-editor-banner,
+  #btnAdminToggleEcuEditor,
+  #btnAdminUndoEcuHotspot {
     display: none !important;
-  }
-  .ecu-color-legend {
-    top: 8px !important;
-    left: 8px !important;
-    right: 8px !important;
-    max-width: calc(100% - 16px) !important;
-    font-size: 0.7rem;
-    overflow-x: auto !important;
-    flex-wrap: nowrap !important;
-    white-space: nowrap !important;
-    padding: 4px 8px !important;
-    -webkit-overflow-scrolling: touch !important;
   }
 }
 
