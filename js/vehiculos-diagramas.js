@@ -525,6 +525,8 @@ function renderOnlyActiveBrands(grid, loader, brandList) {
   }
 }
 
+window._modelsCacheByBrand = window._modelsCacheByBrand || {};
+
 // Open Models for Selected Brand
 window.openBrandDiagramModels = function(brandDocId, brandName, logoSrc, collectionName = 'diagramas') {
   currentSelectedBrandId = brandDocId;
@@ -565,35 +567,6 @@ window.openBrandDiagramModels = function(brandDocId, brandName, logoSrc, collect
   const noRes = document.getElementById('noModelSearchResults');
   if (noRes) noRes.style.display = 'none';
 
-window._modelsCacheByBrand = window._modelsCacheByBrand || {};
-
-function selectBrand(brandDocId, brandName, collectionName = 'diagramas') {
-  currentSelectedBrandId = brandDocId;
-  currentSelectedBrandName = brandName;
-  currentActiveCollection = collectionName;
-  currentSelectedFuelType = null;
-
-  updateBreadcrumb([
-    { label: 'Vehículos', url: 'vehiculos.html' },
-    { label: currentSelectedFuelType ? (currentSelectedFuelType === 'diesel' ? 'Diesel' : 'Gasolina') : 'Diesel', url: 'javascript:void(0)' },
-    { label: getVehicleCategoryName(currentVehicleCategory), url: 'javascript:void(0)' },
-    { label: brandName, url: 'javascript:void(0)', active: true }
-  ]);
-
-  hideAllViews();
-  const modelsSection = document.getElementById('modelsSelectionSection');
-  if (modelsSection) modelsSection.classList.remove('d-none');
-
-  const brandTitle = document.getElementById('selectedBrandTitle');
-  if (brandTitle) brandTitle.textContent = `${brandName} - Diagramas de Vehículos`;
-  const mSearch = document.getElementById('modelSearchInput');
-  if (mSearch) mSearch.value = '';
-  const mClear = document.getElementById('clearModelSearchBtn');
-  if (mClear) mClear.classList.add('d-none');
-  const noRes = document.getElementById('noModelSearchResults');
-  if (noRes) noRes.style.display = 'none';
-
-  const modelsListGrid = document.getElementById('modelsListGrid');
   if (modelsListGrid) {
     const cacheKey = `${collectionName}_${brandDocId}`;
     if (window._modelsCacheByBrand[cacheKey] && window._modelsCacheByBrand[cacheKey].length > 0) {
@@ -628,7 +601,7 @@ function selectBrand(brandDocId, brandName, collectionName = 'diagramas') {
         renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader);
       });
   }
-}
+};
 
 function getFuelTypeInfo(data, modelName, motor) {
   if (!data) data = {};
