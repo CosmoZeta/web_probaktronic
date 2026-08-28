@@ -4667,22 +4667,25 @@ function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
   ];
 }
 
-// Load from Firestore with fallback to LocalStorage (Seguro de Trazos & Bloqueo Persistente)
+// Load from Firestore with fallback to LocalStorage (Seguro de Trazos & Bloqueo Persistente por Foto)
 async function loadEcuHotspotsFromStorage(imgW, imgH) {
   currentEcuHotspots = [];
 
   const active = window._currentActiveDiagramData || {};
   const archDoc = active._selectedArchDoc || {};
   const primaryKey = currentEcuStorageKey || getActiveEcuStorageKey();
+  const isPrimaryPhoto = (typeof currentGalleryIndex !== 'number' || currentGalleryIndex === 0);
 
-  // Check LocalStorage across all possible key aliases (prevents key mismatch on reload)
-  const keysToCheck = [
-    primaryKey,
-    'default_ecu_2kd',
-    'ecu_hotspots_brand_model_ecu_f0',
-    'ecu_hotspots_toyota_hilux_ecu_f0',
-    'ecu_hotspots_toyota_hilux_2kd_ftv_2011_2015_ecu_f0'
-  ];
+  // Check LocalStorage: Foto 1 checks aliases, Foto 2/3 checks only its dedicated key
+  const keysToCheck = isPrimaryPhoto
+    ? [
+        primaryKey,
+        'default_ecu_2kd',
+        'ecu_hotspots_brand_model_ecu_f0',
+        'ecu_hotspots_toyota_hilux_ecu_f0',
+        'ecu_hotspots_toyota_hilux_2kd_ftv_2011_2015_ecu_f0'
+      ]
+    : [primaryKey];
 
   for (const k of keysToCheck) {
     const rawLocal = localStorage.getItem(k) || localStorage.getItem('probaktronic_ecu_hotspots_master_' + k);
@@ -4697,12 +4700,12 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
     }
   }
 
-  // 2. Check if the diagram document in memory already had componentes_ecu
-  if (currentEcuHotspots.length === 0 && Array.isArray(archDoc.componentes_ecu) && archDoc.componentes_ecu.length > 0) {
+  // 2. Check if the diagram document in memory already had componentes_ecu (only for Foto 1)
+  if (isPrimaryPhoto && currentEcuHotspots.length === 0 && Array.isArray(archDoc.componentes_ecu) && archDoc.componentes_ecu.length > 0) {
     currentEcuHotspots = archDoc.componentes_ecu;
   }
 
-  // 3. Parallel Fetch across Firestore endpoints (Diagram doc, model doc, app_config, ecu_hotspots, ecu_interactive_hotspots)
+  // 3. Parallel Fetch across Firestore endpoints
   if (currentEcuHotspots.length === 0 && typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
     try {
       const db = firebase.firestore();
@@ -4714,27 +4717,29 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
       const cleanMotor = (archDoc.motorDocId || '2kd-ftv').toLowerCase().trim();
       const cleanArchId = archDoc.archDocId || archDoc.id || active.id || 'ecu';
 
-      // Endpoint 1: Deep hierarchical doc
-      queries.push(
-        db.collection('diagramas').doc(cleanBrand)
-          .collection('modelos').doc(cleanModel)
-          .collection('anios').doc(cleanAnio)
-          .collection('motores').doc(cleanMotor)
-          .collection('archivos').doc(cleanArchId).get()
-          .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu) && snap.data().componentes_ecu.length > 0) ? snap.data().componentes_ecu : null)
-          .catch(() => null)
-      );
+      if (isPrimaryPhoto) {
+        // Deep hierarchical doc
+        queries.push(
+          db.collection('diagramas').doc(cleanBrand)
+            .collection('modelos').doc(cleanModel)
+            .collection('anios').doc(cleanAnio)
+            .collection('motores').doc(cleanMotor)
+            .collection('archivos').doc(cleanArchId).get()
+            .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu) && snap.data().componentes_ecu.length > 0) ? snap.data().componentes_ecu : null)
+            .catch(() => null)
+        );
 
-      // Endpoint 2: Model archivos subcollection
-      queries.push(
-        db.collection('diagramas').doc(cleanBrand)
-          .collection('modelos').doc(cleanModel)
-          .collection('archivos').doc(cleanArchId).get()
-          .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu) && snap.data().componentes_ecu.length > 0) ? snap.data().componentes_ecu : null)
-          .catch(() => null)
-      );
+        // Model archivos subcollection
+        queries.push(
+          db.collection('diagramas').doc(cleanBrand)
+            .collection('modelos').doc(cleanModel)
+            .collection('archivos').doc(cleanArchId).get()
+            .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu) && snap.data().componentes_ecu.length > 0) ? snap.data().componentes_ecu : null)
+            .catch(() => null)
+        );
+      }
 
-      // Endpoint 3: Global app_config
+      // Global app_config
       queries.push(
         db.collection('app_config').doc('ecu_hotspots').get()
           .then(snap => {
@@ -4749,8 +4754,8 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
           .catch(() => null)
       );
 
-      // Endpoint 4: diagramas > ecu_hotspots > items
-      for (const k of [primaryKey, 'default_ecu_2kd']) {
+      // diagramas > ecu_hotspots > items
+      for (const k of keysToCheck) {
         queries.push(
           db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(k).get()
             .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
@@ -4758,8 +4763,8 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
         );
       }
 
-      // Endpoint 5: ecu_interactive_hotspots
-      for (const k of [primaryKey, 'default_ecu_2kd']) {
+      // ecu_interactive_hotspots
+      for (const k of keysToCheck) {
         queries.push(
           db.collection('ecu_interactive_hotspots').doc(k).get()
             .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
@@ -4777,8 +4782,8 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
     }
   }
 
-  // 6. Default fallback for initial Hilux ECU only if absolutely no data exists
-  if (currentEcuHotspots.length === 0) {
+  // 6. Default fallback for initial Hilux ECU ONLY on primary Photo 1
+  if (isPrimaryPhoto && currentEcuHotspots.length === 0) {
     currentEcuHotspots = getDefaultHiluxHotspots(imgW, imgH);
   }
 
