@@ -1831,9 +1831,18 @@ window.loadSpecificDiagramSection = async function(type) {
         if (single) photos = [single];
       }
 
+      // Safe local fallback so ECU board is NEVER black
+      if (photos.length === 0) {
+        photos = ['ecu_demo_2kd.png'];
+      }
+
       // Resolve all photos if they are gs:// or storage paths
       const resolvedPhotos = await Promise.all(photos.map(p => window.resolveFirebaseStorageUrl(p)));
       const validPhotos = resolvedPhotos.filter(Boolean);
+
+      if (validPhotos.length === 0) {
+        validPhotos.push('ecu_demo_2kd.png');
+      }
 
       if (validPhotos.length > 0) {
         window.renderGalleryPagination(validPhotos);
@@ -4397,14 +4406,8 @@ window.initInteractiveEcuLayer = async function() {
   const imgH = img.naturalHeight || 1094;
   svg.setAttribute('viewBox', `0 0 ${imgW} ${imgH}`);
 
-  // Load existing hotspots from Firestore or local defaults
+  // Load existing hotspots from LocalStorage, Memory, or Firestore
   await loadEcuHotspotsFromStorage(imgW, imgH);
-
-  // Auto-sync admin's local hotspots to Firestore in background
-  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') ? window.isProbaktronicAdmin() : (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
-  if (isAdmin && currentEcuHotspots.length > 0) {
-    saveEcuHotspotsToStorage().catch(() => {});
-  }
 
   // Attach SVG Drawing events if not already attached
   setupEcuSvgEventListeners(svg);
@@ -4438,7 +4441,7 @@ window.hideInteractiveEcuLayer = function() {
   editingEcuHotspotId = null;
 };
 
-// Default Hilux 2KD Denso ECU Hotspots (3 main circuits)
+// Default Hilux 2KD Denso ECU Hotspots (Complete Base Circuit Layout)
 function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
   const scaleX = imgW / 1000;
   const scaleY = imgH / 1094;
@@ -4447,41 +4450,92 @@ function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
     {
       id: 'ecu_comp_mcu',
       name: 'Microcontrolador Principal (MCU)',
+      tipo: 'Procesador / MCU',
       code: 'DENSO / TOSHIBA 32-Bit QFP',
       category: 'Microprocesador',
+      customColor: '#3B82F6',
       x: Math.round(580 * scaleX), y: Math.round(155 * scaleY),
       width: Math.round(220 * scaleX), height: Math.round(230 * scaleY),
       pinX: Math.round(690 * scaleX), pinY: Math.round(270 * scaleY),
       controla: 'Cerebro principal de la ECU. Procesa señales de sensores en tiempo real (CKP, CMP, MAP, Temperatura) y comanda el mapa de inyección y presión del Common Rail.',
       voltajes: 'VCC: 5.0V / Núcleo: 3.3V',
       fallas_comunes: 'Vehículo no arranca, sin comunicación con escáner OBD2 (Sin testigo Check Engine).',
-      pines_clave: 'Alimentación: Pines 1, 32, 64 &bull; Cristal oscilador: 20MHz'
+      pines_clave: 'Alimentación: Pines 1, 32, 64 &bull; Cristal oscilador: 20MHz',
+      isLocked: true
     },
     {
       id: 'ecu_comp_eeprom',
       name: 'Memoria Flash / EEPROM',
+      tipo: 'Memoria EEPROM / Flash',
       code: '93C86 / 25Cxxx SPI',
       category: 'EEPROM / Memoria',
-      x: Math.round(260 * scaleX), y: Math.round(170 * scaleY),
-      width: Math.round(170 * scaleX), height: Math.round(130 * scaleY),
-      pinX: Math.round(345 * scaleX), pinY: Math.round(235 * scaleY),
+      customColor: '#A855F7',
+      x: Math.round(455 * scaleX), y: Math.round(335 * scaleY),
+      width: Math.round(80 * scaleX), height: Math.round(80 * scaleY),
+      pinX: Math.round(495 * scaleX), pinY: Math.round(375 * scaleY),
       controla: 'Almacena la codificación del inmovilizador (Llaves/Transponder), número VIN, kilometraje y mapas de calibración del motor.',
       voltajes: 'VCC: 5.0V en Pin 8',
       fallas_comunes: 'Error de inmovilizador (Luz de seguridad parpadea), bloqueo de arranque, códigos P1600 / B2799.',
-      pines_clave: 'Pin 1: CS &bull; Pin 4: GND &bull; Pin 8: VCC 5V'
+      pines_clave: 'Pin 1: CS &bull; Pin 4: GND &bull; Pin 8: VCC 5V',
+      isLocked: true
+    },
+    {
+      id: 'ecu_comp_voltage_area',
+      name: 'Área de Voltaje / Regulador Principal',
+      tipo: 'Regulador de Voltaje / Fuente',
+      code: 'SE705 / Power IC Stage',
+      category: 'Regulador / Voltaje',
+      customColor: '#EF4444',
+      x: Math.round(420 * scaleX), y: Math.round(470 * scaleY),
+      width: Math.round(180 * scaleX), height: Math.round(220 * scaleY),
+      pinX: Math.round(510 * scaleX), pinY: Math.round(580 * scaleY),
+      points: [
+        { x: Math.round(440 * scaleX), y: Math.round(480 * scaleY) },
+        { x: Math.round(580 * scaleX), y: Math.round(510 * scaleY) },
+        { x: Math.round(605 * scaleX), y: Math.round(580 * scaleY) },
+        { x: Math.round(570 * scaleX), y: Math.round(660 * scaleY) },
+        { x: Math.round(510 * scaleX), y: Math.round(690 * scaleY) },
+        { x: Math.round(430 * scaleX), y: Math.round(670 * scaleY) },
+        { x: Math.round(420 * scaleX), y: Math.round(530 * scaleY) }
+      ],
+      pathD: `M ${Math.round(440 * scaleX)} ${Math.round(480 * scaleY)} L ${Math.round(580 * scaleX)} ${Math.round(510 * scaleY)} L ${Math.round(605 * scaleX)} ${Math.round(580 * scaleY)} L ${Math.round(570 * scaleX)} ${Math.round(660 * scaleY)} L ${Math.round(510 * scaleX)} ${Math.round(690 * scaleY)} L ${Math.round(430 * scaleX)} ${Math.round(670 * scaleY)} L ${Math.round(420 * scaleX)} ${Math.round(530 * scaleY)} Z`,
+      controla: 'Genera y estabiliza las líneas de alimentación críticas de 5.0V para sensores y 3.3V para el microprocesador.',
+      voltajes: 'Entrada BATT: 12V / Salidas Reguladas: 5.0V REF & 3.3V VCC',
+      fallas_comunes: 'Sin 5V en sensores de acelerador/MAP, calentamiento excesivo de la ECU, auto se apaga intermitentemente.',
+      pines_clave: 'Pin Entrada 12V &bull; Pin Salida 5.0V &bull; GND Central',
+      isLocked: true
+    },
+    {
+      id: 'ecu_comp_crystal',
+      name: 'Cristal Oscilador de Reloj',
+      tipo: 'Cristal Oscilador',
+      code: '20.000 MHz Crystal',
+      category: 'Cristal Oscilador',
+      customColor: '#EC4899',
+      x: Math.round(655 * scaleX), y: Math.round(565 * scaleY),
+      width: Math.round(75 * scaleX), height: Math.round(65 * scaleY),
+      pinX: Math.round(692 * scaleX), pinY: Math.round(597 * scaleY),
+      controla: 'Sincroniza la frecuencia de cálculo del procesador central.',
+      voltajes: 'Señal Senoidal de alta frecuencia: 20MHz',
+      fallas_comunes: 'Falta de pulso de inyección, ECU sin actividad.',
+      pines_clave: 'XTAL IN / XTAL OUT',
+      isLocked: true
     },
     {
       id: 'ecu_comp_drivers',
       name: 'Driver Etapa Inyectores Common Rail',
+      tipo: 'Driver Inyectores',
       code: 'SE555 / MOSFET Driver Array',
       category: 'Inyectores',
+      customColor: '#10B981',
       x: Math.round(235 * scaleX), y: Math.round(535 * scaleY),
       width: Math.round(170 * scaleX), height: Math.round(100 * scaleY),
       pinX: Math.round(320 * scaleX), pinY: Math.round(585 * scaleY),
       controla: 'Maneja la apertura y corte de los inyectores electrohidráulicos diésel mediante pulsos de alta corriente.',
       voltajes: 'Voltaje de disparo: 12V / Retorno señal GND controlada',
       fallas_comunes: 'Fallo de cilindro (Misfire), humo negro, códigos P0201, P0202, P0203, P0204.',
-      pines_clave: 'Gate: PWM 5V &bull; Drain: Señal a Inyector'
+      pines_clave: 'Gate: PWM 5V &bull; Drain: Señal a Inyector',
+      isLocked: true
     }
   ];
 }
@@ -4492,17 +4546,28 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
 
   const active = window._currentActiveDiagramData || {};
   const archDoc = active._selectedArchDoc || {};
-  const key = currentEcuStorageKey || getActiveEcuStorageKey();
+  const primaryKey = currentEcuStorageKey || getActiveEcuStorageKey();
 
-  // 1. Check local storage first for custom user modifications (Local admin cache)
-  const rawLocal = localStorage.getItem(key) || localStorage.getItem('probaktronic_ecu_hotspots_master_' + key);
-  if (rawLocal) {
-    try {
-      const parsed = JSON.parse(rawLocal);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        currentEcuHotspots = parsed;
-      }
-    } catch (e) {}
+  // Check LocalStorage across all possible key aliases (prevents key mismatch on reload)
+  const keysToCheck = [
+    primaryKey,
+    'default_ecu_2kd',
+    'ecu_hotspots_brand_model_ecu_f0',
+    'ecu_hotspots_toyota_hilux_ecu_f0',
+    'ecu_hotspots_toyota_hilux_2kd_ftv_2011_2015_ecu_f0'
+  ];
+
+  for (const k of keysToCheck) {
+    const rawLocal = localStorage.getItem(k) || localStorage.getItem('probaktronic_ecu_hotspots_master_' + k);
+    if (rawLocal) {
+      try {
+        const parsed = JSON.parse(rawLocal);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          currentEcuHotspots = parsed;
+          break;
+        }
+      } catch (e) {}
+    }
   }
 
   // 2. Check if the diagram document in memory already had componentes_ecu
@@ -4548,7 +4613,9 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
           .then(snap => {
             if (snap && snap.exists) {
               const d = snap.data() || {};
-              if (Array.isArray(d[key]) && d[key].length > 0) return d[key];
+              for (const k of keysToCheck) {
+                if (Array.isArray(d[k]) && d[k].length > 0) return d[k];
+              }
             }
             return null;
           })
@@ -4556,18 +4623,22 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
       );
 
       // Endpoint 4: diagramas > ecu_hotspots > items
-      queries.push(
-        db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(key).get()
-          .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
-          .catch(() => null)
-      );
+      for (const k of [primaryKey, 'default_ecu_2kd']) {
+        queries.push(
+          db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(k).get()
+            .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
+            .catch(() => null)
+        );
+      }
 
       // Endpoint 5: ecu_interactive_hotspots
-      queries.push(
-        db.collection('ecu_interactive_hotspots').doc(key).get()
-          .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
-          .catch(() => null)
-      );
+      for (const k of [primaryKey, 'default_ecu_2kd']) {
+        queries.push(
+          db.collection('ecu_interactive_hotspots').doc(k).get()
+            .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
+            .catch(() => null)
+        );
+      }
 
       const results = await Promise.all(queries);
       const found = results.find(r => Array.isArray(r) && r.length > 0);
@@ -4645,12 +4716,27 @@ async function saveEcuHotspotsToStorage() {
     lastSaved: Date.now()
   }));
 
-  const key = currentEcuStorageKey || getActiveEcuStorageKey();
-  localStorage.setItem(key, JSON.stringify(currentEcuHotspots));
-  localStorage.setItem('probaktronic_ecu_hotspots_master_' + key, JSON.stringify(currentEcuHotspots));
+  const primaryKey = currentEcuStorageKey || getActiveEcuStorageKey();
+  const keysToSave = [
+    primaryKey,
+    'default_ecu_2kd',
+    'ecu_hotspots_brand_model_ecu_f0',
+    'ecu_hotspots_toyota_hilux_ecu_f0'
+  ];
+
+  for (const k of keysToSave) {
+    localStorage.setItem(k, JSON.stringify(currentEcuHotspots));
+    localStorage.setItem('probaktronic_ecu_hotspots_master_' + k, JSON.stringify(currentEcuHotspots));
+  }
 
   const active = window._currentActiveDiagramData || {};
   const archDoc = active._selectedArchDoc || {};
+  if (archDoc) {
+    archDoc.componentes_ecu = currentEcuHotspots;
+  }
+  if (active) {
+    active.componentes_ecu = currentEcuHotspots;
+  }
 
   try {
     if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
@@ -4683,18 +4769,27 @@ async function saveEcuHotspotsToStorage() {
 
       // Layer C: Write to global app_config
       await db.collection('app_config').doc('ecu_hotspots').set({
-        [key]: currentEcuHotspots,
+        [primaryKey]: currentEcuHotspots,
+        default_ecu_2kd: currentEcuHotspots,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true }).catch(() => null);
 
       // Layer D: Write to collection 'diagramas' > 'ecu_hotspots'
-      await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(key).set({
+      await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(primaryKey).set({
+        componentes: currentEcuHotspots,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true }).catch(() => null);
+      await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc('default_ecu_2kd').set({
         componentes: currentEcuHotspots,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true }).catch(() => null);
 
       // Layer E: Write to 'ecu_interactive_hotspots'
-      await db.collection('ecu_interactive_hotspots').doc(key).set({
+      await db.collection('ecu_interactive_hotspots').doc(primaryKey).set({
+        componentes: currentEcuHotspots,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true }).catch(() => null);
+      await db.collection('ecu_interactive_hotspots').doc('default_ecu_2kd').set({
         componentes: currentEcuHotspots,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true }).catch(() => null);
