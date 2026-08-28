@@ -6464,6 +6464,146 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
   }
 };
 
+// --- ADMIN DELETE CURRENT PHOTO CONTROLLER ---
+window.handleAdminDeleteCurrentPhoto = async function() {
+  const user = window.probaktronicCurrentUser;
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function')
+    ? window.isProbaktronicAdmin()
+    : (user && (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true));
+
+  if (!isAdmin) {
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('Acceso exclusivo para administradores.');
+    } else {
+      alert('Acceso exclusivo para administradores.');
+    }
+    return;
+  }
+
+  if (!currentGalleryImages || currentGalleryImages.length === 0) {
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('No hay fotos para eliminar.', 'warning');
+    } else {
+      alert('No hay fotos para eliminar.');
+    }
+    return;
+  }
+
+  const activeIndex = (typeof currentGalleryIndex === 'number' && currentGalleryIndex >= 0) ? currentGalleryIndex : 0;
+  const photoToDelete = currentGalleryImages[activeIndex];
+
+  if (!photoToDelete) {
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('No se encontró la foto a eliminar.', 'warning');
+    } else {
+      alert('No se encontró la foto a eliminar.');
+    }
+    return;
+  }
+
+  const confirmMsg = `¿Estás seguro de que deseas eliminar permanentemente la Foto ${activeIndex + 1} de este componente en Firebase?`;
+  if (!confirm(confirmMsg)) return;
+
+  const btnDelete = document.getElementById('btnAdminDeleteCurrentPhoto');
+  if (btnDelete) {
+    btnDelete.disabled = true;
+    btnDelete.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Eliminando...';
+  }
+
+  try {
+    const active = window._currentActiveDiagramData || {};
+    const archDoc = active._selectedArchDoc || {};
+
+    const brandDocId = (archDoc.brandDocId || (typeof currentSelectedBrandId !== 'undefined' && currentSelectedBrandId) || (typeof currentSelectedBrandName !== 'undefined' && currentSelectedBrandName) || 'toyota').toLowerCase().trim();
+    const modelDocId = (archDoc.modelDocId || (typeof currentSelectedModelDocId !== 'undefined' && currentSelectedModelDocId) || (typeof currentSelectedModelId !== 'undefined' && currentSelectedModelId) || (typeof currentSelectedModelName !== 'undefined' && currentSelectedModelName) || 'hilux').toLowerCase().trim();
+    const anioDocId = (archDoc.anioDocId || (typeof currentSelectedAnioDocId !== 'undefined' && currentSelectedAnioDocId) || document.getElementById('selectedVehicleSpecText')?.textContent?.match(/\d{4}\s*-\s*\d{4}/)?.[0] || '2011-2015').trim();
+    const motorDocId = (archDoc.motorDocId || (typeof currentSelectedMotorDocId !== 'undefined' && currentSelectedMotorDocId) || active.motor || '2kd-ftv').toLowerCase().trim();
+    const archDocId = archDoc.archDocId || archDoc.id || active.id || active.tituloArchivo || 'ecu';
+
+    // 1. Filter out the deleted photo
+    const updatedGallery = currentGalleryImages.filter((_, idx) => idx !== activeIndex);
+    const newCoverUrl = updatedGallery.length > 0 ? updatedGallery[0] : '';
+
+    // 2. Try deleting from Firebase Storage if it is a storage URL
+    if (typeof firebase !== 'undefined' && firebase.storage && photoToDelete.includes('firebasestorage')) {
+      try {
+        const storageRef = firebase.storage().refFromURL(photoToDelete);
+        await storageRef.delete().catch(() => null);
+      } catch (errStorage) {
+        console.warn('Storage file deletion notice:', errStorage);
+      }
+    }
+
+    // 3. Update Firestore in both deep hierarchy and model subcollection
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      const db = firebase.firestore();
+      const updatePayload = {
+        imagenes: updatedGallery,
+        allImages: updatedGallery,
+        imageUrl: newCoverUrl,
+        fotoComponente: newCoverUrl,
+        foto: newCoverUrl,
+        imagen: newCoverUrl,
+        ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      const docRef = db.collection('diagramas').doc(brandDocId)
+        .collection('modelos').doc(modelDocId)
+        .collection('anios').doc(anioDocId)
+        .collection('motores').doc(motorDocId)
+        .collection('archivos').doc(archDocId);
+      await docRef.set(updatePayload, { merge: true }).catch(err => console.warn('Deep doc update notice:', err));
+
+      const modelArchRef = db.collection('diagramas').doc(brandDocId)
+        .collection('modelos').doc(modelDocId)
+        .collection('archivos').doc(archDocId);
+      await modelArchRef.set(updatePayload, { merge: true }).catch(err => console.warn('Model doc update notice:', err));
+    }
+
+    // 4. Update in-memory data
+    currentGalleryImages = updatedGallery.length > 0 ? updatedGallery : ['ecu_demo_2kd.png'];
+    if (window._currentActiveDiagramData) {
+      window._currentActiveDiagramData.allImages = updatedGallery;
+      window._currentActiveDiagramData.imagenes = updatedGallery;
+      window._currentActiveDiagramData.imageUrl = newCoverUrl;
+      window._currentActiveDiagramData.fotoComponente = newCoverUrl;
+      if (window._currentActiveDiagramData._selectedArchDoc) {
+        window._currentActiveDiagramData._selectedArchDoc.allImages = updatedGallery;
+        window._currentActiveDiagramData._selectedArchDoc.imagenes = updatedGallery;
+        window._currentActiveDiagramData._selectedArchDoc.imageUrl = newCoverUrl;
+        window._currentActiveDiagramData._selectedArchDoc.fotoComponente = newCoverUrl;
+      }
+    }
+
+    // 5. Update viewer stage
+    window.renderGalleryPagination(currentGalleryImages);
+    await window.showGalleryImageAtIndex(0);
+
+    if (typeof window.initInteractiveEcuLayer === 'function') {
+      window.initInteractiveEcuLayer();
+    }
+
+    // 6. Close Modal
+    const modalEl = document.getElementById('adminAddPhotoDirectModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+      const bsModal = bootstrap.Modal.getInstance(modalEl);
+      if (bsModal) bsModal.hide();
+    }
+
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast(`🗑️ ¡Foto eliminada correctamente de Firebase! (${updatedGallery.length} restantes)`);
+    }
+  } catch (err) {
+    console.error('Error eliminando foto:', err);
+    alert('Error al eliminar la foto: ' + err.message);
+  } finally {
+    if (btnDelete) {
+      btnDelete.disabled = false;
+      btnDelete.innerHTML = '<i class="bi bi-trash3-fill me-1"></i> Eliminar Foto Actual';
+    }
+  }
+};
+
 // --- ADMIN ADD BRAND CONTROLLER ---
 let adminNewBrandCustomLogoData = null;
 

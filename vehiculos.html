@@ -2227,11 +2227,18 @@
             </div>
           </div>
 
-          <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
-            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnAdminSubmitDirectPhoto">
-              <i class="bi bi-cloud-arrow-up-fill me-1"></i> Subir y Guardar en Firebase
-            </button>
+          <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between flex-wrap gap-2">
+            <div>
+              <button type="button" class="btn btn-outline-danger rounded-pill px-3 fw-bold font-rajdhani" id="btnAdminDeleteCurrentPhoto" onclick="handleAdminDeleteCurrentPhoto()" title="Eliminar permanentemente la foto actual de Firebase">
+                <i class="bi bi-trash3-fill me-1"></i> Eliminar Foto Actual
+              </button>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnAdminSubmitDirectPhoto">
+                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Subir y Guardar en Firebase
+              </button>
+            </div>
           </div>
         </form>
       </div>
