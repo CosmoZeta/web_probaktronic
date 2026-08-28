@@ -1650,7 +1650,9 @@ window.renderGalleryPagination = function(imagesList) {
 };
 
 window.showGalleryImageAtIndex = async function(index) {
-  if (!currentGalleryImages || currentGalleryImages.length === 0) return;
+  if (!currentGalleryImages || currentGalleryImages.length === 0) {
+    currentGalleryImages = ['ecu_demo_2kd.png'];
+  }
   if (index < 0) index = currentGalleryImages.length - 1;
   if (index >= currentGalleryImages.length) index = 0;
 
@@ -1661,10 +1663,15 @@ window.showGalleryImageAtIndex = async function(index) {
   if (imgEl) {
     let rawSrc = currentGalleryImages[currentGalleryIndex];
     let resolvedSrc = await window.resolveFirebaseStorageUrl(rawSrc);
+    if (!resolvedSrc || resolvedSrc.trim() === '') {
+      resolvedSrc = 'ecu_demo_2kd.png';
+    }
 
     imgEl.onload = () => {
       if (stageLoader) stageLoader.classList.add('d-none');
       window.hideConsoleNoDiagramMessage();
+      imgEl.classList.remove('d-none');
+      imgEl.style.display = 'block';
       const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
       window.applyConsoleWatermark(isVert);
       if (window.currentActiveDiagramSection === 'pcb') {
@@ -1674,31 +1681,27 @@ window.showGalleryImageAtIndex = async function(index) {
 
     imgEl.onerror = () => {
       if (stageLoader) stageLoader.classList.add('d-none');
-      console.warn('Gallery image failed to load:', resolvedSrc);
-      imgEl.classList.add('d-none');
-      imgEl.removeAttribute('src');
-      window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta, 'No se pudo cargar la imagen del componente desde Firebase.');
+      console.warn('Gallery image failed to load, falling back to local ECU image:', resolvedSrc);
+      if (imgEl.src !== window.location.origin + '/ecu_demo_2kd.png' && !imgEl.src.endsWith('ecu_demo_2kd.png')) {
+        imgEl.src = 'ecu_demo_2kd.png';
+        imgEl.classList.remove('d-none');
+        imgEl.style.display = 'block';
+      }
     };
 
-    if (resolvedSrc) {
-      window.hideConsoleNoDiagramMessage();
-      imgEl.classList.remove('d-none');
-      imgEl.style.display = 'block';
-      imgEl.src = resolvedSrc;
-      if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
-        if (stageLoader) stageLoader.classList.add('d-none');
-        window.hideConsoleNoDiagramMessage();
-        const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
-        window.applyConsoleWatermark(isVert);
-        if (window.currentActiveDiagramSection === 'pcb') {
-          window.initInteractiveEcuLayer();
-        }
-      }
-    } else {
+    window.hideConsoleNoDiagramMessage();
+    imgEl.classList.remove('d-none');
+    imgEl.style.display = 'block';
+    imgEl.src = resolvedSrc;
+
+    if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
       if (stageLoader) stageLoader.classList.add('d-none');
-      imgEl.classList.add('d-none');
-      imgEl.removeAttribute('src');
-      window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta);
+      window.hideConsoleNoDiagramMessage();
+      const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
+      window.applyConsoleWatermark(isVert);
+      if (window.currentActiveDiagramSection === 'pcb') {
+        window.initInteractiveEcuLayer();
+      }
     }
   }
 
