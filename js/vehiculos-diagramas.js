@@ -4667,7 +4667,7 @@ function getDefaultHiluxHotspots(imgW = 1000, imgH = 1094) {
   ];
 }
 
-// Load from Firestore with fallback to LocalStorage (Seguro de Trazos & Bloqueo Persistente por Foto)
+// Load from Firestore with fallback to LocalStorage (Seguro de Trazos & Bloqueo Persistente por Componente y Foto)
 async function loadEcuHotspotsFromStorage(imgW, imgH) {
   currentEcuHotspots = [];
 
@@ -4675,116 +4675,85 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
   const archDoc = active._selectedArchDoc || {};
   const primaryKey = currentEcuStorageKey || getActiveEcuStorageKey();
   const isPrimaryPhoto = (typeof currentGalleryIndex !== 'number' || currentGalleryIndex === 0);
+  const title = (archDoc.archDocId || archDoc.id || active.tituloArchivo || archDoc.titulo || archDoc.nombre || active.motor || active.id || '').toLowerCase();
+  const isEcuComponent = title.includes('ecu') || title.includes('computadora');
 
-  // Check LocalStorage: Foto 1 checks aliases, Foto 2/3 checks only its dedicated key
-  const keysToCheck = isPrimaryPhoto
-    ? [
-        primaryKey,
-        'default_ecu_2kd',
-        'ecu_hotspots_brand_model_ecu_f0',
-        'ecu_hotspots_toyota_hilux_ecu_f0',
-        'ecu_hotspots_toyota_hilux_2kd_ftv_2011_2015_ecu_f0'
-      ]
-    : [primaryKey];
+  // Check if this specific component has been explicitly modified or saved by the admin
+  const isExplicitlySaved = localStorage.getItem(primaryKey + '_explicit_saved') === 'true';
 
-  for (const k of keysToCheck) {
-    const rawLocal = localStorage.getItem(k) || localStorage.getItem('probaktronic_ecu_hotspots_master_' + k);
-    if (rawLocal) {
-      try {
-        const parsed = JSON.parse(rawLocal);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          currentEcuHotspots = parsed;
-          break;
-        }
-      } catch (e) {}
-    }
-  }
-
-  // 2. Check if the diagram document in memory already had componentes_ecu (only for Foto 1)
-  if (isPrimaryPhoto && currentEcuHotspots.length === 0 && Array.isArray(archDoc.componentes_ecu) && archDoc.componentes_ecu.length > 0) {
-    currentEcuHotspots = archDoc.componentes_ecu;
-  }
-
-  // 3. Parallel Fetch across Firestore endpoints
-  if (currentEcuHotspots.length === 0 && typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+  // Check LocalStorage for this specific component and photo
+  const rawLocal = localStorage.getItem(primaryKey) || localStorage.getItem('probaktronic_ecu_hotspots_master_' + primaryKey);
+  if (rawLocal) {
     try {
-      const db = firebase.firestore();
-      const queries = [];
-
-      const cleanBrand = (archDoc.brandDocId || currentSelectedBrandId || 'toyota').toLowerCase().trim();
-      const cleanModel = (archDoc.modelDocId || currentSelectedModelDocId || currentSelectedModelId || 'hilux').toLowerCase().trim();
-      const cleanAnio = (archDoc.anioDocId || '2011-2015').trim();
-      const cleanMotor = (archDoc.motorDocId || '2kd-ftv').toLowerCase().trim();
-      const cleanArchId = archDoc.archDocId || archDoc.id || active.id || 'ecu';
-
-      if (isPrimaryPhoto) {
-        // Deep hierarchical doc
-        queries.push(
-          db.collection('diagramas').doc(cleanBrand)
-            .collection('modelos').doc(cleanModel)
-            .collection('anios').doc(cleanAnio)
-            .collection('motores').doc(cleanMotor)
-            .collection('archivos').doc(cleanArchId).get()
-            .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu) && snap.data().componentes_ecu.length > 0) ? snap.data().componentes_ecu : null)
-            .catch(() => null)
-        );
-
-        // Model archivos subcollection
-        queries.push(
-          db.collection('diagramas').doc(cleanBrand)
-            .collection('modelos').doc(cleanModel)
-            .collection('archivos').doc(cleanArchId).get()
-            .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu) && snap.data().componentes_ecu.length > 0) ? snap.data().componentes_ecu : null)
-            .catch(() => null)
-        );
+      const parsed = JSON.parse(rawLocal);
+      if (Array.isArray(parsed)) {
+        currentEcuHotspots = parsed;
       }
-
-      // Global app_config
-      queries.push(
-        db.collection('app_config').doc('ecu_hotspots').get()
-          .then(snap => {
-            if (snap && snap.exists) {
-              const d = snap.data() || {};
-              for (const k of keysToCheck) {
-                if (Array.isArray(d[k]) && d[k].length > 0) return d[k];
-              }
-            }
-            return null;
-          })
-          .catch(() => null)
-      );
-
-      // diagramas > ecu_hotspots > items
-      for (const k of keysToCheck) {
-        queries.push(
-          db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(k).get()
-            .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
-            .catch(() => null)
-        );
-      }
-
-      // ecu_interactive_hotspots
-      for (const k of keysToCheck) {
-        queries.push(
-          db.collection('ecu_interactive_hotspots').doc(k).get()
-            .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
-            .catch(() => null)
-        );
-      }
-
-      const results = await Promise.all(queries);
-      const found = results.find(r => Array.isArray(r) && r.length > 0);
-      if (found) {
-        currentEcuHotspots = found;
-      }
-    } catch (err) {
-      console.warn('Firestore hotspots parallel read notice:', err);
-    }
+    } catch (e) {}
   }
 
-  // 6. Default fallback for initial Hilux ECU ONLY on primary Photo 1
-  if (isPrimaryPhoto && currentEcuHotspots.length === 0) {
-    currentEcuHotspots = getDefaultHiluxHotspots(imgW, imgH);
+  // If already loaded from LocalStorage (even if empty, because user deleted components), respect user's explicit choice
+  if (!isExplicitlySaved && currentEcuHotspots.length === 0) {
+    // 2. Check if the diagram document in memory already had componentes_ecu (only for Foto 1 of that component)
+    if (isPrimaryPhoto && Array.isArray(archDoc.componentes_ecu) && archDoc.componentes_ecu.length > 0) {
+      currentEcuHotspots = archDoc.componentes_ecu;
+    }
+
+    // 3. Parallel Fetch across Firestore endpoints
+    if (currentEcuHotspots.length === 0 && typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+      try {
+        const db = firebase.firestore();
+        const queries = [];
+
+        const cleanBrand = (archDoc.brandDocId || currentSelectedBrandId || 'toyota').toLowerCase().trim();
+        const cleanModel = (archDoc.modelDocId || currentSelectedModelDocId || currentSelectedModelId || 'hilux').toLowerCase().trim();
+        const cleanAnio = (archDoc.anioDocId || '2011-2015').trim();
+        const cleanMotor = (archDoc.motorDocId || '2kd-ftv').toLowerCase().trim();
+        const cleanArchId = archDoc.archDocId || archDoc.id || active.id || 'ecu';
+
+        if (isPrimaryPhoto) {
+          // Deep hierarchical doc
+          queries.push(
+            db.collection('diagramas').doc(cleanBrand)
+              .collection('modelos').doc(cleanModel)
+              .collection('anios').doc(cleanAnio)
+              .collection('motores').doc(cleanMotor)
+              .collection('archivos').doc(cleanArchId).get()
+              .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu)) ? snap.data().componentes_ecu : null)
+              .catch(() => null)
+          );
+
+          // Model archivos subcollection
+          queries.push(
+            db.collection('diagramas').doc(cleanBrand)
+              .collection('modelos').doc(cleanModel)
+              .collection('archivos').doc(cleanArchId).get()
+              .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu)) ? snap.data().componentes_ecu : null)
+              .catch(() => null)
+          );
+        }
+
+        // diagramas > ecu_hotspots > items
+        queries.push(
+          db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(primaryKey).get()
+            .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes)) ? snap.data().componentes : null)
+            .catch(() => null)
+        );
+
+        const results = await Promise.all(queries);
+        const found = results.find(r => Array.isArray(r));
+        if (found) {
+          currentEcuHotspots = found;
+        }
+      } catch (err) {
+        console.warn('Firestore hotspots parallel read notice:', err);
+      }
+    }
+
+    // 4. Default fallback ONLY for initial Hilux ECU on Photo 1 if never modified
+    if (isEcuComponent && isPrimaryPhoto && !isExplicitlySaved && currentEcuHotspots.length === 0) {
+      currentEcuHotspots = getDefaultHiluxHotspots(imgW, imgH);
+    }
   }
 
   // Calibrate and lock proportional dimensions to ensure areas never shift
@@ -4849,17 +4818,11 @@ async function saveEcuHotspotsToStorage() {
   }));
 
   const primaryKey = currentEcuStorageKey || getActiveEcuStorageKey();
-  const keysToSave = [
-    primaryKey,
-    'default_ecu_2kd',
-    'ecu_hotspots_brand_model_ecu_f0',
-    'ecu_hotspots_toyota_hilux_ecu_f0'
-  ];
-
-  for (const k of keysToSave) {
-    localStorage.setItem(k, JSON.stringify(currentEcuHotspots));
-    localStorage.setItem('probaktronic_ecu_hotspots_master_' + k, JSON.stringify(currentEcuHotspots));
-  }
+  
+  // Save strictly under this component's unique key and mark as explicitly saved
+  localStorage.setItem(primaryKey, JSON.stringify(currentEcuHotspots));
+  localStorage.setItem('probaktronic_ecu_hotspots_master_' + primaryKey, JSON.stringify(currentEcuHotspots));
+  localStorage.setItem(primaryKey + '_explicit_saved', 'true');
 
   const active = window._currentActiveDiagramData || {};
   const archDoc = active._selectedArchDoc || {};
@@ -4887,44 +4850,27 @@ async function saveEcuHotspotsToStorage() {
         .collection('archivos').doc(cleanArchId)
         .set({
           componentes_ecu: currentEcuHotspots,
+          asegurado: true,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).catch(err => console.warn('Diagram doc hotspots save error:', err));
+        }, { merge: true }).catch(() => null);
 
-      // Layer B: Write to model archivos subcollection
+      // Layer B: Write to model subcollection
       await db.collection('diagramas').doc(cleanBrand)
         .collection('modelos').doc(cleanModel)
         .collection('archivos').doc(cleanArchId)
         .set({
           componentes_ecu: currentEcuHotspots,
+          asegurado: true,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true }).catch(() => null);
 
-      // Layer C: Write to global app_config
-      await db.collection('app_config').doc('ecu_hotspots').set({
-        [primaryKey]: currentEcuHotspots,
-        default_ecu_2kd: currentEcuHotspots,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true }).catch(() => null);
-
-      // Layer D: Write to collection 'diagramas' > 'ecu_hotspots'
-      await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(primaryKey).set({
-        componentes: currentEcuHotspots,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true }).catch(() => null);
-      await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc('default_ecu_2kd').set({
-        componentes: currentEcuHotspots,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true }).catch(() => null);
-
-      // Layer E: Write to 'ecu_interactive_hotspots'
-      await db.collection('ecu_interactive_hotspots').doc(primaryKey).set({
-        componentes: currentEcuHotspots,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true }).catch(() => null);
-      await db.collection('ecu_interactive_hotspots').doc('default_ecu_2kd').set({
-        componentes: currentEcuHotspots,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true }).catch(() => null);
+      // Layer C: Write to items collection
+      await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(primaryKey)
+        .set({
+          componentes: currentEcuHotspots,
+          asegurado: true,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(() => null);
 
       console.log('Componentes ECU sincronizados exitosamente en Firestore.');
       if (typeof window.showGlobalToast === 'function') {
