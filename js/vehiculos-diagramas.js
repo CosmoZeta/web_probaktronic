@@ -4362,10 +4362,11 @@ window.copyAdminExportEcuJson = function() {
 
 // Generate Storage Document Key for current vehicle / ECU (locked per photo index)
 function getActiveEcuStorageKey() {
-  const brand = (window.currentSelectedBrandId || 'brand').toLowerCase();
-  const model = (window.currentSelectedModelId || 'model').toLowerCase().replace(/[^a-z0-9]/g, '_');
   const active = window._currentActiveDiagramData || {};
-  const title = (active.tituloArchivo || active.motor || active.id || 'ecu').toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const archDoc = active._selectedArchDoc || {};
+  const brand = (archDoc.brandDocId || currentSelectedBrandId || (typeof currentSelectedBrandName !== 'undefined' && currentSelectedBrandName) || 'toyota').toLowerCase().trim();
+  const model = (archDoc.modelDocId || currentSelectedModelDocId || currentSelectedModelId || (typeof currentSelectedModelName !== 'undefined' && currentSelectedModelName) || 'hilux').toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const title = (archDoc.archDocId || archDoc.id || active.tituloArchivo || archDoc.titulo || archDoc.nombre || active.motor || active.id || 'ecu').toLowerCase().replace(/[^a-z0-9]/g, '_');
   const photoIdx = (typeof currentGalleryIndex === 'number') ? `_f${currentGalleryIndex}` : '_f0';
   return `ecu_hotspots_${brand}_${model}_${title}${photoIdx}`;
 }
@@ -4491,9 +4492,10 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
 
   const active = window._currentActiveDiagramData || {};
   const archDoc = active._selectedArchDoc || {};
+  const key = currentEcuStorageKey || getActiveEcuStorageKey();
 
-  // 1. Check local storage first for custom user modifications
-  const rawLocal = localStorage.getItem(currentEcuStorageKey) || localStorage.getItem('probaktronic_ecu_hotspots_master_' + currentEcuStorageKey);
+  // 1. Check local storage first for custom user modifications (Local admin cache)
+  const rawLocal = localStorage.getItem(key) || localStorage.getItem('probaktronic_ecu_hotspots_master_' + key);
   if (rawLocal) {
     try {
       const parsed = JSON.parse(rawLocal);
@@ -4508,34 +4510,61 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
     currentEcuHotspots = archDoc.componentes_ecu;
   }
 
-  // 3. Parallel Fetch across Firestore endpoints (Diagram doc, ecu_hotspots, ecu_interactive_hotspots)
+  // 3. Parallel Fetch across Firestore endpoints (Diagram doc, model doc, app_config, ecu_hotspots, ecu_interactive_hotspots)
   if (currentEcuHotspots.length === 0 && typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
     try {
       const db = firebase.firestore();
       const queries = [];
 
-      if (archDoc.brandDocId && archDoc.modelDocId && archDoc.anioDocId && archDoc.motorDocId && archDoc.archDocId) {
-        const cleanBrand = (archDoc.brandDocId || '').toLowerCase().trim();
-        const cleanModel = (archDoc.modelDocId || '').toLowerCase().trim();
-        queries.push(
-          db.collection('diagramas').doc(cleanBrand)
-            .collection('modelos').doc(cleanModel)
-            .collection('anios').doc(archDoc.anioDocId)
-            .collection('motores').doc(archDoc.motorDocId)
-            .collection('archivos').doc(archDoc.archDocId).get()
-            .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu) && snap.data().componentes_ecu.length > 0) ? snap.data().componentes_ecu : null)
-            .catch(() => null)
-        );
-      }
+      const cleanBrand = (archDoc.brandDocId || currentSelectedBrandId || 'toyota').toLowerCase().trim();
+      const cleanModel = (archDoc.modelDocId || currentSelectedModelDocId || currentSelectedModelId || 'hilux').toLowerCase().trim();
+      const cleanAnio = (archDoc.anioDocId || '2011-2015').trim();
+      const cleanMotor = (archDoc.motorDocId || '2kd-ftv').toLowerCase().trim();
+      const cleanArchId = archDoc.archDocId || archDoc.id || active.id || 'ecu';
 
+      // Endpoint 1: Deep hierarchical doc
       queries.push(
-        db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(currentEcuStorageKey).get()
+        db.collection('diagramas').doc(cleanBrand)
+          .collection('modelos').doc(cleanModel)
+          .collection('anios').doc(cleanAnio)
+          .collection('motores').doc(cleanMotor)
+          .collection('archivos').doc(cleanArchId).get()
+          .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu) && snap.data().componentes_ecu.length > 0) ? snap.data().componentes_ecu : null)
+          .catch(() => null)
+      );
+
+      // Endpoint 2: Model archivos subcollection
+      queries.push(
+        db.collection('diagramas').doc(cleanBrand)
+          .collection('modelos').doc(cleanModel)
+          .collection('archivos').doc(cleanArchId).get()
+          .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes_ecu) && snap.data().componentes_ecu.length > 0) ? snap.data().componentes_ecu : null)
+          .catch(() => null)
+      );
+
+      // Endpoint 3: Global app_config
+      queries.push(
+        db.collection('app_config').doc('ecu_hotspots').get()
+          .then(snap => {
+            if (snap && snap.exists) {
+              const d = snap.data() || {};
+              if (Array.isArray(d[key]) && d[key].length > 0) return d[key];
+            }
+            return null;
+          })
+          .catch(() => null)
+      );
+
+      // Endpoint 4: diagramas > ecu_hotspots > items
+      queries.push(
+        db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(key).get()
           .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
           .catch(() => null)
       );
 
+      // Endpoint 5: ecu_interactive_hotspots
       queries.push(
-        db.collection('ecu_interactive_hotspots').doc(currentEcuStorageKey).get()
+        db.collection('ecu_interactive_hotspots').doc(key).get()
           .then(snap => (snap && snap.exists && Array.isArray(snap.data().componentes) && snap.data().componentes.length > 0) ? snap.data().componentes : null)
           .catch(() => null)
       );
@@ -4616,8 +4645,9 @@ async function saveEcuHotspotsToStorage() {
     lastSaved: Date.now()
   }));
 
-  localStorage.setItem(currentEcuStorageKey, JSON.stringify(currentEcuHotspots));
-  localStorage.setItem('probaktronic_ecu_hotspots_master_' + currentEcuStorageKey, JSON.stringify(currentEcuHotspots));
+  const key = currentEcuStorageKey || getActiveEcuStorageKey();
+  localStorage.setItem(key, JSON.stringify(currentEcuHotspots));
+  localStorage.setItem('probaktronic_ecu_hotspots_master_' + key, JSON.stringify(currentEcuHotspots));
 
   const active = window._currentActiveDiagramData || {};
   const archDoc = active._selectedArchDoc || {};
@@ -4625,31 +4655,46 @@ async function saveEcuHotspotsToStorage() {
   try {
     if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
       const db = firebase.firestore();
+      const cleanBrand = (archDoc.brandDocId || currentSelectedBrandId || 'toyota').toLowerCase().trim();
+      const cleanModel = (archDoc.modelDocId || currentSelectedModelDocId || currentSelectedModelId || 'hilux').toLowerCase().trim();
+      const cleanAnio = (archDoc.anioDocId || '2011-2015').trim();
+      const cleanMotor = (archDoc.motorDocId || '2kd-ftv').toLowerCase().trim();
+      const cleanArchId = archDoc.archDocId || archDoc.id || active.id || 'ecu';
 
       // Layer A: Write directly into the specific diagram document in Firestore
-      if (archDoc.brandDocId && archDoc.modelDocId && archDoc.anioDocId && archDoc.motorDocId && archDoc.archDocId) {
-        const cleanBrand = (archDoc.brandDocId || '').toLowerCase().trim();
-        const cleanModel = (archDoc.modelDocId || '').toLowerCase().trim();
-        await db.collection('diagramas').doc(cleanBrand)
-          .collection('modelos').doc(cleanModel)
-          .collection('anios').doc(archDoc.anioDocId)
-          .collection('motores').doc(archDoc.motorDocId)
-          .collection('archivos').doc(archDoc.archDocId)
-          .set({
-            componentes_ecu: currentEcuHotspots,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true }).catch(err => console.warn('Diagram doc hotspots save error:', err));
-        console.log('Componentes ECU guardados directamente en el documento del diagrama en Firestore.');
-      }
+      await db.collection('diagramas').doc(cleanBrand)
+        .collection('modelos').doc(cleanModel)
+        .collection('anios').doc(cleanAnio)
+        .collection('motores').doc(cleanMotor)
+        .collection('archivos').doc(cleanArchId)
+        .set({
+          componentes_ecu: currentEcuHotspots,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(err => console.warn('Diagram doc hotspots save error:', err));
 
-      // Layer B: Write to collection 'diagramas' > 'ecu_hotspots' (Protected by diagram rules)
-      await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(currentEcuStorageKey).set({
+      // Layer B: Write to model archivos subcollection
+      await db.collection('diagramas').doc(cleanBrand)
+        .collection('modelos').doc(cleanModel)
+        .collection('archivos').doc(cleanArchId)
+        .set({
+          componentes_ecu: currentEcuHotspots,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(() => null);
+
+      // Layer C: Write to global app_config
+      await db.collection('app_config').doc('ecu_hotspots').set({
+        [key]: currentEcuHotspots,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true }).catch(() => null);
+
+      // Layer D: Write to collection 'diagramas' > 'ecu_hotspots'
+      await db.collection('diagramas').doc('ecu_hotspots').collection('items').doc(key).set({
         componentes: currentEcuHotspots,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true }).catch(() => null);
 
-      // Layer C: Write to 'ecu_interactive_hotspots'
-      await db.collection('ecu_interactive_hotspots').doc(currentEcuStorageKey).set({
+      // Layer E: Write to 'ecu_interactive_hotspots'
+      await db.collection('ecu_interactive_hotspots').doc(key).set({
         componentes: currentEcuHotspots,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true }).catch(() => null);
