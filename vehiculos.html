@@ -878,6 +878,12 @@
     .cursor-pointer {
       cursor: pointer !important;
     }
+    .modal {
+      z-index: 1060 !important;
+    }
+    .modal-backdrop {
+      z-index: 1050 !important;
+    }
   </style>
 </head>
 <body>
@@ -1370,147 +1376,135 @@
         </div>
       </div>
 
-      <!-- View 4: High-Tech Technical Diagnostic Console (Level 4 Inspired Viewer) -->
+      <!-- View 4: Diagnóstico Técnico y Visor de Imagen / Esquema (Diseño Exacto Imagen 1) -->
       <div id="diagramViewContainer" class="d-none">
-        <div class="technical-console-window">
+        <div class="technical-console-window rounded-4 overflow-hidden border shadow-sm" style="background: #FFFFFF; border-color: #E2E8F0 !important;">
           
-          <!-- 1. Top Technical Header Bar -->
-          <div class="console-top-bar">
-            <!-- Left Info Block: Manufacturer, ECU, Protocol & Working Mode -->
-            <div class="console-left-meta">
-              <div class="console-chip-icon">
+          <!-- 1. Top Technical Header Bar (Exacto Imagen 1) -->
+          <div class="console-top-bar px-4 py-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background-color: #FFFFFF; border-bottom: 1px solid #E2E8F0;">
+            <!-- Left Info Block: Manufacturer, ECU, Protocol & Component -->
+            <div class="console-left-meta d-flex align-items-center gap-3">
+              <div class="console-chip-icon" style="width: 38px; height: 38px; background-color: #F1F5F9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 1.2rem;">
                 <i class="bi bi-cpu-fill"></i>
               </div>
-              <div class="console-meta-item">
-                <span class="console-meta-label">FABRICANTE / ECU</span>
+              <div class="console-meta-item d-flex flex-column">
+                <span class="console-meta-label text-muted fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">FABRICANTE / ECU</span>
                 <div class="d-flex align-items-center gap-2">
-                  <span class="console-manufacturer-badge" id="consoleManufacturer">DENSO</span>
-                  <span class="console-ecu-number" id="consoleEcuNumber">275036-1152</span>
+                  <span class="console-manufacturer-badge fw-bold font-rajdhani text-danger fst-italic fs-5" id="consoleManufacturer">DENSO</span>
+                  <span class="console-ecu-number fw-bold font-rajdhani text-dark fs-5" id="consoleEcuNumber">2KD-FTV</span>
                 </div>
               </div>
-              <div class="console-meta-divider"></div>
-              <div class="console-meta-item d-none d-md-block">
-                <span class="console-meta-label">NÚMERO DE PROTOCOLO</span>
-                <span class="console-meta-value" id="consoleProtocolNumber">50110389</span>
+              <div class="console-meta-divider d-none d-md-block" style="width: 1px; height: 28px; background-color: #E2E8F0; margin: 0 10px;"></div>
+              <div class="console-meta-item d-none d-md-flex flex-column">
+                <span class="console-meta-label text-muted fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">NÚMERO DE PROTOCOLO</span>
+                <span class="console-meta-value fw-bold text-dark font-rajdhani fs-6" id="consoleProtocolNumber">50110389</span>
               </div>
-              <div class="console-meta-divider d-none d-md-block"></div>
-              <div class="console-meta-item">
-                <span class="console-meta-label">COMPONENTE / MODO</span>
+              <div class="console-meta-divider d-none d-md-block" style="width: 1px; height: 28px; background-color: #E2E8F0; margin: 0 10px;"></div>
+              <div class="console-meta-item d-flex flex-column">
+                <span class="console-meta-label text-muted fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">COMPONENTE / MODO</span>
                 <div class="d-flex align-items-center gap-1">
-                  <i class="bi bi-motherboard text-danger"></i>
-                  <span class="console-meta-value text-uppercase" id="consoleWorkingMode">PEDAL</span>
+                  <i class="bi bi-motherboard text-danger fs-6"></i>
+                  <span class="console-meta-value fw-bold text-dark font-rajdhani text-uppercase fs-6" id="consoleWorkingMode">- 2KD-FTV - 2011- 2015_ECU</span>
                 </div>
               </div>
             </div>
 
-            <!-- Right Window Controls -->
-            <div class="console-window-controls">
-              <button class="console-control-btn" id="btnToggleFullscreen" onclick="toggleConsoleFullscreen()" title="Pantalla completa">
+            <!-- Right Window Controls (Exacto Imagen 1) -->
+            <div class="console-window-controls d-flex align-items-center gap-2">
+              <button class="console-control-btn" id="btnToggleFullscreen" onclick="toggleConsoleFullscreen()" title="Pantalla completa" style="width: 36px; height: 36px; border-radius: 8px; background: #F1F5F9; border: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: center; color: #475569;">
                 <i class="bi bi-fullscreen"></i>
               </button>
-              <button class="console-control-btn close-btn" onclick="showEcuInfoView()" title="Cerrar visor">
+              <button class="console-control-btn close-btn" onclick="showEcuInfoView()" title="Cerrar visor" style="width: 36px; height: 36px; border-radius: 8px; background: #F1F5F9; border: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: center; color: #475569;">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
           </div>
 
           <!-- 2. Main Dark Workspace Canvas -->
-          <div class="console-workspace-canvas" id="consoleWorkspace">
-            <!-- Watermark / Splash view with dynamic choices -->
-            <div class="console-splash-view" id="consoleSplashView">
+          <div class="console-workspace-canvas position-relative" id="consoleWorkspace" style="background-color: #0B0E14; min-height: 520px; color: #FFFFFF;">
+            
+            <!-- Pantalla Principal con los 2 Botones (Exacto Imagen 1) -->
+            <div class="console-splash-view d-flex flex-column align-items-center justify-content-center py-5 px-3" id="consoleSplashView" style="min-height: 480px;">
               <div class="console-brand-watermark mb-4 text-center">
-                <img src="logo_probaktronic_costado.png" alt="Probaktronic" class="console-probak-logo pulse-animation">
-                <div class="console-brand-sub mt-2">MOTORSPORT & AUTOMOTIVE DIAGNOSTICS</div>
+                <img src="logo_probaktronic_costado.png" alt="Probaktronic" class="console-probak-logo" style="max-height: 54px; width: auto; object-fit: contain; filter: drop-shadow(0 0 16px rgba(211, 47, 47, 0.45));">
+                <div class="console-brand-sub mt-2 font-rajdhani fw-bold text-muted" style="font-size: 0.85rem; letter-spacing: 2px; color: #94A3B8 !important;">MOTORSPORT & AUTOMOTIVE DIAGNOSTICS</div>
               </div>
 
-              <!-- Action Buttons with Dynamic Labels -->
-              <div class="console-manual-buttons-row">
-                <button class="btn-console-action active" id="btnPcbManual" onclick="loadSpecificDiagramSection('pcb')">
-                  <i class="bi bi-image me-2"></i> <span id="btnPcbManualLabel">Imagen del Componente</span>
+              <!-- Action Buttons Row (Exacto Imagen 1) -->
+              <div class="console-manual-buttons-row d-flex gap-3 flex-wrap justify-content-center mt-3">
+                <button class="btn-console-splash-primary" id="btnPcbManual" onclick="loadSpecificDiagramSection('pcb')">
+                  <i class="bi bi-image me-2"></i> <span id="btnPcbManualLabel">IMAGEN DE LA ECU</span>
                 </button>
-                <button class="btn-console-action" id="btnConnectorManual" onclick="loadSpecificDiagramSection('connector')">
-                  <i class="bi bi-diagram-3 me-2"></i> <span id="btnConnectorManualLabel">Conexionado del Componente</span>
-                </button>
-                <button class="btn-console-action d-none" id="btnSplashChangeSvg" onclick="openReplaceActiveDiagramModal()" style="border-color: rgba(255, 193, 7, 0.5); color: #ffc107;">
-                  <i class="bi bi-filetype-svg me-2"></i> <span>Modificar / Subir SVG</span>
+                <button class="btn-console-splash-secondary" id="btnConnectorManual" onclick="loadSpecificDiagramSection('connector')">
+                  <i class="bi bi-diagram-3 me-2"></i> <span id="btnConnectorManualLabel">CONEXIONADO DE LA ECU</span>
                 </button>
               </div>
             </div>
 
-            <!-- Active Schematic/Diagram Viewer Container -->
+            <!-- Contenedor del Visor Activo (Diseño Completo Mapeo Interactivo de ECU) -->
             <div class="console-diagram-content d-none" id="consoleDiagramContent">
-              <div class="console-diagram-toolbar">
-                <span class="console-diagram-title font-rajdhani fw-bold" id="consoleActiveDocTitle">Esquema de Diagnóstico</span>
-                <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
-                  <!-- Botón para ver imágenes del componente / pedal -->
+              <!-- Toolbar Superior de la Imagen de la ECU (Exacto Captura) -->
+              <div class="console-diagram-toolbar px-3 py-2 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: #141820; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                <span class="console-diagram-title font-rajdhani fw-bold text-white fs-5" id="consoleActiveDocTitle">Imagen de la ECU</span>
+                
+                <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
+                  <!-- Botón Ver Conexionado -->
                   <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnToggleMediaView" onclick="toggleDiagramMediaView()" title="Ver imágenes o volver al conexionado">
-                    <i class="bi bi-images text-danger fs-6" id="toggleMediaIcon"></i>
-                    <span class="small font-rajdhani fw-bold" id="toggleMediaViewText">Imágenes del Pedal</span>
+                    <i class="bi bi-diagram-3 text-danger fs-6" id="toggleMediaIcon"></i>
+                    <span class="small font-rajdhani fw-bold" id="toggleMediaViewText">Ver Conexionado</span>
                   </button>
 
-                  <!-- Botón para Imprimir el PDF con Marca de Agua -->
-                  <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnPrintDiagramPdf" onclick="printConsoleDiagram()" title="Imprimir diagrama con marca de agua">
+                  <!-- Botón Imprimir -->
+                  <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnPrintDiagramPdf" onclick="printConsoleDiagram()" title="Imprimir imagen con marca de agua">
                     <i class="bi bi-printer text-info fs-6"></i>
                     <span class="small font-rajdhani fw-bold">Imprimir</span>
                   </button>
 
-                  <!-- Botón Admin: Modo Dibujar Espacios de Componentes ECU -->
-                  <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminToggleEcuEditor" onclick="toggleAdminEcuEditorMode()" title="Modo Administrador: Dibujar y mapear componentes en la ECU">
+                  <!-- Botones de Mapeo Interactivo (Dibujar y Marcar Áreas) -->
+                  <button class="btn btn-outline-warning btn-sm border d-inline-flex align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminToggleEcuEditor" onclick="toggleAdminEcuEditorMode()" title="Dibujar y mapear componentes en la ECU">
                     <i class="bi bi-bounding-box"></i>
                     <span id="adminEcuEditorBtnText">DIBUJAR ESPACIOS</span>
                   </button>
-                  <button class="btn btn-outline-success btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminLockEcuHotspots" onclick="lockAndSaveEcuHotspots()" title="Fijar y asegurar permanentemente todas las áreas marcadas">
+                  <button class="btn btn-outline-success btn-sm border d-inline-flex align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminLockEcuHotspots" onclick="lockAndSaveEcuHotspots()" title="Asegurar permanentemente las áreas marcadas">
                     <i class="bi bi-shield-lock-fill"></i>
                     <span>ASEGURAR ÁREAS</span>
                   </button>
-                  <button class="btn btn-outline-info btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminExportEcuJson" onclick="openAdminExportEcuJsonModal()" title="Exportar JSON para que quede fijo en GitHub y en el código">
-                    <i class="bi bi-filetype-json"></i>
-                    <span>EXPORTAR JSON</span>
-                  </button>
-                  <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1" id="btnAdminUndoEcuHotspot" onclick="undoLastAdminEcuHotspot()" title="Deshacer último componente dibujado">
-                    <i class="bi bi-arrow-counterclockwise"></i>
-                  </button>
-                  <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminReorderGallery" onclick="openAdminGalleryReorderModal()" title="Elegir y organizar el orden de las fotos (Foto 1, Foto 2, etc.)">
+                  <button class="btn btn-outline-warning btn-sm border d-inline-flex align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminReorderGallery" onclick="openAdminGalleryReorderModal()" title="Ordenar fotos de la galería">
                     <i class="bi bi-arrow-down-up"></i>
                     <span>ORDENAR FOTOS</span>
                   </button>
-                  <button class="btn btn-outline-danger btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminAddPhotoToComponent" onclick="openAdminAddPhotoDirectModal()" title="Subir y agregar una nueva foto directamente a este componente">
+                  <button class="btn btn-danger btn-sm border d-inline-flex align-items-center gap-1 font-rajdhani fw-bold shadow-sm" id="btnAdminAddPhotoToComponent" onclick="openAdminAddPhotoDirectModal()" title="Subir nueva foto a esta ECU">
                     <i class="bi bi-cloud-arrow-up-fill"></i>
                     <span>+ AGREGAR FOTO</span>
                   </button>
 
-                  <!-- Botón Admin: Modificar y subir imagen PNG / SVG -->
-                  <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnReplaceDiagramSvg" onclick="openReplaceActiveDiagramModal()" title="Modificar este archivo y subir imagen PNG, WebP o SVG de alta resolución (Solo Administrador)">
-                    <i class="bi bi-file-earmark-image-fill text-warning fs-5"></i>
-                    <span>SUBIR PNG / SVG</span>
-                  </button>
-
-                  <!-- Botón Admin: Asegurar y Fijar Diagrama en Firebase -->
-                  <button class="btn btn-outline-success btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminLockDiagramFirebase" onclick="lockAndSaveDiagramToFirebase()" title="Asegurar y verificar que el diagrama actual quede fijado permanentemente en Firebase">
-                    <i class="bi bi-shield-check"></i>
-                    <span>ASEGURAR DIAGRAMA</span>
-                  </button>
-
-                  <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnToggleZoomPan" onclick="toggleHandZoom()" title="Hacer clic para ampliar o reducir">
+                  <!-- Zoom y Ajuste -->
+                  <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnToggleZoomPan" onclick="toggleHandZoom()" title="Zoom">
                     <i class="bi bi-search text-danger fs-6"></i>
                     <span class="small font-rajdhani fw-bold" id="zoomModeText">ZOOM (1.0x)</span>
                   </button>
-                  <button class="btn btn-dark btn-sm border" onclick="rotateConsoleDiagram()" title="Rotar diagrama 90°"><i class="bi bi-arrow-clockwise text-warning"></i></button>
-                  <button class="btn btn-dark btn-sm border" onclick="resetConsoleDiagramZoom()" title="Ajustar a pantalla"><i class="bi bi-aspect-ratio"></i></button>
-                  <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" onclick="toggleFitWidthMode()" id="btnFitWidth" title="Expandir y ajustar al ancho completo de la pantalla"><i class="bi bi-arrows-expand text-warning"></i><span class="small font-rajdhani fw-bold d-none d-lg-inline">Ancho Completo</span></button>
-                  <button class="btn btn-dark btn-sm border" onclick="toggleConsoleFullscreen()" id="btnFullscreenDiagram" title="Pantalla Completa / Maximizar"><i class="bi bi-fullscreen text-info" id="btnFullscreenDiagramIcon"></i></button>
-                  <button class="btn btn-outline-light btn-sm" onclick="showConsoleSplashView()"><i class="bi bi-arrow-left me-1"></i> Opciones</button>
+                  <button class="btn btn-dark btn-sm border" onclick="resetConsoleDiagramZoom()" title="Centrar / Ajustar"><i class="bi bi-aspect-ratio"></i></button>
+                  <button class="btn btn-outline-light btn-sm font-rajdhani fw-bold px-3" onclick="showConsoleSplashView()"><i class="bi bi-arrow-left me-1"></i> Opciones</button>
                 </div>
               </div>
 
-              <!-- Interactive Color Legend Bar for ECU Components (Top Full-Width Guide Strip) -->
-              <div class="ecu-color-legend d-none align-items-center gap-2 p-2 px-3" id="consoleEcuColorLegend">
-                <span class="text-white-50 small fw-bold font-rajdhani me-2 text-nowrap d-flex align-items-center"><i class="bi bi-palette-fill text-warning me-1"></i>GUÍA DE COLORES:</span>
-                <div class="d-flex flex-wrap align-items-center gap-2 flex-grow-1" id="consoleEcuColorLegendItems"></div>
+              <!-- Guía de Colores de Componentes ECU (Exacto Captura) -->
+              <div class="ecu-color-legend d-flex align-items-center gap-2 p-2 px-3 flex-wrap" id="consoleEcuColorLegend" style="background: #0d1117; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                <span class="text-white-50 small fw-bold font-rajdhani me-2 text-nowrap d-flex align-items-center">
+                  <i class="bi bi-palette-fill text-warning me-1"></i>GUÍA DE COLORES:
+                </span>
+                <div class="d-flex flex-wrap align-items-center gap-2 flex-grow-1" id="consoleEcuColorLegendItems">
+                  <span class="badge py-1 px-2 font-rajdhani fw-bold" style="background: rgba(147, 51, 234, 0.15); border: 1px solid #9333EA; color: #D8B4FE;"><i class="bi bi-square-fill me-1" style="color: #9333EA;"></i>MEMORIA EEPROM / FLASH</span>
+                  <span class="badge py-1 px-2 font-rajdhani fw-bold" style="background: rgba(100, 116, 139, 0.15); border: 1px solid #64748B; color: #CBD5E1;"><i class="bi bi-square-fill me-1" style="color: #64748B;"></i>MICROPROCESADOR (MCU)</span>
+                  <span class="badge py-1 px-2 font-rajdhani fw-bold" style="background: rgba(234, 88, 12, 0.15); border: 1px solid #EA580C; color: #FDBA74;"><i class="bi bi-square-fill me-1" style="color: #EA580C;"></i>DRIVER DE SENSORES</span>
+                  <span class="badge py-1 px-2 font-rajdhani fw-bold" style="background: rgba(220, 38, 38, 0.15); border: 1px solid #DC2626; color: #FCA5A5;"><i class="bi bi-square-fill me-1" style="color: #DC2626;"></i>REGULADOR DE VOLTAJE</span>
+                  <span class="badge py-1 px-2 font-rajdhani fw-bold" style="background: rgba(8, 145, 178, 0.15); border: 1px solid #0891B2; color: #67E8F9;"><i class="bi bi-square-fill me-1" style="color: #0891B2;"></i>DIODOS / PROTECCIÓN</span>
+                </div>
               </div>
 
-              <div class="console-img-viewer-wrap" id="consoleImgViewerWrap">
-                <!-- Gallery Navigation Arrows for multiple photos -->
+              <!-- Canvas / Image Stage con Mapeo SVG Interactivo -->
+              <div class="console-img-viewer-wrap position-relative w-100 overflow-hidden" id="consoleImgViewerWrap" style="min-height: 600px; height: 80vh; background: #0B0E14;">
+                <!-- Botones de Navegación de Galería (< y >) -->
                 <button class="btn-gallery-nav prev-btn d-none" id="btnPrevGalleryImg" onclick="navigateGalleryImage(-1)" title="Foto anterior">
                   <i class="bi bi-chevron-left"></i>
                 </button>
@@ -1518,7 +1512,7 @@
                   <i class="bi bi-chevron-right"></i>
                 </button>
 
-                <!-- Admin Instruction Banner when drawing -->
+                <!-- Banner Flotante de Instrucción de Dibujo de Áreas -->
                 <div class="console-ecu-editor-banner d-none" id="consoleEcuEditorBanner">
                   <div class="d-flex align-items-center gap-1">
                     <button type="button" class="btn btn-sm btn-dark py-0 px-2 rounded-pill border border-warning text-warning fw-bold font-rajdhani active" id="btnEcuDrawModeRect" onclick="setEcuDrawShape('rect')" title="Recuadro para Chips / Integrados">
@@ -1528,21 +1522,33 @@
                       <i class="bi bi-brush-fill me-1 text-info"></i>Zona / Lazo Libre
                     </button>
                   </div>
-                  <span id="ecuDrawInstructionText" class="small text-light ms-1"><i class="bi bi-pencil-fill me-1 text-warning"></i> <strong>Modo Chip:</strong> Arrastra sobre el chip</span>
-                  <span class="badge bg-dark text-info border border-secondary border-opacity-50 small ms-1 font-monospace" style="font-size: 0.68rem;" title="Presiona la rueda de desplazamiento del ratón o la barra Espacio para arrastrar la imagen libremente"><i class="bi bi-mouse2 me-1"></i>Scroll/Espacio: Mover</span>
+                  <span id="ecuDrawInstructionText" class="small text-light ms-1"><i class="bi bi-pencil-fill me-1 text-warning"></i> <strong>Modo Chip:</strong> Arrastra sobre el chip para marcarlo</span>
+                  <span class="badge bg-dark text-info border border-secondary border-opacity-50 small ms-1 font-monospace" style="font-size: 0.68rem;"><i class="bi bi-mouse2 me-1"></i>Scroll/Espacio: Mover</span>
                   <button class="btn btn-sm btn-dark py-0 px-2 rounded-pill ms-1 text-danger border border-danger font-rajdhani" onclick="cancelAdminEcuDrawing()"><i class="bi bi-x-circle me-1"></i>Salir</button>
                 </div>
 
-                <div class="console-diagram-stage" id="consoleDiagramStage">
-                  <!-- Watermark Overlay (Vertical or Horizontal based on orientation) -->
-                  <div class="console-watermark-overlay" id="consoleWatermarkOverlay"></div>
-                  <div class="security-shield-overlay" id="consoleSecurityShield" title="Protección de diagrama Probaktronic"></div>
+                <!-- Dropzone si aún no se ha cargado una foto -->
+                <div class="d-none flex-column align-items-center justify-content-center text-center p-4 w-100 h-100" id="consoleEmptyUploadDropzone" style="min-height: 480px; z-index: 10;">
+                  <div class="p-4 p-md-5 rounded-4 border-2 border-dashed text-center mx-auto transition-all cursor-pointer" style="max-width: 520px; background: rgba(255, 255, 255, 0.02); border-color: rgba(220, 38, 38, 0.45) !important;" onclick="openAdminAddPhotoDirectModal()">
+                    <div class="bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-circle p-3 d-inline-flex mb-3">
+                      <i class="bi bi-file-earmark-image-fill text-danger fs-1"></i>
+                    </div>
+                    <h5 class="font-rajdhani fw-bold text-white text-uppercase mb-2">AGREGAR IMAGEN DE LA ECU (PNG)</h5>
+                    <p class="text-white-50 small mb-3">Sube la foto de la placa de la ECU para empezar a marcar y asignar áreas interactivas.</p>
+                    <button class="btn btn-danger rounded-pill font-rajdhani fw-bold px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2" onclick="event.stopPropagation(); openAdminAddPhotoDirectModal();">
+                      <i class="bi bi-cloud-arrow-up-fill fs-5"></i>
+                      <span>SELECCIONAR IMAGEN PNG</span>
+                    </button>
+                  </div>
+                </div>
 
-                  <!-- Visual Media Targets -->
-                  <img id="consoleMainDiagramImg" src="" alt="Diagrama Probaktronic" class="console-diagram-img hand-cursor" draggable="false">
+                <!-- Stage Principal -->
+                <div class="console-diagram-stage text-center position-relative w-100 h-100" id="consoleDiagramStage">
+                  <!-- Imagen de la Placa ECU -->
+                  <img id="consoleMainDiagramImg" alt="" class="console-diagram-img hand-cursor d-none" draggable="false" style="display: none; max-height: 78vh; max-width: 100%; object-fit: contain;">
                   
-                  <!-- Interactive SVG Overlay for ECU PCB Components & Leader Lines -->
-                  <svg id="consoleEcuSvgOverlay" class="console-ecu-svg-overlay d-none" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+                  <!-- Capa SVG Interactiva de Componentes y Áreas Marcadas -->
+                  <svg id="consoleEcuSvgOverlay" class="console-ecu-svg-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none">
                     <path id="consoleEcuActiveLeaderLine" class="console-ecu-leader-line" d="" style="display: none;"></path>
                     <g id="consoleEcuHotspotsGroup"></g>
                     <rect id="consoleEcuDrawingBox" class="console-ecu-drawing-box" x="0" y="0" width="0" height="0" rx="4" style="display: none;"></rect>
@@ -1553,46 +1559,31 @@
                   <canvas id="consolePdfCanvas" class="console-diagram-canvas hand-cursor d-none"></canvas>
                 </div>
 
-                <!-- Floating / Slide-in Component Info Drawer -->
+                <!-- Drawer Lateral de Información del Componente Seleccionado -->
                 <div class="console-ecu-info-drawer d-none" id="consoleEcuInfoDrawer">
-                  <div class="drawer-header d-flex align-items-center justify-content-between">
+                  <div class="drawer-header d-flex align-items-center justify-content-between p-3 border-bottom border-secondary border-opacity-50" style="background: #11151F;">
                     <div class="d-flex align-items-center gap-2">
                       <i class="bi bi-cpu-fill text-info fs-5" id="ecuDrawerHeaderIcon"></i>
-                      <h6 class="mb-0 font-rajdhani fw-bold text-white" id="ecuDrawerTitle">COMPONENTE ECU</h6>
+                      <h6 class="mb-0 font-rajdhani fw-bold text-white fs-6" id="ecuDrawerTitle">COMPONENTE ECU</h6>
                     </div>
                     <div class="d-flex align-items-center gap-1">
-                      <button class="btn btn-sm btn-outline-warning p-0 px-2 d-none" id="btnAdminEditSelectedHotspot" onclick="editActiveEcuComponent()" title="Modificar datos del componente">
+                      <button class="btn btn-sm btn-outline-warning p-0 px-2" id="btnAdminEditSelectedHotspot" onclick="editActiveEcuComponent()" title="Modificar datos del componente">
                         <i class="bi bi-pencil-square"></i> <span class="d-none d-sm-inline ms-1 small">Editar</span>
                       </button>
-                      <button class="btn btn-sm btn-outline-danger p-0 px-2 d-none" id="btnAdminDeleteSelectedHotspot" onclick="deleteActiveEcuComponent()" title="Eliminar componente (Admin)">
+                      <button class="btn btn-sm btn-outline-danger p-0 px-2" id="btnAdminDeleteSelectedHotspot" onclick="deleteActiveEcuComponent()" title="Eliminar componente">
                         <i class="bi bi-trash"></i>
                       </button>
                       <button class="btn-close btn-close-white btn-sm" onclick="closeEcuInfoDrawer()"></button>
                     </div>
                   </div>
-                  <div class="drawer-body" id="ecuDrawerContent">
+                  <div class="drawer-body p-3" id="ecuDrawerContent" style="max-height: 70vh; overflow-y: auto;">
                     <!-- Dynamic Component Details injected here -->
                   </div>
                 </div>
               </div>
-
-              <!-- Multi-Photo Gallery Pagination Strip (For 4 Pedal Photos, ECU Photos, etc.) -->
-              <div class="console-gallery-pagination d-none mt-3" id="consoleGalleryPagination">
-                <!-- Dynamically generated photo buttons -->
-              </div>
-
-              <!-- Pagination for Multi-Page PDFs -->
-              <div class="console-pdf-pagination d-none mt-3" id="consolePdfPagination">
-                <button class="btn btn-outline-light btn-sm px-3" id="btnPdfPrevPage" onclick="changePdfPage(-1)"><i class="bi bi-chevron-left me-1"></i> Anterior</button>
-                <span class="text-white small fw-bold mx-3 font-rajdhani" id="pdfPageInfo">Página 1 / 1</span>
-                <button class="btn btn-outline-light btn-sm px-3" id="btnPdfNextPage" onclick="changePdfPage(1)">Siguiente <i class="bi bi-chevron-right ms-1"></i></button>
-              </div>
-            </div>
           </div>
-
         </div>
       </div>
-
     </main>
   </div>
 
@@ -2204,17 +2195,23 @@
             <!-- File Upload Drop Zone -->
             <div class="mb-3">
               <label class="form-label font-rajdhani fw-bold text-dark mb-1">SELECCIONAR ARCHIVO DE IMAGEN (JPG, PNG, WEBP, SVG)</label>
-              <div class="border-dashed p-3 rounded-3 text-center bg-light cursor-pointer" onclick="document.getElementById('adminDirectPhotoFileInput').click()" style="border: 2px dashed #CBD5E1;">
-                <i class="bi bi-images fs-2 text-danger d-block mb-1"></i>
-                <span class="small fw-bold text-dark d-block" id="adminDirectPhotoFileNameText">Haz clic para elegir una imagen</span>
-                <span class="text-muted" style="font-size: 0.72rem;">Imágenes HD optimizadas de la placa, pedal o conectores</span>
-                <input type="file" id="adminDirectPhotoFileInput" class="d-none" accept="image/*,.svg" onchange="handleAdminDirectPhotoFileChange(this)" required>
+              <div class="border-dashed p-4 rounded-3 text-center bg-light cursor-pointer w-100 d-block transition-all" id="adminDirectPhotoDropzone" style="border: 2px dashed #DC2626; background: rgba(220, 38, 38, 0.03);" onclick="document.getElementById('adminDirectPhotoFileInput').click()">
+                <i class="bi bi-images fs-1 text-danger d-block mb-2"></i>
+                <span class="small fw-bold text-dark d-block fs-6 mb-1" id="adminDirectPhotoFileNameText">Haz clic para elegir una imagen</span>
+                <span class="text-muted small d-block mb-3">Imágenes HD optimizadas de la placa, pedal o conectores (Arrastra tu archivo aquí)</span>
+                
+                <button type="button" class="btn btn-danger btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm" onclick="event.stopPropagation(); document.getElementById('adminDirectPhotoFileInput').click();">
+                  <i class="bi bi-folder2-open me-1"></i> Seleccionar archivo PNG / JPG
+                </button>
+                
+                <input type="file" id="adminDirectPhotoFileInput" accept="image/*,.svg" style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;" onchange="handleAdminDirectPhotoFileChange(this)" onclick="event.stopPropagation()">
               </div>
             </div>
 
             <!-- Live Image Thumbnail Preview -->
-            <div class="d-none text-center mb-3 p-2 bg-dark rounded-3" id="adminDirectPhotoPreviewWrap">
-              <img id="adminDirectPhotoPreviewImg" src="" alt="Preview" style="max-height: 140px; max-width: 100%; object-fit: contain;">
+            <div class="d-none text-center mb-3 p-3 bg-dark rounded-3 border border-secondary border-opacity-25" id="adminDirectPhotoPreviewWrap">
+              <div class="small text-white-50 mb-2 font-rajdhani fw-bold">Vista previa de la imagen seleccionada:</div>
+              <img id="adminDirectPhotoPreviewImg" src="" alt="Preview" style="max-height: 160px; max-width: 100%; object-fit: contain; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);">
             </div>
 
             <!-- Progress Bar -->
@@ -2447,6 +2444,6 @@
   <script src="js/global.js?v=3.0"></script>
   <script src="js/firebase-catalog.js?v=3.0"></script>
   <script src="js/auth.js?v=3.0"></script>
-  <script src="js/vehiculos-diagramas.js?v=5.5"></script>
+  <script src="js/vehiculos-diagramas.js?v=15.0"></script>
 </body>
 </html>

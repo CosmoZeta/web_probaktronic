@@ -183,10 +183,15 @@ function getBrandLogoUrl(brandKey) {
     }
   }
   return 'logo_probaktronic_solo.png';
-}let currentSelectedBrandId = null;
+}
+
+let currentSelectedBrandId = null;
 let currentSelectedBrandName = null;
 let currentSelectedModelId = null;
 let currentSelectedModelName = null;
+let currentSelectedModelDocId = null;
+let currentSelectedAnioDocId = null;
+let currentSelectedMotorDocId = null;
 window.currentModelsDataStore = {};
 
 function initVehiculosDiagramasModule() {
@@ -1265,6 +1270,89 @@ let currentGalleryIndex = 0;
 let currentZoomLevels = [1.0, 1.5, 2.0, 2.75, 3.5];
 let currentZoomLevelIndex = 0;
 
+// Universal Resolver for Firebase Storage URIs (gs://, storage paths, or HTTP URLs)
+window.resolveFirebaseStorageUrl = async function(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  rawUrl = rawUrl.trim();
+  if (!rawUrl || rawUrl.includes('logo_probaktronic')) return '';
+
+  // 1. Direct web URL, Base64 Data URL or Blob URL
+  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('data:') || rawUrl.startsWith('blob:')) {
+    return rawUrl;
+  }
+
+  // 2. Local relative paths (e.g., 'imagenes autos/...', 'imagenes svg/...')
+  if (rawUrl.startsWith('imagenes ') || rawUrl.startsWith('imagenes/') || (rawUrl.endsWith('.png') || rawUrl.endsWith('.jpg') || rawUrl.endsWith('.svg')) && !rawUrl.startsWith('diagramas/') && !rawUrl.startsWith('gs://')) {
+    return rawUrl;
+  }
+
+  // 3. gs:// URL or Firebase Storage relative path (e.g. 'diagramas/TOYOTA/...')
+  if (typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
+    try {
+      const storage = firebase.storage();
+      const ref = rawUrl.startsWith('gs://') ? storage.refFromURL(rawUrl) : storage.ref(rawUrl);
+      const downloadUrl = await ref.getDownloadURL();
+      return downloadUrl;
+    } catch (err) {
+      console.warn('Firebase Storage resolve notice for [' + rawUrl + ']:', err.message || err);
+    }
+  }
+  return rawUrl;
+};
+
+// UI Helpers for Missing/Error Diagram State
+window.showConsoleNoDiagramMessage = function(compMeta, customMessage) {
+  const dropzone = document.getElementById('consoleEmptyUploadDropzone');
+  const imgWrap = document.getElementById('consoleImgViewerWrap');
+  const stage = document.getElementById('consoleDiagramStage');
+  const imgEl = document.getElementById('consoleMainDiagramImg');
+  const svgOverlay = document.getElementById('consoleEcuSvgOverlay');
+  const stageLoader = document.getElementById('consoleDiagramStageLoader');
+
+  if (stageLoader) stageLoader.classList.add('d-none');
+  if (imgEl) {
+    imgEl.classList.add('d-none');
+    imgEl.style.display = 'none';
+    imgEl.removeAttribute('src');
+  }
+  if (svgOverlay) {
+    svgOverlay.style.display = 'none';
+  }
+  if (stage) {
+    stage.classList.add('d-none');
+  }
+  if (dropzone) {
+    dropzone.classList.remove('d-none');
+    dropzone.classList.add('d-flex');
+  }
+  if (imgWrap) {
+    imgWrap.classList.remove('d-none');
+  }
+};
+
+window.hideConsoleNoDiagramMessage = function() {
+  const dropzone = document.getElementById('consoleEmptyUploadDropzone');
+  const imgWrap = document.getElementById('consoleImgViewerWrap');
+  const stage = document.getElementById('consoleDiagramStage');
+  const svgOverlay = document.getElementById('consoleEcuSvgOverlay');
+  const stageLoader = document.getElementById('consoleDiagramStageLoader');
+
+  if (stageLoader) stageLoader.classList.add('d-none');
+  if (dropzone) {
+    dropzone.classList.add('d-none');
+    dropzone.classList.remove('d-flex');
+  }
+  if (stage) {
+    stage.classList.remove('d-none');
+  }
+  if (imgWrap) {
+    imgWrap.classList.remove('d-none');
+  }
+  if (svgOverlay && window.currentActiveDiagramSection === 'pcb') {
+    svgOverlay.style.display = 'block';
+  }
+};
+
 window.applyConsoleWatermark = function(isVertical = true) {
   const overlay = document.getElementById('consoleWatermarkOverlay');
   if (overlay) {
@@ -1561,28 +1649,56 @@ window.renderGalleryPagination = function(imagesList) {
   }
 };
 
-window.showGalleryImageAtIndex = function(index) {
+window.showGalleryImageAtIndex = async function(index) {
   if (!currentGalleryImages || currentGalleryImages.length === 0) return;
   if (index < 0) index = currentGalleryImages.length - 1;
   if (index >= currentGalleryImages.length) index = 0;
 
   currentGalleryIndex = index;
   const imgEl = document.getElementById('consoleMainDiagramImg');
+  const stageLoader = document.getElementById('consoleDiagramStageLoader');
+
   if (imgEl) {
+    let rawSrc = currentGalleryImages[currentGalleryIndex];
+    let resolvedSrc = await window.resolveFirebaseStorageUrl(rawSrc);
+
     imgEl.onload = () => {
+      if (stageLoader) stageLoader.classList.add('d-none');
+      window.hideConsoleNoDiagramMessage();
       const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
       window.applyConsoleWatermark(isVert);
       if (window.currentActiveDiagramSection === 'pcb') {
         window.initInteractiveEcuLayer();
       }
     };
-    imgEl.src = currentGalleryImages[currentGalleryIndex];
-    if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
-      const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
-      window.applyConsoleWatermark(isVert);
-      if (window.currentActiveDiagramSection === 'pcb') {
-        window.initInteractiveEcuLayer();
+
+    imgEl.onerror = () => {
+      if (stageLoader) stageLoader.classList.add('d-none');
+      console.warn('Gallery image failed to load:', resolvedSrc);
+      imgEl.classList.add('d-none');
+      imgEl.removeAttribute('src');
+      window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta, 'No se pudo cargar la imagen del componente desde Firebase.');
+    };
+
+    if (resolvedSrc) {
+      window.hideConsoleNoDiagramMessage();
+      imgEl.classList.remove('d-none');
+      imgEl.style.display = 'block';
+      imgEl.src = resolvedSrc;
+      if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
+        if (stageLoader) stageLoader.classList.add('d-none');
+        window.hideConsoleNoDiagramMessage();
+        const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
+        window.applyConsoleWatermark(isVert);
+        if (window.currentActiveDiagramSection === 'pcb') {
+          window.initInteractiveEcuLayer();
+        }
       }
+    } else {
+      if (stageLoader) stageLoader.classList.add('d-none');
+      imgEl.classList.add('d-none');
+      imgEl.removeAttribute('src');
+      window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta);
     }
   }
 
@@ -1634,8 +1750,11 @@ window.toggleHandZoom = function() {
 window.showConsoleSplashView = function() {
   const splash = document.getElementById('consoleSplashView');
   const content = document.getElementById('consoleDiagramContent');
+  const stageLoader = document.getElementById('consoleDiagramStageLoader');
+  if (stageLoader) stageLoader.classList.add('d-none');
   if (splash) splash.classList.remove('d-none');
   if (content) content.classList.add('d-none');
+  window.hideConsoleNoDiagramMessage();
 };
 
 window.loadSpecificDiagramSection = async function(type) {
@@ -1643,6 +1762,8 @@ window.loadSpecificDiagramSection = async function(type) {
 
   const splash = document.getElementById('consoleSplashView');
   const content = document.getElementById('consoleDiagramContent');
+  const stageLoader = document.getElementById('consoleDiagramStageLoader');
+  if (stageLoader && type === 'pcb') stageLoader.classList.add('d-none');
   const titleEl = document.getElementById('consoleActiveDocTitle');
   const imgEl = document.getElementById('consoleMainDiagramImg');
   const frameEl = document.getElementById('consolePdfFrame');
@@ -1658,6 +1779,7 @@ window.loadSpecificDiagramSection = async function(type) {
 
   if (splash) splash.classList.add('d-none');
   if (content) content.classList.remove('d-none');
+  window.hideConsoleNoDiagramMessage();
 
   const comp = window._currentActiveDiagramData ? window._currentActiveDiagramData._componentMeta : { phrase: 'del Componente' };
   const active = window._currentActiveDiagramData || {};
@@ -1703,29 +1825,31 @@ window.loadSpecificDiagramSection = async function(type) {
         photos = [...active.fotos];
       }
 
-      // If single or none, extract and prepare gallery (e.g. 4 photos for pedal)
+      // If single or none, extract and prepare gallery
       if (photos.length === 0) {
-        const single = active.fotoComponente || active.imageUrl || active.imagen || active.image || 'imagenes autos/ic_car_toyota_yaris.JPG';
-        photos = [single];
+        const single = active.fotoComponente || active.imageUrl || active.imagen || active.image || null;
+        if (single) photos = [single];
       }
 
-      // If viewing Pedal, ensure up to 4 photos are browsable
-      if (photos.length === 1 && (comp.phrase.includes('Pedal') || comp.phrase.includes('PEDAL'))) {
-        photos = [
-          photos[0],
-          'imagenes autos/ic_car_toyota_yaris.JPG',
-          'imagenes autos/ic_car_toyota_hilux.JPG',
-          'imagenes autos/ic_car_toyota_corolla.JPG'
-        ].filter((v, i, a) => a.indexOf(v) === i || i < 4);
+      // Resolve all photos if they are gs:// or storage paths
+      const resolvedPhotos = await Promise.all(photos.map(p => window.resolveFirebaseStorageUrl(p)));
+      const validPhotos = resolvedPhotos.filter(Boolean);
+
+      if (validPhotos.length > 0) {
+        window.renderGalleryPagination(validPhotos);
+        await window.showGalleryImageAtIndex(0);
+        if (typeof window.initInteractiveEcuLayer === 'function') {
+          window.initInteractiveEcuLayer();
+        }
+      } else {
+        if (imgEl) {
+          imgEl.classList.add('d-none');
+          imgEl.style.display = 'none';
+          imgEl.removeAttribute('src');
+        }
+        window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta);
       }
 
-      window.renderGalleryPagination(photos);
-      window.showGalleryImageAtIndex(0);
-
-      // Activate interactive ECU layer & check Admin controls
-      if (typeof window.initInteractiveEcuLayer === 'function') {
-        window.initInteractiveEcuLayer();
-      }
       if (typeof window.updateEcuAdminUI === 'function') {
         window.updateEcuAdminUI();
       }
@@ -1784,6 +1908,11 @@ window.loadSpecificDiagramSection = async function(type) {
 
     let targetPdfOrImg = lockedDiagramUrl || active.diagramaUrl || active._selectedArchDoc?.diagramaUrl || active.archivoUrl || active._selectedArchDoc?.archivoUrl || active.diagramaImg || active._selectedArchDoc?.diagramaImg || active.url || active._selectedArchDoc?.url || active.pdfUrl || active._selectedArchDoc?.pdfUrl || active.downloadUrl;
 
+    // Resolve gs:// or relative Storage path if present
+    if (targetPdfOrImg) {
+      targetPdfOrImg = await window.resolveFirebaseStorageUrl(targetPdfOrImg);
+    }
+
     // If no explicit file set, search Firebase Storage as fallback
     if (!targetPdfOrImg && typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
       try {
@@ -1801,7 +1930,7 @@ window.loadSpecificDiagramSection = async function(type) {
           const listRes = await storage.ref(fPath).listAll().catch(() => null);
           if (listRes) {
             // Check direct items in folder
-            const pdfItem = listRes.items.find(item => item.name.toLowerCase().endsWith('.pdf') || item.name.toLowerCase().endsWith('.svg') || item.name.toLowerCase().endsWith('.png'));
+            const pdfItem = listRes.items.find(item => item.name.toLowerCase().endsWith('.pdf') || item.name.toLowerCase().endsWith('.svg') || item.name.toLowerCase().endsWith('.png') || item.name.toLowerCase().endsWith('.jpg') || item.name.toLowerCase().endsWith('.webp'));
             if (pdfItem) {
               targetPdfOrImg = await pdfItem.getDownloadURL();
               active.pdfUrl = targetPdfOrImg;
@@ -1811,7 +1940,7 @@ window.loadSpecificDiagramSection = async function(type) {
             for (const prefix of listRes.prefixes) {
               const subList = await prefix.listAll().catch(() => null);
               if (subList) {
-                const subPdf = subList.items.find(item => item.name.toLowerCase().endsWith('.pdf') || item.name.toLowerCase().endsWith('.svg') || item.name.toLowerCase().endsWith('.png'));
+                const subPdf = subList.items.find(item => item.name.toLowerCase().endsWith('.pdf') || item.name.toLowerCase().endsWith('.svg') || item.name.toLowerCase().endsWith('.png') || item.name.toLowerCase().endsWith('.jpg') || item.name.toLowerCase().endsWith('.webp'));
                 if (subPdf) {
                   targetPdfOrImg = await subPdf.getDownloadURL();
                   active.pdfUrl = targetPdfOrImg;
@@ -1831,6 +1960,20 @@ window.loadSpecificDiagramSection = async function(type) {
       targetPdfOrImg = '';
     }
 
+    if (!targetPdfOrImg) {
+      if (stageLoader) stageLoader.classList.add('d-none');
+      if (frameEl) { frameEl.classList.add('d-none'); frameEl.src = ''; }
+      if (canvasEl) { canvasEl.classList.add('d-none'); canvasEl.style.display = 'none'; }
+      if (pdfPaginationEl) pdfPaginationEl.classList.add('d-none');
+      if (imgEl) {
+        imgEl.classList.add('d-none');
+        imgEl.style.display = 'none';
+        imgEl.removeAttribute('src');
+      }
+      window.showConsoleNoDiagramMessage(comp);
+      return;
+    }
+
     // Accurate PDF check: must end with .pdf and not be an image/SVG
     const cleanUrlLower = (targetPdfOrImg || '').toLowerCase();
     const isImageExt = cleanUrlLower.startsWith('blob:') ? (!cleanUrlLower.includes('.pdf') && !active.pdfUrl) : /\.(png|jpg|jpeg|webp|svg|gif|bmp)(\?|$)/i.test(cleanUrlLower);
@@ -1839,13 +1982,18 @@ window.loadSpecificDiagramSection = async function(type) {
     window.currentActivePdfUrl = targetPdfOrImg;
 
     if (isPdf) {
-      if (imgEl) imgEl.classList.add('d-none');
+      if (imgEl) {
+        imgEl.classList.add('d-none');
+        imgEl.style.display = 'none';
+        imgEl.removeAttribute('src');
+      }
 
       if (typeof pdfjsLib !== 'undefined') {
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
         pdfjsLib.getDocument({ url: targetPdfOrImg, withCredentials: false }).promise.then(pdfDoc => {
           if (stageLoader) stageLoader.classList.add('d-none');
+          window.hideConsoleNoDiagramMessage();
           currentPdfDoc = pdfDoc;
           currentPdfPageNum = 1;
           if (frameEl) {
@@ -1881,7 +2029,6 @@ window.loadSpecificDiagramSection = async function(type) {
       window.applyConsoleWatermark(false);
     } else {
       // Direct SVG / Image vector rendering: Fills 100% width in Ultra-HD without any cropping artifacts
-      if (stageLoader) stageLoader.classList.add('d-none');
       if (frameEl) {
         frameEl.classList.add('d-none');
         frameEl.src = '';
@@ -1893,6 +2040,30 @@ window.loadSpecificDiagramSection = async function(type) {
       }
 
       if (imgEl) {
+        imgEl.onload = () => {
+          const sl = document.getElementById('consoleDiagramStageLoader');
+          if (sl) sl.classList.add('d-none');
+          window.hideConsoleNoDiagramMessage();
+          const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
+          window.applyConsoleWatermark(isVert);
+          window.resetConsoleDiagramZoom();
+        };
+
+        imgEl.onerror = () => {
+          const sl = document.getElementById('consoleDiagramStageLoader');
+          if (sl) sl.classList.add('d-none');
+          console.warn('Image failed to load URL:', targetPdfOrImg);
+          imgEl.classList.add('d-none');
+          imgEl.style.display = 'none';
+          imgEl.removeAttribute('src');
+          window.showConsoleNoDiagramMessage(comp, 'No se pudo cargar la imagen desde Firebase Storage. Comprueba la URL o las reglas de seguridad/CORS.');
+          if (targetPdfOrImg && targetPdfOrImg.startsWith('blob:')) {
+            try {
+              localStorage.removeItem('probaktronic_locked_diagrams');
+            } catch (e) {}
+          }
+        };
+
         imgEl.classList.remove('d-none');
         imgEl.style.display = 'block';
         imgEl.src = targetPdfOrImg;
@@ -1910,22 +2081,15 @@ window.loadSpecificDiagramSection = async function(type) {
           if (window.isFitWidthActive) stageEl.classList.add('fit-width');
         }
 
-        imgEl.onload = () => {
-          if (stageLoader) stageLoader.classList.add('d-none');
+        // Handle already-cached images instantly
+        if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
+          const sl = document.getElementById('consoleDiagramStageLoader');
+          if (sl) sl.classList.add('d-none');
+          window.hideConsoleNoDiagramMessage();
           const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
           window.applyConsoleWatermark(isVert);
           window.resetConsoleDiagramZoom();
-        };
-
-        imgEl.onerror = () => {
-          if (stageLoader) stageLoader.classList.add('d-none');
-          console.warn('Image failed to load URL:', targetPdfOrImg);
-          if (targetPdfOrImg && targetPdfOrImg.startsWith('blob:')) {
-            try {
-              localStorage.removeItem('probaktronic_locked_diagrams');
-            } catch (e) {}
-          }
-        };
+        }
       }
     }
   }
@@ -2196,7 +2360,7 @@ function handleFullscreenStatusChange() {
   }, 120);
 }
 
-// Open Diagram Viewer for Selected Model (Level 4 High-Tech Console)
+// Open Diagram Viewer for Selected Model (Diseño Exacto Imagen 1)
 window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
   const rawData = window.currentModelsDataStore[docId] || {};
   console.log(`Displaying diagram console for [${docId}]:`, rawData, 'selectedArchDoc:', selectedArchDoc);
@@ -2205,16 +2369,20 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
   const modelsView = document.getElementById('modelsViewContainer');
   const ecuView = document.getElementById('ecuInfoViewContainer');
   const diagramView = document.getElementById('diagramViewContainer');
+  const mainHeader = document.querySelector('.select-vehicle-header');
+  const bcrumb = document.getElementById('vehicleBreadcrumbNav');
 
   if (brandsView) brandsView.classList.add('d-none');
   if (modelsView) modelsView.classList.add('d-none');
   if (ecuView) ecuView.classList.add('d-none');
   if (diagramView) diagramView.classList.remove('d-none');
+  if (mainHeader) mainHeader.classList.remove('d-none');
+  if (bcrumb) bcrumb.classList.remove('d-none');
 
   const btnAdmin = document.getElementById('btnAdminAddDiagram');
   if (btnAdmin) btnAdmin.classList.add('d-none');
 
-  // Populate Console Meta Header
+  // Populate Console Meta Header (Exacto Imagen 1)
   const brandId = (currentSelectedBrandId || 'toyota').toLowerCase();
   let manufacturerName = 'DENSO';
   if (brandId.includes('audi') || brandId.includes('bmw') || brandId.includes('volkswagen') || brandId.includes('vw') || brandId.includes('mercedes') || brandId.includes('porsche') || brandId.includes('seat') || brandId.includes('skoda')) {
@@ -2229,8 +2397,8 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
     manufacturerName = 'DENSO';
   }
 
-  const ecuTitle = (rawData.motor && rawData.motor !== 'Estándar') ? rawData.motor : '275036-1152';
-  const connTitle = selectedArchDoc ? (selectedArchDoc.titulo || selectedArchDoc.nombre || selectedArchDoc.id || 'PEDAL') : 'PEDAL';
+  const ecuTitle = (rawData.motor && rawData.motor !== 'Estándar') ? rawData.motor : '2KD-FTV';
+  const connTitle = selectedArchDoc ? (selectedArchDoc.titulo || selectedArchDoc.nombre || selectedArchDoc.id || '2KD-FTV - 2011- 2015_ECU') : '2KD-FTV - 2011- 2015_ECU';
 
   const mfgEl = document.getElementById('consoleManufacturer');
   const ecuEl = document.getElementById('consoleEcuNumber');
@@ -2239,21 +2407,15 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
 
   if (mfgEl) mfgEl.textContent = manufacturerName;
   if (ecuEl) ecuEl.textContent = ecuTitle;
-  let cleanModeTitle = connTitle;
-  // Clean redundant brand and year prefix if present
-  const redundantPrefixRegex = new RegExp(`^(${currentSelectedBrandName || ''}|toyota|hyundai|nissan|chevrolet|audi|kia|ford)\\s*([a-zA-Z0-9_-]+)?\\s*(\\d{4}\\s*-\\s*\\d{4})?\\s*`, 'i');
-  const stripped = cleanModeTitle.replace(redundantPrefixRegex, '').trim();
-  if (stripped.length >= 3) cleanModeTitle = stripped;
-  if (modeEl) modeEl.textContent = cleanModeTitle.toUpperCase();
+  if (modeEl) modeEl.textContent = `- ${connTitle.toUpperCase()}`;
   if (protoEl) protoEl.textContent = '50110389';
 
-  // Dynamic Button Labels (e.g. "Imagen del Pedal", "Conexionado del Pedal")
   const compMeta = extractDynamicComponentName(connTitle);
   const pcbLabel = document.getElementById('btnPcbManualLabel');
   const connLabel = document.getElementById('btnConnectorManualLabel');
 
-  if (pcbLabel) pcbLabel.textContent = `Imagen ${compMeta.phrase}`;
-  if (connLabel) connLabel.textContent = `Conexionado ${compMeta.phrase}`;
+  if (pcbLabel) pcbLabel.textContent = `IMAGEN ${compMeta.phrase.toUpperCase()}`;
+  if (connLabel) connLabel.textContent = `CONEXIONADO ${compMeta.phrase.toUpperCase()}`;
 
   // Deep Hierarchy Traversal & Integration
   let activeData = { ...rawData };
@@ -2262,7 +2424,7 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
     if (selectedArchDoc.titulo || selectedArchDoc.nombre) {
       activeData.tituloArchivo = selectedArchDoc.titulo || selectedArchDoc.nombre;
     }
-    const fileUrl = selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.pdfUrl || selectedArchDoc.downloadUrl || selectedArchDoc.imageUrl || selectedArchDoc.imagen;
+    const fileUrl = selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.diagramaUrl || selectedArchDoc.pdfUrl || selectedArchDoc.downloadUrl || selectedArchDoc.imageUrl || selectedArchDoc.imagen;
     if (fileUrl) {
       activeData.url = fileUrl;
     }
@@ -2283,7 +2445,7 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
   activeData._componentMeta = compMeta;
   window._currentActiveDiagramData = activeData;
 
-  // Show the console splash view initially
+  // Show splash view exactly like Image 1
   window.showConsoleSplashView();
 };
 
@@ -2509,11 +2671,15 @@ window.showEcuInfoView = function() {
   const modelsView = document.getElementById('modelsViewContainer');
   const ecuView = document.getElementById('ecuInfoViewContainer');
   const diagramView = document.getElementById('diagramViewContainer');
+  const mainHeader = document.querySelector('.select-vehicle-header');
+  const bcrumb = document.getElementById('vehicleBreadcrumbNav');
 
   if (brandsView) brandsView.classList.add('d-none');
   if (modelsView) modelsView.classList.add('d-none');
   if (ecuView) ecuView.classList.remove('d-none');
   if (diagramView) diagramView.classList.add('d-none');
+  if (mainHeader) mainHeader.classList.remove('d-none');
+  if (bcrumb) bcrumb.classList.remove('d-none');
 
   if (typeof window.checkAdminButtonVisibility === 'function') {
     window.checkAdminButtonVisibility();
@@ -3636,49 +3802,91 @@ window.setEcuDrawShape = function(shape) {
   }
 };
 
-// Standardized Automotive Color Habit Mapping for ECU Components (12 Categorías Profesionales)
+// Standardized Automotive Color Habit Mapping for ECU Components (Exacto al requerimiento del usuario)
 const ECU_CATEGORY_THEMES = {
-  'EEPROM / Memoria': {
-    name: 'Memoria EEPROM / Flash',
-    color: '#A855F7',
-    glow: '#C084FC',
-    fill: 'rgba(168, 85, 247, 0.18)',
-    icon: 'bi-memory'
-  },
-  'Microprocesador': {
-    name: 'Microprocesador / MCU',
-    color: '#94A3B8',
-    glow: '#CBD5E1',
-    fill: 'rgba(148, 163, 184, 0.18)',
-    icon: 'bi-cpu-fill'
-  },
   'Inyectores': {
     name: 'Driver Inyectores',
-    color: '#10B981',
+    color: '#10B981', // VERDE
     glow: '#34D399',
-    fill: 'rgba(16, 185, 129, 0.18)',
+    fill: 'rgba(16, 185, 129, 0.20)',
     icon: 'bi-fuel-pump-fill'
   },
-  'Bobinas': {
-    name: 'Driver Bobinas / Ignición',
-    color: '#EAB308',
-    glow: '#FDE047',
-    fill: 'rgba(234, 179, 8, 0.18)',
-    icon: 'bi-lightning-charge-fill'
-  },
-  'Voltaje': {
-    name: 'Regulador / Voltaje Power',
-    color: '#EF4444',
-    glow: '#F87171',
-    fill: 'rgba(239, 68, 68, 0.18)',
-    icon: 'bi-battery-charging'
+  'Microprocesador': {
+    name: 'Microprocesador (MCU)',
+    color: '#64748B', // PLOMO
+    glow: '#94A3B8',
+    fill: 'rgba(100, 116, 139, 0.20)',
+    icon: 'bi-cpu-fill'
   },
   'Diodos': {
     name: 'Diodos / Protección',
+    color: '#FFFFFF', // BLANCO
+    glow: '#F8FAFC',
+    fill: 'rgba(255, 255, 255, 0.22)',
+    icon: 'bi-shield-shaded'
+  },
+  'Resistencia': {
+    name: 'Resistencia SMD / Shunt',
+    color: '#92400E', // MARRÓN
+    glow: '#B45309',
+    fill: 'rgba(146, 64, 14, 0.22)',
+    icon: 'bi-slash-lg'
+  },
+  'Bobinas': {
+    name: 'Driver Bobinas / Ignición',
+    color: '#EAB308', // AMARILLO
+    glow: '#FDE047',
+    fill: 'rgba(234, 179, 8, 0.20)',
+    icon: 'bi-lightning-charge-fill'
+  },
+  'Voltaje': {
+    name: 'Área / Regulador de Voltaje',
+    color: '#EF4444', // ROJO
+    glow: '#F87171',
+    fill: 'rgba(239, 68, 68, 0.20)',
+    icon: 'bi-battery-charging'
+  },
+  'Integrados': {
+    name: 'Circuitos Integrados / Driver',
+    color: '#F97316', // ANARANJADO
+    glow: '#FB923C',
+    fill: 'rgba(249, 115, 22, 0.20)',
+    icon: 'bi-grid-3x3-gap-fill'
+  },
+  'Driver Sensor': {
+    name: 'Driver / Procesador de Sensores',
+    color: '#F97316', // ANARANJADO
+    glow: '#FB923C',
+    fill: 'rgba(249, 115, 22, 0.20)',
+    icon: 'bi-activity'
+  },
+  'Condensador': {
+    name: 'Condensadores SMD',
+    color: '#9CA3AF', // GRIS
+    glow: '#D1D5DB',
+    fill: 'rgba(156, 163, 175, 0.20)',
+    icon: 'bi-dash-lg'
+  },
+  'EEPROM / Memoria': {
+    name: 'Memoria EEPROM / Flash',
+    color: '#A855F7', // MORADO / PÚRPURA
+    glow: '#C084FC',
+    fill: 'rgba(168, 85, 247, 0.20)',
+    icon: 'bi-memory'
+  },
+  'Transistor': {
+    name: 'Transistor / MOSFET SMD',
     color: '#06B6D4',
     glow: '#38BDF8',
-    fill: 'rgba(6, 182, 212, 0.18)',
-    icon: 'bi-shield-shaded'
+    fill: 'rgba(6, 182, 212, 0.20)',
+    icon: 'bi-diagram-3-fill'
+  },
+  'Cristal': {
+    name: 'Cristal Oscilador / Reloj',
+    color: '#EC4899',
+    glow: '#F472B6',
+    fill: 'rgba(236, 72, 153, 0.20)',
+    icon: 'bi-gem'
   },
   'EFI': {
     name: 'Alimentación Principal EFI',
@@ -3686,41 +3894,6 @@ const ECU_CATEGORY_THEMES = {
     glow: '#60A5FA',
     fill: 'rgba(37, 99, 235, 0.20)',
     icon: 'bi-power'
-  },
-  'Driver Sensor': {
-    name: 'Driver / Procesador de Sensores',
-    color: '#F97316',
-    glow: '#FB923C',
-    fill: 'rgba(249, 115, 22, 0.18)',
-    icon: 'bi-activity'
-  },
-  'Transistor': {
-    name: 'Transistor / MOSFET SMD',
-    color: '#F8FAFC',
-    glow: '#FFFFFF',
-    fill: 'rgba(248, 250, 252, 0.18)',
-    icon: 'bi-diagram-3-fill'
-  },
-  'Resistencia': {
-    name: 'Resistencia SMD / Shunt',
-    color: '#D97706',
-    glow: '#FBBF24',
-    fill: 'rgba(217, 119, 6, 0.18)',
-    icon: 'bi-slash-lg'
-  },
-  'Cristal': {
-    name: 'Cristal Oscilador / Reloj',
-    color: '#EC4899',
-    glow: '#F472B6',
-    fill: 'rgba(236, 72, 153, 0.18)',
-    icon: 'bi-gem'
-  },
-  'Condensador': {
-    name: 'Condensador / Filtro',
-    color: '#14B8A6',
-    glow: '#2DD4BF',
-    fill: 'rgba(20, 184, 166, 0.18)',
-    icon: 'bi-dash-lg'
   }
 };
 window.ECU_CATEGORY_THEMES = ECU_CATEGORY_THEMES;
@@ -3732,26 +3905,30 @@ const CATEGORY_ALIASES = {
   'Alimentación Interna': 'Voltaje',
   'Comunicaciones': 'Diodos',
   'Sensores & Entradas': 'Driver Sensor',
-  'Conexionado': 'Microprocesador'
+  'Conexionado': 'Microprocesador',
+  'Integrados': 'Integrados',
+  'Driver': 'Integrados'
 };
 window.CATEGORY_ALIASES = CATEGORY_ALIASES;
 
 const ECU_FRIENDLY_TYPES = {
-  'EEPROM / Memoria': 'MEMORIA EEPROM / FLASH',
-  'Microprocesador': 'MICROPROCESADOR (MCU)',
   'Inyectores': 'DRIVER DE INYECTORES',
-  'Bobinas': 'DRIVER DE BOBINAS / IGNICIÓN',
-  'Voltaje': 'REGULADOR DE VOLTAJE',
+  'Microprocesador': 'MICROPROCESADOR (MCU)',
   'Diodos': 'DIODOS / PROTECCIÓN',
-  'EFI': 'ALIMENTACIÓN PRINCIPAL EFI',
-  'Driver Sensor': 'DRIVER DE SENSORES',
-  'Transistor': 'TRANSISTOR / MOSFET SMD',
   'Resistencia': 'RESISTENCIA SMD',
+  'Bobinas': 'BOBINAS / IGNICIÓN',
+  'Voltaje': 'ÁREA DE VOLTAJE / REGULADOR',
+  'Integrados': 'CIRCUITOS INTEGRADOS (IC)',
+  'Driver Sensor': 'DRIVER DE SENSORES',
+  'Condensador': 'CONDENSADORES SMD',
+  'EEPROM / Memoria': 'MEMORIA EEPROM / FLASH',
+  'Transistor': 'TRANSISTOR / MOSFET SMD',
   'Cristal': 'CRISTAL OSCILADOR',
-  'Condensador': 'CONDENSADOR SMD'
+  'EFI': 'ALIMENTACIÓN PRINCIPAL EFI'
 };
 window.ECU_FRIENDLY_TYPES = ECU_FRIENDLY_TYPES;
-// Robust Category Normalizer to guarantee zero-fail matching across all historical data & formats
+
+// Robust Category Normalizer
 window.normalizeEcuCategory = function(rawCat) {
   if (!rawCat || typeof rawCat !== 'string') return 'Microprocesador';
   const c = rawCat.trim();
@@ -3759,18 +3936,18 @@ window.normalizeEcuCategory = function(rawCat) {
   if (CATEGORY_ALIASES[c]) return CATEGORY_ALIASES[c];
 
   const lower = c.toLowerCase();
-  if (lower.includes('eeprom') || lower.includes('flash') || lower.includes('memoria') || lower.includes('inmo') || lower.includes('almacenamiento') || lower.includes('eprom')) return 'EEPROM / Memoria';
-  if (lower.includes('micro') || lower.includes('mcu') || lower.includes('procesador') || lower.includes('procesamiento')) return 'Microprocesador';
-  if (lower.includes('inyector') || lower.includes('actuador') || lower.includes('potencia') || lower.includes('driver iny')) return 'Inyectores';
-  if (lower.includes('bobina') || lower.includes('ignic') || lower.includes('chispa')) return 'Bobinas';
-  if (lower.includes('voltaje') || lower.includes('regulador') || lower.includes('alimentac') || lower.includes('power')) return 'Voltaje';
-  if (lower.includes('diodo') || lower.includes('comunic') || lower.includes('can') || lower.includes('redes') || lower.includes('transceiver')) return 'Diodos';
-  if (lower.includes('efi') || lower.includes('rele') || lower.includes('relay')) return 'EFI';
-  if (lower.includes('sensor') || lower.includes('ckp') || lower.includes('cmp') || lower.includes('entrada')) return 'Driver Sensor';
-  if (lower.includes('transistor') || lower.includes('mosfet') || lower.includes('igbt')) return 'Transistor';
+  if (lower.includes('inyector') || lower.includes('actuador') || lower.includes('driver iny')) return 'Inyectores';
+  if (lower.includes('micro') || lower.includes('mcu') || lower.includes('procesador')) return 'Microprocesador';
+  if (lower.includes('diodo') || lower.includes('protecc') || lower.includes('tvs') || lower.includes('zenner')) return 'Diodos';
   if (lower.includes('resistencia') || lower.includes('shunt') || lower.includes('smd')) return 'Resistencia';
+  if (lower.includes('bobina') || lower.includes('ignic') || lower.includes('chispa')) return 'Bobinas';
+  if (lower.includes('voltaje') || lower.includes('regulador') || lower.includes('power') || lower.includes('alimentac')) return 'Voltaje';
+  if (lower.includes('integrado') || lower.includes('ic ') || lower.includes('driver')) return 'Integrados';
+  if (lower.includes('condensador') || lower.includes('capacit') || lower.includes('filtro')) return 'Condensador';
+  if (lower.includes('eeprom') || lower.includes('flash') || lower.includes('memoria') || lower.includes('inmo')) return 'EEPROM / Memoria';
+  if (lower.includes('transistor') || lower.includes('mosfet') || lower.includes('igbt')) return 'Transistor';
   if (lower.includes('cristal') || lower.includes('reloj') || lower.includes('clock') || lower.includes('oscilador')) return 'Cristal';
-  if (lower.includes('condensador') || lower.includes('filtro') || lower.includes('capacit')) return 'Condensador';
+  if (lower.includes('efi') || lower.includes('rele') || lower.includes('relay')) return 'EFI';
 
   return 'Microprocesador';
 };
@@ -4555,96 +4732,68 @@ function renderEcuHotspots() {
   if (!group) return;
   group.innerHTML = '';
 
-  const zonesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  zonesLayer.id = 'ecuZonesBaseLayer';
-  const chipsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  chipsLayer.id = 'ecuChipsTopLayer';
-  const pinsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  pinsLayer.id = 'ecuPinsOverlayLayer';
-
-  group.appendChild(zonesLayer);
-  group.appendChild(chipsLayer);
-  group.appendChild(pinsLayer);
-
   (currentEcuHotspots || []).forEach(comp => {
     const theme = window.getEcuComponentTheme(comp);
     const isZone = comp.isZone || comp.type === 'polygon' || comp.pathD;
-
-    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    g.setAttribute('data-id', comp.id);
-    g.style.cursor = 'pointer';
-
-    if (isZone && comp.pathD) {
-      // 1. Freeform Zone / Stage Path (Base Layer)
-      const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      pathEl.setAttribute('d', comp.pathD);
-      pathEl.setAttribute('class', 'ecu-hotspot-zone');
-      pathEl.id = `ecu-box-${comp.id}`;
-      pathEl.style.stroke = theme.color;
-      pathEl.style.strokeWidth = '2px';
-      pathEl.style.fill = theme.color + '22'; // 13% soft translucent fill
-      pathEl.style.filter = `drop-shadow(0 0 6px ${theme.color})`;
-      g.appendChild(pathEl);
-      zonesLayer.appendChild(g);
-    } else {
-      // 2. Individual IC Chip Box (Top Layer with Solid High Contrast & Vibrant Glow)
-      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      rect.setAttribute('x', comp.x);
-      rect.setAttribute('y', comp.y);
-      rect.setAttribute('width', comp.width);
-      rect.setAttribute('height', comp.height);
-      rect.setAttribute('rx', '5');
-      rect.setAttribute('class', 'ecu-hotspot-box');
-      rect.id = `ecu-box-${comp.id}`;
-      rect.style.stroke = theme.color;
-      rect.style.strokeWidth = '2.5px';
-      rect.style.fill = theme.color + '44'; // 27% vivid fill so orange/chips stand out crisp over any background
-      rect.style.filter = `drop-shadow(0 0 8px ${theme.color})`;
-      g.appendChild(rect);
-      chipsLayer.appendChild(g);
-    }
-
-    // 3. Pin indicator (Upper Overlay Layer)
     const pinX = (typeof comp.pinX === 'number' && !isNaN(comp.pinX)) ? comp.pinX : Math.round((comp.x || 0) + (comp.width || 100) / 2);
     const pinY = (typeof comp.pinY === 'number' && !isNaN(comp.pinY)) ? comp.pinY : Math.round((comp.y || 0) + (comp.height || 100) / 2);
 
+    if (isZone && comp.pathD) {
+      // 1. Freeform Zone / Stage Path
+      const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathEl.setAttribute('d', comp.pathD);
+      pathEl.setAttribute('class', 'ecu-hotspot-zone hand-cursor');
+      pathEl.id = `ecu-box-${comp.id}`;
+      pathEl.style.stroke = theme.color;
+      pathEl.style.strokeWidth = '2.5px';
+      pathEl.style.strokeDasharray = '6, 4';
+      pathEl.style.fill = theme.fill || (theme.color + '26');
+      pathEl.style.filter = `drop-shadow(0 0 8px ${theme.color})`;
+      pathEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.selectEcuComponent(comp);
+      });
+      group.appendChild(pathEl);
+    } else {
+      // 2. Individual IC Chip Box
+      const rectEl = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rectEl.setAttribute('x', comp.x);
+      rectEl.setAttribute('y', comp.y);
+      rectEl.setAttribute('width', comp.width);
+      rectEl.setAttribute('height', comp.height);
+      rectEl.setAttribute('rx', '5');
+      rectEl.setAttribute('class', 'ecu-hotspot-box hand-cursor');
+      rectEl.id = `ecu-box-${comp.id}`;
+      rectEl.style.stroke = theme.color;
+      rectEl.style.strokeWidth = '2.5px';
+      rectEl.style.fill = theme.fill;
+      rectEl.style.filter = `drop-shadow(0 0 8px ${theme.color})`;
+      rectEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.selectEcuComponent(comp);
+      });
+      group.appendChild(rectEl);
+    }
+
+    // 3. Interactive Pulsing Pin Node
     const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    pinG.setAttribute('class', 'ecu-hotspot-pin');
-    pinG.setAttribute('transform', `translate(${pinX}, ${pinY})`);
-    pinG.id = `ecu-pin-${comp.id}`;
-
-    const outerRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    outerRing.setAttribute('class', 'outer-ring');
-    outerRing.setAttribute('r', isZone ? '16' : '14');
-    outerRing.style.stroke = theme.color;
-    outerRing.style.strokeWidth = '2px';
-
-    const innerDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    innerDot.setAttribute('class', 'inner-dot');
-    innerDot.setAttribute('r', isZone ? '6' : '5');
-    innerDot.style.fill = theme.color;
-
-    pinG.appendChild(outerRing);
-    pinG.appendChild(innerDot);
-
-    // Event listeners
-    const triggerSelect = (e) => {
-      if (isEcuEditorMode) return;
+    pinG.setAttribute('id', `ecu-pin-${comp.id}`);
+    pinG.setAttribute('class', 'ecu-hotspot-pin hand-cursor');
+    pinG.innerHTML = `
+      <circle class="outer-ring" cx="${pinX}" cy="${pinY}" r="8" fill="none" stroke="${theme.color}" stroke-width="2"/>
+      <circle class="inner-dot" cx="${pinX}" cy="${pinY}" r="4" fill="${theme.color}"/>
+    `;
+    pinG.addEventListener('click', (e) => {
       e.stopPropagation();
       window.selectEcuComponent(comp);
-    };
-
-    g.addEventListener('click', triggerSelect);
-    pinG.addEventListener('click', triggerSelect);
-
-    pinsLayer.appendChild(pinG);
+    });
+    group.appendChild(pinG);
   });
 
-  // Dynamically update adaptive legend in single line
   window.renderEcuColorLegend();
 }
 
-// Select Component & Show Details + Animated Leader Line (Smart Closest-Side Placement)
+// Select Component & Show Details in Styled Drawer (Exacto al estilo solicitado)
 window.selectEcuComponent = function(comp) {
   activeEcuComponentId = comp.id;
   const theme = window.getEcuComponentTheme(comp);
@@ -4654,7 +4803,7 @@ window.selectEcuComponent = function(comp) {
   const drawerHeaderIcon = document.getElementById('ecuDrawerHeaderIcon');
   const drawerContent = document.getElementById('ecuDrawerContent');
 
-  // Reset active classes and restore baseline color themes on both boxes and zones
+  // Reset active classes and restore baseline color themes
   document.querySelectorAll('.ecu-hotspot-box, .ecu-hotspot-zone').forEach(el => {
     el.classList.remove('active');
     const compId = el.id.replace('ecu-box-', '');
@@ -4684,7 +4833,7 @@ window.selectEcuComponent = function(comp) {
     box.style.stroke = theme.color;
     box.style.fill = theme.color + '4D'; // 30% fill
     box.style.strokeWidth = '3.5px';
-    box.style.filter = `drop-shadow(0 0 14px ${theme.glow})`;
+    box.style.filter = `drop-shadow(0 0 16px ${theme.glow})`;
   }
   if (pin) {
     pin.classList.add('active');
@@ -4694,19 +4843,22 @@ window.selectEcuComponent = function(comp) {
     if (d) d.style.fill = theme.glow;
   }
 
-  const pinX = (typeof comp.pinX === 'number' && !isNaN(comp.pinX)) ? comp.pinX : Math.round((comp.x || 0) + (comp.width || 100) / 2);
-  const pinY = (typeof comp.pinY === 'number' && !isNaN(comp.pinY)) ? comp.pinY : Math.round((comp.y || 0) + (comp.height || 100) / 2);
-
-  // Populate Rich Technical Drawer with Title Subtitle and Conditional Section Rendering
+  // Populate Rich Technical Drawer (Exacto a la captura de pantalla)
   if (drawer && drawerTitle && drawerContent) {
     const cat = window.normalizeEcuCategory(comp.category || comp.tipo || comp.name);
     const friendlyMap = window.ECU_FRIENDLY_TYPES || ECU_FRIENDLY_TYPES || {};
     const defaultFriendly = friendlyMap[cat] || cat;
     const rawSubLabel = (comp.tipo && comp.tipo.trim() !== '') ? comp.tipo.trim() : defaultFriendly;
     const subLabel = rawSubLabel.toUpperCase();
-    drawerTitle.innerHTML = `<span class="text-white font-rajdhani fw-bold me-1">${comp.name || 'COMPONENTE'}</span> <span class="text-white-50 mx-1">&bull;</span> <span class="font-rajdhani fw-bold" style="color: ${theme.glow}; font-size: 0.95rem;">${subLabel}</span>`;
+    
+    // Header text matching screenshot: IC 901 • MEMORIA EEPROM / FLASH
+    drawerTitle.innerHTML = `<span class="text-white font-rajdhani fw-bold me-1 fs-6">${comp.name || 'COMPONENTE'}</span> <span class="text-white-50 mx-1">&bull;</span> <span class="font-rajdhani fw-bold" style="color: ${theme.color}; font-size: 0.95rem;">${subLabel}</span>`;
+    
+    drawer.style.backgroundColor = '#0A1118';
     drawer.style.borderColor = theme.color;
-    drawer.style.boxShadow = `0 10px 30px rgba(0, 0, 0, 0.7), 0 0 25px ${theme.fill}`;
+    drawer.style.borderRadius = '14px';
+    drawer.style.boxShadow = `0 10px 30px rgba(0, 0, 0, 0.85), 0 0 25px ${theme.color}40`;
+    drawer.style.borderWidth = '2px';
 
     if (drawerHeaderIcon) {
       drawerHeaderIcon.className = `bi ${theme.icon} fs-5`;
@@ -4718,16 +4870,14 @@ window.selectEcuComponent = function(comp) {
     const pkgBadge = (comp.package && comp.package.trim() !== '') ? `<span class="badge bg-dark border border-secondary text-info me-1 font-monospace">${comp.package}</span>` : '';
     const codeLine = (comp.code && comp.code.trim() !== '' && comp.code !== 'N/A') ? `<div class="font-monospace small mb-2 fw-bold fs-6" style="color: ${theme.glow};">${comp.code}</div>` : '';
 
-    // SECCIÓN 2: Función (Condicional)
     const hasControla = comp.show_controla !== false && comp.controla && comp.controla.trim() !== '';
     const controlaHtml = hasControla ? `
-      <div class="tech-box" style="border-left: 3px solid ${theme.color};">
-        <div class="spec-label mb-1 fw-bold" style="color: ${theme.glow};"><i class="bi bi-gear-wide-connected me-1"></i>¿Qué Controla en el Motor?</div>
-        <div class="text-light small" style="line-height: 1.45;">${comp.controla}</div>
+      <div class="tech-box mb-2 p-2 rounded-3" style="background: rgba(255,255,255,0.03); border-left: 3px solid ${theme.color};">
+        <div class="spec-label mb-1 fw-bold" style="color: ${theme.glow}; font-size: 0.78rem;"><i class="bi bi-gear-wide-connected me-1"></i>¿Qué Controla en el Motor?</div>
+        <div class="text-light small" style="line-height: 1.4; font-size: 0.82rem;">${comp.controla}</div>
       </div>
     ` : '';
 
-    // SECCIÓN 3: Parámetros Eléctricos / Voltajes / Pines (Condicional)
     const hasVoltajes = comp.show_voltajes !== false && ((comp.voltajes && comp.voltajes.trim() !== '') || (comp.pines_clave && comp.pines_clave.trim() !== ''));
     let voltajesHtml = '';
     if (hasVoltajes) {
@@ -4735,39 +4885,39 @@ window.selectEcuComponent = function(comp) {
       if (comp.voltajes && comp.voltajes.trim() !== '') {
         rows += `
           <div class="d-flex justify-content-between mb-1 pb-1 ${comp.pines_clave && comp.pines_clave.trim() !== '' ? 'border-bottom border-secondary border-opacity-25' : ''}">
-            <span class="spec-label">Voltaje Operación:</span>
-            <span class="spec-val" style="color: ${theme.glow};">${comp.voltajes}</span>
+            <span class="spec-label small text-white-50">Voltaje Operación:</span>
+            <span class="spec-val fw-bold" style="color: ${theme.glow};">${comp.voltajes}</span>
           </div>
         `;
       }
       if (comp.pines_clave && comp.pines_clave.trim() !== '') {
         rows += `
           <div class="mt-1">
-            <span class="spec-label d-block mb-1">Pines Críticos (Medición):</span>
+            <span class="spec-label d-block mb-1 small text-white-50">Pines Críticos (Medición):</span>
             <span class="spec-val text-warning small font-monospace d-block">${comp.pines_clave}</span>
           </div>
         `;
       }
-      voltajesHtml = `<div class="tech-box">${rows}</div>`;
+      voltajesHtml = `<div class="tech-box mb-2 p-2 rounded-3" style="background: rgba(255,255,255,0.03);">${rows}</div>`;
     }
 
-    // SECCIÓN 4: Síntomas de Falla y DTCs (Condicional)
     const hasFallas = comp.show_fallas !== false && ((comp.fallas_comunes && comp.fallas_comunes.trim() !== '') || (comp.dtcs && comp.dtcs.trim() !== ''));
     let fallasHtml = '';
     if (hasFallas) {
       fallasHtml = `
         <div class="alert alert-danger bg-opacity-10 border-danger text-white small p-2 mb-2">
           <div class="fw-bold mb-1 text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i> Síntomas de Falla:</div>
-          ${comp.fallas_comunes && comp.fallas_comunes.trim() !== '' ? `<div class="text-light" style="font-size: 0.82rem;">${comp.fallas_comunes}</div>` : ''}
+          ${comp.fallas_comunes && comp.fallas_comunes.trim() !== '' ? `<div class="text-light" style="font-size: 0.8rem;">${comp.fallas_comunes}</div>` : ''}
           ${dtcBadges ? `<div class="mt-2 pt-1 border-top border-danger border-opacity-25"><strong class="small text-danger me-1">DTCs:</strong> ${dtcBadges}</div>` : ''}
         </div>
       `;
     }
 
     drawerContent.innerHTML = `
-      <div class="d-flex flex-wrap align-items-center gap-1 mb-2">
-        <span class="badge" style="background: ${theme.fill}; color: ${theme.glow}; border: 1px solid ${theme.color}; font-size: 0.78rem; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.5px;">
-          <i class="bi ${theme.icon} me-1"></i> ${defaultFriendly}
+      <!-- Badge Pill Categoría Exacto a la Captura -->
+      <div class="mb-3">
+        <span class="badge py-1 px-3 rounded-pill font-rajdhani fw-bold text-uppercase d-inline-flex align-items-center gap-2" style="background: ${theme.fill}; border: 1.5px solid ${theme.color}; color: ${theme.glow}; font-size: 0.84rem;">
+          <i class="bi ${theme.icon}"></i> ${subLabel}
         </span>
         ${mfgBadge}
         ${pkgBadge}
@@ -5857,13 +6007,27 @@ window.openAdminAddPhotoDirectModal = function(e) {
   if (!isAdmin) {
     if (typeof window.showGlobalToast === 'function') {
       window.showGlobalToast('Acceso exclusivo para administradores.');
+    } else {
+      alert('Acceso exclusivo para administradores.');
     }
     return;
   }
 
   const active = window._currentActiveDiagramData || {};
   const archDoc = active._selectedArchDoc || {};
-  const currentCount = (currentGalleryImages && currentGalleryImages.length) || 1;
+
+  let currentCount = 0;
+  if (Array.isArray(currentGalleryImages) && currentGalleryImages.length > 0) {
+    currentCount = currentGalleryImages.length;
+  } else if (Array.isArray(active.allImages) && active.allImages.length > 0) {
+    currentCount = active.allImages.length;
+  } else if (Array.isArray(active.imagenes) && active.imagenes.length > 0) {
+    currentCount = active.imagenes.length;
+  } else if (Array.isArray(archDoc.imagenes) && archDoc.imagenes.length > 0) {
+    currentCount = archDoc.imagenes.length;
+  } else if (active.imageUrl || active.url || archDoc.imageUrl || archDoc.url) {
+    currentCount = 1;
+  }
 
   // Set modal UI labels
   const fuelEl = document.getElementById('adminAddPhotoContextFuel');
@@ -5873,32 +6037,75 @@ window.openAdminAddPhotoDirectModal = function(e) {
   const endDescEl = document.getElementById('adminPhotoPosEndDesc');
   const fileNameText = document.getElementById('adminDirectPhotoFileNameText');
   const previewWrap = document.getElementById('adminDirectPhotoPreviewWrap');
+  const previewImg = document.getElementById('adminDirectPhotoPreviewImg');
   const progressWrap = document.getElementById('adminDirectPhotoProgressWrap');
   const form = document.getElementById('formAdminAddPhotoDirect');
+  const fileInput = document.getElementById('adminDirectPhotoFileInput');
+  const btnSubmit = document.getElementById('btnAdminSubmitDirectPhoto');
 
   if (form) form.reset();
+  if (fileInput) fileInput.value = '';
   if (fileNameText) fileNameText.textContent = 'Haz clic para elegir una imagen';
   if (previewWrap) previewWrap.classList.add('d-none');
+  if (previewImg) previewImg.src = '';
   if (progressWrap) progressWrap.classList.add('d-none');
+  if (btnSubmit) btnSubmit.disabled = false;
   adminDirectSelectedPhotoFile = null;
 
-  if (fuelEl) fuelEl.textContent = (currentSelectedFuelType || 'diesel').toUpperCase();
-  if (countEl) countEl.textContent = `${currentCount} foto${currentCount > 1 ? 's' : ''} registrada${currentCount > 1 ? 's' : ''} actualmente`;
+  const currentFuel = (typeof currentSelectedFuelType !== 'undefined' && currentSelectedFuelType) || active.fuel || 'diesel';
+  if (fuelEl) fuelEl.textContent = currentFuel.toUpperCase();
+  if (countEl) countEl.textContent = `${currentCount} foto${currentCount === 1 ? '' : 's'} registrada${currentCount === 1 ? '' : 's'} actualmente`;
   
-  const b = currentSelectedBrandName || archDoc.brandDocId || 'Toyota';
-  const m = document.getElementById('selectedVehicleModelText')?.textContent || archDoc.modelDocId || 'Vehículo';
-  const y = document.getElementById('selectedVehicleSpecText')?.textContent || archDoc.motorDocId || '';
-  if (vehicleEl) vehicleEl.textContent = `${b.toUpperCase()} ${m.toUpperCase()} ${y.toUpperCase()}`.trim();
+  const b = (typeof currentSelectedBrandName !== 'undefined' && currentSelectedBrandName) || (typeof currentSelectedBrandId !== 'undefined' && currentSelectedBrandId) || archDoc.brandDocId || 'Toyota';
+  const m = document.getElementById('selectedVehicleModelText')?.textContent || (typeof currentSelectedModelName !== 'undefined' && currentSelectedModelName) || (typeof currentSelectedModelId !== 'undefined' && currentSelectedModelId) || archDoc.modelDocId || 'Vehículo';
+  const y = document.getElementById('selectedVehicleSpecText')?.textContent || (typeof currentSelectedMotorDocId !== 'undefined' && currentSelectedMotorDocId) || archDoc.motorDocId || '';
+  
+  const brandUpper = b.toUpperCase().trim();
+  const modelUpper = m.toUpperCase().trim();
+  const specUpper = y.toUpperCase().trim();
+  const fullVehTitle = modelUpper.startsWith(brandUpper) 
+    ? `${modelUpper} ${specUpper}`.trim() 
+    : `${brandUpper} ${modelUpper} ${specUpper}`.trim();
+  
+  if (vehicleEl) vehicleEl.textContent = fullVehTitle;
 
-  const compTitle = active.tituloArchivo || archDoc.titulo || 'IMAGEN DEL COMPONENTE / ECU';
+  const compTitle = active.tituloArchivo || archDoc.titulo || archDoc.nombre || archDoc.id || 'IMAGEN DEL COMPONENTE / ECU';
   if (compEl) compEl.textContent = compTitle.toUpperCase();
 
-  if (endDescEl) endDescEl.textContent = `Se guardará como Foto ${currentCount + 1}`;
+  if (endDescEl) endDescEl.textContent = currentCount > 0 ? `Se guardará como Foto ${currentCount + 1}` : 'Se guardará como Foto 1 principal';
 
   const modalEl = document.getElementById('adminAddPhotoDirectModal');
   if (modalEl && typeof bootstrap !== 'undefined') {
     const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
     bsModal.show();
+  }
+
+  // Setup drag & drop on dropzone
+  const dropzone = document.getElementById('adminDirectPhotoDropzone');
+  if (dropzone && fileInput && !dropzone._dragAttached) {
+    dropzone._dragAttached = true;
+    ['dragenter', 'dragover'].forEach(name => {
+      dropzone.addEventListener(name, (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        dropzone.style.borderColor = '#22C55E';
+        dropzone.style.backgroundColor = 'rgba(34, 197, 94, 0.08)';
+      });
+    });
+    ['dragleave', 'drop'].forEach(name => {
+      dropzone.addEventListener(name, (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        dropzone.style.borderColor = '#DC2626';
+        dropzone.style.backgroundColor = 'rgba(220, 38, 38, 0.03)';
+      });
+    });
+    dropzone.addEventListener('drop', (ev) => {
+      if (ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0]) {
+        fileInput.files = ev.dataTransfer.files;
+        window.handleAdminDirectPhotoFileChange(fileInput);
+      }
+    });
   }
 };
 
@@ -5907,9 +6114,9 @@ window.handleAdminDirectPhotoFileChange = function(input) {
   const previewWrap = document.getElementById('adminDirectPhotoPreviewWrap');
   const previewImg = document.getElementById('adminDirectPhotoPreviewImg');
 
-  if (input.files && input.files[0]) {
+  if (input && input.files && input.files[0]) {
     adminDirectSelectedPhotoFile = input.files[0];
-    if (fileNameText) fileNameText.textContent = input.files[0].name;
+    if (fileNameText) fileNameText.textContent = `Archivo seleccionado: ${input.files[0].name}`;
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -5924,7 +6131,11 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
   if (e) e.preventDefault();
 
   if (!adminDirectSelectedPhotoFile) {
-    alert('Por favor selecciona una imagen primero.');
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('Por favor selecciona una imagen primero.');
+    } else {
+      alert('Por favor selecciona una imagen primero.');
+    }
     return;
   }
 
@@ -5942,49 +6153,63 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
     const active = window._currentActiveDiagramData || {};
     const archDoc = active._selectedArchDoc || {};
 
-    const brandDocId = (archDoc.brandDocId || currentSelectedBrandId || 'toyota').toLowerCase().trim();
-    const modelDocId = (archDoc.modelDocId || currentSelectedModelDocId || 'modelo').toLowerCase().trim();
-    const anioDocId = archDoc.anioDocId || 'estandar';
-    const motorDocId = (archDoc.motorDocId || 'estandar').toLowerCase().trim();
-    const archDocId = archDoc.archDocId || active.id || 'ecu';
+    const brandDocId = (archDoc.brandDocId || (typeof currentSelectedBrandId !== 'undefined' && currentSelectedBrandId) || (typeof currentSelectedBrandName !== 'undefined' && currentSelectedBrandName) || 'toyota').toLowerCase().trim();
+    const modelDocId = (archDoc.modelDocId || (typeof currentSelectedModelDocId !== 'undefined' && currentSelectedModelDocId) || (typeof currentSelectedModelId !== 'undefined' && currentSelectedModelId) || (typeof currentSelectedModelName !== 'undefined' && currentSelectedModelName) || 'hilux').toLowerCase().trim();
+    const anioDocId = (archDoc.anioDocId || (typeof currentSelectedAnioDocId !== 'undefined' && currentSelectedAnioDocId) || document.getElementById('selectedVehicleSpecText')?.textContent?.match(/\d{4}\s*-\s*\d{4}/)?.[0] || '2011-2015').trim();
+    const motorDocId = (archDoc.motorDocId || (typeof currentSelectedMotorDocId !== 'undefined' && currentSelectedMotorDocId) || active.motor || '2kd-ftv').toLowerCase().trim();
+    const archDocId = archDoc.archDocId || archDoc.id || active.id || active.tituloArchivo || 'ecu';
 
-    // 1. Upload to Firebase Storage with clean structured path
+    // 1. Upload to Firebase Storage with clean structured path: Marca / Modelo / Año / Motor / fotos_ecu
     const timestamp = Date.now();
     const cleanFileName = adminDirectSelectedPhotoFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    const storagePath = `diagramas/${brandDocId}/${modelDocId}/${motorDocId}/fotos_galeria/${timestamp}_${cleanFileName}`;
+    const cleanAnio = anioDocId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const cleanMotor = motorDocId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const storagePath = `diagramas/${brandDocId}/${modelDocId}/${cleanAnio}/${cleanMotor}/fotos_ecu/${timestamp}_${cleanFileName}`;
     
     let fileDownloadUrl = '';
-    const storage = firebase.storage();
-    const storageRef = storage.ref(storagePath);
-    
-    const isSvg = adminDirectSelectedPhotoFile.name.toLowerCase().endsWith('.svg');
-    const metadata = isSvg ? { contentType: 'image/svg+xml' } : {};
+    if (typeof firebase !== 'undefined' && firebase.storage) {
+      const storage = firebase.storage();
+      const storageRef = storage.ref(storagePath);
+      
+      const isSvg = adminDirectSelectedPhotoFile.name.toLowerCase().endsWith('.svg');
+      const isPng = adminDirectSelectedPhotoFile.name.toLowerCase().endsWith('.png');
+      const metadata = isSvg ? { contentType: 'image/svg+xml' } : { contentType: adminDirectSelectedPhotoFile.type || (isPng ? 'image/png' : 'image/jpeg') };
 
-    const uploadTask = storageRef.put(adminDirectSelectedPhotoFile, metadata);
+      const uploadTask = storageRef.put(adminDirectSelectedPhotoFile, metadata);
 
-    await new Promise((resolve, reject) => {
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 75) + 15;
-          if (progressBar) progressBar.style.width = `${progress}%`;
-        },
-        (error) => reject(error),
-        async () => {
-          fileDownloadUrl = await uploadTask.snapshot.ref.getDownloadURL();
-          resolve();
-        }
-      );
-    });
+      await new Promise((resolve, reject) => {
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 75) + 15;
+            if (progressBar) progressBar.style.width = `${progress}%`;
+          },
+          (error) => reject(error),
+          async () => {
+            fileDownloadUrl = await uploadTask.snapshot.ref.getDownloadURL();
+            resolve();
+          }
+        );
+      });
+    } else {
+      fileDownloadUrl = URL.createObjectURL(adminDirectSelectedPhotoFile);
+    }
 
     if (progressBar) progressBar.style.width = '90%';
     if (statusText) statusText.textContent = 'Actualizando documento en Firestore...';
 
     // 2. Determine Position: Add to End or Make Primary Cover (Foto 1)
     const posChoice = document.querySelector('input[name="adminPhotoPosition"]:checked')?.value || 'end';
-    let newGallery = [...(currentGalleryImages || [])];
-    if (newGallery.length === 0 && (active.imageUrl || active.url)) {
+    let newGallery = [];
+    if (Array.isArray(currentGalleryImages) && currentGalleryImages.length > 0) {
+      newGallery = [...currentGalleryImages];
+    } else if (Array.isArray(active.allImages) && active.allImages.length > 0) {
+      newGallery = [...active.allImages];
+    } else if (Array.isArray(active.imagenes) && active.imagenes.length > 0) {
+      newGallery = [...active.imagenes];
+    } else if (active.imageUrl || active.url) {
       newGallery = [active.imageUrl || active.url];
     }
+    newGallery = newGallery.filter(Boolean);
 
     if (posChoice === 'first') {
       newGallery.unshift(fileDownloadUrl);
@@ -5992,41 +6217,82 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
       newGallery.push(fileDownloadUrl);
     }
 
+    // Deduplicate gallery while preserving order
+    newGallery = Array.from(new Set(newGallery));
+
     // 3. Save to Firestore under exact hierarchical path
-    const db = firebase.firestore();
-    const docRef = db.collection('diagramas').doc(brandDocId)
-      .collection('modelos').doc(modelDocId)
-      .collection('anios').doc(anioDocId)
-      .collection('motores').doc(motorDocId)
-      .collection('archivos').doc(archDocId);
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      const db = firebase.firestore();
+      const updatePayload = {
+        fotoComponente: fileDownloadUrl,
+        imageUrl: (posChoice === 'first') ? fileDownloadUrl : (newGallery[0] || fileDownloadUrl),
+        imagen: (posChoice === 'first') ? fileDownloadUrl : (newGallery[0] || fileDownloadUrl),
+        foto: fileDownloadUrl,
+        imagenes: newGallery,
+        allImages: newGallery,
+        marca: brandDocId,
+        modelo: modelDocId,
+        anio: anioDocId,
+        motor: motorDocId,
+        ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+      };
 
-    const updatePayload = {
-      imagenes: newGallery,
-      allImages: newGallery,
-      ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    if (posChoice === 'first') {
-      updatePayload.imageUrl = fileDownloadUrl;
+      // Update in deep hierarchy
+      const docRef = db.collection('diagramas').doc(brandDocId)
+        .collection('modelos').doc(modelDocId)
+        .collection('anios').doc(anioDocId)
+        .collection('motores').doc(motorDocId)
+        .collection('archivos').doc(archDocId);
+      await docRef.set(updatePayload, { merge: true }).catch(err => console.warn('Deep doc update notice:', err));
+
+      // Update in direct model collection for query redundancy
+      const modelArchRef = db.collection('diagramas').doc(brandDocId)
+        .collection('modelos').doc(modelDocId)
+        .collection('archivos').doc(archDocId);
+      await modelArchRef.set(updatePayload, { merge: true }).catch(err => console.warn('Model doc update notice:', err));
     }
-
-    await docRef.set(updatePayload, { merge: true });
 
     if (progressBar) progressBar.style.width = '100%';
     if (statusText) statusText.textContent = '¡Foto vinculada con éxito!';
 
-    // 4. Update live state & reload gallery in viewer
+    // 4. Update live state & reload viewer stage immediately
     currentGalleryImages = newGallery;
     if (window._currentActiveDiagramData) {
       window._currentActiveDiagramData.allImages = newGallery;
       window._currentActiveDiagramData.imagenes = newGallery;
-      if (posChoice === 'first') {
-        window._currentActiveDiagramData.imageUrl = fileDownloadUrl;
+      window._currentActiveDiagramData.imageUrl = (posChoice === 'first') ? fileDownloadUrl : (newGallery[0] || fileDownloadUrl);
+      window._currentActiveDiagramData.fotoComponente = fileDownloadUrl;
+      if (window._currentActiveDiagramData._selectedArchDoc) {
+        window._currentActiveDiagramData._selectedArchDoc.allImages = newGallery;
+        window._currentActiveDiagramData._selectedArchDoc.imagenes = newGallery;
+        window._currentActiveDiagramData._selectedArchDoc.imageUrl = (posChoice === 'first') ? fileDownloadUrl : (newGallery[0] || fileDownloadUrl);
+        window._currentActiveDiagramData._selectedArchDoc.fotoComponente = fileDownloadUrl;
       }
+    }
+
+    // Reveal image in viewer stage and hide empty dropzone
+    const dropzoneEl = document.getElementById('consoleEmptyUploadDropzone');
+    const stage = document.getElementById('consoleDiagramStage');
+    const imgEl = document.getElementById('consoleMainDiagramImg');
+    if (dropzoneEl) {
+      dropzoneEl.classList.add('d-none');
+      dropzoneEl.classList.remove('d-flex');
+    }
+    if (stage) {
+      stage.classList.remove('d-none');
+    }
+    if (imgEl) {
+      imgEl.classList.remove('d-none');
+      imgEl.style.display = 'block';
     }
 
     window.renderGalleryPagination(newGallery);
     const newActiveIndex = (posChoice === 'first') ? 0 : (newGallery.length - 1);
-    window.showGalleryImageAtIndex(newActiveIndex);
+    await window.showGalleryImageAtIndex(newActiveIndex);
+
+    if (typeof window.initInteractiveEcuLayer === 'function') {
+      window.initInteractiveEcuLayer();
+    }
 
     // 5. Close Modal & Reset Form
     setTimeout(() => {
@@ -6035,14 +6301,17 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
         const bsModal = bootstrap.Modal.getInstance(modalEl);
         if (bsModal) bsModal.hide();
       }
-      if (form) form.reset();
+      const formEl = document.getElementById('formAdminAddPhotoDirect');
+      if (formEl) formEl.reset();
+      const fileInputEl = document.getElementById('adminDirectPhotoFileInput');
+      if (fileInputEl) fileInputEl.value = '';
       adminDirectSelectedPhotoFile = null;
       if (btnSubmit) btnSubmit.disabled = false;
       if (progressWrap) progressWrap.classList.add('d-none');
-    }, 600);
+    }, 500);
 
     if (typeof window.showGlobalToast === 'function') {
-      window.showGlobalToast('¡Nueva foto agregada y organizada con éxito en Firebase!');
+      window.showGlobalToast(`📸 ¡Foto del componente subida y guardada en Firebase (${brandDocId.toUpperCase()} / ${modelDocId.toUpperCase()} / ${anioDocId} / ${motorDocId.toUpperCase()})!`);
     }
   } catch (err) {
     console.error('Error subiendo foto directa:', err);
