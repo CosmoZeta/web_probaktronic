@@ -1834,8 +1834,9 @@ window.loadSpecificDiagramSection = async function(type) {
         if (single) photos = [single];
       }
 
-      // Safe local fallback so ECU board is NEVER black
-      if (photos.length === 0) {
+      // Check if user has explicitly deleted all photos
+      const isExplicitlyEmpty = (Array.isArray(active.imagenes) && active.imagenes.length === 0 && (!active.imageUrl || active.imageUrl === ''));
+      if (!isExplicitlyEmpty && photos.length === 0) {
         photos = ['ecu_demo_2kd.png'];
       }
 
@@ -1843,7 +1844,7 @@ window.loadSpecificDiagramSection = async function(type) {
       const resolvedPhotos = await Promise.all(photos.map(p => window.resolveFirebaseStorageUrl(p)));
       const validPhotos = resolvedPhotos.filter(Boolean);
 
-      if (validPhotos.length === 0) {
+      if (!isExplicitlyEmpty && validPhotos.length === 0) {
         validPhotos.push('ecu_demo_2kd.png');
       }
 
@@ -1859,7 +1860,11 @@ window.loadSpecificDiagramSection = async function(type) {
           imgEl.style.display = 'none';
           imgEl.removeAttribute('src');
         }
-        window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta);
+        if (typeof window.hideInteractiveEcuLayer === 'function') {
+          window.hideInteractiveEcuLayer();
+        }
+        window.renderGalleryPagination([]);
+        window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta, 'No hay fotos registradas para este componente. Haz clic en + AGREGAR FOTO para subir una.');
       }
 
       if (typeof window.updateEcuAdminUI === 'function') {
@@ -6561,26 +6566,45 @@ window.handleAdminDeleteCurrentPhoto = async function() {
     }
 
     // 4. Update in-memory data
-    currentGalleryImages = updatedGallery.length > 0 ? updatedGallery : ['ecu_demo_2kd.png'];
+    currentGalleryImages = [...updatedGallery];
     if (window._currentActiveDiagramData) {
       window._currentActiveDiagramData.allImages = updatedGallery;
       window._currentActiveDiagramData.imagenes = updatedGallery;
       window._currentActiveDiagramData.imageUrl = newCoverUrl;
       window._currentActiveDiagramData.fotoComponente = newCoverUrl;
+      window._currentActiveDiagramData.foto = newCoverUrl;
+      window._currentActiveDiagramData.imagen = newCoverUrl;
       if (window._currentActiveDiagramData._selectedArchDoc) {
         window._currentActiveDiagramData._selectedArchDoc.allImages = updatedGallery;
         window._currentActiveDiagramData._selectedArchDoc.imagenes = updatedGallery;
         window._currentActiveDiagramData._selectedArchDoc.imageUrl = newCoverUrl;
         window._currentActiveDiagramData._selectedArchDoc.fotoComponente = newCoverUrl;
+        window._currentActiveDiagramData._selectedArchDoc.foto = newCoverUrl;
+        window._currentActiveDiagramData._selectedArchDoc.imagen = newCoverUrl;
       }
     }
 
     // 5. Update viewer stage
-    window.renderGalleryPagination(currentGalleryImages);
-    await window.showGalleryImageAtIndex(0);
+    if (updatedGallery.length > 0) {
+      window.renderGalleryPagination(updatedGallery);
+      await window.showGalleryImageAtIndex(0);
 
-    if (typeof window.initInteractiveEcuLayer === 'function') {
-      window.initInteractiveEcuLayer();
+      if (typeof window.initInteractiveEcuLayer === 'function') {
+        window.initInteractiveEcuLayer();
+      }
+    } else {
+      // 0 photos left -> Clear image and show clean empty dropzone to upload a new one
+      const imgEl = document.getElementById('consoleMainDiagramImg');
+      if (imgEl) {
+        imgEl.classList.add('d-none');
+        imgEl.style.display = 'none';
+        imgEl.removeAttribute('src');
+      }
+      if (typeof window.hideInteractiveEcuLayer === 'function') {
+        window.hideInteractiveEcuLayer();
+      }
+      window.renderGalleryPagination([]);
+      window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta, 'No hay fotos registradas para este componente.');
     }
 
     // 6. Close Modal
