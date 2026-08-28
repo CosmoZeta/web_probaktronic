@@ -1859,32 +1859,62 @@ window.loadSpecificDiagramSection = async function(type) {
         } catch (e) {}
       }
 
+      const extractPhotosFromDoc = (d) => {
+        if (!d) return null;
+        if (Array.isArray(d.allImages) && d.allImages.length > 0) return d.allImages;
+        if (Array.isArray(d.imagenes) && d.imagenes.length > 0) return d.imagenes;
+        if (Array.isArray(d.fotos) && d.fotos.length > 0) return d.fotos;
+        const single = d.imageUrl || d.fotoComponente || d.foto || d.imagen || d.archivoUrl;
+        if (single && typeof single === 'string' && !single.toLowerCase().includes('.pdf')) return [single];
+        return null;
+      };
+
       // Parallel Fetch across Firestore endpoints if photos array is empty on reload
       if (photos.length === 0 && typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
         try {
           const db = firebase.firestore();
           const rawBrand = (arch.brandDocId || currentSelectedBrandId || 'Toyota').trim();
           const rawModel = (arch.modelDocId || currentSelectedModelDocId || currentSelectedModelId || 'hilux').trim();
-          const rawAnio = (arch.anioDocId || '2011-2015').trim();
-          const rawMotor = (arch.motorDocId || '2KD-FTV').trim();
-          const rawArchId = arch.archDocId || arch.id || active.id || 'ecu';
+          const anioVariants = [arch.anioDocId, '2011-2015', '2011 - 2015'].filter(Boolean);
+          const motorVariants = [arch.motorDocId, '2KD-FTV', '2kd-ftv'].filter(Boolean);
+          const archVariants = [arch.archDocId, arch.id, active.id, 'Toyota Hilux - 2KD-FTV - 2011- 2015_ECU', '2KD-FTV - 2011- 2015_ECU', 'ecu'].filter(Boolean);
 
-          const photoQueries = [
-            // Deep doc exact casing
-            db.collection('diagramas').doc(rawBrand).collection('modelos').doc(rawModel).collection('anios').doc(rawAnio).collection('motores').doc(rawMotor).collection('archivos').doc(rawArchId).get()
-              .then(s => (s && s.exists) ? (s.data().imagenes || (s.data().imageUrl ? [s.data().imageUrl] : null)) : null).catch(() => null),
-            // Deep doc lowercase
-            db.collection('diagramas').doc(rawBrand.toLowerCase()).collection('modelos').doc(rawModel.toLowerCase()).collection('anios').doc(rawAnio).collection('motores').doc(rawMotor.toLowerCase()).collection('archivos').doc(rawArchId).get()
-              .then(s => (s && s.exists) ? (s.data().imagenes || (s.data().imageUrl ? [s.data().imageUrl] : null)) : null).catch(() => null),
-            // Model doc exact and lowercase
-            db.collection('diagramas').doc(rawBrand).collection('modelos').doc(rawModel).collection('archivos').doc(rawArchId).get()
-              .then(s => (s && s.exists) ? (s.data().imagenes || (s.data().imageUrl ? [s.data().imageUrl] : null)) : null).catch(() => null),
-            db.collection('diagramas').doc(rawBrand.toLowerCase()).collection('modelos').doc(rawModel.toLowerCase()).collection('archivos').doc(rawArchId).get()
-              .then(s => (s && s.exists) ? (s.data().imagenes || (s.data().imageUrl ? [s.data().imageUrl] : null)) : null).catch(() => null),
-            // Global config fallback
+          const photoQueries = [];
+          
+          for (const aV of Array.from(new Set(anioVariants))) {
+            for (const mV of Array.from(new Set(motorVariants))) {
+              for (const arcV of Array.from(new Set(archVariants))) {
+                // Exact casing
+                photoQueries.push(
+                  db.collection('diagramas').doc(rawBrand).collection('modelos').doc(rawModel).collection('anios').doc(aV).collection('motores').doc(mV).collection('archivos').doc(arcV).get()
+                    .then(s => (s && s.exists) ? extractPhotosFromDoc(s.data()) : null).catch(() => null)
+                );
+                // Lowercase casing
+                photoQueries.push(
+                  db.collection('diagramas').doc(rawBrand.toLowerCase()).collection('modelos').doc(rawModel.toLowerCase()).collection('anios').doc(aV).collection('motores').doc(mV.toLowerCase()).collection('archivos').doc(arcV).get()
+                    .then(s => (s && s.exists) ? extractPhotosFromDoc(s.data()) : null).catch(() => null)
+                );
+              }
+            }
+          }
+
+          // Model doc queries
+          for (const arcV of Array.from(new Set(archVariants))) {
+            photoQueries.push(
+              db.collection('diagramas').doc(rawBrand).collection('modelos').doc(rawModel).collection('archivos').doc(arcV).get()
+                .then(s => (s && s.exists) ? extractPhotosFromDoc(s.data()) : null).catch(() => null)
+            );
+            photoQueries.push(
+              db.collection('diagramas').doc(rawBrand.toLowerCase()).collection('modelos').doc(rawModel.toLowerCase()).collection('archivos').doc(arcV).get()
+                .then(s => (s && s.exists) ? extractPhotosFromDoc(s.data()) : null).catch(() => null)
+            );
+          }
+
+          // Global config fallback
+          photoQueries.push(
             db.collection('app_config').doc('diagramas_imagenes').get()
               .then(s => (s && s.exists && Array.isArray(s.data()[storageKey])) ? s.data()[storageKey] : null).catch(() => null)
-          ];
+          );
 
           const photoResults = await Promise.all(photoQueries);
           const foundPhotos = photoResults.find(r => Array.isArray(r) && r.length > 0);
