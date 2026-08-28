@@ -183,10 +183,10 @@ function getBrandLogoUrl(brandKey) {
     }
   }
   return 'logo_probaktronic_solo.png';
-}
-
-let currentSelectedBrandId = null;
+}let currentSelectedBrandId = null;
 let currentSelectedBrandName = null;
+let currentSelectedModelId = null;
+let currentSelectedModelName = null;
 window.currentModelsDataStore = {};
 
 function initVehiculosDiagramasModule() {
@@ -1250,7 +1250,7 @@ let currentPdfDoc = null;
 let currentPdfPageNum = 1;
 let currentGalleryImages = [];
 let currentGalleryIndex = 0;
-let currentZoomLevels = [1.0, 1.75, 2.5];
+let currentZoomLevels = [1.0, 1.5, 2.0, 2.75, 3.5];
 let currentZoomLevelIndex = 0;
 
 window.applyConsoleWatermark = function(isVertical = true) {
@@ -1260,42 +1260,238 @@ window.applyConsoleWatermark = function(isVertical = true) {
   }
 };
 
+let currentConsoleRotation = 0;
+window.rotateConsoleDiagram = function() {
+  currentConsoleRotation = (currentConsoleRotation + 90) % 360;
+  window.updateStageTransform(true);
+};
+
+window.isFitWidthActive = false;
+window.toggleFitWidthMode = function() {
+  window.isFitWidthActive = !window.isFitWidthActive;
+  const btn = document.getElementById('btnFitWidth');
+  if (btn) {
+    if (window.isFitWidthActive) {
+      btn.classList.remove('btn-dark');
+      btn.classList.add('btn-warning', 'text-dark');
+    } else {
+      btn.classList.remove('btn-warning', 'text-dark');
+      btn.classList.add('btn-dark');
+    }
+  }
+  const canvas = document.getElementById('consolePdfCanvas');
+  if (currentPdfDoc && canvas && !canvas.classList.contains('d-none')) {
+    window.renderPdfPageOnCanvas(currentPdfPageNum);
+  } else {
+    const stage = document.getElementById('consoleDiagramStage');
+    const img = document.getElementById('consoleMainDiagramImg');
+    if (stage && img && !img.classList.contains('d-none')) {
+      if (window.isFitWidthActive) {
+        stage.classList.add('fit-width');
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        img.style.maxHeight = 'none';
+      } else {
+        stage.classList.remove('fit-width');
+        img.style.width = '';
+        img.style.height = '';
+        img.style.maxHeight = '80vh';
+      }
+    }
+    window.resetConsoleDiagramZoom();
+  }
+};
+
+function cropAndDisplayDiagram(sourceCanvas, targetCanvas, stageEl, wrapEl) {
+  const sW = sourceCanvas.width;
+  const sH = sourceCanvas.height;
+  const sCtx = sourceCanvas.getContext('2d');
+
+  let minX = 0, minY = 0, maxX = sW - 1, maxY = sH - 1;
+
+  try {
+    const imgData = sCtx.getImageData(0, 0, sW, sH);
+    const d = imgData.data;
+
+    // Fast check: is pixel diagram ink / contrast (not background)?
+    function isInkPixel(x, y) {
+      const idx = (y * sW + x) * 4;
+      const a = d[idx + 3];
+      if (a < 30) return false;
+      const r = d[idx], g = d[idx + 1], b = d[idx + 2];
+
+      // White / light gray sheet (common in PDFs/diagrams)
+      if (r > 200 && g > 200 && b > 200 && Math.abs(r - g) < 25 && Math.abs(r - b) < 25 && Math.abs(g - b) < 25) {
+        return false;
+      }
+      // Pure dark background
+      if (r < 35 && g < 35 && b < 35) {
+        return false;
+      }
+      return true;
+    }
+
+    // 1. Calculate row density profile
+    const rowCounts = new Uint32Array(sH);
+    for (let y = 0; y < sH; y += 2) {
+      let count = 0;
+      for (let x = 0; x < sW; x += 4) {
+        if (isInkPixel(x, y)) count++;
+      }
+      rowCounts[y] = count;
+      if (y + 1 < sH) rowCounts[y + 1] = count;
+    }
+
+    const sampledCols = Math.floor(sW / 4);
+    const rowThreshold = Math.max(3, Math.floor(sampledCols * 0.012));
+
+    let topY = 0;
+    for (let y = 0; y < sH; y++) {
+      if (rowCounts[y] >= rowThreshold) {
+        topY = Math.max(0, y - 15);
+        break;
+      }
+    }
+
+    let botY = sH - 1;
+    for (let y = sH - 1; y >= topY; y--) {
+      if (rowCounts[y] >= rowThreshold) {
+        botY = Math.min(sH - 1, y + 15);
+        break;
+      }
+    }
+
+    // 2. Calculate column density profile within detected [topY, botY]
+    const colCounts = new Uint32Array(sW);
+    for (let x = 0; x < sW; x += 2) {
+      let count = 0;
+      for (let y = topY; y <= botY; y += 4) {
+        if (isInkPixel(x, y)) count++;
+      }
+      colCounts[x] = count;
+      if (x + 1 < sW) colCounts[x + 1] = count;
+    }
+
+    const sampledRows = Math.floor((botY - topY + 1) / 4);
+    const colThreshold = Math.max(3, Math.floor(sampledRows * 0.012));
+
+    let leftX = 0;
+    for (let x = 0; x < sW; x++) {
+      if (colCounts[x] >= colThreshold) {
+        leftX = Math.max(0, x - 15);
+        break;
+      }
+    }
+
+    let rightX = sW - 1;
+    for (let x = sW - 1; x >= leftX; x--) {
+      if (colCounts[x] >= colThreshold) {
+        rightX = Math.min(sW - 1, x + 15);
+        break;
+      }
+    }
+
+    if (botY > topY + 30 && rightX > leftX + 30) {
+      minY = topY;
+      maxY = botY;
+      minX = leftX;
+      maxX = rightX;
+    }
+  } catch (err) {
+    console.warn('Diagram bounds detection notice:', err);
+  }
+
+  const cropW = Math.max(80, maxX - minX + 1);
+  const cropH = Math.max(80, maxY - minY + 1);
+
+  // Available viewer dimensions
+  const wrapW = wrapEl?.clientWidth || window.innerWidth || 1200;
+  const wrapH = wrapEl?.clientHeight || (window.innerHeight * 0.82) || 750;
+
+  // Calculate display dimensions
+  let displayW, displayH;
+  if (window.isFitWidthActive) {
+    displayW = Math.floor(wrapW * 0.98);
+    displayH = Math.round(cropH * (displayW / cropW));
+  } else {
+    const targetW = Math.floor(wrapW * 0.98);
+    const targetH = Math.floor(wrapH * 0.96);
+    const scaleW = targetW / cropW;
+    const scaleH = targetH / cropH;
+    const displayScale = Math.min(scaleW, scaleH);
+    displayW = Math.round(cropW * displayScale);
+    displayH = Math.round(cropH * displayScale);
+  }
+
+  // Render on target canvas with Ultra-HD 2x/3x crispness
+  const renderScale = Math.min(3, Math.max(2, window.devicePixelRatio || 2));
+  targetCanvas.width = Math.round(cropW * renderScale);
+  targetCanvas.height = Math.round(cropH * renderScale);
+  const tCtx = targetCanvas.getContext('2d');
+  tCtx.imageSmoothingEnabled = true;
+  tCtx.imageSmoothingQuality = 'high';
+  tCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+  tCtx.drawImage(sourceCanvas, minX, minY, cropW, cropH, 0, 0, targetCanvas.width, targetCanvas.height);
+
+  targetCanvas.style.width = `${displayW}px`;
+  targetCanvas.style.height = `${displayH}px`;
+  targetCanvas.style.maxWidth = 'none';
+  targetCanvas.style.maxHeight = 'none';
+  targetCanvas.style.objectFit = 'fill';
+
+  if (stageEl) {
+    stageEl.style.width = `${displayW}px`;
+    stageEl.style.height = `${displayH}px`;
+    stageEl.style.maxWidth = 'none';
+    stageEl.style.maxHeight = 'none';
+  }
+
+  currentPanX = 0;
+  currentPanY = 0;
+  currentConsoleRotation = 0;
+  window.updateStageTransform(false);
+
+  const isVert = cropH > cropW * 1.05;
+  window.applyConsoleWatermark(isVert);
+
+  return { displayW, displayH, cropW, cropH };
+}
+
 window.renderPdfPageOnCanvas = function(pageNum) {
   if (!currentPdfDoc) return;
   const canvas = document.getElementById('consolePdfCanvas');
   const wrap = document.getElementById('consoleImgViewerWrap');
+  const stage = document.getElementById('consoleDiagramStage');
   if (!canvas || !wrap) return;
 
+  // Hide color legend and admin layer when viewing PDF/schematic
+  const legend = document.getElementById('consoleEcuColorLegend');
+  if (legend) {
+    legend.classList.add('d-none');
+    legend.style.display = 'none';
+  }
+  if (typeof window.hideInteractiveEcuLayer === 'function') window.hideInteractiveEcuLayer();
+  if (typeof window.updateEcuAdminUI === 'function') window.updateEcuAdminUI();
+
   currentPdfDoc.getPage(pageNum).then(page => {
-    const unscaledViewport = page.getViewport({ scale: 1.0 });
-    const wrapWidth = wrap.clientWidth ? Math.min(wrap.clientWidth - 24, 1300) : 1100;
-    const fitScale = wrapWidth / unscaledViewport.width;
-
-    const dpr = Math.max(window.devicePixelRatio || 1, 2);
-    const viewport = page.getViewport({ scale: fitScale * dpr });
-
-    const ctx = canvas.getContext('2d');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-
-    // Display scale in CSS to keep exact physical crispness and fill container
-    canvas.style.width = '100%';
-    canvas.style.height = 'auto';
-    canvas.style.maxWidth = '100%';
-    canvas.style.maxHeight = '78vh';
+    // Render PDF page to high-res offscreen canvas
+    const scale = Math.max(3.0, (window.devicePixelRatio || 1) * 2.5);
+    const viewport = page.getViewport({ scale });
+    const offscreen = document.createElement('canvas');
+    offscreen.width = viewport.width;
+    offscreen.height = viewport.height;
+    const offCtx = offscreen.getContext('2d');
 
     const renderContext = {
-      canvasContext: ctx,
+      canvasContext: offCtx,
       viewport: viewport
     };
+
     page.render(renderContext).promise.then(() => {
-      console.log(`PDF Page ${pageNum} rendered with Ultra-HD crispness.`);
+      cropAndDisplayDiagram(offscreen, canvas, stage, wrap);
+
       const pageInfo = document.getElementById('pdfPageInfo');
-      if (pageInfo) {
-        pageInfo.textContent = `Página ${pageNum} / ${currentPdfDoc.numPages}`;
-      }
-      const isVert = (viewport.height / viewport.width) > 1.15;
-      window.applyConsoleWatermark(isVert);
+      if (pageInfo) pageInfo.textContent = `Página ${pageNum} / ${currentPdfDoc.numPages}`;
     });
   });
 };
@@ -1396,7 +1592,7 @@ window.updateStageTransform = function(animate = true) {
   const stageEl = document.getElementById('consoleDiagramStage');
   if (!stageEl) return;
   stageEl.style.transition = animate ? 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
-  stageEl.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentConsoleZoom})`;
+  stageEl.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentConsoleZoom}) rotate(${currentConsoleRotation || 0}deg)`;
 
   if (activeEcuComponentId && typeof window.positionActiveEcuDrawerAndLine === 'function') {
     const comp = currentEcuHotspots.find(c => c.id === activeEcuComponentId);
@@ -1431,18 +1627,22 @@ window.showConsoleSplashView = function() {
 };
 
 window.loadSpecificDiagramSection = async function(type) {
+  window.currentActiveDiagramSection = type;
+
   const splash = document.getElementById('consoleSplashView');
   const content = document.getElementById('consoleDiagramContent');
   const titleEl = document.getElementById('consoleActiveDocTitle');
   const imgEl = document.getElementById('consoleMainDiagramImg');
   const frameEl = document.getElementById('consolePdfFrame');
   const canvasEl = document.getElementById('consolePdfCanvas');
+  const stageEl = document.getElementById('consoleDiagramStage');
   const pdfPaginationEl = document.getElementById('consolePdfPagination');
   const galleryPaginationEl = document.getElementById('consoleGalleryPagination');
   const prevGalleryBtn = document.getElementById('btnPrevGalleryImg');
   const nextGalleryBtn = document.getElementById('btnNextGalleryImg');
   const btnPcb = document.getElementById('btnPcbManual');
   const btnConn = document.getElementById('btnConnectorManual');
+  const legend = document.getElementById('consoleEcuColorLegend');
 
   if (splash) splash.classList.add('d-none');
   if (content) content.classList.remove('d-none');
@@ -1459,8 +1659,18 @@ window.loadSpecificDiagramSection = async function(type) {
     if (btnConn) btnConn.classList.remove('active');
     if (titleEl) titleEl.textContent = `Imagen ${comp.phrase}`;
 
+    if (stageEl) {
+      stageEl.style.width = '';
+      stageEl.style.height = '';
+      stageEl.style.maxWidth = '';
+      stageEl.style.maxHeight = '';
+    }
     if (pdfPaginationEl) pdfPaginationEl.classList.add('d-none');
-    if (canvasEl) canvasEl.classList.add('d-none');
+    if (canvasEl) {
+      canvasEl.classList.add('d-none');
+      canvasEl.style.width = '';
+      canvasEl.style.height = '';
+    }
     if (frameEl) {
       frameEl.classList.add('d-none');
       frameEl.src = '';
@@ -1468,6 +1678,8 @@ window.loadSpecificDiagramSection = async function(type) {
 
     if (imgEl) {
       imgEl.classList.remove('d-none');
+      imgEl.style.width = '';
+      imgEl.style.height = '';
 
       // Aggregate all photos for this component
       let photos = [];
@@ -1511,6 +1723,13 @@ window.loadSpecificDiagramSection = async function(type) {
     if (typeof window.hideInteractiveEcuLayer === 'function') {
       window.hideInteractiveEcuLayer();
     }
+    if (typeof window.updateEcuAdminUI === 'function') {
+      window.updateEcuAdminUI();
+    }
+    if (legend) {
+      legend.classList.add('d-none');
+      legend.style.display = 'none';
+    }
 
     // 2. Conexionado del componente (PDF or Schematic Diagram)
     if (btnPcb) btnPcb.classList.remove('active');
@@ -1534,24 +1753,10 @@ window.loadSpecificDiagramSection = async function(type) {
     }
     if (stageLoader) stageLoader.classList.remove('d-none');
 
-    // Priority check for PDF schema / connector file
-    const candidatePdfUrls = [
-      active.pdfUrl,
-      active._selectedArchDoc?.pdfUrl,
-      active.diagramaUrl,
-      active._selectedArchDoc?.diagramaUrl,
-      active.archivoPdf,
-      active._selectedArchDoc?.archivoPdf,
-      active.archivoUrl,
-      active._selectedArchDoc?.archivoUrl,
-      active.url,
-      active._selectedArchDoc?.url,
-      active.downloadUrl
-    ];
+    // Priority check for explicit SVG, image or diagram URL
+    let targetPdfOrImg = active.imageUrl || active._selectedArchDoc?.imageUrl || active.diagramaUrl || active._selectedArchDoc?.diagramaUrl || active.archivoUrl || active._selectedArchDoc?.archivoUrl || active.url || active._selectedArchDoc?.url || active.pdfUrl || active._selectedArchDoc?.pdfUrl || active.downloadUrl;
 
-    let targetPdfOrImg = candidatePdfUrls.find(u => typeof u === 'string' && (u.toLowerCase().includes('.pdf') || u.toLowerCase().includes('%2epdf')));
-
-    // If target is not a PDF, search in Firebase Storage for the matching vehicle PDF
+    // If no explicit file set, search Firebase Storage as fallback
     if (!targetPdfOrImg && typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
       try {
         const brand = (currentSelectedBrandName || currentSelectedBrandId || 'toyota').toUpperCase().trim();
@@ -1568,7 +1773,7 @@ window.loadSpecificDiagramSection = async function(type) {
           const listRes = await storage.ref(fPath).listAll().catch(() => null);
           if (listRes) {
             // Check direct items in folder
-            const pdfItem = listRes.items.find(item => item.name.toLowerCase().endsWith('.pdf'));
+            const pdfItem = listRes.items.find(item => item.name.toLowerCase().endsWith('.pdf') || item.name.toLowerCase().endsWith('.svg') || item.name.toLowerCase().endsWith('.png'));
             if (pdfItem) {
               targetPdfOrImg = await pdfItem.getDownloadURL();
               active.pdfUrl = targetPdfOrImg;
@@ -1578,7 +1783,7 @@ window.loadSpecificDiagramSection = async function(type) {
             for (const prefix of listRes.prefixes) {
               const subList = await prefix.listAll().catch(() => null);
               if (subList) {
-                const subPdf = subList.items.find(item => item.name.toLowerCase().endsWith('.pdf'));
+                const subPdf = subList.items.find(item => item.name.toLowerCase().endsWith('.pdf') || item.name.toLowerCase().endsWith('.svg') || item.name.toLowerCase().endsWith('.png'));
                 if (subPdf) {
                   targetPdfOrImg = await subPdf.getDownloadURL();
                   active.pdfUrl = targetPdfOrImg;
@@ -1594,30 +1799,13 @@ window.loadSpecificDiagramSection = async function(type) {
       }
     }
 
-    if (!targetPdfOrImg) {
-      targetPdfOrImg = active.pdfUrl || active.archivoUrl || active.diagramaUrl || active.url || active.downloadUrl || active.imageUrl || active.imagen;
-    }
-
-    // Resolve gs:// storage URLs if necessary
-    if (typeof targetPdfOrImg === 'string' && targetPdfOrImg.startsWith('gs://')) {
-      try {
-        if (typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
-          const storage = firebase.storage();
-          const ref = storage.refFromURL(targetPdfOrImg);
-          targetPdfOrImg = await ref.getDownloadURL();
-        }
-      } catch (err) {
-        console.warn('Storage URL resolve error:', err);
-      }
-    }
-
     if (!targetPdfOrImg || targetPdfOrImg.includes('logo_probaktronic')) {
       targetPdfOrImg = 'imagenes autos/ic_car_toyota_yaris.JPG';
     }
 
-    // Accurate PDF check: must end with .pdf and not be an image
+    // Accurate PDF check: must end with .pdf and not be an image/SVG
     const cleanUrlLower = (targetPdfOrImg || '').toLowerCase();
-    const isImageExt = /\.(png|jpg|jpeg|webp|svg|gif|bmp)(\?|$)/i.test(cleanUrlLower);
+    const isImageExt = cleanUrlLower.startsWith('blob:') ? (!cleanUrlLower.includes('.pdf') && !active.pdfUrl) : /\.(png|jpg|jpeg|webp|svg|gif|bmp)(\?|$)/i.test(cleanUrlLower);
     const isPdf = !isImageExt && (cleanUrlLower.includes('.pdf') || cleanUrlLower.includes('%2epdf'));
 
     window.currentActivePdfUrl = targetPdfOrImg;
@@ -1664,29 +1852,42 @@ window.loadSpecificDiagramSection = async function(type) {
       // Set horizontal watermark for PDFs
       window.applyConsoleWatermark(false);
     } else {
-      // Direct instant image rendering
+      // Direct SVG / Image vector rendering: Fills 100% width in Ultra-HD without any cropping artifacts
+      if (stageLoader) stageLoader.classList.add('d-none');
       if (frameEl) {
         frameEl.classList.add('d-none');
         frameEl.src = '';
       }
-      if (canvasEl) canvasEl.classList.add('d-none');
       if (pdfPaginationEl) pdfPaginationEl.classList.add('d-none');
+      if (canvasEl) {
+        canvasEl.classList.add('d-none');
+        canvasEl.style.display = 'none';
+      }
+
       if (imgEl) {
         imgEl.classList.remove('d-none');
+        imgEl.style.display = 'block';
+        imgEl.src = targetPdfOrImg;
+        imgEl.style.width = '100%';
+        imgEl.style.height = 'auto';
+        imgEl.style.maxWidth = '100%';
+        imgEl.style.maxHeight = window.isFitWidthActive ? 'none' : '82vh';
+        imgEl.style.objectFit = 'contain';
+
+        if (stageEl) {
+          stageEl.style.width = '100%';
+          stageEl.style.height = 'auto';
+          stageEl.style.maxWidth = '100%';
+          stageEl.style.maxHeight = 'none';
+          if (window.isFitWidthActive) stageEl.classList.add('fit-width');
+        }
+
         imgEl.onload = () => {
           if (stageLoader) stageLoader.classList.add('d-none');
           const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
           window.applyConsoleWatermark(isVert);
+          window.resetConsoleDiagramZoom();
         };
-        imgEl.onerror = () => {
-          if (stageLoader) stageLoader.classList.add('d-none');
-        };
-        imgEl.src = targetPdfOrImg;
-        if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
-          if (stageLoader) stageLoader.classList.add('d-none');
-          const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
-          window.applyConsoleWatermark(isVert);
-        }
       }
     }
   }
@@ -1913,19 +2114,49 @@ window.resetConsoleDiagramZoom = function() {
 };
 
 window.toggleConsoleFullscreen = function() {
-  const elem = document.getElementById('diagramViewContainer');
-  if (!document.fullscreenElement) {
+  const elem = document.getElementById('consoleDiagramContent') || document.getElementById('diagramViewContainer') || document.documentElement;
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
     if (elem.requestFullscreen) {
       elem.requestFullscreen();
     } else if (elem.webkitRequestFullscreen) {
       elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
     }
   } else {
     if (document.exitFullscreen) {
       document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
     }
   }
 };
+
+document.addEventListener('fullscreenchange', handleFullscreenStatusChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenStatusChange);
+
+function handleFullscreenStatusChange() {
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const fsIcon = document.getElementById('btnFullscreenDiagramIcon');
+  if (fsIcon) {
+    fsIcon.className = isFs ? 'bi bi-fullscreen-exit text-warning' : 'bi bi-fullscreen text-info';
+  }
+  const wrap = document.getElementById('consoleImgViewerWrap');
+  if (wrap) {
+    if (isFs) wrap.classList.add('is-fullscreen');
+    else wrap.classList.remove('is-fullscreen');
+  }
+  setTimeout(() => {
+    const canvas = document.getElementById('consolePdfCanvas');
+    if (currentPdfDoc && canvas && !canvas.classList.contains('d-none')) {
+      window.renderPdfPageOnCanvas(currentPdfPageNum);
+    } else {
+      window.resetConsoleDiagramZoom();
+    }
+  }, 120);
+}
 
 // Open Diagram Viewer for Selected Model (Level 4 High-Tech Console)
 window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
@@ -4018,6 +4249,13 @@ window.renderEcuColorLegend = function() {
   const container = document.getElementById('consoleEcuColorLegend');
   if (!container) return;
 
+  // Color legend is ONLY for interactive ECU PCB images, never for PDFs or connector mode
+  if (window.currentActiveDiagramSection !== 'pcb') {
+    container.classList.add('d-none');
+    container.style.display = 'none';
+    return;
+  }
+
   let itemsContainer = document.getElementById('consoleEcuColorLegendItems');
   if (!itemsContainer) {
     itemsContainer = document.createElement('div');
@@ -5688,7 +5926,7 @@ window.handleAdminSubmitNewBrand = async function(e) {
 
       // Reload brands grid
       const grid = document.getElementById('vehiculosBrandGrid');
-      if (grid) loadFirestoreDiagramasBrands(grid);
+      if (grid && typeof loadFirestoreDiagramasBrands === 'function') loadFirestoreDiagramasBrands(grid);
 
       if (typeof window.showGlobalToast === 'function') {
         window.showGlobalToast(`¡Marca ${brandName.toUpperCase()} registrada con éxito!`);
@@ -5700,7 +5938,6 @@ window.handleAdminSubmitNewBrand = async function(e) {
     if (btn) btn.disabled = false;
   }
 };
-
 
 // --- ADMIN ADD MODEL CONTROLLER ---
 let adminNewModelCustomPhotoData = null;
@@ -5849,12 +6086,6 @@ window.handleAdminSubmitNewModel = async function(e) {
       }
       if (btn) btn.disabled = false;
 
-      // Reload models list for this brand
-      const modelsListGrid = document.getElementById('modelsListGrid');
-      if (modelsListGrid) {
-        window.openBrandDiagramModels(brandDocId, brandName, getBrandLogoUrl(brandDocId), 'diagramas');
-      }
-
       if (typeof window.showGlobalToast === 'function') {
         window.showGlobalToast(`¡Modelo ${fullModelTitle} registrado con éxito!`);
       }
@@ -5866,6 +6097,279 @@ window.handleAdminSubmitNewModel = async function(e) {
   }
 };
 
+// ==========================================
+// MODAL: REEMPLAZAR DIAGRAMA CON SVG / PNG / PDF
+// ==========================================
+let replaceSelectedFile = null;
 
+window.openReplaceActiveDiagramModal = function() {
+  try {
+    const active = window._currentActiveDiagramData || {};
+    const selectedDoc = active._selectedArchDoc || {};
 
+    const brand = (typeof currentSelectedBrandName !== 'undefined' && currentSelectedBrandName) || (typeof currentSelectedBrandId !== 'undefined' && currentSelectedBrandId) || 'TOYOTA';
+    const model = (typeof currentSelectedModelName !== 'undefined' && currentSelectedModelName) || (typeof currentSelectedModelId !== 'undefined' && currentSelectedModelId) || 'HILUX';
+    const motor = (active.motor || document.getElementById('selectedVehicleSpecText')?.textContent || '2KD-FTV').trim();
+    const docTitle = (active.tituloArchivo || selectedDoc.titulo || selectedDoc.nombre || 'Conexionado de la ECU').trim();
 
+    const vehicleEl = document.getElementById('replaceModalVehicleText');
+    const motorEl = document.getElementById('replaceModalMotorText');
+    const docEl = document.getElementById('replaceModalDocText');
+
+    if (vehicleEl) vehicleEl.textContent = `${String(brand).toUpperCase()} ${String(model).toUpperCase()}`;
+    if (motorEl) motorEl.textContent = motor;
+    if (docEl) docEl.textContent = docTitle;
+
+    // Reset form
+    replaceSelectedFile = null;
+    const fileInput = document.getElementById('replaceActiveDiagramFileInput');
+    if (fileInput) fileInput.value = '';
+
+    const badgeWrap = document.getElementById('replaceSelectedFileBadgeWrap');
+    if (badgeWrap) badgeWrap.classList.add('d-none');
+
+    const previewBox = document.getElementById('replaceFilePreviewBox');
+    if (previewBox) previewBox.classList.add('d-none');
+
+    const progressWrap = document.getElementById('replaceProgressBarWrap');
+    if (progressWrap) progressWrap.classList.add('d-none');
+
+    const statusMsg = document.getElementById('replaceStatusMsg');
+    if (statusMsg) statusMsg.textContent = '';
+
+    const btnLocal = document.getElementById('btnReplacePreviewLocal');
+    if (btnLocal) btnLocal.disabled = true;
+
+    const btnSubmit = document.getElementById('btnSubmitReplaceDiagram');
+    if (btnSubmit) btnSubmit.disabled = true;
+
+    const modalEl = document.getElementById('replaceActiveDiagramModal');
+    if (modalEl) {
+      if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        bsModal.show();
+      } else {
+        modalEl.classList.add('show');
+        modalEl.style.display = 'block';
+        document.body.classList.add('modal-open');
+      }
+    }
+  } catch (err) {
+    console.error('Error opening replace diagram modal:', err);
+    alert('No se pudo abrir la ventana de carga: ' + err.message);
+  }
+};
+
+window.handleReplaceFileSelected = function(input) {
+  if (input.files && input.files[0]) {
+    replaceSelectedFile = input.files[0];
+    const badgeWrap = document.getElementById('replaceSelectedFileBadgeWrap');
+    const badgeName = document.getElementById('replaceSelectedFileNameBadge');
+    const previewBox = document.getElementById('replaceFilePreviewBox');
+    const previewImg = document.getElementById('replaceFilePreviewImg');
+    const btnLocal = document.getElementById('btnReplacePreviewLocal');
+    const btnSubmit = document.getElementById('btnSubmitReplaceDiagram');
+
+    if (badgeWrap && badgeName) {
+      const isSvg = replaceSelectedFile.name.toLowerCase().endsWith('.svg');
+      const extBadge = isSvg ? '<span class="badge bg-warning text-dark me-1">SVG</span>' : '';
+      badgeName.innerHTML = `<i class="bi bi-file-earmark-check-fill"></i> ${extBadge} ${replaceSelectedFile.name} (${(replaceSelectedFile.size / 1024).toFixed(1)} KB)`;
+      badgeWrap.classList.remove('d-none');
+    }
+
+    const isImgOrSvg = /\.(svg|png|jpg|jpeg|webp|gif)$/i.test(replaceSelectedFile.name);
+    if (isImgOrSvg && previewBox && previewImg) {
+      previewImg.src = URL.createObjectURL(replaceSelectedFile);
+      previewBox.classList.remove('d-none');
+    } else if (previewBox) {
+      previewBox.classList.add('d-none');
+    }
+
+    if (btnLocal) btnLocal.disabled = false;
+    if (btnSubmit) btnSubmit.disabled = false;
+  }
+};
+
+window.applyReplacePreviewLocally = function() {
+  if (!replaceSelectedFile) return;
+
+  const blobUrl = URL.createObjectURL(replaceSelectedFile);
+  const isSvg = replaceSelectedFile.name.toLowerCase().endsWith('.svg');
+  const isPdf = replaceSelectedFile.name.toLowerCase().endsWith('.pdf');
+
+  if (!window._currentActiveDiagramData) window._currentActiveDiagramData = {};
+  window._currentActiveDiagramData.url = blobUrl;
+  window._currentActiveDiagramData.diagramaUrl = blobUrl;
+  window._currentActiveDiagramData.archivoUrl = blobUrl;
+
+  if (isPdf) {
+    window._currentActiveDiagramData.pdfUrl = blobUrl;
+    window._currentActiveDiagramData.imageUrl = null;
+  } else {
+    window._currentActiveDiagramData.pdfUrl = null;
+    window._currentActiveDiagramData.archivoPdf = null;
+    window._currentActiveDiagramData.imageUrl = blobUrl;
+  }
+
+  if (window._currentActiveDiagramData._selectedArchDoc) {
+    window._currentActiveDiagramData._selectedArchDoc.url = blobUrl;
+    window._currentActiveDiagramData._selectedArchDoc.diagramaUrl = blobUrl;
+    window._currentActiveDiagramData._selectedArchDoc.archivoUrl = blobUrl;
+    if (isPdf) {
+      window._currentActiveDiagramData._selectedArchDoc.pdfUrl = blobUrl;
+      window._currentActiveDiagramData._selectedArchDoc.imageUrl = null;
+    } else {
+      window._currentActiveDiagramData._selectedArchDoc.pdfUrl = null;
+      window._currentActiveDiagramData._selectedArchDoc.archivoPdf = null;
+      window._currentActiveDiagramData._selectedArchDoc.imageUrl = blobUrl;
+    }
+  }
+
+  const modalEl = document.getElementById('replaceActiveDiagramModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    bootstrap.Modal.getInstance(modalEl)?.hide();
+  }
+
+  // Reload the diagram section immediately with the new SVG
+  window.loadSpecificDiagramSection('connector');
+
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast('¡Diagrama SVG/Imagen cargado y aplicado en pantalla!');
+  }
+};
+
+window.handleReplaceActiveDiagramSubmit = async function(e) {
+  e.preventDefault();
+  if (!replaceSelectedFile) {
+    alert('Por favor selecciona un archivo SVG, PNG o PDF primero.');
+    return;
+  }
+
+  const btnSubmit = document.getElementById('btnSubmitReplaceDiagram');
+  const btnLocal = document.getElementById('btnReplacePreviewLocal');
+  const progressWrap = document.getElementById('replaceProgressBarWrap');
+  const progressBar = document.getElementById('replaceProgressBar');
+  const statusMsg = document.getElementById('replaceStatusMsg');
+
+  if (btnSubmit) btnSubmit.disabled = true;
+  if (btnLocal) btnLocal.disabled = true;
+  if (progressWrap) progressWrap.classList.remove('d-none');
+  if (progressBar) progressBar.style.width = '20%';
+  if (statusMsg) {
+    statusMsg.className = 'small text-center fw-bold text-warning';
+    statusMsg.textContent = 'Subiendo archivo a Firebase Storage...';
+  }
+
+  const active = window._currentActiveDiagramData || {};
+  const selectedDoc = active._selectedArchDoc || {};
+
+  const brand = (currentSelectedBrandName || currentSelectedBrandId || 'toyota').toUpperCase().trim();
+  const brandDocId = (currentSelectedBrandId || 'toyota').toLowerCase().trim();
+  const modelDocId = (currentSelectedModelId || 'hilux').toLowerCase().trim();
+  const cleanFileName = replaceSelectedFile.name;
+  const isSvg = cleanFileName.toLowerCase().endsWith('.svg');
+  const isPdf = cleanFileName.toLowerCase().endsWith('.pdf');
+
+  try {
+    let downloadUrl = '';
+
+    if (typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
+      const storage = firebase.storage();
+      const uploadPath = `diagramas/${brand}/${modelDocId}/${cleanFileName}`;
+      const fileRef = storage.ref().child(uploadPath);
+
+      const metadata = {
+        contentType: replaceSelectedFile.type || (isSvg ? 'image/svg+xml' : (isPdf ? 'application/pdf' : 'image/png'))
+      };
+
+      if (progressBar) progressBar.style.width = '55%';
+
+      const uploadTask = await fileRef.put(replaceSelectedFile, metadata);
+      downloadUrl = await uploadTask.ref.getDownloadURL();
+
+      if (progressBar) progressBar.style.width = '85%';
+      if (statusMsg) statusMsg.textContent = 'Actualizando registro en la base de datos...';
+
+      // Update Firestore if record exists
+      if (typeof firebase.firestore === 'function') {
+        const db = firebase.firestore();
+        const updatePayload = {
+          url: downloadUrl,
+          diagramaUrl: downloadUrl,
+          archivoUrl: downloadUrl,
+          formato: isSvg ? 'svg' : (isPdf ? 'pdf' : 'imagen'),
+          ultimaModificacion: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (isPdf) updatePayload.pdfUrl = downloadUrl;
+        else updatePayload.imageUrl = downloadUrl;
+
+        // Try updating in common collection locations
+        if (selectedDoc.id) {
+          await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).collection('archivos').doc(selectedDoc.id).set(updatePayload, { merge: true }).catch(() => {});
+          await db.collection('archivos').doc(selectedDoc.id).set(updatePayload, { merge: true }).catch(() => {});
+        }
+      }
+    } else {
+      // Offline fallback
+      downloadUrl = URL.createObjectURL(replaceSelectedFile);
+    }
+
+    if (progressBar) progressBar.style.width = '100%';
+    if (statusMsg) {
+      statusMsg.className = 'small text-center fw-bold text-success';
+      statusMsg.textContent = '¡Diagrama actualizado correctamente!';
+    }
+
+    // Apply to current active view
+    if (!window._currentActiveDiagramData) window._currentActiveDiagramData = {};
+    window._currentActiveDiagramData.url = downloadUrl;
+    window._currentActiveDiagramData.diagramaUrl = downloadUrl;
+    window._currentActiveDiagramData.archivoUrl = downloadUrl;
+    if (isPdf) {
+      window._currentActiveDiagramData.pdfUrl = downloadUrl;
+      window._currentActiveDiagramData.imageUrl = null;
+    } else {
+      window._currentActiveDiagramData.pdfUrl = null;
+      window._currentActiveDiagramData.archivoPdf = null;
+      window._currentActiveDiagramData.imageUrl = downloadUrl;
+    }
+    if (selectedDoc) {
+      selectedDoc.url = downloadUrl;
+      selectedDoc.diagramaUrl = downloadUrl;
+      selectedDoc.archivoUrl = downloadUrl;
+      if (isPdf) {
+        selectedDoc.pdfUrl = downloadUrl;
+        selectedDoc.imageUrl = null;
+      } else {
+        selectedDoc.pdfUrl = null;
+        selectedDoc.archivoPdf = null;
+        selectedDoc.imageUrl = downloadUrl;
+      }
+    }
+
+    setTimeout(() => {
+      const modalEl = document.getElementById('replaceActiveDiagramModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+      }
+      if (btnSubmit) btnSubmit.disabled = false;
+      if (btnLocal) btnLocal.disabled = false;
+
+      // Reload view with the new crystal-clear SVG/PNG
+      window.loadSpecificDiagramSection(window.currentActiveDiagramSection || 'connector');
+
+      if (typeof window.showGlobalToast === 'function') {
+        window.showGlobalToast(`¡Diagrama ${cleanFileName} subido y actualizado con éxito!`);
+      }
+    }, 600);
+
+  } catch (err) {
+    console.error('Error subiendo diagrama:', err);
+    if (statusMsg) {
+      statusMsg.className = 'small text-center fw-bold text-danger';
+      statusMsg.textContent = 'Error al subir: ' + err.message;
+    }
+    if (btnSubmit) btnSubmit.disabled = false;
+    if (btnLocal) btnLocal.disabled = false;
+  }
+};

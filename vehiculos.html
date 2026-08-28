@@ -17,7 +17,7 @@
   
   <!-- Stylesheets -->
   <link href="css/global.css?v=3.0" rel="stylesheet">
-  <link href="css/vehiculos.css?v=4.0" rel="stylesheet">
+  <link href="css/vehiculos.css?v=4.8" rel="stylesheet">
   
   <style>
     .select-vehicle-header {
@@ -1431,6 +1431,9 @@
                 <button class="btn-console-action" id="btnConnectorManual" onclick="loadSpecificDiagramSection('connector')">
                   <i class="bi bi-diagram-3 me-2"></i> <span id="btnConnectorManualLabel">Conexionado del Componente</span>
                 </button>
+                <button class="btn-console-action" id="btnSplashChangeSvg" onclick="openReplaceActiveDiagramModal()" style="border-color: rgba(255, 193, 7, 0.5); color: #ffc107;">
+                  <i class="bi bi-filetype-svg me-2"></i> <span>Modificar / Subir SVG</span>
+                </button>
               </div>
             </div>
 
@@ -1476,11 +1479,20 @@
                     <span>+ AGREGAR FOTO</span>
                   </button>
 
-                  <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnToggleZoomPan" onclick="toggleHandZoom()" title="Hacer clic para ampliar o reducir con la mano">
-                    <i class="bi bi-hand-index-thumb text-danger fs-6"></i>
-                    <span class="small font-rajdhani fw-bold" id="zoomModeText">ZOOM (1x)</span>
+                  <!-- Botón para modificar y subir imagen PNG / SVG -->
+                  <button class="btn btn-outline-warning btn-sm border d-flex align-items-center gap-1 font-rajdhani fw-bold" id="btnReplaceDiagramSvg" onclick="openReplaceActiveDiagramModal()" title="Modificar este archivo y subir imagen PNG, WebP o SVG de alta resolución">
+                    <i class="bi bi-file-earmark-image-fill text-warning fs-5"></i>
+                    <span>SUBIR PNG / SVG</span>
                   </button>
+
+                  <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnToggleZoomPan" onclick="toggleHandZoom()" title="Hacer clic para ampliar o reducir">
+                    <i class="bi bi-search text-danger fs-6"></i>
+                    <span class="small font-rajdhani fw-bold" id="zoomModeText">ZOOM (1.0x)</span>
+                  </button>
+                  <button class="btn btn-dark btn-sm border" onclick="rotateConsoleDiagram()" title="Rotar diagrama 90°"><i class="bi bi-arrow-clockwise text-warning"></i></button>
                   <button class="btn btn-dark btn-sm border" onclick="resetConsoleDiagramZoom()" title="Ajustar a pantalla"><i class="bi bi-aspect-ratio"></i></button>
+                  <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" onclick="toggleFitWidthMode()" id="btnFitWidth" title="Expandir y ajustar al ancho completo de la pantalla"><i class="bi bi-arrows-expand text-warning"></i><span class="small font-rajdhani fw-bold d-none d-lg-inline">Ancho Completo</span></button>
+                  <button class="btn btn-dark btn-sm border" onclick="toggleConsoleFullscreen()" id="btnFullscreenDiagram" title="Pantalla Completa / Maximizar"><i class="bi bi-fullscreen text-info" id="btnFullscreenDiagramIcon"></i></button>
                   <button class="btn btn-outline-light btn-sm" onclick="showConsoleSplashView()"><i class="bi bi-arrow-left me-1"></i> Opciones</button>
                 </div>
               </div>
@@ -1576,6 +1588,86 @@
       </div>
 
     </main>
+  </div>
+
+  <!-- Modal: Modificar Archivo y Cargar Diagrama SVG / PNG -->
+  <div class="modal fade" id="replaceActiveDiagramModal" tabindex="-1" aria-labelledby="replaceActiveDiagramModalLabel" aria-hidden="true" style="z-index: 1065;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg text-white" style="border-radius: 16px; overflow: hidden; background: #12161f; border: 1px solid rgba(255, 193, 7, 0.4) !important;">
+        <div class="modal-header border-secondary border-opacity-50 py-3" style="background: #0d1017;">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-warning text-dark rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+              <i class="bi bi-filetype-svg fs-4"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0 text-warning" id="replaceActiveDiagramModalLabel">MODIFICAR Y ASIGNAR DIAGRAMA SVG / PNG</h5>
+              <div class="text-white-50 small" style="font-size: 0.75rem;">Reemplaza este archivo por un archivo vectorial SVG o imagen HD para calidad perfecta</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form id="replaceActiveDiagramForm" onsubmit="handleReplaceActiveDiagramSubmit(event)">
+          <div class="modal-body p-4">
+            <!-- Context Info Card -->
+            <div class="p-3 rounded-3 mb-3 border border-secondary border-opacity-25" style="background: rgba(255, 255, 255, 0.04);">
+              <div class="row g-2">
+                <div class="col-6 col-md-4">
+                  <div class="text-white-50 small font-rajdhani">VEHÍCULO / MODELO:</div>
+                  <div class="fw-bold text-info font-rajdhani" id="replaceModalVehicleText">TOYOTA HILUX</div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="text-white-50 small font-rajdhani">MOTOR / ECU:</div>
+                  <div class="fw-bold text-warning font-rajdhani" id="replaceModalMotorText">2KD-FTV (2011 - 2015)</div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div class="text-white-50 small font-rajdhani">COMPONENTE / ARCHIVO:</div>
+                  <div class="fw-bold text-success font-rajdhani" id="replaceModalDocText">Conexionado de la ECU</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="mb-3">
+              <label class="form-label fw-bold font-rajdhani text-light mb-1">Seleccionar Archivo (SVG recomendado, PNG o PDF):</label>
+              <div class="p-4 border border-2 border-dashed rounded-3 text-center cursor-pointer transition-all" id="replaceFileDropArea" style="border-color: rgba(255, 193, 7, 0.5) !important; background: rgba(255, 193, 7, 0.03);" onclick="document.getElementById('replaceActiveDiagramFileInput').click()">
+                <i class="bi bi-cloud-arrow-up-fill text-warning display-5 mb-2 d-block"></i>
+                <div class="fw-bold text-light mb-1">Haz clic para seleccionar o arrastra tu archivo aquí</div>
+                <div class="text-white-50 small">Formatos soportados: <span class="badge bg-warning text-dark fw-bold">.SVG (Vectorial)</span> <span class="badge bg-info text-dark fw-bold">.PNG (HD)</span> <span class="badge bg-danger fw-bold">.PDF</span> <span class="badge bg-secondary fw-bold">.JPG</span></div>
+                <input type="file" id="replaceActiveDiagramFileInput" class="d-none" accept=".svg,.png,.jpg,.jpeg,.webp,.pdf" onchange="handleReplaceFileSelected(this)">
+              </div>
+              <div class="mt-2 d-none" id="replaceSelectedFileBadgeWrap">
+                <span class="badge bg-success py-2 px-3 fs-6 d-inline-flex align-items-center gap-2" id="replaceSelectedFileNameBadge">
+                  <i class="bi bi-check-circle-fill"></i> <span>archivo.svg</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Live Preview -->
+            <div class="d-none mb-3 text-center p-3 rounded-3 border border-secondary border-opacity-50" id="replaceFilePreviewBox" style="background: #0B0E14; max-height: 250px; overflow: hidden;">
+              <div class="text-white-50 small mb-2 text-start"><i class="bi bi-eye me-1 text-info"></i>Vista previa del archivo seleccionado:</div>
+              <img id="replaceFilePreviewImg" src="" alt="Vista previa" class="img-fluid rounded" style="max-height: 180px; object-fit: contain;">
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress d-none mb-3" id="replaceProgressBarWrap" style="height: 10px;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" id="replaceProgressBar" role="progressbar" style="width: 0%;"></div>
+            </div>
+            <div id="replaceStatusMsg" class="small text-center fw-bold"></div>
+          </div>
+
+          <div class="modal-footer border-secondary border-opacity-50 py-3" style="background: #0d1017;">
+            <button type="button" class="btn btn-outline-light font-rajdhani fw-bold px-3" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-outline-info font-rajdhani fw-bold px-3" onclick="applyReplacePreviewLocally()" id="btnReplacePreviewLocal" disabled>
+              <i class="bi bi-play-circle me-1"></i>Probar en Pantalla Ahora
+            </button>
+            <button type="submit" class="btn btn-warning text-dark font-rajdhani fw-bold px-4" id="btnSubmitReplaceDiagram" disabled>
+              <i class="bi bi-cloud-upload-fill me-1"></i>Guardar y Actualizar Diagrama
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <!-- Modal Admin: Subir Nuevo Diagrama (Hijo directo del body para evitar bloqueos de z-index) -->
@@ -2349,6 +2441,6 @@
   <script src="js/global.js?v=3.0"></script>
   <script src="js/firebase-catalog.js?v=3.0"></script>
   <script src="js/auth.js?v=3.0"></script>
-  <script src="js/vehiculos-diagramas.js?v=4.0"></script>
+  <script src="js/vehiculos-diagramas.js?v=4.8"></script>
 </body>
 </html>

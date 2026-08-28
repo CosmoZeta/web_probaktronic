@@ -1038,17 +1038,35 @@
 .console-img-viewer-wrap {
   position: relative;
   width: 100%;
-  min-height: 600px;
-  height: 80vh;
+  min-height: 650px;
+  height: 82vh;
   overflow: hidden;
   background: #0B0E14;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 12px;
+  padding: 8px;
   cursor: grab;
   user-select: none;
+}
+
+:fullscreen .console-diagram-content,
+:-webkit-full-screen .console-diagram-content {
+  width: 100vw !important;
+  height: 100vh !important;
+  background: #0B0E14 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+:fullscreen .console-img-viewer-wrap,
+:-webkit-full-screen .console-img-viewer-wrap,
+.console-img-viewer-wrap.is-fullscreen {
+  width: 100vw !important;
+  height: calc(100vh - 54px) !important;
+  min-height: calc(100vh - 54px) !important;
+  padding: 4px !important;
 }
 
 .console-img-viewer-wrap.grabbing,
@@ -1060,21 +1078,32 @@
 .console-diagram-stage {
   position: relative;
   display: inline-block;
-  max-width: 100%;
-  max-height: 100%;
   margin: auto;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   line-height: 0;
   transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
   transform-origin: center center;
 }
 
+.console-diagram-stage.fit-width {
+  width: 98% !important;
+  max-width: 98% !important;
+}
+
+.console-diagram-stage.fit-width .console-diagram-img,
+.console-diagram-stage.fit-width .console-diagram-canvas {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
 .console-diagram-img {
   display: block;
-  max-width: 100%;
-  max-height: 78vh;
+  max-width: 98%;
+  max-height: 80vh;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -1088,16 +1117,13 @@
 
 .console-diagram-canvas {
   display: block;
-  width: 100%;
-  max-height: 78vh;
-  height: auto;
-  object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
   border-radius: 6px;
   margin: 0 auto;
   cursor: grab;
   image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 .console-pdf-frame {
@@ -1658,11 +1684,15 @@
   border-right: none !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
   border-radius: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  flex-wrap: wrap !important;
-  gap: 8px 12px !important;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   z-index: 10;
+}
+
+.ecu-color-legend.d-none {
+  display: none !important;
 }
 
 .ecu-color-legend::-webkit-scrollbar {
