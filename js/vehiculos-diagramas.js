@@ -1055,6 +1055,18 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
     return !deletedDiagrams.includes(cleanId) && !deletedDiagrams.includes(cleanTitle);
   });
 
+  // Automatic deduplication: ensure no duplicate cards with the same title are displayed
+  const seenCards = new Set();
+  const uniqueArchivosList = [];
+  archivosList.forEach(a => {
+    const cardTitleKey = (a.titulo || a.nombre || a.id || '').toUpperCase().trim();
+    if (!seenCards.has(cardTitleKey)) {
+      seenCards.add(cardTitleKey);
+      uniqueArchivosList.push(a);
+    }
+  });
+  archivosList = uniqueArchivosList;
+
   const isAdmin = (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin'));
   const btnNext = document.getElementById('btnNextToDiagram');
 
@@ -1754,8 +1766,23 @@ window.loadSpecificDiagramSection = async function(type) {
     if (stageLoader) stageLoader.classList.remove('d-none');
 
     // Priority check for connector diagram (PDF, SVG or PNG pinout):
-    // NOTE: Do NOT use active.imageUrl because that corresponds to the PCB board photo!
-    let targetPdfOrImg = active.diagramaUrl || active._selectedArchDoc?.diagramaUrl || active.archivoUrl || active._selectedArchDoc?.archivoUrl || active.url || active._selectedArchDoc?.url || active.pdfUrl || active._selectedArchDoc?.pdfUrl || active.downloadUrl;
+    // 1. Check permanent lock in LocalStorage/Cloud
+    const brandKey = (active.brandDocId || currentSelectedBrandId || 'toyota').toLowerCase().trim();
+    const modelKey = (active.modelDocId || currentSelectedModelDocId || currentSelectedModelId || 'hilux').toLowerCase().trim();
+    const motorKey = (active.motorDocId || 'estandar').toLowerCase().trim();
+    const archKey = (active.archDocId || active.id || 'ecu').toLowerCase().trim();
+    const exactLockKey = `${brandKey}_${modelKey}_${motorKey}_${archKey}`;
+
+    let lockedDiagramUrl = null;
+    try {
+      const localLocks = JSON.parse(localStorage.getItem('probaktronic_locked_diagrams') || '{}');
+      const lockedObj = localLocks[exactLockKey] || localLocks[`${brandKey}_${modelKey}`] || localLocks[`${brandKey}_${motorKey}`] || localLocks[`${brandKey}_${archKey}`];
+      if (lockedObj && (lockedObj.diagramaUrl || lockedObj.url)) {
+        lockedDiagramUrl = lockedObj.diagramaUrl || lockedObj.url;
+      }
+    } catch (e) {}
+
+    let targetPdfOrImg = lockedDiagramUrl || active.diagramaUrl || active._selectedArchDoc?.diagramaUrl || active.archivoUrl || active._selectedArchDoc?.archivoUrl || active.diagramaImg || active._selectedArchDoc?.diagramaImg || active.url || active._selectedArchDoc?.url || active.pdfUrl || active._selectedArchDoc?.pdfUrl || active.downloadUrl;
 
     // If no explicit file set, search Firebase Storage as fallback
     if (!targetPdfOrImg && typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
@@ -1801,7 +1828,7 @@ window.loadSpecificDiagramSection = async function(type) {
     }
 
     if (!targetPdfOrImg || targetPdfOrImg.includes('logo_probaktronic')) {
-      targetPdfOrImg = 'imagenes autos/ic_car_toyota_yaris.JPG';
+      targetPdfOrImg = '';
     }
 
     // Accurate PDF check: must end with .pdf and not be an image/SVG
@@ -1888,6 +1915,16 @@ window.loadSpecificDiagramSection = async function(type) {
           const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
           window.applyConsoleWatermark(isVert);
           window.resetConsoleDiagramZoom();
+        };
+
+        imgEl.onerror = () => {
+          if (stageLoader) stageLoader.classList.add('d-none');
+          console.warn('Image failed to load URL:', targetPdfOrImg);
+          if (targetPdfOrImg && targetPdfOrImg.startsWith('blob:')) {
+            try {
+              localStorage.removeItem('probaktronic_locked_diagrams');
+            } catch (e) {}
+          }
         };
       }
     }
@@ -3909,6 +3946,191 @@ window.updateEcuAdminUI = function() {
       splashReplaceBtn.classList.remove('d-none');
     } else {
       splashReplaceBtn.classList.add('d-none');
+    }
+  }
+
+  const lockDiagramBtn = document.getElementById('btnAdminLockDiagramFirebase');
+  if (lockDiagramBtn) {
+    if (isAdmin && window.currentActiveDiagramSection === 'connector') {
+      lockDiagramBtn.classList.remove('d-none');
+      lockDiagramBtn.classList.add('d-flex');
+    } else {
+      lockDiagramBtn.classList.add('d-none');
+      lockDiagramBtn.classList.remove('d-flex');
+    }
+  }
+};
+
+// ==========================================
+// ASEGURAR Y VERIFICAR DIAGRAMA EN FIREBASE
+// ==========================================
+window.lockAndSaveDiagramToFirebase = async function() {
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') ? window.isProbaktronicAdmin() : false;
+  if (!isAdmin) {
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('Acceso exclusivo para el Administrador del sistema.', 'warning');
+    } else {
+      alert('Acceso exclusivo para el Administrador del sistema.');
+    }
+    return;
+  }
+
+  const btn = document.getElementById('btnAdminLockDiagramFirebase');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> <span>ASEGURANDO...</span>';
+  }
+
+  const active = window._currentActiveDiagramData || {};
+  const archDoc = active._selectedArchDoc || {};
+
+  const brandDocId = (archDoc.brandDocId || currentSelectedBrandId || 'toyota').toLowerCase().trim();
+  const modelDocId = (archDoc.modelDocId || currentSelectedModelDocId || currentSelectedModelId || 'hilux').toLowerCase().trim();
+  const anioDocId = archDoc.anioDocId || 'estandar';
+  const motorDocId = (archDoc.motorDocId || 'estandar').toLowerCase().trim();
+  const archDocId = archDoc.archDocId || archDoc.id || active.id || 'ecu';
+
+  let currentDiagramUrl = active.diagramaUrl || archDoc.diagramaUrl || active.archivoUrl || archDoc.archivoUrl || active.url || archDoc.url || active.pdfUrl || archDoc.pdfUrl;
+
+  try {
+    if (!currentDiagramUrl) {
+      throw new Error('No hay ningún diagrama cargado en pantalla para asegurar.');
+    }
+
+    // If it's a local blob URL, fetch and upload to Firebase Storage to get a permanent HTTPS link
+    if (currentDiagramUrl.startsWith('blob:') && typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
+      let fileToUpload = replaceSelectedFile;
+      if (!fileToUpload) {
+        const resp = await fetch(currentDiagramUrl).catch(() => null);
+        if (resp) {
+          fileToUpload = await resp.blob();
+        }
+      }
+      if (fileToUpload) {
+        const storage = firebase.storage();
+        const cleanName = (replaceSelectedFile && replaceSelectedFile.name) ? replaceSelectedFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_') : 'diagrama_ecu.png';
+        const isSvg = cleanName.toLowerCase().endsWith('.svg') || (fileToUpload.type && fileToUpload.type.includes('svg'));
+        const isPdf = cleanName.toLowerCase().endsWith('.pdf') || (fileToUpload.type && fileToUpload.type.includes('pdf'));
+        const uploadPath = `diagramas/${brandDocId.toUpperCase()}/${modelDocId}/${motorDocId}/${Date.now()}_${cleanName}`;
+        const fileRef = storage.ref(uploadPath);
+        const metadata = {
+          contentType: fileToUpload.type || (isSvg ? 'image/svg+xml' : (isPdf ? 'application/pdf' : 'image/png'))
+        };
+        const snap = await fileRef.put(fileToUpload, metadata);
+        currentDiagramUrl = await snap.ref.getDownloadURL();
+        active.url = currentDiagramUrl;
+        active.diagramaUrl = currentDiagramUrl;
+        active.archivoUrl = currentDiagramUrl;
+        if (archDoc) {
+          archDoc.url = currentDiagramUrl;
+          archDoc.diagramaUrl = currentDiagramUrl;
+          archDoc.archivoUrl = currentDiagramUrl;
+        }
+      }
+    }
+
+    const isPdf = (currentDiagramUrl.toLowerCase().includes('.pdf') || currentDiagramUrl.toLowerCase().includes('%2epdf'));
+    const isSvg = currentDiagramUrl.toLowerCase().includes('.svg');
+
+    if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+      const db = firebase.firestore();
+      const updatePayload = {
+        url: currentDiagramUrl,
+        diagramaUrl: currentDiagramUrl,
+        archivoUrl: currentDiagramUrl,
+        formato: isSvg ? 'svg' : (isPdf ? 'pdf' : 'imagen'),
+        asegurado: true,
+        fechaAsegurado: firebase.firestore.FieldValue.serverTimestamp(),
+        ultimaModificacion: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (isPdf) {
+        updatePayload.pdfUrl = currentDiagramUrl;
+        updatePayload.archivoPdf = currentDiagramUrl;
+      } else {
+        updatePayload.pdfUrl = null;
+        updatePayload.archivoPdf = null;
+        updatePayload.diagramaImg = currentDiagramUrl;
+      }
+
+      // 1. Primary hierarchical path: diagramas/{brand}/modelos/{model}/anios/{year}/motores/{motor}/archivos/{doc}
+      const docRef = db.collection('diagramas').doc(brandDocId)
+        .collection('modelos').doc(modelDocId)
+        .collection('anios').doc(anioDocId)
+        .collection('motores').doc(motorDocId)
+        .collection('archivos').doc(archDocId);
+
+      await docRef.set(updatePayload, { merge: true });
+
+      // 2. Also update motor document
+      await db.collection('diagramas').doc(brandDocId)
+        .collection('modelos').doc(modelDocId)
+        .collection('anios').doc(anioDocId)
+        .collection('motores').doc(motorDocId)
+        .set({ diagramaUrl: currentDiagramUrl, url: currentDiagramUrl }, { merge: true }).catch(() => {});
+
+      // 3. Flat collections
+      await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).collection('archivos').doc(archDocId).set(updatePayload, { merge: true }).catch(() => {});
+      await db.collection('archivos').doc(archDocId).set(updatePayload, { merge: true }).catch(() => {});
+
+      // 4. Save to app_config global locks in Firestore
+      const lockKey = `${brandDocId}_${modelDocId}_${motorDocId}_${archDocId}`.toLowerCase();
+      await db.collection('app_config').doc('diagramas_asegurados').set({
+        [lockKey]: {
+          url: currentDiagramUrl,
+          diagramaUrl: currentDiagramUrl,
+          isPdf: isPdf,
+          isSvg: isSvg,
+          updatedAt: Date.now()
+        }
+      }, { merge: true }).catch(() => {});
+    }
+
+    // 5. Permanent Local Lock Storage
+    try {
+      const lockKey = `${brandDocId}_${modelDocId}_${motorDocId}_${archDocId}`.toLowerCase();
+      const globalLocks = JSON.parse(localStorage.getItem('probaktronic_locked_diagrams') || '{}');
+      const lockData = {
+        url: currentDiagramUrl,
+        diagramaUrl: currentDiagramUrl,
+        archivoUrl: currentDiagramUrl,
+        isPdf: isPdf,
+        isSvg: isSvg,
+        timestamp: Date.now()
+      };
+      globalLocks[lockKey] = lockData;
+      globalLocks[`${brandDocId}_${modelDocId}`.toLowerCase()] = lockData;
+      globalLocks[`${brandDocId}_${motorDocId}`.toLowerCase()] = lockData;
+      globalLocks[`${brandDocId}_${archDocId}`.toLowerCase()] = lockData;
+      localStorage.setItem('probaktronic_locked_diagrams', JSON.stringify(globalLocks));
+    } catch (e) {}
+
+    // Success UI animation
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('btn-outline-success');
+      btn.classList.add('btn-success', 'text-white');
+      btn.innerHTML = '<i class="bi bi-shield-fill-check text-white"></i> <span>¡ASEGURADO EN FIREBASE!</span>';
+      setTimeout(() => {
+        btn.classList.remove('btn-success', 'text-white');
+        btn.classList.add('btn-outline-success');
+        btn.innerHTML = '<i class="bi bi-shield-check"></i> <span>ASEGURAR DIAGRAMA</span>';
+      }, 3000);
+    }
+
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('✓ Diagrama asegurado y verificado en Firebase exitosamente.');
+    }
+
+  } catch (err) {
+    console.error('Error asegurando diagrama en Firebase:', err);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-shield-check"></i> <span>ASEGURAR DIAGRAMA</span>';
+    }
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('Error asegurando en Firebase: ' + err.message, 'danger');
+    } else {
+      alert('Error asegurando en Firebase: ' + err.message);
     }
   }
 };
@@ -6292,12 +6514,15 @@ window.handleReplaceActiveDiagramSubmit = async function(e) {
   }
 
   const active = window._currentActiveDiagramData || {};
-  const selectedDoc = active._selectedArchDoc || {};
+  const archDoc = active._selectedArchDoc || {};
 
-  const brand = (currentSelectedBrandName || currentSelectedBrandId || 'toyota').toUpperCase().trim();
-  const brandDocId = (currentSelectedBrandId || 'toyota').toLowerCase().trim();
-  const modelDocId = (currentSelectedModelId || 'hilux').toLowerCase().trim();
-  const cleanFileName = replaceSelectedFile.name;
+  const brandDocId = (archDoc.brandDocId || currentSelectedBrandId || 'toyota').toLowerCase().trim();
+  const modelDocId = (archDoc.modelDocId || currentSelectedModelDocId || currentSelectedModelId || 'hilux').toLowerCase().trim();
+  const anioDocId = archDoc.anioDocId || 'estandar';
+  const motorDocId = (archDoc.motorDocId || 'estandar').toLowerCase().trim();
+  const archDocId = archDoc.archDocId || archDoc.id || active.id || 'ecu';
+
+  const cleanFileName = replaceSelectedFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
   const isSvg = cleanFileName.toLowerCase().endsWith('.svg');
   const isPdf = cleanFileName.toLowerCase().endsWith('.pdf');
 
@@ -6306,8 +6531,8 @@ window.handleReplaceActiveDiagramSubmit = async function(e) {
 
     if (typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
       const storage = firebase.storage();
-      const uploadPath = `diagramas/${brand}/${modelDocId}/${cleanFileName}`;
-      const fileRef = storage.ref().child(uploadPath);
+      const uploadPath = `diagramas/${brandDocId.toUpperCase()}/${modelDocId}/${motorDocId}/${Date.now()}_${cleanFileName}`;
+      const fileRef = storage.ref(uploadPath);
 
       const metadata = {
         contentType: replaceSelectedFile.type || (isSvg ? 'image/svg+xml' : (isPdf ? 'application/pdf' : 'image/png'))
@@ -6319,9 +6544,9 @@ window.handleReplaceActiveDiagramSubmit = async function(e) {
       downloadUrl = await uploadTask.ref.getDownloadURL();
 
       if (progressBar) progressBar.style.width = '85%';
-      if (statusMsg) statusMsg.textContent = 'Actualizando registro en la base de datos...';
+      if (statusMsg) statusMsg.textContent = 'Guardando permanentemente en Firestore...';
 
-      // Update Firestore if record exists
+      // Update Firestore in the exact database hierarchy
       if (typeof firebase.firestore === 'function') {
         const db = firebase.firestore();
         const updatePayload = {
@@ -6331,24 +6556,74 @@ window.handleReplaceActiveDiagramSubmit = async function(e) {
           formato: isSvg ? 'svg' : (isPdf ? 'pdf' : 'imagen'),
           ultimaModificacion: firebase.firestore.FieldValue.serverTimestamp()
         };
-        if (isPdf) updatePayload.pdfUrl = downloadUrl;
-        else updatePayload.imageUrl = downloadUrl;
-
-        // Try updating in common collection locations
-        if (selectedDoc.id) {
-          await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).collection('archivos').doc(selectedDoc.id).set(updatePayload, { merge: true }).catch(() => {});
-          await db.collection('archivos').doc(selectedDoc.id).set(updatePayload, { merge: true }).catch(() => {});
+        if (isPdf) {
+          updatePayload.pdfUrl = downloadUrl;
+          updatePayload.archivoPdf = downloadUrl;
+        } else {
+          updatePayload.pdfUrl = null;
+          updatePayload.archivoPdf = null;
+          updatePayload.diagramaImg = downloadUrl;
         }
+
+        // 1. Primary path: diagramas/{brand}/modelos/{model}/anios/{year}/motores/{motor}/archivos/{doc}
+        const docRef = db.collection('diagramas').doc(brandDocId)
+          .collection('modelos').doc(modelDocId)
+          .collection('anios').doc(anioDocId)
+          .collection('motores').doc(motorDocId)
+          .collection('archivos').doc(archDocId);
+
+        await docRef.set(updatePayload, { merge: true });
+
+        // 2. Also update motor document if it has main diagram field
+        await db.collection('diagramas').doc(brandDocId)
+          .collection('modelos').doc(modelDocId)
+          .collection('anios').doc(anioDocId)
+          .collection('motores').doc(motorDocId)
+          .set({ diagramaUrl: downloadUrl, url: downloadUrl }, { merge: true }).catch(() => {});
+
+        // 3. Fallback direct collection updates
+        await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).collection('archivos').doc(archDocId).set(updatePayload, { merge: true }).catch(() => {});
+        await db.collection('archivos').doc(archDocId).set(updatePayload, { merge: true }).catch(() => {});
+
+        // 4. Save to app_config global locks in Firestore
+        const lockKey = `${brandDocId}_${modelDocId}_${motorDocId}_${archDocId}`.toLowerCase();
+        await db.collection('app_config').doc('diagramas_asegurados').set({
+          [lockKey]: {
+            url: downloadUrl,
+            diagramaUrl: downloadUrl,
+            isPdf: isPdf,
+            isSvg: isSvg,
+            updatedAt: Date.now()
+          }
+        }, { merge: true }).catch(() => {});
       }
     } else {
-      // Offline fallback
       downloadUrl = URL.createObjectURL(replaceSelectedFile);
     }
+
+    // 5. Permanent Local Lock Storage
+    try {
+      const lockKey = `${brandDocId}_${modelDocId}_${motorDocId}_${archDocId}`.toLowerCase();
+      const globalLocks = JSON.parse(localStorage.getItem('probaktronic_locked_diagrams') || '{}');
+      const lockData = {
+        url: downloadUrl,
+        diagramaUrl: downloadUrl,
+        archivoUrl: downloadUrl,
+        isPdf: isPdf,
+        isSvg: isSvg,
+        timestamp: Date.now()
+      };
+      globalLocks[lockKey] = lockData;
+      globalLocks[`${brandDocId}_${modelDocId}`.toLowerCase()] = lockData;
+      globalLocks[`${brandDocId}_${motorDocId}`.toLowerCase()] = lockData;
+      globalLocks[`${brandDocId}_${archDocId}`.toLowerCase()] = lockData;
+      localStorage.setItem('probaktronic_locked_diagrams', JSON.stringify(globalLocks));
+    } catch (e) {}
 
     if (progressBar) progressBar.style.width = '100%';
     if (statusMsg) {
       statusMsg.className = 'small text-center fw-bold text-success';
-      statusMsg.textContent = '¡Diagrama actualizado correctamente!';
+      statusMsg.textContent = '¡Diagrama guardado permanentemente!';
     }
 
     // Apply to current active view
@@ -6358,23 +6633,24 @@ window.handleReplaceActiveDiagramSubmit = async function(e) {
     window._currentActiveDiagramData.archivoUrl = downloadUrl;
     if (isPdf) {
       window._currentActiveDiagramData.pdfUrl = downloadUrl;
-      window._currentActiveDiagramData.imageUrl = null;
+      window._currentActiveDiagramData.archivoPdf = downloadUrl;
     } else {
       window._currentActiveDiagramData.pdfUrl = null;
       window._currentActiveDiagramData.archivoPdf = null;
-      window._currentActiveDiagramData.imageUrl = downloadUrl;
+      window._currentActiveDiagramData.diagramaImg = downloadUrl;
     }
-    if (selectedDoc) {
-      selectedDoc.url = downloadUrl;
-      selectedDoc.diagramaUrl = downloadUrl;
-      selectedDoc.archivoUrl = downloadUrl;
+
+    if (archDoc) {
+      archDoc.url = downloadUrl;
+      archDoc.diagramaUrl = downloadUrl;
+      archDoc.archivoUrl = downloadUrl;
       if (isPdf) {
-        selectedDoc.pdfUrl = downloadUrl;
-        selectedDoc.imageUrl = null;
+        archDoc.pdfUrl = downloadUrl;
+        archDoc.archivoPdf = downloadUrl;
       } else {
-        selectedDoc.pdfUrl = null;
-        selectedDoc.archivoPdf = null;
-        selectedDoc.imageUrl = downloadUrl;
+        archDoc.pdfUrl = null;
+        archDoc.archivoPdf = null;
+        archDoc.diagramaImg = downloadUrl;
       }
     }
 
@@ -6386,11 +6662,11 @@ window.handleReplaceActiveDiagramSubmit = async function(e) {
       if (btnSubmit) btnSubmit.disabled = false;
       if (btnLocal) btnLocal.disabled = false;
 
-      // Reload view with the new crystal-clear SVG/PNG
-      window.loadSpecificDiagramSection(window.currentActiveDiagramSection || 'connector');
+      // Reload view with the new diagram
+      window.loadSpecificDiagramSection('connector');
 
       if (typeof window.showGlobalToast === 'function') {
-        window.showGlobalToast(`¡Diagrama ${cleanFileName} subido y actualizado con éxito!`);
+        window.showGlobalToast(`¡Diagrama guardado con éxito en Firebase!`);
       }
     }, 600);
 

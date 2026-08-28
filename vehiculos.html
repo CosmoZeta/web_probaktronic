@@ -17,7 +17,7 @@
   
   <!-- Stylesheets -->
   <link href="css/global.css?v=3.0" rel="stylesheet">
-  <link href="css/vehiculos.css?v=4.9" rel="stylesheet">
+  <link href="css/vehiculos.css?v=5.5" rel="stylesheet">
   
   <style>
     .select-vehicle-header {
@@ -1485,6 +1485,12 @@
                     <span>SUBIR PNG / SVG</span>
                   </button>
 
+                  <!-- Botón Admin: Asegurar y Fijar Diagrama en Firebase -->
+                  <button class="btn btn-outline-success btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminLockDiagramFirebase" onclick="lockAndSaveDiagramToFirebase()" title="Asegurar y verificar que el diagrama actual quede fijado permanentemente en Firebase">
+                    <i class="bi bi-shield-check"></i>
+                    <span>ASEGURAR DIAGRAMA</span>
+                  </button>
+
                   <button class="btn btn-dark btn-sm border d-flex align-items-center gap-1" id="btnToggleZoomPan" onclick="toggleHandZoom()" title="Hacer clic para ampliar o reducir">
                     <i class="bi bi-search text-danger fs-6"></i>
                     <span class="small font-rajdhani fw-bold" id="zoomModeText">ZOOM (1.0x)</span>
@@ -2441,6 +2447,6 @@
   <script src="js/global.js?v=3.0"></script>
   <script src="js/firebase-catalog.js?v=3.0"></script>
   <script src="js/auth.js?v=3.0"></script>
-  <script src="js/vehiculos-diagramas.js?v=4.9"></script>
+  <script src="js/vehiculos-diagramas.js?v=5.5"></script>
 </body>
 </html>
