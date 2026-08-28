@@ -1845,25 +1845,40 @@ window.loadSpecificDiagramSection = async function(type) {
         }
       }
 
+      // Zero-latency LocalStorage cache check on reload
+      const storageKey = getActiveEcuStorageKey();
+      if (photos.length === 0) {
+        try {
+          const cachedPhotosRaw = localStorage.getItem(storageKey + '_photos') || localStorage.getItem('default_ecu_2kd_photos');
+          if (cachedPhotosRaw) {
+            const parsedP = JSON.parse(cachedPhotosRaw);
+            if (Array.isArray(parsedP) && parsedP.length > 0) {
+              photos = parsedP;
+            }
+          }
+        } catch (e) {}
+      }
+
       // Parallel Fetch across Firestore endpoints if photos array is empty on reload
       if (photos.length === 0 && typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
         try {
           const db = firebase.firestore();
-          const storageKey = getActiveEcuStorageKey();
-          const rawBrand = (arch.brandDocId || currentSelectedBrandId || 'toyota').trim();
+          const rawBrand = (arch.brandDocId || currentSelectedBrandId || 'Toyota').trim();
           const rawModel = (arch.modelDocId || currentSelectedModelDocId || currentSelectedModelId || 'hilux').trim();
           const rawAnio = (arch.anioDocId || '2011-2015').trim();
-          const rawMotor = (arch.motorDocId || '2kd-ftv').trim();
+          const rawMotor = (arch.motorDocId || '2KD-FTV').trim();
           const rawArchId = arch.archDocId || arch.id || active.id || 'ecu';
 
           const photoQueries = [
-            // Deep doc exact
+            // Deep doc exact casing
             db.collection('diagramas').doc(rawBrand).collection('modelos').doc(rawModel).collection('anios').doc(rawAnio).collection('motores').doc(rawMotor).collection('archivos').doc(rawArchId).get()
               .then(s => (s && s.exists) ? (s.data().imagenes || (s.data().imageUrl ? [s.data().imageUrl] : null)) : null).catch(() => null),
             // Deep doc lowercase
             db.collection('diagramas').doc(rawBrand.toLowerCase()).collection('modelos').doc(rawModel.toLowerCase()).collection('anios').doc(rawAnio).collection('motores').doc(rawMotor.toLowerCase()).collection('archivos').doc(rawArchId).get()
               .then(s => (s && s.exists) ? (s.data().imagenes || (s.data().imageUrl ? [s.data().imageUrl] : null)) : null).catch(() => null),
-            // Model doc
+            // Model doc exact and lowercase
+            db.collection('diagramas').doc(rawBrand).collection('modelos').doc(rawModel).collection('archivos').doc(rawArchId).get()
+              .then(s => (s && s.exists) ? (s.data().imagenes || (s.data().imageUrl ? [s.data().imageUrl] : null)) : null).catch(() => null),
             db.collection('diagramas').doc(rawBrand.toLowerCase()).collection('modelos').doc(rawModel.toLowerCase()).collection('archivos').doc(rawArchId).get()
               .then(s => (s && s.exists) ? (s.data().imagenes || (s.data().imageUrl ? [s.data().imageUrl] : null)) : null).catch(() => null),
             // Global config fallback
@@ -1883,6 +1898,9 @@ window.loadSpecificDiagramSection = async function(type) {
               active._selectedArchDoc.allImages = photos;
               active._selectedArchDoc.imageUrl = photos[0];
             }
+            try {
+              localStorage.setItem(storageKey + '_photos', JSON.stringify(photos));
+            } catch(e) {}
           }
         } catch (errP) {
           console.warn('Firestore photos lookup notice:', errP);
@@ -6458,6 +6476,12 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
         .set({ [storageKey]: newGallery, [storageKey + '_main']: fileDownloadUrl }, { merge: true }).catch(() => null);
     }
 
+    try {
+      const storageKey = getActiveEcuStorageKey();
+      localStorage.setItem(storageKey + '_photos', JSON.stringify(newGallery));
+      localStorage.setItem('default_ecu_2kd_photos', JSON.stringify(newGallery));
+    } catch(e) {}
+
     if (progressBar) progressBar.style.width = '100%';
     if (statusText) statusText.textContent = '¡Foto vinculada con éxito!';
 
@@ -6637,6 +6661,12 @@ window.handleAdminDeleteCurrentPhoto = async function() {
       await db.collection('app_config').doc('diagramas_imagenes')
         .set({ [storageKey]: updatedGallery, [storageKey + '_main']: newCoverUrl }, { merge: true }).catch(() => null);
     }
+
+    try {
+      const storageKey = getActiveEcuStorageKey();
+      localStorage.setItem(storageKey + '_photos', JSON.stringify(updatedGallery));
+      localStorage.setItem('default_ecu_2kd_photos', JSON.stringify(updatedGallery));
+    } catch(e) {}
 
     // 4. Update in-memory data
     currentGalleryImages = [...updatedGallery];
