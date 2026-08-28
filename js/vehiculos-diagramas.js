@@ -498,9 +498,7 @@ function renderOnlyActiveBrands(grid, loader, brandList) {
     });
 
     // Admin Card: + AGREGAR MARCA
-    const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
-      ? window.isProbaktronicAdmin() 
-      : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+    const isAdmin = window.checkIsAdmin();
 
     if (isAdmin) {
       const addBrandCard = document.createElement('div');
@@ -554,9 +552,7 @@ window.openBrandDiagramModels = function(brandDocId, brandName, logoSrc, collect
   }
 
   const topAddModelBtn = document.getElementById('btnAdminTopAddModel');
-  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
-    ? window.isProbaktronicAdmin() 
-    : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+  const isAdmin = window.checkIsAdmin();
 
   if (topAddModelBtn) {
     if (isAdmin) topAddModelBtn.classList.remove('d-none');
@@ -704,9 +700,7 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
   }
 
   if (filteredEntries.length === 0) {
-    const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
-      ? window.isProbaktronicAdmin() 
-      : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+    const isAdmin = window.checkIsAdmin();
 
     const adminAddBtnHtml = isAdmin ? `
       <div class="mt-4">
@@ -743,7 +737,7 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
       </div>
     `;
 
-    const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
+    const isAdmin = window.checkIsAdmin();
     const editModelBtn = isAdmin ? `
       <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${docId}', name: '${modelName}', brand: '${brandName}', motor: '${motor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}' })">
         <i class="bi bi-pencil-fill" style="font-size: 11px;"></i>
@@ -773,9 +767,7 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
     });
 
     // Admin Card: + AGREGAR MODELO
-    const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
-      ? window.isProbaktronicAdmin() 
-      : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+    const isAdmin = window.checkIsAdmin();
 
     if (isAdmin) {
       const addModelCard = document.createElement('div');
@@ -884,9 +876,7 @@ function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loa
     });
 
     // Admin Card: + AGREGAR MODELO
-    const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
-      ? window.isProbaktronicAdmin() 
-      : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+    const isAdmin = window.checkIsAdmin();
 
     if (isAdmin) {
       const addModelCard = document.createElement('div');
@@ -1285,31 +1275,30 @@ let currentGalleryIndex = 0;
 let currentZoomLevels = [1.0, 1.5, 2.0, 2.75, 3.5];
 let currentZoomLevelIndex = 0;
 
-// Universal Resolver for Firebase Storage URIs (gs://, storage paths, or HTTP URLs)
+// Unified Admin Checker
+window.checkIsAdmin = function() {
+  if (typeof window.isProbaktronicAdmin === 'function') {
+    return window.isProbaktronicAdmin();
+  }
+  const u = window.probaktronicCurrentUser;
+  return !!(u && (u.email === 'prueba@probak.com' || u.rol === 'admin' || u.isAdmin === true));
+};
+
+// Universal Cached Resolver for Firebase Storage URIs
 window.resolveFirebaseStorageUrl = async function(rawUrl) {
+  if (window.VehiculosData && typeof window.VehiculosData.resolveStorageUrl === 'function') {
+    return await window.VehiculosData.resolveStorageUrl(rawUrl);
+  }
   if (!rawUrl || typeof rawUrl !== 'string') return '';
   rawUrl = rawUrl.trim();
-  if (!rawUrl || rawUrl.includes('logo_probaktronic')) return '';
-
-  // 1. Direct web URL, Base64 Data URL or Blob URL
-  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('data:') || rawUrl.startsWith('blob:')) {
-    return rawUrl;
-  }
-
-  // 2. Local relative paths (e.g., 'imagenes autos/...', 'imagenes svg/...')
-  if (rawUrl.startsWith('imagenes ') || rawUrl.startsWith('imagenes/') || (rawUrl.endsWith('.png') || rawUrl.endsWith('.jpg') || rawUrl.endsWith('.svg')) && !rawUrl.startsWith('diagramas/') && !rawUrl.startsWith('gs://')) {
-    return rawUrl;
-  }
-
-  // 3. gs:// URL or Firebase Storage relative path (e.g. 'diagramas/TOYOTA/...')
-  if (typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
+  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('data:') || rawUrl.startsWith('blob:')) return rawUrl;
+  if (typeof firebase !== 'undefined' && firebase.storage) {
     try {
       const storage = firebase.storage();
       const ref = rawUrl.startsWith('gs://') ? storage.refFromURL(rawUrl) : storage.ref(rawUrl);
-      const downloadUrl = await ref.getDownloadURL();
-      return downloadUrl;
+      return await ref.getDownloadURL();
     } catch (err) {
-      console.warn('Firebase Storage resolve notice for [' + rawUrl + ']:', err.message || err);
+      console.warn('Storage resolve notice for [' + rawUrl + ']:', err.message || err);
     }
   }
   return rawUrl;
@@ -1839,30 +1828,10 @@ window.loadSpecificDiagramSection = async function(type) {
       imgEl.style.height = '';
 
       // Aggregate all photos for this component
-      let photos = [];
-      if (Array.isArray(active.allImages) && active.allImages.length > 0) {
-        photos = [...active.allImages];
-      } else if (Array.isArray(active.imagenes) && active.imagenes.length > 0) {
-        photos = [...active.imagenes];
-      } else if (Array.isArray(active.fotos) && active.fotos.length > 0) {
-        photos = [...active.fotos];
-      }
-
-      // If single or none, extract and prepare gallery
-      if (photos.length === 0) {
-        const single = active.fotoComponente || active.imageUrl || active.imagen || active.image || null;
-        if (single) photos = [single];
-      }
-
-      // Check in archDoc if not in active
+      let photos = window.VehiculosData ? window.VehiculosData.extractPhotos(active) : [];
       const arch = active._selectedArchDoc || {};
-      if (photos.length === 0) {
-        if (Array.isArray(arch.imagenes) && arch.imagenes.length > 0) photos = [...arch.imagenes];
-        else if (Array.isArray(arch.allImages) && arch.allImages.length > 0) photos = [...arch.allImages];
-        else {
-          const singleArch = arch.fotoComponente || arch.imageUrl || arch.imagen || arch.foto;
-          if (singleArch) photos = [singleArch];
-        }
+      if (photos.length === 0 && active._selectedArchDoc && window.VehiculosData) {
+        photos = window.VehiculosData.extractPhotos(active._selectedArchDoc);
       }
 
       // Zero-latency LocalStorage cache check on reload
@@ -1881,11 +1850,12 @@ window.loadSpecificDiagramSection = async function(type) {
 
       const extractPhotosFromDoc = (d) => {
         if (!d) return null;
+        if (window.VehiculosData) {
+          const r = window.VehiculosData.extractPhotos(d);
+          return (r && r.length > 0) ? r : null;
+        }
         if (Array.isArray(d.allImages) && d.allImages.length > 0) return d.allImages;
         if (Array.isArray(d.imagenes) && d.imagenes.length > 0) return d.imagenes;
-        if (Array.isArray(d.fotos) && d.fotos.length > 0) return d.fotos;
-        const single = d.imageUrl || d.fotoComponente || d.foto || d.imagen || d.archivoUrl;
-        if (single && typeof single === 'string' && !single.toLowerCase().includes('.pdf')) return [single];
         return null;
       };
 
@@ -3153,10 +3123,7 @@ if (typeof firebase !== 'undefined' && firebase.auth) {
 window.openAdminAddDiagramModal = function(e, context = null) {
   if (e) e.preventDefault();
 
-  const user = window.probaktronicCurrentUser;
-  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
-    ? window.isProbaktronicAdmin() 
-    : (user && (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true));
+  const isAdmin = window.checkIsAdmin();
 
   if (!isAdmin) {
     if (typeof window.showGlobalToast === 'function') {
@@ -3454,9 +3421,7 @@ window.handleAdminSubmitNewDiagram = async function(e) {
 window.checkAdminButtonVisibility = function() {
   const btn = document.getElementById('btnAdminAddDiagram');
   if (!btn) return;
-  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
-    ? window.isProbaktronicAdmin() 
-    : (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin' || window.probaktronicCurrentUser.isAdmin === true));
+  const isAdmin = window.checkIsAdmin();
   
   const ecuView = document.getElementById('ecuInfoViewContainer');
   const isEcuViewActive = ecuView && !ecuView.classList.contains('d-none');
@@ -6032,10 +5997,7 @@ let currentEditingGalleryList = [];
 window.openAdminGalleryReorderModal = function(e) {
   if (e) e.preventDefault();
 
-  const user = window.probaktronicCurrentUser;
-  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
-    ? window.isProbaktronicAdmin() 
-    : (user && (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true));
+  const isAdmin = window.checkIsAdmin();
 
   if (!isAdmin) {
     if (typeof window.showGlobalToast === 'function') {
@@ -6217,10 +6179,7 @@ let adminDirectSelectedPhotoFile = null;
 window.openAdminAddPhotoDirectModal = function(e) {
   if (e) e.preventDefault();
 
-  const user = window.probaktronicCurrentUser;
-  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
-    ? window.isProbaktronicAdmin() 
-    : (user && (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true));
+  const isAdmin = window.checkIsAdmin();
 
   if (!isAdmin) {
     if (typeof window.showGlobalToast === 'function') {
@@ -6560,10 +6519,7 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
 
 // --- ADMIN DELETE CURRENT PHOTO CONTROLLER ---
 window.handleAdminDeleteCurrentPhoto = async function() {
-  const user = window.probaktronicCurrentUser;
-  const isAdmin = (typeof window.isProbaktronicAdmin === 'function')
-    ? window.isProbaktronicAdmin()
-    : (user && (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true));
+  const isAdmin = window.checkIsAdmin();
 
   if (!isAdmin) {
     if (typeof window.showGlobalToast === 'function') {
