@@ -2160,6 +2160,7 @@ window.loadSpecificDiagramSection = async function(type) {
         canvasEl.style.display = 'none';
       }
 
+      if (imgEl) {
         imgEl.onload = () => {
           const sl = document.getElementById('consoleDiagramStageLoader');
           if (sl) sl.classList.add('d-none');
@@ -2210,14 +2211,6 @@ window.loadSpecificDiagramSection = async function(type) {
           window.hideConsoleNoDiagramMessage();
           imgEl.classList.remove('d-none');
           imgEl.style.display = 'block';
-          const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
-          window.applyConsoleWatermark(isVert);
-          window.resetConsoleDiagramZoom();
-        }
-        if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
-          const sl = document.getElementById('consoleDiagramStageLoader');
-          if (sl) sl.classList.add('d-none');
-          window.hideConsoleNoDiagramMessage();
           const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
           window.applyConsoleWatermark(isVert);
           window.resetConsoleDiagramZoom();
