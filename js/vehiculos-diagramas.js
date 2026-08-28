@@ -1834,6 +1834,61 @@ window.loadSpecificDiagramSection = async function(type) {
         if (single) photos = [single];
       }
 
+      // Check in archDoc if not in active
+      const arch = active._selectedArchDoc || {};
+      if (photos.length === 0) {
+        if (Array.isArray(arch.imagenes) && arch.imagenes.length > 0) photos = [...arch.imagenes];
+        else if (Array.isArray(arch.allImages) && arch.allImages.length > 0) photos = [...arch.allImages];
+        else {
+          const singleArch = arch.fotoComponente || arch.imageUrl || arch.imagen || arch.foto;
+          if (singleArch) photos = [singleArch];
+        }
+      }
+
+      // Parallel Fetch across Firestore endpoints if photos array is empty on reload
+      if (photos.length === 0 && typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+        try {
+          const db = firebase.firestore();
+          const storageKey = getActiveEcuStorageKey();
+          const rawBrand = (arch.brandDocId || currentSelectedBrandId || 'toyota').trim();
+          const rawModel = (arch.modelDocId || currentSelectedModelDocId || currentSelectedModelId || 'hilux').trim();
+          const rawAnio = (arch.anioDocId || '2011-2015').trim();
+          const rawMotor = (arch.motorDocId || '2kd-ftv').trim();
+          const rawArchId = arch.archDocId || arch.id || active.id || 'ecu';
+
+          const photoQueries = [
+            // Deep doc exact
+            db.collection('diagramas').doc(rawBrand).collection('modelos').doc(rawModel).collection('anios').doc(rawAnio).collection('motores').doc(rawMotor).collection('archivos').doc(rawArchId).get()
+              .then(s => (s && s.exists) ? (s.data().imagenes || (s.data().imageUrl ? [s.data().imageUrl] : null)) : null).catch(() => null),
+            // Deep doc lowercase
+            db.collection('diagramas').doc(rawBrand.toLowerCase()).collection('modelos').doc(rawModel.toLowerCase()).collection('anios').doc(rawAnio).collection('motores').doc(rawMotor.toLowerCase()).collection('archivos').doc(rawArchId).get()
+              .then(s => (s && s.exists) ? (s.data().imagenes || (s.data().imageUrl ? [s.data().imageUrl] : null)) : null).catch(() => null),
+            // Model doc
+            db.collection('diagramas').doc(rawBrand.toLowerCase()).collection('modelos').doc(rawModel.toLowerCase()).collection('archivos').doc(rawArchId).get()
+              .then(s => (s && s.exists) ? (s.data().imagenes || (s.data().imageUrl ? [s.data().imageUrl] : null)) : null).catch(() => null),
+            // Global config fallback
+            db.collection('app_config').doc('diagramas_imagenes').get()
+              .then(s => (s && s.exists && Array.isArray(s.data()[storageKey])) ? s.data()[storageKey] : null).catch(() => null)
+          ];
+
+          const photoResults = await Promise.all(photoQueries);
+          const foundPhotos = photoResults.find(r => Array.isArray(r) && r.length > 0);
+          if (foundPhotos) {
+            photos = [...foundPhotos];
+            active.imagenes = photos;
+            active.allImages = photos;
+            active.imageUrl = photos[0];
+            if (active._selectedArchDoc) {
+              active._selectedArchDoc.imagenes = photos;
+              active._selectedArchDoc.allImages = photos;
+              active._selectedArchDoc.imageUrl = photos[0];
+            }
+          }
+        } catch (errP) {
+          console.warn('Firestore photos lookup notice:', errP);
+        }
+      }
+
       // Resolve all photos if they are gs:// or storage paths
       const resolvedPhotos = await Promise.all(photos.map(p => window.resolveFirebaseStorageUrl(p)));
       const validPhotos = resolvedPhotos.filter(Boolean);
@@ -6358,9 +6413,10 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
     // Deduplicate gallery while preserving order
     newGallery = Array.from(new Set(newGallery));
 
-    // 3. Save to Firestore under exact hierarchical path
+    // 3. Save to Firestore under exact hierarchical path and normalized fallbacks
     if (typeof firebase !== 'undefined' && firebase.firestore) {
       const db = firebase.firestore();
+      const storageKey = getActiveEcuStorageKey();
       const updatePayload = {
         fotoComponente: fileDownloadUrl,
         imageUrl: (posChoice === 'first') ? fileDownloadUrl : (newGallery[0] || fileDownloadUrl),
@@ -6375,19 +6431,31 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
         ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
       };
 
-      // Update in deep hierarchy
-      const docRef = db.collection('diagramas').doc(brandDocId)
+      // Write to deep hierarchy exact
+      await db.collection('diagramas').doc(brandDocId)
         .collection('modelos').doc(modelDocId)
         .collection('anios').doc(anioDocId)
         .collection('motores').doc(motorDocId)
-        .collection('archivos').doc(archDocId);
-      await docRef.set(updatePayload, { merge: true }).catch(err => console.warn('Deep doc update notice:', err));
+        .collection('archivos').doc(archDocId)
+        .set(updatePayload, { merge: true }).catch(() => null);
 
-      // Update in direct model collection for query redundancy
-      const modelArchRef = db.collection('diagramas').doc(brandDocId)
-        .collection('modelos').doc(modelDocId)
-        .collection('archivos').doc(archDocId);
-      await modelArchRef.set(updatePayload, { merge: true }).catch(err => console.warn('Model doc update notice:', err));
+      // Write to deep hierarchy lowercase
+      await db.collection('diagramas').doc(brandDocId.toLowerCase())
+        .collection('modelos').doc(modelDocId.toLowerCase())
+        .collection('anios').doc(anioDocId)
+        .collection('motores').doc(motorDocId.toLowerCase())
+        .collection('archivos').doc(archDocId)
+        .set(updatePayload, { merge: true }).catch(() => null);
+
+      // Write to direct model collection
+      await db.collection('diagramas').doc(brandDocId.toLowerCase())
+        .collection('modelos').doc(modelDocId.toLowerCase())
+        .collection('archivos').doc(archDocId)
+        .set(updatePayload, { merge: true }).catch(() => null);
+
+      // Write to global app_config for universal instant discovery
+      await db.collection('app_config').doc('diagramas_imagenes')
+        .set({ [storageKey]: newGallery, [storageKey + '_main']: fileDownloadUrl }, { merge: true }).catch(() => null);
     }
 
     if (progressBar) progressBar.style.width = '100%';
@@ -6529,9 +6597,10 @@ window.handleAdminDeleteCurrentPhoto = async function() {
       }
     }
 
-    // 3. Update Firestore in both deep hierarchy and model subcollection
+    // 3. Update Firestore in both deep hierarchy, model subcollection, and global app_config
     if (typeof firebase !== 'undefined' && firebase.firestore) {
       const db = firebase.firestore();
+      const storageKey = getActiveEcuStorageKey();
       const updatePayload = {
         imagenes: updatedGallery,
         allImages: updatedGallery,
@@ -6542,17 +6611,31 @@ window.handleAdminDeleteCurrentPhoto = async function() {
         ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
       };
 
-      const docRef = db.collection('diagramas').doc(brandDocId)
+      // Write to deep hierarchy exact
+      await db.collection('diagramas').doc(brandDocId)
         .collection('modelos').doc(modelDocId)
         .collection('anios').doc(anioDocId)
         .collection('motores').doc(motorDocId)
-        .collection('archivos').doc(archDocId);
-      await docRef.set(updatePayload, { merge: true }).catch(err => console.warn('Deep doc update notice:', err));
+        .collection('archivos').doc(archDocId)
+        .set(updatePayload, { merge: true }).catch(() => null);
 
-      const modelArchRef = db.collection('diagramas').doc(brandDocId)
-        .collection('modelos').doc(modelDocId)
-        .collection('archivos').doc(archDocId);
-      await modelArchRef.set(updatePayload, { merge: true }).catch(err => console.warn('Model doc update notice:', err));
+      // Write to deep hierarchy lowercase
+      await db.collection('diagramas').doc(brandDocId.toLowerCase())
+        .collection('modelos').doc(modelDocId.toLowerCase())
+        .collection('anios').doc(anioDocId)
+        .collection('motores').doc(motorDocId.toLowerCase())
+        .collection('archivos').doc(archDocId)
+        .set(updatePayload, { merge: true }).catch(() => null);
+
+      // Write to direct model collection
+      await db.collection('diagramas').doc(brandDocId.toLowerCase())
+        .collection('modelos').doc(modelDocId.toLowerCase())
+        .collection('archivos').doc(archDocId)
+        .set(updatePayload, { merge: true }).catch(() => null);
+
+      // Update in global app_config
+      await db.collection('app_config').doc('diagramas_imagenes')
+        .set({ [storageKey]: updatedGallery, [storageKey + '_main']: newCoverUrl }, { merge: true }).catch(() => null);
     }
 
     // 4. Update in-memory data
