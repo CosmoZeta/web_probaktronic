@@ -2543,11 +2543,22 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
     } else if (fileUrl && (fileUrl.toLowerCase().includes('.pdf') || fileUrl.toLowerCase().includes('%2epdf'))) {
       activeData.pdfUrl = fileUrl;
     }
-    if (Array.isArray(selectedArchDoc.imagenes) && selectedArchDoc.imagenes.length > 0) {
+    if (Array.isArray(selectedArchDoc.allImages) && selectedArchDoc.allImages.length > 0) {
+      activeData.allImages = selectedArchDoc.allImages;
+      activeData.imagenes = selectedArchDoc.allImages;
+      activeData.imageUrl = selectedArchDoc.allImages[0];
+    } else if (Array.isArray(selectedArchDoc.imagenes) && selectedArchDoc.imagenes.length > 0) {
       activeData.allImages = selectedArchDoc.imagenes;
+      activeData.imagenes = selectedArchDoc.imagenes;
       activeData.imageUrl = selectedArchDoc.imagenes[0];
+    } else if (Array.isArray(selectedArchDoc.fotos) && selectedArchDoc.fotos.length > 0) {
+      activeData.allImages = selectedArchDoc.fotos;
+      activeData.imagenes = selectedArchDoc.fotos;
+      activeData.imageUrl = selectedArchDoc.fotos[0];
     } else if (selectedArchDoc.imageUrl) {
       activeData.imageUrl = selectedArchDoc.imageUrl;
+    } else if (selectedArchDoc.fotoComponente) {
+      activeData.imageUrl = selectedArchDoc.fotoComponente;
     }
     activeData._selectedArchDoc = selectedArchDoc;
   }
