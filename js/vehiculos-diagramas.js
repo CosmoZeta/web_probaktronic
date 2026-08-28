@@ -1753,8 +1753,9 @@ window.loadSpecificDiagramSection = async function(type) {
     }
     if (stageLoader) stageLoader.classList.remove('d-none');
 
-    // Priority check for explicit SVG, image or diagram URL
-    let targetPdfOrImg = active.imageUrl || active._selectedArchDoc?.imageUrl || active.diagramaUrl || active._selectedArchDoc?.diagramaUrl || active.archivoUrl || active._selectedArchDoc?.archivoUrl || active.url || active._selectedArchDoc?.url || active.pdfUrl || active._selectedArchDoc?.pdfUrl || active.downloadUrl;
+    // Priority check for connector diagram (PDF, SVG or PNG pinout):
+    // NOTE: Do NOT use active.imageUrl because that corresponds to the PCB board photo!
+    let targetPdfOrImg = active.diagramaUrl || active._selectedArchDoc?.diagramaUrl || active.archivoUrl || active._selectedArchDoc?.archivoUrl || active.url || active._selectedArchDoc?.url || active.pdfUrl || active._selectedArchDoc?.pdfUrl || active.downloadUrl;
 
     // If no explicit file set, search Firebase Storage as fallback
     if (!targetPdfOrImg && typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
@@ -3888,6 +3889,26 @@ window.updateEcuAdminUI = function() {
       delBtn.classList.remove('d-none');
     } else {
       delBtn.classList.add('d-none');
+    }
+  }
+
+  const replaceBtn = document.getElementById('btnReplaceDiagramSvg');
+  if (replaceBtn) {
+    if (isAdmin) {
+      replaceBtn.classList.remove('d-none');
+      replaceBtn.classList.add('d-flex');
+    } else {
+      replaceBtn.classList.add('d-none');
+      replaceBtn.classList.remove('d-flex');
+    }
+  }
+
+  const splashReplaceBtn = document.getElementById('btnSplashChangeSvg');
+  if (splashReplaceBtn) {
+    if (isAdmin) {
+      splashReplaceBtn.classList.remove('d-none');
+    } else {
+      splashReplaceBtn.classList.add('d-none');
     }
   }
 };
@@ -6103,6 +6124,16 @@ window.handleAdminSubmitNewModel = async function(e) {
 let replaceSelectedFile = null;
 
 window.openReplaceActiveDiagramModal = function() {
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') ? window.isProbaktronicAdmin() : false;
+  if (!isAdmin) {
+    if (typeof window.showGlobalToast === 'function') {
+      window.showGlobalToast('Acceso exclusivo para el Administrador del sistema.', 'warning');
+    } else {
+      alert('Acceso exclusivo para el Administrador del sistema.');
+    }
+    return;
+  }
+
   try {
     const active = window._currentActiveDiagramData || {};
     const selectedDoc = active._selectedArchDoc || {};

@@ -17,7 +17,7 @@
   
   <!-- Stylesheets -->
   <link href="css/global.css?v=3.0" rel="stylesheet">
-  <link href="css/vehiculos.css?v=4.8" rel="stylesheet">
+  <link href="css/vehiculos.css?v=4.9" rel="stylesheet">
   
   <style>
     .select-vehicle-header {
@@ -1431,7 +1431,7 @@
                 <button class="btn-console-action" id="btnConnectorManual" onclick="loadSpecificDiagramSection('connector')">
                   <i class="bi bi-diagram-3 me-2"></i> <span id="btnConnectorManualLabel">Conexionado del Componente</span>
                 </button>
-                <button class="btn-console-action" id="btnSplashChangeSvg" onclick="openReplaceActiveDiagramModal()" style="border-color: rgba(255, 193, 7, 0.5); color: #ffc107;">
+                <button class="btn-console-action d-none" id="btnSplashChangeSvg" onclick="openReplaceActiveDiagramModal()" style="border-color: rgba(255, 193, 7, 0.5); color: #ffc107;">
                   <i class="bi bi-filetype-svg me-2"></i> <span>Modificar / Subir SVG</span>
                 </button>
               </div>
@@ -1479,8 +1479,8 @@
                     <span>+ AGREGAR FOTO</span>
                   </button>
 
-                  <!-- Botón para modificar y subir imagen PNG / SVG -->
-                  <button class="btn btn-outline-warning btn-sm border d-flex align-items-center gap-1 font-rajdhani fw-bold" id="btnReplaceDiagramSvg" onclick="openReplaceActiveDiagramModal()" title="Modificar este archivo y subir imagen PNG, WebP o SVG de alta resolución">
+                  <!-- Botón Admin: Modificar y subir imagen PNG / SVG -->
+                  <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnReplaceDiagramSvg" onclick="openReplaceActiveDiagramModal()" title="Modificar este archivo y subir imagen PNG, WebP o SVG de alta resolución (Solo Administrador)">
                     <i class="bi bi-file-earmark-image-fill text-warning fs-5"></i>
                     <span>SUBIR PNG / SVG</span>
                   </button>
@@ -2441,6 +2441,6 @@
   <script src="js/global.js?v=3.0"></script>
   <script src="js/firebase-catalog.js?v=3.0"></script>
   <script src="js/auth.js?v=3.0"></script>
-  <script src="js/vehiculos-diagramas.js?v=4.8"></script>
+  <script src="js/vehiculos-diagramas.js?v=4.9"></script>
 </body>
 </html>
