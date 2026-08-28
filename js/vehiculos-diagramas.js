@@ -1632,33 +1632,21 @@ window.renderGalleryPagination = function(imagesList) {
 
   const isAdmin = (typeof window.isProbaktronicAdmin === 'function') ? window.isProbaktronicAdmin() : false;
 
-  if (currentGalleryImages.length > 1 || (currentGalleryImages.length === 1 && isAdmin)) {
+  if (currentGalleryImages.length > 1) {
     paginationEl.classList.remove('d-none');
-    if (prevBtn) {
-      if (currentGalleryImages.length > 1) prevBtn.classList.remove('d-none');
-      else prevBtn.classList.add('d-none');
-    }
-    if (nextBtn) {
-      if (currentGalleryImages.length > 1) nextBtn.classList.remove('d-none');
-      else nextBtn.classList.add('d-none');
-    }
-
-    const reorderBtnHtml = isAdmin ? `
-      <button class="btn-photo-pill border border-warning text-warning fw-bold ms-2 shadow-sm" onclick="openAdminGalleryReorderModal(event)" title="Elegir y organizar el orden de las fotos">
-        <i class="bi bi-arrow-down-up me-1"></i> Ordenar Fotos
-      </button>
-      <button class="btn-photo-pill border border-danger text-danger fw-bold ms-1 shadow-sm" onclick="openAdminAddPhotoDirectModal(event)" title="Subir y agregar una nueva foto a este componente">
-        <i class="bi bi-cloud-arrow-up-fill me-1"></i> + Agregar Foto
-      </button>
-    ` : '';
+    paginationEl.style.display = 'flex';
+    if (prevBtn) prevBtn.classList.remove('d-none');
+    if (nextBtn) nextBtn.classList.remove('d-none');
 
     paginationEl.innerHTML = currentGalleryImages.map((_, idx) => `
-      <button class="btn-photo-pill ${idx === 0 ? 'active' : ''}" onclick="showGalleryImageAtIndex(${idx})">
+      <button type="button" class="btn-photo-pill ${idx === 0 ? 'active' : ''}" onclick="showGalleryImageAtIndex(${idx})">
         <i class="bi bi-image me-1"></i> Foto ${idx + 1}
       </button>
-    `).join('') + reorderBtnHtml;
+    `).join('');
   } else {
     paginationEl.classList.add('d-none');
+    paginationEl.style.display = 'none';
+    paginationEl.innerHTML = '';
     if (prevBtn) prevBtn.classList.add('d-none');
     if (nextBtn) nextBtn.classList.add('d-none');
   }
