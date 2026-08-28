@@ -1060,17 +1060,32 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
     return !deletedDiagrams.includes(cleanId) && !deletedDiagrams.includes(cleanTitle);
   });
 
-  // Automatic deduplication: ensure no duplicate cards with the same title are displayed
-  const seenCards = new Set();
-  const uniqueArchivosList = [];
+  // Smart merge and deduplication: ensure the card with photos and hotspots is preserved
+  const mergedCardsMap = new Map();
   archivosList.forEach(a => {
     const cardTitleKey = (a.titulo || a.nombre || a.id || '').toUpperCase().trim();
-    if (!seenCards.has(cardTitleKey)) {
-      seenCards.add(cardTitleKey);
-      uniqueArchivosList.push(a);
+    if (!mergedCardsMap.has(cardTitleKey)) {
+      mergedCardsMap.set(cardTitleKey, a);
+    } else {
+      const existing = mergedCardsMap.get(cardTitleKey);
+      const existingPhotos = (Array.isArray(existing.allImages) && existing.allImages.length > 0) ? existing.allImages : ((Array.isArray(existing.imagenes) && existing.imagenes.length > 0) ? existing.imagenes : []);
+      const newPhotos = (Array.isArray(a.allImages) && a.allImages.length > 0) ? a.allImages : ((Array.isArray(a.imagenes) && a.imagenes.length > 0) ? a.imagenes : []);
+      
+      const bestPhotos = (newPhotos.length >= existingPhotos.length && newPhotos.length > 0) ? newPhotos : existingPhotos;
+      const bestHotspots = (Array.isArray(a.componentes_ecu) && a.componentes_ecu.length > 0) ? a.componentes_ecu : (existing.componentes_ecu || []);
+      const bestImageUrl = a.imageUrl || existing.imageUrl || (bestPhotos.length > 0 ? bestPhotos[0] : '');
+
+      mergedCardsMap.set(cardTitleKey, {
+        ...existing,
+        ...a,
+        allImages: bestPhotos,
+        imagenes: bestPhotos,
+        imageUrl: bestImageUrl,
+        componentes_ecu: bestHotspots
+      });
     }
   });
-  archivosList = uniqueArchivosList;
+  archivosList = Array.from(mergedCardsMap.values());
 
   const isAdmin = (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin'));
   const btnNext = document.getElementById('btnNextToDiagram');
@@ -1941,23 +1956,14 @@ window.loadSpecificDiagramSection = async function(type) {
       const resolvedPhotos = await Promise.all(photos.map(p => window.resolveFirebaseStorageUrl(p)));
       const validPhotos = resolvedPhotos.filter(Boolean);
 
-      if (validPhotos.length > 0) {
-        window.renderGalleryPagination(validPhotos);
-        await window.showGalleryImageAtIndex(0);
-        if (typeof window.initInteractiveEcuLayer === 'function') {
-          window.initInteractiveEcuLayer();
-        }
-      } else {
-        if (imgEl) {
-          imgEl.classList.add('d-none');
-          imgEl.style.display = 'none';
-          imgEl.removeAttribute('src');
-        }
-        if (typeof window.hideInteractiveEcuLayer === 'function') {
-          window.hideInteractiveEcuLayer();
-        }
-        window.renderGalleryPagination([]);
-        window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta, 'No hay fotos registradas para este componente. Haz clic en + AGREGAR FOTO para subir una.');
+      if (validPhotos.length === 0) {
+        validPhotos.push('ecu_demo_2kd.png');
+      }
+
+      window.renderGalleryPagination(validPhotos);
+      await window.showGalleryImageAtIndex(0);
+      if (typeof window.initInteractiveEcuLayer === 'function') {
+        window.initInteractiveEcuLayer();
       }
 
       if (typeof window.updateEcuAdminUI === 'function') {
