@@ -1787,6 +1787,24 @@ window.loadSpecificDiagramSection = async function(type) {
   if (content) content.classList.remove('d-none');
   window.hideConsoleNoDiagramMessage();
 
+  // Instant visual blanking of previous image to prevent glitchy flashing
+  if (imgEl) {
+    imgEl.classList.add('d-none');
+    imgEl.style.display = 'none';
+    imgEl.removeAttribute('src');
+  }
+  if (canvasEl) {
+    canvasEl.classList.add('d-none');
+    canvasEl.style.display = 'none';
+  }
+  if (frameEl) {
+    frameEl.classList.add('d-none');
+    frameEl.src = '';
+  }
+  if (typeof window.hideInteractiveEcuLayer === 'function') {
+    window.hideInteractiveEcuLayer();
+  }
+
   const comp = window._currentActiveDiagramData ? window._currentActiveDiagramData._componentMeta : { phrase: 'del Componente' };
   const active = window._currentActiveDiagramData || {};
 
@@ -1817,7 +1835,6 @@ window.loadSpecificDiagramSection = async function(type) {
     }
 
     if (imgEl) {
-      imgEl.classList.remove('d-none');
       imgEl.style.width = '';
       imgEl.style.height = '';
 
@@ -2143,11 +2160,12 @@ window.loadSpecificDiagramSection = async function(type) {
         canvasEl.style.display = 'none';
       }
 
-      if (imgEl) {
         imgEl.onload = () => {
           const sl = document.getElementById('consoleDiagramStageLoader');
           if (sl) sl.classList.add('d-none');
           window.hideConsoleNoDiagramMessage();
+          imgEl.classList.remove('d-none');
+          imgEl.style.display = 'block';
           const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
           window.applyConsoleWatermark(isVert);
           window.resetConsoleDiagramZoom();
@@ -2168,8 +2186,8 @@ window.loadSpecificDiagramSection = async function(type) {
           }
         };
 
-        imgEl.classList.remove('d-none');
-        imgEl.style.display = 'block';
+        imgEl.classList.add('d-none');
+        imgEl.style.display = 'none';
         imgEl.src = targetPdfOrImg;
         imgEl.style.width = '100%';
         imgEl.style.height = 'auto';
@@ -2186,6 +2204,16 @@ window.loadSpecificDiagramSection = async function(type) {
         }
 
         // Handle already-cached images instantly
+        if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
+          const sl = document.getElementById('consoleDiagramStageLoader');
+          if (sl) sl.classList.add('d-none');
+          window.hideConsoleNoDiagramMessage();
+          imgEl.classList.remove('d-none');
+          imgEl.style.display = 'block';
+          const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
+          window.applyConsoleWatermark(isVert);
+          window.resetConsoleDiagramZoom();
+        }
         if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
           const sl = document.getElementById('consoleDiagramStageLoader');
           if (sl) sl.classList.add('d-none');
