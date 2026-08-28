@@ -1650,9 +1650,7 @@ window.renderGalleryPagination = function(imagesList) {
 };
 
 window.showGalleryImageAtIndex = async function(index) {
-  if (!currentGalleryImages || currentGalleryImages.length === 0) {
-    currentGalleryImages = ['ecu_demo_2kd.png'];
-  }
+  if (!currentGalleryImages || currentGalleryImages.length === 0) return;
   if (index < 0) index = currentGalleryImages.length - 1;
   if (index >= currentGalleryImages.length) index = 0;
 
@@ -1663,9 +1661,6 @@ window.showGalleryImageAtIndex = async function(index) {
   if (imgEl) {
     let rawSrc = currentGalleryImages[currentGalleryIndex];
     let resolvedSrc = await window.resolveFirebaseStorageUrl(rawSrc);
-    if (!resolvedSrc || resolvedSrc.trim() === '') {
-      resolvedSrc = 'ecu_demo_2kd.png';
-    }
 
     imgEl.onload = () => {
       if (stageLoader) stageLoader.classList.add('d-none');
@@ -1681,27 +1676,32 @@ window.showGalleryImageAtIndex = async function(index) {
 
     imgEl.onerror = () => {
       if (stageLoader) stageLoader.classList.add('d-none');
-      console.warn('Gallery image failed to load, falling back to local ECU image:', resolvedSrc);
-      if (imgEl.src !== window.location.origin + '/ecu_demo_2kd.png' && !imgEl.src.endsWith('ecu_demo_2kd.png')) {
-        imgEl.src = 'ecu_demo_2kd.png';
-        imgEl.classList.remove('d-none');
-        imgEl.style.display = 'block';
-      }
+      console.warn('Gallery image failed to load:', resolvedSrc);
+      imgEl.classList.add('d-none');
+      imgEl.removeAttribute('src');
+      window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta, 'No se pudo cargar la imagen.');
     };
 
-    window.hideConsoleNoDiagramMessage();
-    imgEl.classList.remove('d-none');
-    imgEl.style.display = 'block';
-    imgEl.src = resolvedSrc;
-
-    if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
-      if (stageLoader) stageLoader.classList.add('d-none');
+    if (resolvedSrc) {
       window.hideConsoleNoDiagramMessage();
-      const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
-      window.applyConsoleWatermark(isVert);
-      if (window.currentActiveDiagramSection === 'pcb') {
-        window.initInteractiveEcuLayer();
+      imgEl.classList.remove('d-none');
+      imgEl.style.display = 'block';
+      imgEl.src = resolvedSrc;
+
+      if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
+        if (stageLoader) stageLoader.classList.add('d-none');
+        window.hideConsoleNoDiagramMessage();
+        const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
+        window.applyConsoleWatermark(isVert);
+        if (window.currentActiveDiagramSection === 'pcb') {
+          window.initInteractiveEcuLayer();
+        }
       }
+    } else {
+      if (stageLoader) stageLoader.classList.add('d-none');
+      imgEl.classList.add('d-none');
+      imgEl.removeAttribute('src');
+      window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta);
     }
   }
 
@@ -1834,19 +1834,9 @@ window.loadSpecificDiagramSection = async function(type) {
         if (single) photos = [single];
       }
 
-      // Check if user has explicitly deleted all photos
-      const isExplicitlyEmpty = (Array.isArray(active.imagenes) && active.imagenes.length === 0 && (!active.imageUrl || active.imageUrl === ''));
-      if (!isExplicitlyEmpty && photos.length === 0) {
-        photos = ['ecu_demo_2kd.png'];
-      }
-
       // Resolve all photos if they are gs:// or storage paths
       const resolvedPhotos = await Promise.all(photos.map(p => window.resolveFirebaseStorageUrl(p)));
       const validPhotos = resolvedPhotos.filter(Boolean);
-
-      if (!isExplicitlyEmpty && validPhotos.length === 0) {
-        validPhotos.push('ecu_demo_2kd.png');
-      }
 
       if (validPhotos.length > 0) {
         window.renderGalleryPagination(validPhotos);
