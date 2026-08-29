@@ -395,15 +395,12 @@ function markItemAsDeleted(type, id) {
   } catch (e) {}
 }
 
-const defaultDiagramBrands = [];
+const defaultDiagramBrands = [
+  { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
+  { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
+];
 
 let cachedActiveBrands = null;
-try {
-  const _savedBrands = localStorage.getItem('probaktronic_cached_firestore_brands');
-  if (_savedBrands) {
-    cachedActiveBrands = JSON.parse(_savedBrands);
-  }
-} catch (e) {}
 
 function loadFirestoreDiagramasBrands(grid) {
   if (!grid) {
@@ -413,18 +410,9 @@ function loadFirestoreDiagramasBrands(grid) {
 
   const deletedBrands = getDeletedItemsList('brands');
 
-  // Si hay marcas en caché real de Firestore, renderizarlas inmediatamente sin parpadeo
-  if (Array.isArray(cachedActiveBrands) && cachedActiveBrands.length > 0) {
-    const initialList = cachedActiveBrands.filter(b => !deletedBrands.includes(b.id.toLowerCase().trim()) && !deletedBrands.includes(b.name.toLowerCase().trim()));
-    renderOnlyActiveBrands(grid, null, initialList);
-  } else {
-    grid.innerHTML = `
-      <div class="col-12 text-center py-5" style="grid-column: 1 / -1;">
-        <div class="spinner-border text-danger spinner-border-sm me-2" role="status"></div>
-        <span class="text-muted small font-rajdhani fw-semibold">Cargando marcas registradas...</span>
-      </div>
-    `;
-  }
+  // Render immediately from cache/filtered defaults
+  const initialList = (cachedActiveBrands || defaultDiagramBrands).filter(b => !deletedBrands.includes(b.id.toLowerCase().trim()) && !deletedBrands.includes(b.name.toLowerCase().trim()));
+  renderOnlyActiveBrands(grid, null, initialList);
 
   ensureFirebaseSDKReady(() => {
     if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
@@ -458,9 +446,6 @@ function loadFirestoreDiagramasBrands(grid) {
         }
 
         cachedActiveBrands = firestoreBrands;
-        try {
-          localStorage.setItem('probaktronic_cached_firestore_brands', JSON.stringify(firestoreBrands));
-        } catch(e) {}
         renderOnlyActiveBrands(grid, null, firestoreBrands);
       })
       .catch(err => {
@@ -809,6 +794,7 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
 
 function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader) {
   const defaultModelsMap = {
+    'hyundai': [{ id: 'accent', modelo: 'Hyundai Accent 2020', motor: '1.6 Gamma', combustible: 'gasolina' }],
     'toyota': [
       { id: 'hilux', modelo: 'TOYOTA HILUX 2011 - 2015', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel' },
       { id: 'Corolla', modelo: 'Toyota corollla 4E FE - 1991 - 2002', motor: '4E-FE 1.3L', combustible: 'gasolina' }
@@ -2171,6 +2157,9 @@ window.loadSpecificDiagramSection = async function(type) {
           const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
           window.applyConsoleWatermark(isVert);
           window.resetConsoleDiagramZoom();
+          if (type === 'pcb') {
+            window.initInteractiveEcuLayer();
+          }
         };
 
         imgEl.onerror = () => {
@@ -2180,12 +2169,7 @@ window.loadSpecificDiagramSection = async function(type) {
           imgEl.classList.add('d-none');
           imgEl.style.display = 'none';
           imgEl.removeAttribute('src');
-          window.showConsoleNoDiagramMessage(comp, 'No se pudo cargar la imagen desde Firebase Storage. Comprueba la URL o las reglas de seguridad/CORS.');
-          if (targetPdfOrImg && targetPdfOrImg.startsWith('blob:')) {
-            try {
-              localStorage.removeItem('probaktronic_locked_diagrams');
-            } catch (e) {}
-          }
+          window.showConsoleNoDiagramMessage(comp, 'No se pudo cargar la imagen desde Firebase Storage.');
         };
 
         imgEl.classList.add('d-none');
@@ -2215,6 +2199,9 @@ window.loadSpecificDiagramSection = async function(type) {
           const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
           window.applyConsoleWatermark(isVert);
           window.resetConsoleDiagramZoom();
+          if (type === 'pcb') {
+            window.initInteractiveEcuLayer();
+          }
         }
       }
     }
@@ -2712,6 +2699,11 @@ window.selectVehicleCategory = function(catKey, fuelType, catTitle, count = 1) {
   const headerSubtitle = document.getElementById('vehiculosHeaderSubtitle');
   if (headerTitle) headerTitle.textContent = `MARCAS ${catTitle}`;
   if (headerSubtitle) headerSubtitle.textContent = `Seleccione la marca de ${catTitle} (${fuelType.toUpperCase()}) para ver modelos y diagramas`;
+
+  const grid = document.getElementById('vehiculosBrandGrid');
+  if (grid) {
+    loadFirestoreDiagramasBrands(grid);
+  }
 };
 
 function updateBreadcrumbUI(level, fuelLabel = '', catLabel = '') {
@@ -2785,6 +2777,11 @@ window.showBrandsView = function() {
   const headerSubtitle = document.getElementById('vehiculosHeaderSubtitle');
   if (headerTitle) headerTitle.textContent = 'SELECCIONAR MARCA DE VEHÍCULO';
   if (headerSubtitle) headerSubtitle.textContent = 'Seleccione la marca de vehículo para consultar los esquemas de conexión y diagnóstico';
+
+  const grid = document.getElementById('vehiculosBrandGrid');
+  if (grid) {
+    loadFirestoreDiagramasBrands(grid);
+  }
 };
 
 window.showModelsView = function() {

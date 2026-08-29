@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Protección Global: Desactivar menú contextual (clic derecho) y arrastre sobre imágenes de diagramas
   document.addEventListener('contextmenu', (e) => {
-    if (e.target.closest('.console-diagram-img, .console-diagram-canvas, .console-watermark-overlay, #consoleImgViewerWrap, .vehicle-viewer-container, .diagram-img-secure')) {
+    if (e.target.closest('.console-diagram-img, .console-diagram-canvas, .console-watermark-overlay, #consoleImgViewerWrap, .vehicle-viewer-container, .diagram-img-secure, .protection-glass-shield')) {
       e.preventDefault();
       e.stopPropagation();
       return false;
@@ -123,8 +123,41 @@ document.addEventListener('DOMContentLoaded', () => {
   }, true);
 
   document.addEventListener('dragstart', (e) => {
-    if (e.target.closest('.console-diagram-img, .console-diagram-canvas, .console-watermark-overlay, #consoleImgViewerWrap, .vehicle-viewer-container, .diagram-img-secure')) {
+    if (e.target.closest('.console-diagram-img, .console-diagram-canvas, .console-watermark-overlay, #consoleImgViewerWrap, .vehicle-viewer-container, .diagram-img-secure, .protection-glass-shield')) {
       e.preventDefault();
+      return false;
+    }
+  }, true);
+
+  // Protección Global Anti-DevTools y Bloqueo de Atajos de Descarga/Inspección
+  document.addEventListener('keydown', (e) => {
+    // 1. Bloquear F12
+    if (e.key === 'F12' || e.keyCode === 123) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+
+    // 2. Bloquear Ctrl + Shift + I (Inspeccionar)
+    // 3. Bloquear Ctrl + Shift + J (Consola)
+    // 4. Bloquear Ctrl + Shift + C (Selector de Elementos)
+    if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+
+    // 5. Bloquear Ctrl + U (Ver Código Fuente)
+    if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+
+    // 6. Bloquear Ctrl + S (Guardar Página Web Completa)
+    if (e.ctrlKey && (e.key === 'S' || e.key === 's')) {
+      e.preventDefault();
+      e.stopPropagation();
       return false;
     }
   }, true);
