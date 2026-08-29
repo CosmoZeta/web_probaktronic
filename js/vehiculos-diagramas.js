@@ -1357,12 +1357,29 @@ window.hideConsoleNoDiagramMessage = function() {
   }
 };
 
-window.applyConsoleWatermark = function(isVertical = true) {
+window.applyConsoleWatermark = function(isVertical = false) {
   const overlay = document.getElementById('consoleWatermarkOverlay');
   if (overlay) {
-    overlay.style.backgroundImage = isVertical ? "url('ic_fondo_vertical.png')" : "url('ic_fondo_horizontal.png')";
+    overlay.style.backgroundImage = "url('ic_fondo_horizontal.png')";
+    overlay.style.display = 'block';
   }
 };
+
+// Protección de Contenido: Bloquear menú contextual (clic derecho) y arrastre en todo el visor de imágenes
+document.addEventListener('contextmenu', (e) => {
+  if (e.target.closest('#consoleImgViewerWrap, .console-diagram-stage, #consoleImageLayerWrapper, .console-diagram-img, .console-diagram-canvas, .console-watermark-overlay')) {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
+}, true);
+
+document.addEventListener('dragstart', (e) => {
+  if (e.target.closest('#consoleImgViewerWrap, .console-diagram-stage, #consoleImageLayerWrapper, .console-diagram-img, .console-diagram-canvas, .console-watermark-overlay')) {
+    e.preventDefault();
+    return false;
+  }
+}, true);
 
 let currentConsoleRotation = 0;
 window.rotateConsoleDiagram = function() {

@@ -112,6 +112,22 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }, true);
+
+  // Protección Global: Desactivar menú contextual (clic derecho) y arrastre sobre imágenes de diagramas
+  document.addEventListener('contextmenu', (e) => {
+    if (e.target.closest('.console-diagram-img, .console-diagram-canvas, .console-watermark-overlay, #consoleImgViewerWrap, .vehicle-viewer-container, .diagram-img-secure')) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  }, true);
+
+  document.addEventListener('dragstart', (e) => {
+    if (e.target.closest('.console-diagram-img, .console-diagram-canvas, .console-watermark-overlay, #consoleImgViewerWrap, .vehicle-viewer-container, .diagram-img-secure')) {
+      e.preventDefault();
+      return false;
+    }
+  }, true);
 });
 
 // Setup Mobile Menu Drawer & Backdrop

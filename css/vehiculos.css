@@ -1184,8 +1184,8 @@
   z-index: 12;
   background-position: center center;
   background-repeat: no-repeat;
-  background-size: 100% 100%;
-  opacity: 0.30;
+  background-size: contain;
+  opacity: 0.40;
   user-select: none;
   -webkit-user-drag: none;
   border-radius: inherit;
