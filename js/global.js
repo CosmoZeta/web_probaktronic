@@ -79,6 +79,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize features on initial load
   initCurrentPageFeatures();
+
+  // Intercept clicks to Vehiculos section for Premium/Admin verification
+  document.addEventListener('click', (e) => {
+    const targetLink = e.target.closest('a[href*="vehiculos.html"], .action-card-vehicle');
+    if (targetLink) {
+      if (typeof window.handleVehiculosNavigation === 'function') {
+        const allowed = window.handleVehiculosNavigation(e);
+        if (!allowed) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      } else {
+        try {
+          const raw = localStorage.getItem('probaktronic_cached_user');
+          let isAuthOk = false;
+          if (raw) {
+            const u = JSON.parse(raw);
+            const isAdmin = (u.email === 'prueba@probak.com' || u.email === 'jhanzeta@gmail.com' || u.rol === 'admin' || u.isAdmin === true);
+            isAuthOk = isAdmin || (u.esPremium === true || u.esPremium === 'true' || u.tipo === 'premium');
+          }
+          if (!isAuthOk) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = 'login.html';
+          }
+        } catch (err) {
+          e.preventDefault();
+          e.stopPropagation();
+          window.location.href = 'login.html';
+        }
+      }
+    }
+  }, true);
 });
 
 // Setup Mobile Menu Drawer & Backdrop

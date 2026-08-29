@@ -64,11 +64,35 @@ function initCachedUserProfile() {
       if (typeof window.checkAdminButtonVisibility === 'function') {
         window.checkAdminButtonVisibility();
       }
+
+      // Check access immediately if on vehiculos.html
+      const isAdmin = (cachedData.email === 'prueba@probak.com' || cachedData.email === 'jhanzeta@gmail.com' || cachedData.rol === 'admin' || cachedData.isAdmin === true);
+      const isPremium = isAdmin || (cachedData.esPremium === true || cachedData.esPremium === 'true' || cachedData.tipo === 'premium');
+      if (isPremium) {
+        document.documentElement.classList.remove('auth-verifying-access');
+      }
     }
   } catch (e) {
     console.warn('Error al leer caché de usuario local:', e);
   }
 }
+
+// Function to guard the Vehiculos page from unauthorized direct access
+window.enforceVehiculosRouteAccess = function(userData) {
+  const currentPath = window.location.pathname.split('/').pop() || '';
+  if (currentPath === 'vehiculos.html') {
+    const user = userData || window.probaktronicCurrentUser;
+    const isAdmin = user && (user.email === 'prueba@probak.com' || user.email === 'jhanzeta@gmail.com' || user.rol === 'admin' || user.isAdmin === true);
+    const isPremium = isAdmin || (user && (user.esPremium === true || user.esPremium === 'true' || user.tipo === 'premium'));
+    
+    if (isPremium) {
+      document.documentElement.classList.remove('auth-verifying-access');
+    } else {
+      document.documentElement.classList.add('auth-verifying-access');
+      window.location.replace('login.html');
+    }
+  }
+};
 
 // Master System Startup
 function startAuthSystem() {
@@ -89,6 +113,7 @@ function initAuthObserver() {
 
   if (typeof firebase === 'undefined' || typeof firebase.auth !== 'function') {
     console.warn('Firebase Auth SDK not loaded.');
+    window.enforceVehiculosRouteAccess(null);
     return;
   }
 
@@ -170,6 +195,7 @@ function initAuthObserver() {
 
         renderLoggedInHeaderUI(userData);
         updateStatusFooterUI(userData);
+        window.enforceVehiculosRouteAccess(userData);
 
       } catch (err) {
         console.warn('Aviso al obtener Firestore user doc:', err);
@@ -187,6 +213,7 @@ function initAuthObserver() {
 
         renderLoggedInHeaderUI(fallbackUser);
         updateStatusFooterUI(fallbackUser);
+        window.enforceVehiculosRouteAccess(fallbackUser);
       }
     } else {
       console.log('Sin usuario activo en el sistema.');
@@ -197,6 +224,7 @@ function initAuthObserver() {
 
       renderLoggedOutHeaderUI();
       updateStatusFooterUI(null);
+      window.enforceVehiculosRouteAccess(null);
     }
   });
 }
@@ -214,6 +242,59 @@ window.isProbaktronicAdmin = function() {
     return false;
   }
   return (user.email === 'prueba@probak.com' || user.email === 'jhanzeta@gmail.com' || user.rol === 'admin' || user.isAdmin === true);
+};
+
+window.isProbaktronicLoggedIn = function() {
+  if (window.probaktronicCurrentUser) return true;
+  try {
+    const raw = localStorage.getItem('probaktronic_cached_user');
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u && (u.uid || u.email)) return true;
+    }
+  } catch(e) {}
+  if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+    return true;
+  }
+  return false;
+};
+
+window.isProbaktronicPremiumOrAdmin = function() {
+  const user = window.probaktronicCurrentUser;
+  if (user) {
+    const isAdmin = (user.email === 'prueba@probak.com' || user.email === 'jhanzeta@gmail.com' || user.rol === 'admin' || user.isAdmin === true);
+    const isPremium = isAdmin || (user.esPremium === true || user.esPremium === 'true' || user.tipo === 'premium');
+    return isPremium;
+  }
+  try {
+    const raw = localStorage.getItem('probaktronic_cached_user');
+    if (raw) {
+      const u = JSON.parse(raw);
+      const isAdmin = (u.email === 'prueba@probak.com' || u.email === 'jhanzeta@gmail.com' || u.rol === 'admin' || u.isAdmin === true);
+      const isPremium = isAdmin || (u.esPremium === true || u.esPremium === 'true' || u.tipo === 'premium');
+      return isPremium;
+    }
+  } catch(e) {}
+  return false;
+};
+
+window.canAccessVehiculos = function() {
+  return window.isProbaktronicPremiumOrAdmin();
+};
+
+window.handleVehiculosNavigation = function(event) {
+  if (window.canAccessVehiculos()) {
+    return true; // Acceso permitido (ingreso normal)
+  }
+  
+  if (event && typeof event.preventDefault === 'function') {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  // Redirigir a la pantalla de inicio de sesión
+  window.location.href = 'login.html';
+  return false;
 };
 
 // Render User Header UI when Logged In
