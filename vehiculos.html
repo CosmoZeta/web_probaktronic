@@ -1573,17 +1573,19 @@
                 </div>
 
                 <!-- Stage Principal -->
-                <div class="console-diagram-stage text-center position-relative w-100 h-100" id="consoleDiagramStage">
-                  <!-- Imagen de la Placa ECU -->
-                  <img id="consoleMainDiagramImg" alt="" class="console-diagram-img hand-cursor d-none" draggable="false" style="display: none; max-height: 78vh; max-width: 100%; object-fit: contain;">
-                  
-                  <!-- Capa SVG Interactiva de Componentes y Áreas Marcadas -->
-                  <svg id="consoleEcuSvgOverlay" class="console-ecu-svg-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none">
-                    <path id="consoleEcuActiveLeaderLine" class="console-ecu-leader-line" d="" style="display: none;"></path>
-                    <g id="consoleEcuHotspotsGroup"></g>
-                    <rect id="consoleEcuDrawingBox" class="console-ecu-drawing-box" x="0" y="0" width="0" height="0" rx="4" style="display: none;"></rect>
-                    <path id="consoleEcuLassoPreview" class="console-ecu-lasso-preview" d="" style="display: none;"></path>
-                  </svg>
+                <div class="console-diagram-stage text-center position-relative w-100 h-100 d-flex align-items-center justify-content-center" id="consoleDiagramStage">
+                  <div class="console-image-layer-wrapper position-relative d-inline-block" id="consoleImageLayerWrapper" style="line-height: 0; max-height: 78vh; max-width: 100%;">
+                    <!-- Imagen de la Placa ECU -->
+                    <img id="consoleMainDiagramImg" alt="" class="console-diagram-img hand-cursor d-none" draggable="false" style="display: none; max-height: 78vh; max-width: 100%; object-fit: contain;">
+                    
+                    <!-- Capa SVG Interactiva de Componentes y Áreas Marcadas -->
+                    <svg id="consoleEcuSvgOverlay" class="console-ecu-svg-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+                      <path id="consoleEcuActiveLeaderLine" class="console-ecu-leader-line" d="" style="display: none;"></path>
+                      <g id="consoleEcuHotspotsGroup"></g>
+                      <rect id="consoleEcuDrawingBox" class="console-ecu-drawing-box" x="0" y="0" width="0" height="0" rx="4" style="display: none;"></rect>
+                      <path id="consoleEcuLassoPreview" class="console-ecu-lasso-preview" d="" style="display: none;"></path>
+                    </svg>
+                  </div>
 
                   <iframe id="consolePdfFrame" src="" class="console-pdf-frame d-none" frameborder="0"></iframe>
                   <canvas id="consolePdfCanvas" class="console-diagram-canvas hand-cursor d-none"></canvas>

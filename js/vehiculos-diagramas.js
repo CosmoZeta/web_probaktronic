@@ -4472,6 +4472,32 @@ function getActiveEcuStorageKey() {
   return `ecu_hotspots_${brand}_${model}_${title}${photoIdx}`;
 }
 
+// Sincronizador Milimétrico Universal de SVG vs Imagen Renderizada (Opera, Chrome, Firefox, Safari, Edge)
+window.syncEcuSvgOverlaySize = function() {
+  const svg = document.getElementById('consoleEcuSvgOverlay');
+  const img = document.getElementById('consoleMainDiagramImg');
+  if (!svg || !img) return;
+
+  const imgW = img.naturalWidth || 1000;
+  const imgH = img.naturalHeight || 1094;
+  svg.setAttribute('viewBox', `0 0 ${imgW} ${imgH}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+
+  if (activeEcuComponentId && typeof window.positionActiveEcuDrawerAndLine === 'function') {
+    const comp = (currentEcuHotspots || []).find(c => c.id === activeEcuComponentId);
+    if (comp) {
+      window.positionActiveEcuDrawerAndLine(comp, window.getEcuComponentTheme(comp));
+    }
+  }
+};
+
+// Listener global para redimensionamiento en todos los navegadores
+window.addEventListener('resize', () => {
+  if (window.currentActiveDiagramSection === 'pcb') {
+    window.syncEcuSvgOverlaySize();
+  }
+});
+
 // Initialize Interactive ECU Layer
 window.initInteractiveEcuLayer = async function() {
   // Mobile check: Disable interactive ECU hotspots on mobile view (<= 768px) temporarily
@@ -4497,12 +4523,28 @@ window.initInteractiveEcuLayer = async function() {
   const imgW = img.naturalWidth || 1000;
   const imgH = img.naturalHeight || 1094;
   svg.setAttribute('viewBox', `0 0 ${imgW} ${imgH}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
 
   // Load existing hotspots from LocalStorage, Memory, or Firestore
   await loadEcuHotspotsFromStorage(imgW, imgH);
 
+  // Sincronizar inmediatamente dimensiones exactas del SVG
+  window.syncEcuSvgOverlaySize();
+
   // Attach SVG Drawing events if not already attached
   setupEcuSvgEventListeners(svg);
+
+  // Observador de cambios de tamaño en la imagen para navegadores con zoom dinámico (Opera/Chrome)
+  if (typeof ResizeObserver !== 'undefined' && !img._ecuResizeObserverAttached) {
+    img._ecuResizeObserverAttached = true;
+    try {
+      new ResizeObserver(() => {
+        if (window.currentActiveDiagramSection === 'pcb') {
+          window.syncEcuSvgOverlaySize();
+        }
+      }).observe(img);
+    } catch(e) {}
+  }
 
   // Update Admin Buttons visibility
   window.updateEcuAdminUI();

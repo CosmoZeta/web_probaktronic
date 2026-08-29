@@ -1488,6 +1488,16 @@
    PROBAKTRONIC INTERACTIVE ECU PCB VIEWER & ADMIN HOTSPOT MAPPER
    ========================================================================== */
 
+.console-image-layer-wrapper {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto;
+  line-height: 0;
+  max-height: 78vh;
+  max-width: 100%;
+  overflow: visible;
+}
+
 .console-ecu-svg-overlay {
   position: absolute;
   top: 0;
@@ -1496,6 +1506,7 @@
   height: 100%;
   pointer-events: auto;
   z-index: 15;
+  overflow: visible;
 }
 
 .ecu-hotspot-box {
