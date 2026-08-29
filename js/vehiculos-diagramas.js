@@ -395,12 +395,15 @@ function markItemAsDeleted(type, id) {
   } catch (e) {}
 }
 
-const defaultDiagramBrands = [
-  { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
-  { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
-];
+const defaultDiagramBrands = [];
 
 let cachedActiveBrands = null;
+try {
+  const _savedBrands = localStorage.getItem('probaktronic_cached_firestore_brands');
+  if (_savedBrands) {
+    cachedActiveBrands = JSON.parse(_savedBrands);
+  }
+} catch (e) {}
 
 function loadFirestoreDiagramasBrands(grid) {
   if (!grid) {
@@ -410,9 +413,18 @@ function loadFirestoreDiagramasBrands(grid) {
 
   const deletedBrands = getDeletedItemsList('brands');
 
-  // Render immediately from cache/filtered defaults
-  const initialList = (cachedActiveBrands || defaultDiagramBrands).filter(b => !deletedBrands.includes(b.id.toLowerCase().trim()) && !deletedBrands.includes(b.name.toLowerCase().trim()));
-  renderOnlyActiveBrands(grid, null, initialList);
+  // Si hay marcas en caché real de Firestore, renderizarlas inmediatamente sin parpadeo
+  if (Array.isArray(cachedActiveBrands) && cachedActiveBrands.length > 0) {
+    const initialList = cachedActiveBrands.filter(b => !deletedBrands.includes(b.id.toLowerCase().trim()) && !deletedBrands.includes(b.name.toLowerCase().trim()));
+    renderOnlyActiveBrands(grid, null, initialList);
+  } else {
+    grid.innerHTML = `
+      <div class="col-12 text-center py-5" style="grid-column: 1 / -1;">
+        <div class="spinner-border text-danger spinner-border-sm me-2" role="status"></div>
+        <span class="text-muted small font-rajdhani fw-semibold">Cargando marcas registradas...</span>
+      </div>
+    `;
+  }
 
   ensureFirebaseSDKReady(() => {
     if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
@@ -446,6 +458,9 @@ function loadFirestoreDiagramasBrands(grid) {
         }
 
         cachedActiveBrands = firestoreBrands;
+        try {
+          localStorage.setItem('probaktronic_cached_firestore_brands', JSON.stringify(firestoreBrands));
+        } catch(e) {}
         renderOnlyActiveBrands(grid, null, firestoreBrands);
       })
       .catch(err => {
@@ -794,7 +809,6 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
 
 function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader) {
   const defaultModelsMap = {
-    'hyundai': [{ id: 'accent', modelo: 'Hyundai Accent 2020', motor: '1.6 Gamma', combustible: 'gasolina' }],
     'toyota': [
       { id: 'hilux', modelo: 'TOYOTA HILUX 2011 - 2015', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel' },
       { id: 'Corolla', modelo: 'Toyota corollla 4E FE - 1991 - 2002', motor: '4E-FE 1.3L', combustible: 'gasolina' }
