@@ -34,6 +34,22 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 .vscode/
+.vscode/*
+sftp.json
 .idea/
 *.swp
 *.swo
+
+# Copias de seguridad, bases de datos y archivos pesados
+*.sql
+*.zip
+*.rar
+*.tar.gz
+archivos_almacenamiento.zip
+
+# Configuraciones de servidor con credenciales
+api/config.php
+api/db_config.php
+config.php
+db_passwords.txt
+

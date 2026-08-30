@@ -1,0 +1,1830 @@
+{
+  "audi": [
+    {
+      "Codigo": "Audi A3",
+      "Marca": "audi",
+      "Descripcion": "Modelo: Audi A3 (8P VR6 3.2L Quattro - 2003 – 2009) | Motor: 022905100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FPorsche%2Fporsche_2.jpg?alt=media&token=ec5dbe10-8a4d-4e77-ae86-4c225bb9d530",
+      "RutaLocal": "archivos_almacenamiento/bobinas/audi/Audi_A3.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Audi Q7",
+      "Marca": "audi",
+      "Descripcion": "Modelo: Audi Q7 (4L VR6 3.6L FSI - 2006 – 2014) | Motor: 022905100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FPorsche%2Fporsche_2.jpg?alt=media&token=ec5dbe10-8a4d-4e77-ae86-4c225bb9d530",
+      "RutaLocal": "archivos_almacenamiento/bobinas/audi/Audi_Q7.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Audi TT",
+      "Marca": "audi",
+      "Descripcion": "Modelo: Audi TT (8N / 8J VR6 3.2L Quattro - 2003 – 2010) | Motor: 022905100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FPorsche%2Fporsche_2.jpg?alt=media&token=ec5dbe10-8a4d-4e77-ae86-4c225bb9d530",
+      "RutaLocal": "archivos_almacenamiento/bobinas/audi/Audi_TT.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Audi_Volks",
+      "Marca": "audi",
+      "Descripcion": "Modelo: Audi | Motor: 0986221023",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Faudi%2Faudi_bobina.jpg?alt=media&token=a31d2750-c9bb-4753-8818-74b823a16ff3",
+      "RutaLocal": "archivos_almacenamiento/bobinas/audi/Audi_Volks.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "audi.a3",
+      "Marca": "audi",
+      "Descripcion": "Modelo: Audi A3 | Motor: 06F905115",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Faudi%2Faudi_bobina.jpg?alt=media&token=a31d2750-c9bb-4753-8818-74b823a16ff3",
+      "RutaLocal": "archivos_almacenamiento/bobinas/audi/audi_a3.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "audi.a4",
+      "Marca": "audi",
+      "Descripcion": "Modelo: Audi A4 | Motor: 06F905115",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Faudi%2Faudi_bobina_2.jpg?alt=media&token=8ac83bfb-3bac-4f81-b180-2f3c08e4ebf1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/audi/audi_a4.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "bmw": [
+    {
+      "Codigo": "BMW 118",
+      "Marca": "bmw",
+      "Descripcion": "Modelo: BMW 118i (Carrocerias E87 / F20 Motor 1.6L - 2007 – 2015) | Motor: 12137575010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_3.jpg?alt=media&token=0926fee9-16f4-4a52-a580-cd50b891cbce",
+      "RutaLocal": "archivos_almacenamiento/bobinas/bmw/BMW_118.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "chevrolet": [
+    {
+      "Codigo": "Chevrolet Captiva",
+      "Marca": "chevrolet",
+      "Descripcion": "Modelo: Chevrolet Captiva 3.2L V6 de 2006 a 2011 (Bobina de Encendido Individual Denso) | Motor: 099700-1180",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fbobina_chevrolet_5.JPG?alt=media&token=d2cbb1ff-5c72-4a45-b722-edcbfa624d0f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/chevrolet/Chevrolet_Captiva.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Chevrolet Colorado",
+      "Marca": "chevrolet",
+      "Descripcion": "Modelo: Chevrolet Colorado (2004 – 2006) | Motor: Estándar",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fhummer.jpg?alt=media&token=4fdd511d-c2d9-426e-9422-1a8c526f3e58",
+      "RutaLocal": "archivos_almacenamiento/bobinas/chevrolet/Chevrolet_Colorado.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Chevrolet Sail",
+      "Marca": "chevrolet",
+      "Descripcion": "Modelo: Chevrolet Sail (Primera y Segunda Generacion 1.4L / 1.5L - 2010 – 2020) | Motor: 9023781",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fchevrolet_sail.jpg?alt=media&token=1ab3a383-f3b9-472e-bf5f-97ec8fbb0528",
+      "RutaLocal": "archivos_almacenamiento/bobinas/chevrolet/Chevrolet_Sail.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Chevrolet TrailBlazer",
+      "Marca": "chevrolet",
+      "Descripcion": "Modelo: Chevrolet TrailBlazer ( 2002 – 2009) | Motor: 12568070 ",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fhummer.jpg?alt=media&token=4fdd511d-c2d9-426e-9422-1a8c526f3e58",
+      "RutaLocal": "archivos_almacenamiento/bobinas/chevrolet/Chevrolet_TrailBlazer.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "chevy",
+      "Marca": "chevrolet",
+      "Descripcion": "Modelo: chevrolet Chevy Taxi | Motor: 1.6",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fchevrolet_chevie_taxi.jpg?alt=media&token=7f4b6695-c28e-4a16-81ed-94d1e92e143e",
+      "RutaLocal": "archivos_almacenamiento/bobinas/chevrolet/chevy.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "citroen": [
+    {
+      "Codigo": "Citroen Berlingo",
+      "Marca": "citroen",
+      "Descripcion": "Modelo: Citroen Berlingo (Fase III - 2015 – 2021) | Motor: 9871214580",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fcitroen%2Fcitroen.jpg?alt=media&token=ef5277ce-8381-46c8-869a-83592f99b210",
+      "RutaLocal": "archivos_almacenamiento/bobinas/citroen/Citroen_Berlingo.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Citroen C3",
+      "Marca": "citroen",
+      "Descripcion": "Modelo: Citroen C3 (Segunda y Tercera Generación - 2012 – 2022) | Motor: 9871214580",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fcitroen%2Fcitroen.jpg?alt=media&token=ef5277ce-8381-46c8-869a-83592f99b210",
+      "RutaLocal": "archivos_almacenamiento/bobinas/citroen/Citroen_C3.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Citroen C3 Aircross",
+      "Marca": "citroen",
+      "Descripcion": "Modelo: Citroen C3 Aircross (Primera Generación - 2017 – 2022) | Motor: 9871214580",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fcitroen%2Fcitroen.jpg?alt=media&token=ef5277ce-8381-46c8-869a-83592f99b210",
+      "RutaLocal": "archivos_almacenamiento/bobinas/citroen/Citroen_C3_Aircross.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Citroen C3 Aircross_2",
+      "Marca": "citroen",
+      "Descripcion": "Modelo: Citroen C3 Aircross (1.2 PureTech - 2017 – 2024) | Motor: 18324025",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_3.jpg?alt=media&token=1cbbc180-0e1c-450b-9d07-5637458b5547",
+      "RutaLocal": "archivos_almacenamiento/bobinas/citroen/Citroen_C3_Aircross_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Citroen C3_2",
+      "Marca": "citroen",
+      "Descripcion": "Modelo: Citroen C3 (MK3 1.2 PureTech Turbo - 2016 – 2023) | Motor: 18324025",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_3.jpg?alt=media&token=1cbbc180-0e1c-450b-9d07-5637458b5547",
+      "RutaLocal": "archivos_almacenamiento/bobinas/citroen/Citroen_C3_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Citroen C4",
+      "Marca": "citroen",
+      "Descripcion": "Modelo: Citroen C4 / C4 Cactus (Fase I y II - 2014 – 2021) | Motor: 9871214580",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fcitroen%2Fcitroen.jpg?alt=media&token=ef5277ce-8381-46c8-869a-83592f99b210",
+      "RutaLocal": "archivos_almacenamiento/bobinas/citroen/Citroen_C4.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Citroen C4 Cactus",
+      "Marca": "citroen",
+      "Descripcion": "Modelo: Citroen C4 Cactus (1.2 PureTech Turbo - 2015 – 2021) | Motor: 18324025",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_3.jpg?alt=media&token=1cbbc180-0e1c-450b-9d07-5637458b5547",
+      "RutaLocal": "archivos_almacenamiento/bobinas/citroen/Citroen_C4_Cactus.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Citroen C4_2",
+      "Marca": "citroen",
+      "Descripcion": "Modelo: Citroen C4 / C4 Picasso (1.6 VTi / THP - 2008 – 2016) | Motor: 12137575010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_3.jpg?alt=media&token=0926fee9-16f4-4a52-a580-cd50b891cbce",
+      "RutaLocal": "archivos_almacenamiento/bobinas/citroen/Citroen_C4_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Citroen Saxo",
+      "Marca": "citroen",
+      "Descripcion": "Modelo: Citroën Saxo (1996 – 2004) | Motor: 96213181 (o equivalente 5970.55)",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_1.jpg?alt=media&token=418f454a-8c59-40ef-9e12-0928189ee952",
+      "RutaLocal": "archivos_almacenamiento/bobinas/citroen/Citroen_Saxo.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Citroen Xsara Picasso",
+      "Marca": "citroen",
+      "Descripcion": "Modelo: Citroën Xsara / Xsara Picasso (1997 – 2005) | Motor: 96213181",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_1.jpg?alt=media&token=418f454a-8c59-40ef-9e12-0928189ee952",
+      "RutaLocal": "archivos_almacenamiento/bobinas/citroen/Citroen_Xsara_Picasso.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "dacia": [
+    {
+      "Codigo": "Dacia Duster",
+      "Marca": "dacia",
+      "Descripcion": "Modelo: Dacia Duster II (1.3 TCe - 2019 – 2024) | Motor: 0986221079",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_2.jpg?alt=media&token=c3889a39-61df-48a7-b70c-9dc2f73db898",
+      "RutaLocal": "archivos_almacenamiento/bobinas/dacia/Dacia_Duster.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Dacia Lodgy",
+      "Marca": "dacia",
+      "Descripcion": "Modelo: Dacia Lodgy (1.3 TCe - 2019 – 2022) | Motor: 0986221079",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_2.jpg?alt=media&token=c3889a39-61df-48a7-b70c-9dc2f73db898",
+      "RutaLocal": "archivos_almacenamiento/bobinas/dacia/Dacia_Lodgy.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "daihatsu": [
+    {
+      "Codigo": "Daihatsu Copen",
+      "Marca": "daihatsu",
+      "Descripcion": "Modelo: Daihatsu Copen (1.3L VVT - 2006 – 2011) | Motor: 099700-0570",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FDaihatsu%2Fdaihatsu.jpg?alt=media&token=2c10c664-e035-4e6b-b902-ed7592e01e08",
+      "RutaLocal": "archivos_almacenamiento/bobinas/daihatsu/Daihatsu_Copen.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Daihatsu Materia",
+      "Marca": "daihatsu",
+      "Descripcion": "Modelo: Daihatsu Materia (1.3L / 1.5L - 2006 – 2012) | Motor: 099700-0570",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FDaihatsu%2Fdaihatsu.jpg?alt=media&token=2c10c664-e035-4e6b-b902-ed7592e01e08",
+      "RutaLocal": "archivos_almacenamiento/bobinas/daihatsu/Daihatsu_Materia.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Daihatsu Sirion",
+      "Marca": "daihatsu",
+      "Descripcion": "Modelo: Daihatsu Sirion (M100 / M300 1.3L - 2000 – 2015) | Motor: 099700-0570",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FDaihatsu%2Fdaihatsu.jpg?alt=media&token=2c10c664-e035-4e6b-b902-ed7592e01e08",
+      "RutaLocal": "archivos_almacenamiento/bobinas/daihatsu/Daihatsu_Sirion.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Daihatsu Terios",
+      "Marca": "daihatsu",
+      "Descripcion": "Modelo: Daihatsu Terios (Primera y Segunda Generacion 1.3L / 1.5L - 2000 – 2016) | Motor: 099700-0570",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FDaihatsu%2Fdaihatsu.jpg?alt=media&token=2c10c664-e035-4e6b-b902-ed7592e01e08",
+      "RutaLocal": "archivos_almacenamiento/bobinas/daihatsu/Daihatsu_Terios.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "fiat": [
+    {
+      "Codigo": "Fiat Barchetta",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Barchetta (1.8 16V Roadster - 2000 – 2005) | Motor: 0221504014",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat_3.jpg?alt=media&token=be5b0574-d9eb-4b5e-9838-7a45185eb49b",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Barchetta.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Brava .  Bravo",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Brava / Bravo (1.6 16V Trofeo - 2000 – 2002) | Motor: 0986221042",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat.jpg?alt=media&token=4488d15b-7143-416a-b425-bc5a71b7992a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Brava____Bravo.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Coupe",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Coupe (2.0i 20V Atmosferico y Turbo - 1996 – 2000) | Motor: 0221504006",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat_2.jpg?alt=media&token=b474a569-a18b-4c94-b688-9c0324a2f2ec",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Coupe.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Coupe_2",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Coupe (1.8 16V - 2000 – 2001) | Motor: 0221504014",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat_3.jpg?alt=media&token=be5b0574-d9eb-4b5e-9838-7a45185eb49b",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Coupe_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Doblo",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Doblo (1.6 16V - 2002 – 2009) | Motor: 0986221042",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat.jpg?alt=media&token=4488d15b-7143-416a-b425-bc5a71b7992a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Doblo.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Marea",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Marea (1.6 16V SX / ELX - 2000 – 2007) | Motor: 0986221042",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat.jpg?alt=media&token=4488d15b-7143-416a-b425-bc5a71b7992a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Marea.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Marea_2",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Marea (2.0i 20V / 2.4i 20V HLX - 1999 – 2007) | Motor: 0221504006",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat_2.jpg?alt=media&token=b474a569-a18b-4c94-b688-9c0324a2f2ec",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Marea_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Marea_3",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Marea (1.8 16V - 1999 – 2007) | Motor: 0221504014",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat_3.jpg?alt=media&token=be5b0574-d9eb-4b5e-9838-7a45185eb49b",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Marea_3.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Multipla",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Multipla (1.6 16V Bipower - 1999 – 2010) | Motor: 0986221042",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat.jpg?alt=media&token=4488d15b-7143-416a-b425-bc5a71b7992a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Multipla.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Palio Weekend",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Palio Weekend (1.6 16V Torque - 2001 – 2004) | Motor: 0986221042",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat.jpg?alt=media&token=4488d15b-7143-416a-b425-bc5a71b7992a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Palio_Weekend.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Stilo",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Stilo (1.6 16V - 2001 – 2006) | Motor: 0986221042",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat.jpg?alt=media&token=4488d15b-7143-416a-b425-bc5a71b7992a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Stilo.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Stilo_2",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Stilo Abarth (2.4 20V 5 Cilindros - 2001 – 2007) | Motor: 0221504006",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat_2.jpg?alt=media&token=b474a569-a18b-4c94-b688-9c0324a2f2ec",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Stilo_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Fiat Stilo_3",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Stilo (1.8 16V - 2001 – 2006) | Motor: 0221504014",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat_3.jpg?alt=media&token=be5b0574-d9eb-4b5e-9838-7a45185eb49b",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/Fiat_Stilo_3.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "fiat.sedici",
+      "Marca": "fiat",
+      "Descripcion": "Modelo: Fiat Sedici (2005 – 2015) | Motor: 33400-65J00",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fsuzuki.jpg?alt=media&token=ad242cb7-3a61-4f32-a247-40dbaf1a5e17",
+      "RutaLocal": "archivos_almacenamiento/bobinas/fiat/fiat_sedici.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "ford": [
+    {
+      "Codigo": "04YU8DQFwhbDZYBKGCo5",
+      "Marca": "ford",
+      "Descripcion": "Modelo: fiesta | Motor: 1.6",
+      "ImagenUrl": "https://i.postimg.cc/Hx013GtH/ford150.jpg",
+      "RutaLocal": "archivos_almacenamiento/bobinas/ford/04YU8DQFwhbDZYBKGCo5.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Ford EcoSport",
+      "Marca": "ford",
+      "Descripcion": "Modelo: Ford EcoSport (Primera Generacion 2.0L Motor Duratec HE - 2003 – 2012) | Motor: L3G2-18-100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fmazda_2.jpg?alt=media&token=dc72b030-ec0c-4687-8295-58f3b2777f9b",
+      "RutaLocal": "archivos_almacenamiento/bobinas/ford/Ford_EcoSport.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Ford Expedition",
+      "Marca": "ford",
+      "Descripcion": "Modelo: Ford Expedition (Primera y Segunda Generacion Motor Triton V8 4.6L / 5.4L 2V - 1997 – 2004) | Motor: DG508",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fford%2Fford_4.jpg?alt=media&token=d24240bc-1f0d-4cd1-852c-6e5369f94d7d",
+      "RutaLocal": "archivos_almacenamiento/bobinas/ford/Ford_Expedition.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Ford Explorer",
+      "Marca": "ford",
+      "Descripcion": "Modelo: Ford Explorer (Motor Triton V8 4.6L 2V - 2002 – 2005) | Motor: DG508",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fford%2Fford_4.jpg?alt=media&token=d24240bc-1f0d-4cd1-852c-6e5369f94d7d",
+      "RutaLocal": "archivos_almacenamiento/bobinas/ford/Ford_Explorer.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Ford F150",
+      "Marca": "ford",
+      "Descripcion": "Modelo: Ford F150 (Motor Triton V8 4.6L / 5.4L 2V - 1997 – 2003) | Motor: DG508",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fford%2Fford_4.jpg?alt=media&token=d24240bc-1f0d-4cd1-852c-6e5369f94d7d",
+      "RutaLocal": "archivos_almacenamiento/bobinas/ford/Ford_F150.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Ford Focus",
+      "Marca": "ford",
+      "Descripcion": "Modelo: Ford Focus (Segunda Generacion 2.0L Duratec - 2005 – 2011) | Motor: L3G2-18-100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fmazda_2.jpg?alt=media&token=dc72b030-ec0c-4687-8295-58f3b2777f9b",
+      "RutaLocal": "archivos_almacenamiento/bobinas/ford/Ford_Focus.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Ford Mustang",
+      "Marca": "ford",
+      "Descripcion": "Modelo: Ford Mustang (GT Motor Modular V8 4.6L 2V - 1999 – 2004) | Motor: DG508",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fford%2Fford_4.jpg?alt=media&token=d24240bc-1f0d-4cd1-852c-6e5369f94d7d",
+      "RutaLocal": "archivos_almacenamiento/bobinas/ford/Ford_Mustang.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "ford 2",
+      "Marca": "ford",
+      "Descripcion": "Modelo: 1234 | Motor: 1352",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fford%2Fford150.jpg?alt=media&token=143ade9b-c13a-4029-9bdb-ed0ea1c594a3",
+      "RutaLocal": "archivos_almacenamiento/bobinas/ford/ford_2.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "gmc": [
+    {
+      "Codigo": "GMC Canyon",
+      "Marca": "gmc",
+      "Descripcion": "Modelo: GMC Canyon (2004 – 2006) | Motor: 12568070 ",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fhummer.jpg?alt=media&token=4fdd511d-c2d9-426e-9422-1a8c526f3e58",
+      "RutaLocal": "archivos_almacenamiento/bobinas/gmc/GMC_Canyon.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "GMC Envoy",
+      "Marca": "gmc",
+      "Descripcion": "Modelo: GMC Envoy (2002 – 2009) | Motor: 12568070",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fhummer.jpg?alt=media&token=4fdd511d-c2d9-426e-9422-1a8c526f3e58",
+      "RutaLocal": "archivos_almacenamiento/bobinas/gmc/GMC_Envoy.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "honda": [
+    {
+      "Codigo": "Honda",
+      "Marca": "honda",
+      "Descripcion": "Modelo: HONDA | Motor: 1234",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhonda%2Fhonda_1.jpg?alt=media&token=a62615a9-3d15-4dae-8f46-acd06a3a0734",
+      "RutaLocal": "archivos_almacenamiento/bobinas/honda/Honda.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Honda City",
+      "Marca": "honda",
+      "Descripcion": "Modelo: Honda City 1.5 16V i-VTEC de 2009 a 2014 (Bobina de Encendido Individual - Sistema Hitachi) | Motor:  CM11-116 30520-RB0-003",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhonda%2Fhonda_2.jpg?alt=media&token=a9ef6f66-144d-464b-884a-f1548dc0748c",
+      "RutaLocal": "archivos_almacenamiento/bobinas/honda/Honda_City.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Honda Fit",
+      "Marca": "honda",
+      "Descripcion": "Modelo:  Honda Fit 1.4 8V Dual Spark i-DSI de 2003 a 2008 (Bobina de Encendido Individual - Lado Admisión/Escape) | Motor: GC428800",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhonda%2Fbobina_honda5.jpg?alt=media&token=0f72ce9a-76f4-466e-8329-4d96fc2a66b1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/honda/Honda_Fit.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Honda Jazz",
+      "Marca": "honda",
+      "Descripcion": "Modelo: Honda Jazz 1.2 / 1.4 i-DSI de 2002 a 2008 (Bobina de Encendido Individual - Sistema de Doble Bujía) | Motor: GC428800",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhonda%2Fbobina_honda5.jpg?alt=media&token=0f72ce9a-76f4-466e-8329-4d96fc2a66b1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/honda/Honda_Jazz.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "honda.airwave",
+      "Marca": "honda",
+      "Descripcion": "Modelo: Honda Airwave (2005 – 2010) | Motor: 30520-PWA-003",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhonda%2Fhonda.jpg?alt=media&token=15fa51ad-a7d1-4c55-9794-f72416d0e20f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/honda/honda_airwave.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "honda.civic",
+      "Marca": "honda",
+      "Descripcion": "Modelo: Honda Civic (2003 – 2011) | Motor: 30520-PWA-003",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhonda%2Fhonda.jpg?alt=media&token=15fa51ad-a7d1-4c55-9794-f72416d0e20f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/honda/honda_civic.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "honda.fit",
+      "Marca": "honda",
+      "Descripcion": "Modelo: Honda Fit (2002 – 2008) | Motor: 30520-PWA-003",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhonda%2Fhonda.jpg?alt=media&token=15fa51ad-a7d1-4c55-9794-f72416d0e20f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/honda/honda_fit.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "honda.mobilio",
+      "Marca": "honda",
+      "Descripcion": "Modelo: Honda Mobilio (2001 – 2008) | Motor: 30520-PWA-003",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhonda%2Fhonda.jpg?alt=media&token=15fa51ad-a7d1-4c55-9794-f72416d0e20f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/honda/honda_mobilio.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "hummer": [
+    {
+      "Codigo": "Hummer H3",
+      "Marca": "hummer",
+      "Descripcion": "Modelo: Hummer H3 ( 2006 - 2007 – 2010) | Motor: 12568070 ",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fhummer.jpg?alt=media&token=4fdd511d-c2d9-426e-9422-1a8c526f3e58",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hummer/Hummer_H3.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "hyundai": [
+    {
+      "Codigo": "Hyundai Accent",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai Accent (Tercera Generacion MC 1.4L / 1.6L GLS - 2006 – 2011) | Motor: 27301-2B010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai_4.jpg?alt=media&token=e2f39d29-be00-4338-8638-c454f38466b7",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/Hyundai_Accent.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Hyundai Atos",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai Atos / Atos Prime (0.8L / 1.0L / 1.1L - 1997 – 2008) | Motor: 27301-02502",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2FHYUNDAI_3.jpg?alt=media&token=15ffd151-eb4b-4825-a825-61679919d473",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/Hyundai_Atos.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Hyundai Elantra",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai Elantra (Cuarta Generacion HD 1.6L Gamma - 2006 – 2010) | Motor: 27301-2B010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai_4.jpg?alt=media&token=e2f39d29-be00-4338-8638-c454f38466b7",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/Hyundai_Elantra.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Hyundai Elantra_2",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai Elantra (Quinta y Sexta Generacion Motor Nu 1.8L / 2.0L - 2011 – 2020) | Motor: 27300-2E000",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FKia%2Fkia_4.jpg?alt=media&token=eaec5b9b-40b1-43bd-93cb-d518cc5fb751",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/Hyundai_Elantra_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Hyundai Santa Fe",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai Santa Fe (Primera Generacion 2.4L - 2001 – 2006) | Motor: 27301-38020",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai_2.jpg?alt=media&token=e6e1c91a-bb86-4a7a-ab7f-07b4c430228f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/Hyundai_Santa_Fe.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Hyundai Santro",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai Santro (Fase I y II 1.0L / 1.1L - 1998 – 2014) | Motor: 27301-02502",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2FHYUNDAI_3.jpg?alt=media&token=15ffd151-eb4b-4825-a825-61679919d473",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/Hyundai_Santro.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Hyundai Sonata",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai Sonata (EF Facelift 2.4L - 2002 – 2005) | Motor: 27301-38020",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai_2.jpg?alt=media&token=e6e1c91a-bb86-4a7a-ab7f-07b4c430228f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/Hyundai_Sonata.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Hyundai Tucson",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai Tucson (Tercera Generacion Motor Nu 2.0L MPI - 2015 – 2021) | Motor: 27300-2E000",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FKia%2Fkia_4.jpg?alt=media&token=eaec5b9b-40b1-43bd-93cb-d518cc5fb751",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/Hyundai_Tucson.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Hyundai i10",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai i10 (Primera Generacion 1.1L Motor Epsilon - 2007 – 2013) | Motor: 27301-02502",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2FHYUNDAI_3.jpg?alt=media&token=15ffd151-eb4b-4825-a825-61679919d473",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/Hyundai_i10.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Hyundai i30",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai i30 (Primera Generacion FD 1.4L / 1.6L Gamma - 2007 – 2012) | Motor: 27301-2B010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai_4.jpg?alt=media&token=e2f39d29-be00-4338-8638-c454f38466b7",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/Hyundai_i30.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Hyundai i30_2",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai i30 (Segunda Generacion Motor Nu 2.0L MPI - 2012 – 2016) | Motor: 27300-2E000",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FKia%2Fkia_4.jpg?alt=media&token=eaec5b9b-40b1-43bd-93cb-d518cc5fb751",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/Hyundai_i30_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "hyundai.terracan",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai Terracan (2001 – 2006) | Motor: 27300-39800",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai%20terracan%20Kia.jpg?alt=media&token=dd2f2fdf-0a50-4339-8de3-914bf9d500dc",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/hyundai_terracan.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "hyundai.xg350",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai XG350 (2002 – 2005) | Motor: 27300-39800",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai%20terracan%20Kia.jpg?alt=media&token=dd2f2fdf-0a50-4339-8de3-914bf9d500dc",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/hyundai_xg350.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "santa.fe",
+      "Marca": "hyundai",
+      "Descripcion": "Modelo: Hyundai Santa Fe (Primera Generación 2003 – 2006 )  | Motor: 27300-39800",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai%20terracan%20Kia.jpg?alt=media&token=dd2f2fdf-0a50-4339-8de3-914bf9d500dc",
+      "RutaLocal": "archivos_almacenamiento/bobinas/hyundai/santa_fe.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "infiniti": [
+    {
+      "Codigo": "Infiniti I30  I35",
+      "Marca": "infiniti",
+      "Descripcion": "Modelo: Infiniti I30 / I35 (A33 V6 3.0L / 3.5L - 2000 – 2004) | Motor: 22448-2Y005",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FNissan%2Fnissan_22448.jpg?alt=media&token=d1fcadb0-5f8c-476e-b243-c977cc15643a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/infiniti/Infiniti_I30__I35.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Infiniti QX4",
+      "Marca": "infiniti",
+      "Descripcion": "Modelo: Infiniti QX4 (V6 3.5L - 2001 – 2003) | Motor: 22448-2Y005",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FNissan%2Fnissan_22448.jpg?alt=media&token=d1fcadb0-5f8c-476e-b243-c977cc15643a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/infiniti/Infiniti_QX4.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "isuzu": [
+    {
+      "Codigo": "Isuzu Ascender",
+      "Marca": "isuzu",
+      "Descripcion": "Modelo: Isuzu Ascender (2003 – 2008) | Motor: 12568070 ",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fhummer.jpg?alt=media&token=4fdd511d-c2d9-426e-9422-1a8c526f3e58",
+      "RutaLocal": "archivos_almacenamiento/bobinas/isuzu/Isuzu_Ascender.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Isuzu i-280 i-350",
+      "Marca": "isuzu",
+      "Descripcion": "Modelo: Isuzu i-280 / i-350 (2006) | Motor: 12568070 ",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fhummer.jpg?alt=media&token=4fdd511d-c2d9-426e-9422-1a8c526f3e58",
+      "RutaLocal": "archivos_almacenamiento/bobinas/isuzu/Isuzu_i-280_i-350.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Isuzu i-290  i-370",
+      "Marca": "isuzu",
+      "Descripcion": "Modelo: Isuzu i-290 / i-370 (2007 – 2008) | Motor: 12568070 ",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fhummer.jpg?alt=media&token=4fdd511d-c2d9-426e-9422-1a8c526f3e58",
+      "RutaLocal": "archivos_almacenamiento/bobinas/isuzu/Isuzu_i-290__i-370.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "kia": [
+    {
+      "Codigo": "Kia Amanti",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Amanti (2004 – 2006) | Motor: 27300-39800",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai%20terracan%20Kia.jpg?alt=media&token=dd2f2fdf-0a50-4339-8de3-914bf9d500dc",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/Kia_Amanti.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Kia Amanti_2",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Amanti / Opirus (Específico para las variantes de motor pequeño en ciertos mercados - 2003 – 2006) | Motor: 27301-02502",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2FHYUNDAI_3.jpg?alt=media&token=15ffd151-eb4b-4825-a825-61679919d473",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/Kia_Amanti_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Kia Cerato",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Cerato / Forte (Primera Generacion TD 1.6L Gamma - 2008 – 2013) | Motor: 27301-2B010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai_4.jpg?alt=media&token=e2f39d29-be00-4338-8638-c454f38466b7",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/Kia_Cerato.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Kia Opirus",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Opirus (2004 – 2006) | Motor: 27300-39800",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai%20terracan%20Kia.jpg?alt=media&token=dd2f2fdf-0a50-4339-8de3-914bf9d500dc",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/Kia_Opirus.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Kia Optima",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Optima (Primera Generacion 2.4L - 2001 – 2006) | Motor: 27301-38020",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai_2.jpg?alt=media&token=e6e1c91a-bb86-4a7a-ab7f-07b4c430228f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/Kia_Optima.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Kia Optima_2",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Optima (Tercera y Cuarta Generacion Motor Nu 2.0L - 2011 – 2019) | Motor: 27300-2E000",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FKia%2Fkia_4.jpg?alt=media&token=eaec5b9b-40b1-43bd-93cb-d518cc5fb751",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/Kia_Optima_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Kia Picanto",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Picanto (Primera Generacion SA 1.0L / 1.1L - 2004 – 2011) | Motor: 27301-02502",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2FHYUNDAI_3.jpg?alt=media&token=15ffd151-eb4b-4825-a825-61679919d473",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/Kia_Picanto.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Kia Rio",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Rio (Segunda Generacion JB 1.4L / 1.6L - 2005 – 2011) | Motor: 27301-2B010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai_4.jpg?alt=media&token=e2f39d29-be00-4338-8638-c454f38466b7",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/Kia_Rio.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Kia Soul",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Soul (Primera Generacion AM 1.6L MPI - 2008 – 2011) | Motor: 27301-2B010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai_4.jpg?alt=media&token=e2f39d29-be00-4338-8638-c454f38466b7",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/Kia_Soul.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Kia Soul_2",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Soul (Segunda Generacion Motor Nu 2.0L MPI - 2014 – 2019) | Motor: 27300-2E000",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FKia%2Fkia_4.jpg?alt=media&token=eaec5b9b-40b1-43bd-93cb-d518cc5fb751",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/Kia_Soul_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Kia Sportage",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Sportage (Tercera y Cuarta Generacion Motor Nu 2.0L MPI - 2014 – 2021) | Motor: 27300-2E000",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FKia%2Fkia_4.jpg?alt=media&token=eaec5b9b-40b1-43bd-93cb-d518cc5fb751",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/Kia_Sportage.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "kia.carnival",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Carnival (Segunda Generación 2002 – 2005) | Motor: Estándar",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai%20terracan%20Kia.jpg?alt=media&token=dd2f2fdf-0a50-4339-8de3-914bf9d500dc",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/kia_carnival.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "kia.sedona",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Sedona (Segunda Generación 2002 – 2005) | Motor: 27300-39800",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai%20terracan%20Kia.jpg?alt=media&token=dd2f2fdf-0a50-4339-8de3-914bf9d500dc",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/kia_sedona.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "kia.sorento",
+      "Marca": "kia",
+      "Descripcion": "Modelo: Kia Sorento (Primera Generación 2003 – 2006) | Motor: 27300-39800",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fhyundai%2Fhyundai%20terracan%20Kia.jpg?alt=media&token=dd2f2fdf-0a50-4339-8de3-914bf9d500dc",
+      "RutaLocal": "archivos_almacenamiento/bobinas/kia/kia_sorento.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "lada": [
+    {
+      "Codigo": "Lada 110",
+      "Marca": "lada",
+      "Descripcion": "Modelo: Lada 110 (VAZ-2110 16V - 1995 – 2012) | Motor: 2112-3705010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FLada%2Flada.jpg?alt=media&token=667362cd-ca68-4ff4-a4d2-59e1a6151683",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lada/Lada_110.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Lada 111",
+      "Marca": "lada",
+      "Descripcion": "Modelo: Lada 111 (VAZ-2111 Estate - 1996 – 2009) | Motor: 2112-3705010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FLada%2Flada.jpg?alt=media&token=667362cd-ca68-4ff4-a4d2-59e1a6151683",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lada/Lada_111.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Lada 112",
+      "Marca": "lada",
+      "Descripcion": "Modelo: Lada 112 (VAZ-2112 Hatchback - 1995 – 2008) | Motor: 0221504461",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FLada%2Flada.jpg?alt=media&token=667362cd-ca68-4ff4-a4d2-59e1a6151683",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lada/Lada_112.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Lada Granta",
+      "Marca": "lada",
+      "Descripcion": "Modelo: Lada Granta (Versiones 16V - 2011 – 2021) | Motor: 0221504461",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FLada%2Flada.jpg?alt=media&token=667362cd-ca68-4ff4-a4d2-59e1a6151683",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lada/Lada_Granta.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Lada Kalina",
+      "Marca": "lada",
+      "Descripcion": "Modelo: Lada Kalina (Fase I - 2004 – 2013) | Motor: 0221504461",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FLada%2Flada.jpg?alt=media&token=667362cd-ca68-4ff4-a4d2-59e1a6151683",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lada/Lada_Kalina.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Lada Niva",
+      "Marca": "lada",
+      "Descripcion": "Modelo: Lada Niva (4x4 Urban / Travel 16V - 2002 – 2020) | Motor: 0221504461",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FLada%2Flada.jpg?alt=media&token=667362cd-ca68-4ff4-a4d2-59e1a6151683",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lada/Lada_Niva.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Lada Priora",
+      "Marca": "lada",
+      "Descripcion": "Modelo: Lada Priora (VAZ-2170 / 2171 / 2172 - 2007 – 2018) | Motor: 0221504461",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FLada%2Flada.jpg?alt=media&token=667362cd-ca68-4ff4-a4d2-59e1a6151683",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lada/Lada_Priora.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "lancia": [
+    {
+      "Codigo": "Lancia Kappa",
+      "Marca": "lancia",
+      "Descripcion": "Modelo: Lancia Kappa (2.0 20V / 2.4 20V 5 Cilindros - 1996 – 2001) | Motor: 0221504006",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat_2.jpg?alt=media&token=b474a569-a18b-4c94-b688-9c0324a2f2ec",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lancia/Lancia_Kappa.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Lancia Lybra",
+      "Marca": "lancia",
+      "Descripcion": "Modelo: Lancia Lybra (2.0 20V 5 Cilindros - 1999 – 2005) | Motor: 0221504006",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat_2.jpg?alt=media&token=b474a569-a18b-4c94-b688-9c0324a2f2ec",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lancia/Lancia_Lybra.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Lancia Lybra_2",
+      "Marca": "lancia",
+      "Descripcion": "Modelo: Lancia Lybra (1.8 16V - 1999 – 2005) | Motor: 0221504014",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat_3.jpg?alt=media&token=be5b0574-d9eb-4b5e-9838-7a45185eb49b",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lancia/Lancia_Lybra_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Lancia Thesis",
+      "Marca": "lancia",
+      "Descripcion": "Modelo: Lancia Thesis (2.4 20V 5 Cilindros - 2002 – 2009) | Motor: 0221504006",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FFiat%2Ffiat_2.jpg?alt=media&token=b474a569-a18b-4c94-b688-9c0324a2f2ec",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lancia/Lancia_Thesis.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "lotus": [
+    {
+      "Codigo": "Lotus Elise",
+      "Marca": "lotus",
+      "Descripcion": "Modelo: Lotus Elise (Series 2 1.8L Motor Toyota 2ZZ-GE - 2004 – 2011) | Motor: 0221504020",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Ftoyota_2.jpg?alt=media&token=c89311ba-1964-409d-b7c3-a61544b43fdf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/lotus/Lotus_Elise.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "mahindra": [
+    {
+      "Codigo": "Mahindra Scorpio",
+      "Marca": "mahindra",
+      "Descripcion": "Modelo: Mahindra Scorpio (Motores a Gasolina - 2002 – 2014) | Motor: 0221504461",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FLada%2Flada.jpg?alt=media&token=667362cd-ca68-4ff4-a4d2-59e1a6151683",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mahindra/Mahindra_Scorpio.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "maruti": [
+    {
+      "Codigo": "Maruti Suzuki Wagon R",
+      "Marca": "maruti",
+      "Descripcion": "Modelo: Maruti Suzuki Wagon R (Versiones K-Series 1.0L - 2010 – 2022) | Motor: 33400-85K20",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fsuzuki_2.jpg?alt=media&token=37aad06d-52b1-4320-94f1-4d02d5cbecc1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/maruti/Maruti_Suzuki_Wagon_R.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "mazda": [
+    {
+      "Codigo": "Mazda 3",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda 3 (Primera Generacion BK 2.0L / 2.3L - 2003 – 2009) | Motor: L3G2-18-100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fmazda_2.jpg?alt=media&token=dc72b030-ec0c-4687-8295-58f3b2777f9b",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_3.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mazda 323",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda 323 Protege (Fase BJ 1.6L - 1998 – 2003) | Motor: ZM0118100",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fmazda.jpg?alt=media&token=8e7efcd8-4c63-43b0-9083-8d85c3e00ab8",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_323.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mazda 323_2",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda 323 Protege (Fase BJ 2.0L - 2001 – 2003) | Motor: FFY118100",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fmazda_3.jpg?alt=media&token=21800d36-f070-483d-af56-e2a52363f165",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_323_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mazda 3_2",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda 3 2.0L / 2.5L Motor SkyActiv-G de 2012 a 2018 (Bobina de Encendido Individual) | Motor: PE20-18-100",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fbobina_mazda5.JPG?alt=media&token=02d75d4e-39e9-4521-99d8-1392ac843df7",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_3_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mazda 5",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda 5 (Primera Generacion CR 2.0L / 2.3L - 2005 – 2010) | Motor: L3G2-18-100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fmazda_2.jpg?alt=media&token=dc72b030-ec0c-4687-8295-58f3b2777f9b",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_5.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mazda 6",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda 6 (Primera Generacion GG 2.0L / 2.3L - 2002 – 2008) | Motor: L3G2-18-100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fmazda_2.jpg?alt=media&token=dc72b030-ec0c-4687-8295-58f3b2777f9b",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_6.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mazda 626",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda 626 (Fase GF 2.0L DOHC - 1998 – 2002) | Motor: FFY118100",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fmazda_3.jpg?alt=media&token=21800d36-f070-483d-af56-e2a52363f165",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_626.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mazda 6_2",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda 6 2.5L Motor SkyActiv-G de 2014 a 2018 (Bobina de Encendido Individual) | Motor: PE20-18-100",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fbobina_mazda5.JPG?alt=media&token=02d75d4e-39e9-4521-99d8-1392ac843df7",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_6_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mazda Allegro",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda Allegro (Versiones 1.6L Mercado Latinoamericano - 1999 – 2004) | Motor: ZM0118100",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fmazda.jpg?alt=media&token=8e7efcd8-4c63-43b0-9083-8d85c3e00ab8",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_Allegro.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mazda Allegro_2",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda Allegro (Versiones 2.0L Mercado Latinoamericano - 2001 – 2004) | Motor: FFY118100",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fmazda_3.jpg?alt=media&token=21800d36-f070-483d-af56-e2a52363f165",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_Allegro_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mazda CX-5",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda CX-5 2.0L / 2.5L Motor SkyActiv-G de 2013 a 2018 (Bobina de Encendido Individual) | Motor: PE20-18-100",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fbobina_mazda5.JPG?alt=media&token=02d75d4e-39e9-4521-99d8-1392ac843df7",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_CX-5.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mazda Premacy",
+      "Marca": "mazda",
+      "Descripcion": "Modelo: Mazda Premacy (Primera Generacion 2.0L - 1999 – 2005) | Motor: FFY118100",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmazda%2Fmazda_3.jpg?alt=media&token=21800d36-f070-483d-af56-e2a52363f165",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mazda/Mazda_Premacy.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "mercedes_benz": [
+    {
+      "Codigo": "Mercedes-Benz Clase A",
+      "Marca": "mercedes_benz",
+      "Descripcion": "Modelo: Mercedes-Benz Clase A (W177 A180 / A200 - 2018 – 2024) | Motor: 0986221079",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_2.jpg?alt=media&token=c3889a39-61df-48a7-b70c-9dc2f73db898",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mercedes_benz/Mercedes-Benz_Clase_A.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "mini": [
+    {
+      "Codigo": "Mini Cooper",
+      "Marca": "mini",
+      "Descripcion": "Modelo: Mini Cooper (Segunda Generacion R56 / R57 Succion y Turbo - 2007 – 2013) | Motor: 12137575010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_3.jpg?alt=media&token=0926fee9-16f4-4a52-a580-cd50b891cbce",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mini/Mini_Cooper.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "mitsubishi": [
+    {
+      "Codigo": "Mitsubishi Galant",
+      "Marca": "mitsubishi",
+      "Descripcion": "Modelo: Mitsubishi Galant 2.0L de 1992 a 1996 (Bobina de Encendido Interna de Distribuidor) | Motor: H3T0397 MD611190",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fbobina_mitsuishi5.JPG?alt=media&token=c22bb36b-403b-4c84-86d2-e447353767a6",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mitsubishi/Mitsubishi_Galant.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mitsubishi Lancer",
+      "Marca": "mitsubishi",
+      "Descripcion": "Modelo: Mitsubishi Lancer (Fase CS Cedia 1.3L / 1.6L - 2000 – 2009) | Motor: H6T11471",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_2.jpg?alt=media&token=00446ee0-b02c-4403-be29-d2cb5a512f83",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mitsubishi/Mitsubishi_Lancer.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mitsubishi Lancer_2",
+      "Marca": "mitsubishi",
+      "Descripcion": "Modelo: Mitsubishi Lancer 1.5L / 1.8L 16V de 1990 a 1996 (Bobina de Encendido Interna de Distribuidor) | Motor: H3T0397 MD611190",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fbobina_mitsuishi5.JPG?alt=media&token=c22bb36b-403b-4c84-86d2-e447353767a6",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mitsubishi/Mitsubishi_Lancer_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mitsubishi Mirage",
+      "Marca": "mitsubishi",
+      "Descripcion": "Modelo: Mitsubishi Mirage 1.5L / 1.8L de 1991 a 1996 (Bobina de Encendido Interna de Distribuidor) | Motor: H3T0397 MD611190",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fbobina_mitsuishi5.JPG?alt=media&token=c22bb36b-403b-4c84-86d2-e447353767a6",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mitsubishi/Mitsubishi_Mirage.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Mitsubishi Space Star",
+      "Marca": "mitsubishi",
+      "Descripcion": "Modelo: Mitsubishi Space Star (Fase DG3A 1.6L 16V - 2001 – 2005) | Motor: H6T11471",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_2.jpg?alt=media&token=00446ee0-b02c-4403-be29-d2cb5a512f83",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mitsubishi/Mitsubishi_Space_Star.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Suzuki Alto",
+      "Marca": "mitsubishi",
+      "Descripcion": "Modelo: Suzuki Alto 1.0L Motor K10B (Bobina de Encendido Individual 3 Pines) | Motor: 33400-76G21",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fbobina_suzuki.JPG?alt=media&token=e825ff3f-5ef8-4ac3-bf43-9713b10eba1f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mitsubishi/Suzuki_Alto.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Suzuki Jimny",
+      "Marca": "mitsubishi",
+      "Descripcion": "Modelo: Suzuki Jimny 1.3L 16V Motor M13A (Bobina de Encendido Individual 3 Pines) | Motor: 33400-76G21",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fbobina_suzuki.JPG?alt=media&token=e825ff3f-5ef8-4ac3-bf43-9713b10eba1f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mitsubishi/Suzuki_Jimny.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Suzuki Wagon R",
+      "Marca": "mitsubishi",
+      "Descripcion": "Modelo:  Suzuki Wagon R 1.0L / 1.3L Motores K10A / K12A (Bobina de Encendido Individual 3 Pines) | Motor: 33400-76G21",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fbobina_suzuki.JPG?alt=media&token=e825ff3f-5ef8-4ac3-bf43-9713b10eba1f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mitsubishi/Suzuki_Wagon_R.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "mitsubishi",
+      "Marca": "mitsubishi",
+      "Descripcion": "Modelo: bobina_Universal | Motor: 1.6",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_bobina_universal.jpg?alt=media&token=f7336216-1ccd-4ce2-b147-e4bfe8bdc6df",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mitsubishi/mitsubishi.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "mitsubishi_cop",
+      "Marca": "mitsubishi",
+      "Descripcion": "Modelo: Bobina Universal COP | Motor: 1.6",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_bobina_universal_cop.jpg?alt=media&token=73468b0c-a9fb-46d5-8871-3366248473f9",
+      "RutaLocal": "archivos_almacenamiento/bobinas/mitsubishi/mitsubishi_cop.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "nissan": [
+    {
+      "Codigo": "Nissan Maxima",
+      "Marca": "nissan",
+      "Descripcion": "Modelo: Nissan Maxima (A33 V6 3.0L / 3.5L - 2000 – 2003) | Motor: 22448-2Y005",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FNissan%2Fnissan_22448.jpg?alt=media&token=d1fcadb0-5f8c-476e-b243-c977cc15643a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/nissan/Nissan_Maxima.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Nissan Maxima_2",
+      "Marca": "nissan",
+      "Descripcion": "Modelo: Nissan Maxima (A33 V6 3.0L / 3.5L - 2000 – 2003) | Motor: 22448-2Y000",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FNissan%2Fnissan_3.jpg?alt=media&token=72c5171c-12d3-4ede-82ee-da56ae20d45e",
+      "RutaLocal": "archivos_almacenamiento/bobinas/nissan/Nissan_Maxima_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Nissan Murano",
+      "Marca": "nissan",
+      "Descripcion": "Modelo: Nissan Murano (Z50 V6 3.5L - 2003 – 2007) | Motor: 22448-2Y005",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FNissan%2Fnissan_22448.jpg?alt=media&token=d1fcadb0-5f8c-476e-b243-c977cc15643a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/nissan/Nissan_Murano.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Nissan Murano_2",
+      "Marca": "nissan",
+      "Descripcion": "Modelo: Nissan Murano (Z50 V6 3.5L - 2003 – 2007) | Motor: 22448-2Y000",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FNissan%2Fnissan_3.jpg?alt=media&token=72c5171c-12d3-4ede-82ee-da56ae20d45e",
+      "RutaLocal": "archivos_almacenamiento/bobinas/nissan/Nissan_Murano_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Nissan Pathfinder",
+      "Marca": "nissan",
+      "Descripcion": "Modelo: Nissan Pathfinder (R50 V6 3.5L - 2001 – 2004) | Motor: 22448-2Y005",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FNissan%2Fnissan_22448.jpg?alt=media&token=d1fcadb0-5f8c-476e-b243-c977cc15643a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/nissan/Nissan_Pathfinder.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Nissan Pathfinder_2",
+      "Marca": "nissan",
+      "Descripcion": "Modelo: Nissan Pathfinder (R50 V6 3.5L - 2001 – 2004) | Motor: 22448-2Y000",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FNissan%2Fnissan_3.jpg?alt=media&token=72c5171c-12d3-4ede-82ee-da56ae20d45e",
+      "RutaLocal": "archivos_almacenamiento/bobinas/nissan/Nissan_Pathfinder_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Nissan Pixo",
+      "Marca": "nissan",
+      "Descripcion": "Modelo: Nissan Pixo (Hermano gemelo del Suzuki Alto 1.0L - 2009 – 2013) | Motor: 33400-85K20",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fsuzuki_2.jpg?alt=media&token=37aad06d-52b1-4320-94f1-4d02d5cbecc1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/nissan/Nissan_Pixo.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Nissan Qashqai",
+      "Marca": "nissan",
+      "Descripcion": "Modelo: Nissan Qashqai (J11 / J12 1.3 DIG-T - 2018 – 2024) | Motor: 0986221079",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_2.jpg?alt=media&token=c3889a39-61df-48a7-b70c-9dc2f73db898",
+      "RutaLocal": "archivos_almacenamiento/bobinas/nissan/Nissan_Qashqai.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Nissan X-Trail",
+      "Marca": "nissan",
+      "Descripcion": "Modelo: Nissan X-Trail (T32 1.3 DIG-T - 2019 – 2021) | Motor: 0986221079",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_2.jpg?alt=media&token=c3889a39-61df-48a7-b70c-9dc2f73db898",
+      "RutaLocal": "archivos_almacenamiento/bobinas/nissan/Nissan_X-Trail.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Qg15",
+      "Marca": "nissan",
+      "Descripcion": "Modelo: QG15 | Motor: Estándar",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FNissan%2Fnissa_qg15.jpg?alt=media&token=f5ba6a5a-bc6e-494b-a8b7-ced433cfc011",
+      "RutaLocal": "archivos_almacenamiento/bobinas/nissan/Qg15.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "opel": [
+    {
+      "Codigo": "Opel Agila",
+      "Marca": "opel",
+      "Descripcion": "Modelo: Opel Agila B (Hermano gemelo del Suzuki Splash 1.0L / 1.2L - 2008 – 2014) | Motor: 33400-85K20",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fsuzuki_2.jpg?alt=media&token=37aad06d-52b1-4320-94f1-4d02d5cbecc1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/opel/Opel_Agila.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Opel Corsa",
+      "Marca": "opel",
+      "Descripcion": "Modelo: Opel Corsa F (1.2 Turbo de Origen PSA - 2019 – 2024) | Motor: 18324025",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_3.jpg?alt=media&token=1cbbc180-0e1c-450b-9d07-5637458b5547",
+      "RutaLocal": "archivos_almacenamiento/bobinas/opel/Opel_Corsa.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Opel Crossland X",
+      "Marca": "opel",
+      "Descripcion": "Modelo: Opel Crossland X (1.2 Turbo - 2017 – 2023) | Motor: 18324025",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_3.jpg?alt=media&token=1cbbc180-0e1c-450b-9d07-5637458b5547",
+      "RutaLocal": "archivos_almacenamiento/bobinas/opel/Opel_Crossland_X.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "peugeot": [
+    {
+      "Codigo": "Peugeot 106 (Fase II)",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 106 (Fase II -  1996 – 2004 )  | Motor: 5970.55 (o equivalente 5970.A8)",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_1.jpg?alt=media&token=418f454a-8c59-40ef-9e12-0928189ee952",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_106__Fase_II_.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 2008",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 2008 (Primera Generación 2013 – 2019) | Motor: 9871214580",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fcitroen%2Fcitroen.jpg?alt=media&token=ef5277ce-8381-46c8-869a-83592f99b210",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_2008.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 2008_3",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 2008 (1.2 PureTech Turbo GT Line - 2015 – 2024) | Motor: 18324025",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_3.jpg?alt=media&token=1cbbc180-0e1c-450b-9d07-5637458b5547",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_2008_3.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 206",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 206 (1998 – 2007) | Motor: 5970.55",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_1.jpg?alt=media&token=418f454a-8c59-40ef-9e12-0928189ee952",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_206.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 208 (Fase I y II)",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 208 (Fase I y II - 2012 – 2019) | Motor: 9871214580 (Reemplazo OEM: 5970.G1 / 5970.H3)",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fcitroen%2Fcitroen.jpg?alt=media&token=ef5277ce-8381-46c8-869a-83592f99b210",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_208__Fase_I_y_II_.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 208_2",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 208 (1.2 PureTech Turbo - 2015 – 2023) | Motor: 18324025",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_3.jpg?alt=media&token=1cbbc180-0e1c-450b-9d07-5637458b5547",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_208_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 208_3",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 208 (1.6 VTi / GTi Motor Prince - 2012 – 2018) | Motor: 12137575010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_3.jpg?alt=media&token=0926fee9-16f4-4a52-a580-cd50b891cbce",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_208_3.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 3008",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 3008 (Segunda Generación 2016 – 2020) | Motor: 9871214580",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fcitroen%2Fcitroen.jpg?alt=media&token=ef5277ce-8381-46c8-869a-83592f99b210",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_3008.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 3008_2",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 3008 (1.2 PureTech - 2016 – 2023) | Motor: 18324025",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_3.jpg?alt=media&token=1cbbc180-0e1c-450b-9d07-5637458b5547",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_3008_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 306 (Fase II)",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 306 (Fase II - 1997 – 2002) | Motor: 5970.55 (o equivalente 5970.48)",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_1.jpg?alt=media&token=418f454a-8c59-40ef-9e12-0928189ee952",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_306__Fase_II_.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 308",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 308 (MK2 / MK3 1.2 PureTech - 2014 – 2024) | Motor: 18324025",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fmitsubishi%2Fmitsubishi_3.jpg?alt=media&token=1cbbc180-0e1c-450b-9d07-5637458b5547",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_308.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 308 (Segunda Generación)",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 308 (Segunda Generación - 2013 – 2021) | Motor: 9871214580",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fcitroen%2Fcitroen.jpg?alt=media&token=ef5277ce-8381-46c8-869a-83592f99b210",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_308__Segunda_Generaci_n_.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 308_3",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 308 (Primera y Segunda Generacion 1.6 THP - 2008 – 2017) | Motor: 12137575010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_3.jpg?alt=media&token=0926fee9-16f4-4a52-a580-cd50b891cbce",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_308_3.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 406",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 406 ( 1999 – 2004) | Motor: 5970.55",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_1.jpg?alt=media&token=418f454a-8c59-40ef-9e12-0928189ee952",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_406.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot 408",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot 408 (Primera Generacion 1.6 THP Turbo - 2010 – 2018) | Motor: 12137575010",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_3.jpg?alt=media&token=0926fee9-16f4-4a52-a580-cd50b891cbce",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_408.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot Partner (Fase I  II)",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot Partner (Fase I / II - 1996 – 2008) | Motor: Estándar",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fpeugeot%2Fpeugeot_1.jpg?alt=media&token=418f454a-8c59-40ef-9e12-0928189ee952",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_Partner__Fase_I__II_.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Peugeot Partner Rifter",
+      "Marca": "peugeot",
+      "Descripcion": "Modelo: Peugeot Partner / Rifter (2015 – 2021)  | Motor: 9871214580",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fcitroen%2Fcitroen.jpg?alt=media&token=ef5277ce-8381-46c8-869a-83592f99b210",
+      "RutaLocal": "archivos_almacenamiento/bobinas/peugeot/Peugeot_Partner_Rifter.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "pontiac": [
+    {
+      "Codigo": "Pontiac",
+      "Marca": "pontiac",
+      "Descripcion": "Modelo: Pontiac Vibe (Base / GT 1.8L - 2003 – 2008) | Motor: 0221504020",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Ftoyota_2.jpg?alt=media&token=c89311ba-1964-409d-b7c3-a61544b43fdf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/pontiac/Pontiac.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "porsche": [
+    {
+      "Codigo": "Porsche Cayenne",
+      "Marca": "porsche",
+      "Descripcion": "Modelo: Porsche Cayenne (9PA / 92A V8 S, GTS, Turbo y Turbo S - 2003 – 2014) | Motor: 0986221069",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FPorsche%2Fporsche.jpg?alt=media&token=e2899444-9abe-4f78-a51d-e92c26fef7ec",
+      "RutaLocal": "archivos_almacenamiento/bobinas/porsche/Porsche_Cayenne.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Porsche Cayenne_2",
+      "Marca": "porsche",
+      "Descripcion": "Modelo: Porsche Cayenne (9PA VR6 3.2L / 3.6L - 2003 – 2010) | Motor: 955602101",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FPorsche%2Fporsche_2.jpg?alt=media&token=ec5dbe10-8a4d-4e77-ae86-4c225bb9d530",
+      "RutaLocal": "archivos_almacenamiento/bobinas/porsche/Porsche_Cayenne_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Porsche Panamera",
+      "Marca": "porsche",
+      "Descripcion": "Modelo: Porsche Panamera (970 V8 S, 4S, GTS, Turbo y Turbo S - 2009 – 2013) | Motor: 0986221069",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FPorsche%2Fporsche.jpg?alt=media&token=e2899444-9abe-4f78-a51d-e92c26fef7ec",
+      "RutaLocal": "archivos_almacenamiento/bobinas/porsche/Porsche_Panamera.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "renault": [
+    {
+      "Codigo": "Renault Arkana",
+      "Marca": "renault",
+      "Descripcion": "Modelo: Renault Arkana (1.3 TCe Mild Hybrid - 2019 – 2025) | Motor: 0986221079",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_2.jpg?alt=media&token=c3889a39-61df-48a7-b70c-9dc2f73db898",
+      "RutaLocal": "archivos_almacenamiento/bobinas/renault/Renault_Arkana.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Renault Captur",
+      "Marca": "renault",
+      "Descripcion": "Modelo: Renault Captur (Fase II 1.3 TCe - 2019 – 2024) | Motor: 0986221079",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_2.jpg?alt=media&token=c3889a39-61df-48a7-b70c-9dc2f73db898",
+      "RutaLocal": "archivos_almacenamiento/bobinas/renault/Renault_Captur.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Renault Clio",
+      "Marca": "renault",
+      "Descripcion": "Modelo: Renault Clio V (1.3 TCe - 2019 – 2023) | Motor: 0986221079",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_2.jpg?alt=media&token=c3889a39-61df-48a7-b70c-9dc2f73db898",
+      "RutaLocal": "archivos_almacenamiento/bobinas/renault/Renault_Clio.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Renault Clio_2",
+      "Marca": "renault",
+      "Descripcion": "Modelo: Renault Clio II (1.4 16V / 1.6 16V - 1999 – 2009) | Motor: 2526117A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_3.jpg?alt=media&token=f885a8a1-bc52-4ec9-a3d2-c70e611f99cf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/renault/Renault_Clio_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Renault Duster",
+      "Marca": "renault",
+      "Descripcion": "Modelo: Renault Duster (Fase II 1.3 TCe Turbo - 2020 – 2025) | Motor: 0986221079",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_2.jpg?alt=media&token=c3889a39-61df-48a7-b70c-9dc2f73db898",
+      "RutaLocal": "archivos_almacenamiento/bobinas/renault/Renault_Duster.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Renault Kadjar",
+      "Marca": "renault",
+      "Descripcion": "Modelo: Renault Kadjar (1.3 TCe - 2018 – 2022) | Motor: 0986221079",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_2.jpg?alt=media&token=c3889a39-61df-48a7-b70c-9dc2f73db898",
+      "RutaLocal": "archivos_almacenamiento/bobinas/renault/Renault_Kadjar.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Renault Kangoo",
+      "Marca": "renault",
+      "Descripcion": "Modelo: Renault Kangoo I (1.6 16V Express - 2001 – 2012) | Motor: 2526117A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_3.jpg?alt=media&token=f885a8a1-bc52-4ec9-a3d2-c70e611f99cf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/renault/Renault_Kangoo.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Renault Logan",
+      "Marca": "renault",
+      "Descripcion": "Modelo: Renault Logan I (1.6 16V K4M - 2004 – 2013) | Motor: 2526117A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_3.jpg?alt=media&token=f885a8a1-bc52-4ec9-a3d2-c70e611f99cf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/renault/Renault_Logan.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Renault Megane",
+      "Marca": "renault",
+      "Descripcion": "Modelo: Renault Megane I / II (1.4 16V / 1.6 16V - 1999 – 2009) | Motor: 2526117A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_3.jpg?alt=media&token=f885a8a1-bc52-4ec9-a3d2-c70e611f99cf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/renault/Renault_Megane.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Renault Sandero",
+      "Marca": "renault",
+      "Descripcion": "Modelo: Renault Sandero I (Stepway / Pack 1.6 16V - 2007 – 2014) | Motor: 2526117A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_3.jpg?alt=media&token=f885a8a1-bc52-4ec9-a3d2-c70e611f99cf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/renault/Renault_Sandero.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Renault Scenic",
+      "Marca": "renault",
+      "Descripcion": "Modelo: Renault Scenic I / II (1.4 16V / 1.6 16V - 1999 – 2009) | Motor: 2526117A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FRenault%2Frenaul_3.jpg?alt=media&token=f885a8a1-bc52-4ec9-a3d2-c70e611f99cf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/renault/Renault_Scenic.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "seat": [
+    {
+      "Codigo": "Seat Cordoba",
+      "Marca": "seat",
+      "Descripcion": "Modelo: Seat Cordoba (MK2 1.2L 12V / 1.4L 16V - 2002 – 2009) | Motor: 030905115A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FVolkswagen%2Fvolkswagen_2.jpg?alt=media&token=86261afa-ac3d-48e1-8fd9-cd42f829f05a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/seat/Seat_Cordoba.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Seat Ibiza",
+      "Marca": "seat",
+      "Descripcion": "Modelo: Seat Ibiza (MK3 y MK4 1.2L 12V / 1.4L 16V - 2002 – 2015) | Motor: 030905115A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FVolkswagen%2Fvolkswagen_2.jpg?alt=media&token=86261afa-ac3d-48e1-8fd9-cd42f829f05a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/seat/Seat_Ibiza.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "skoda": [
+    {
+      "Codigo": "Skoda Fabia",
+      "Marca": "skoda",
+      "Descripcion": "Modelo: Skoda Fabia (MK1 y MK2 1.2L HTP / 1.4L 16V - 2001 – 2014) | Motor: 030905115A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FVolkswagen%2Fvolkswagen_2.jpg?alt=media&token=86261afa-ac3d-48e1-8fd9-cd42f829f05a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/skoda/Skoda_Fabia.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "subaru": [
+    {
+      "Codigo": "Subaru Forester",
+      "Marca": "subaru",
+      "Descripcion": "Modelo: Subaru Forester (Segunda y Tercera Generacion 2.0 X / XS - 2005 – 2010) | Motor: FK0186",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSubaru%2Fsubaru_1.jpg?alt=media&token=3cfdc3b2-b654-4c78-b2ab-eb8e9767e3c6",
+      "RutaLocal": "archivos_almacenamiento/bobinas/subaru/Subaru_Forester.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Subaru Impreza",
+      "Marca": "subaru",
+      "Descripcion": "Modelo: Subaru Impreza (Tercera Generacion 2.0 R / Sport - 2007 – 2011) | Motor: FK0186",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSubaru%2Fsubaru_1.jpg?alt=media&token=3cfdc3b2-b654-4c78-b2ab-eb8e9767e3c6",
+      "RutaLocal": "archivos_almacenamiento/bobinas/subaru/Subaru_Impreza.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Subaru Legacy",
+      "Marca": "subaru",
+      "Descripcion": "Modelo: Subaru Legacy (Cuarta Generacion 2.0 R / 2.5 i - 2003 – 2009) | Motor: FK0186",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSubaru%2Fsubaru_1.jpg?alt=media&token=3cfdc3b2-b654-4c78-b2ab-eb8e9767e3c6",
+      "RutaLocal": "archivos_almacenamiento/bobinas/subaru/Subaru_Legacy.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Subaru Outback",
+      "Marca": "subaru",
+      "Descripcion": "Modelo: Subaru Outback (Tercera Generacion 2.5 i - 2004 – 2009) | Motor: FK0186",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSubaru%2Fsubaru_1.jpg?alt=media&token=3cfdc3b2-b654-4c78-b2ab-eb8e9767e3c6",
+      "RutaLocal": "archivos_almacenamiento/bobinas/subaru/Subaru_Outback.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "suzuki": [
+    {
+      "Codigo": "Suzuki Alto",
+      "Marca": "suzuki",
+      "Descripcion": "Modelo: Suzuki Alto (Septima y Octava Generacion 1.0L K10B - 2009 – 2021) | Motor: 33400-85K20",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fsuzuki_2.jpg?alt=media&token=37aad06d-52b1-4320-94f1-4d02d5cbecc1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/suzuki/Suzuki_Alto.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Suzuki Celerio",
+      "Marca": "suzuki",
+      "Descripcion": "Modelo: Suzuki Celerio (Primera y Segunda Generacion 1.0L K10B - 2009 – 2021) | Motor: 33400-85K20",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fsuzuki_2.jpg?alt=media&token=37aad06d-52b1-4320-94f1-4d02d5cbecc1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/suzuki/Suzuki_Celerio.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Suzuki Grand Vitara",
+      "Marca": "suzuki",
+      "Descripcion": "Modelo: Suzuki Grand Vitara 3.2L V6 de 2009 a 2010 (Bobina de Encendido Individual Denso) | Motor: 099700-1180",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fbobina_chevrolet_5.JPG?alt=media&token=d2cbb1ff-5c72-4a45-b722-edcbfa624d0f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/suzuki/Suzuki_Grand_Vitara.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Suzuki Splash",
+      "Marca": "suzuki",
+      "Descripcion": "Modelo: Suzuki Splash (1.0L K10B / 1.2L K12B - 2008 – 2014) | Motor: 33400-85K20",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fsuzuki_2.jpg?alt=media&token=37aad06d-52b1-4320-94f1-4d02d5cbecc1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/suzuki/Suzuki_Splash.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Suzuki Swift",
+      "Marca": "suzuki",
+      "Descripcion": "Modelo: Suzuki Swift (Tercera y Cuarta Generacion 1.2L K12B - 2010 – 2017) | Motor: 33400-85K20",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fsuzuki_2.jpg?alt=media&token=37aad06d-52b1-4320-94f1-4d02d5cbecc1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/suzuki/Suzuki_Swift.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Suzuki XL-7",
+      "Marca": "suzuki",
+      "Descripcion": "Modelo: Suzuki XL-7 3.6L V6 de 2007 a 2009 (Bobina de Encendido Individual Denso) | Motor: 099700-1180",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fbobina_chevrolet_5.JPG?alt=media&token=d2cbb1ff-5c72-4a45-b722-edcbfa624d0f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/suzuki/Suzuki_XL-7.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "grand.nomade",
+      "Marca": "suzuki",
+      "Descripcion": "Modelo: Suzuki Grand Nomade ( 2005 – 2015) | Motor: Estándar",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fsuzuki.jpg?alt=media&token=ad242cb7-3a61-4f32-a247-40dbaf1a5e17",
+      "RutaLocal": "archivos_almacenamiento/bobinas/suzuki/grand_nomade.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "suzuki.grand.vitara",
+      "Marca": "suzuki",
+      "Descripcion": "Modelo: Suzuki Grand Vitara (2005 – 2015) | Motor: 33400-65J00",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FSuzuki%2Fsuzuki.jpg?alt=media&token=ad242cb7-3a61-4f32-a247-40dbaf1a5e17",
+      "RutaLocal": "archivos_almacenamiento/bobinas/suzuki/suzuki_grand_vitara.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "toyota": [
+    {
+      "Codigo": "Toyota Avanza",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota Avanza (Primera y Segunda Generacion 1.3L / 1.5L - 2003 – 2015) | Motor: 099700-0570",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FDaihatsu%2Fdaihatsu.jpg?alt=media&token=2c10c664-e035-4e6b-b902-ed7592e01e08",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_Avanza.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota Celica",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota Celica (T230 GT / GTS 1.8L - 1999 – 2006) | Motor: 0221504020",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Ftoyota_2.jpg?alt=media&token=c89311ba-1964-409d-b7c3-a61544b43fdf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_Celica.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota Corolla",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota Corolla (E120 / E130 1.8L 1ZZ-FE - 2000 – 2008) | Motor: 0221504020",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Ftoyota_2.jpg?alt=media&token=c89311ba-1964-409d-b7c3-a61544b43fdf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_Corolla.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota Corolla (1.4  1.6)",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota Corolla 1.4L / 1.6L Motores 4ZZ-FE / 3ZZ-FE de 2000 a 2007 (Bobina de Encendido Tipo Lápiz de 4 Pines) | Motor: 90919-02236",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Ftoyota_yaris.JPG?alt=media&token=a3d9bab1-f82f-4b27-8b03-79b20d686d56",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_Corolla__1_4__1_6_.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota Corolla_2",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota Corolla 1.8L Motor 2ZR-FE / 2ZR-FBE de 2009 a 2019 (Bobina de Encendido Tipo Lápiz de 4 Pines) | Motor: 90919-02258 90919-C2003",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Fbobina_toyota.JPG?alt=media&token=afeeb85d-6ccb-4d45-b108-d890213a012f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_Corolla_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota Echo",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota Echo 1.5L Motor 1NZ-FE de 2000 a 2005 (Bobina de Encendido Tipo Lápiz de 4 Pines) | Motor: 90919-02236",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Ftoyota_yaris.JPG?alt=media&token=a3d9bab1-f82f-4b27-8b03-79b20d686d56",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_Echo.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota MR2 Spyder",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota MR2 Spyder (W30 1.8L 1ZZ-FE - 1999 – 2007) | Motor: 0221504020",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Ftoyota_2.jpg?alt=media&token=c89311ba-1964-409d-b7c3-a61544b43fdf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_MR2_Spyder.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota Matrix",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota Matrix (E130 1.8L - 2002 – 2008) | Motor: 0221504020",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Ftoyota_2.jpg?alt=media&token=c89311ba-1964-409d-b7c3-a61544b43fdf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_Matrix.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota Matrix_2",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota Matrix 1.8L Motor 2ZR-FE de 2009 a 2013 (Bobina de Encendido Tipo Lápiz de 4 Pines) | Motor: 90919-02258 90919-C2003",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Fbobina_toyota.JPG?alt=media&token=afeeb85d-6ccb-4d45-b108-d890213a012f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_Matrix_2.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota Prius",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota Prius 1.8L Híbrido Motor 2ZR-FXE de 2010 a 2015 (Bobina de Encendido Tipo Lápiz de 4 Pines) | Motor: 90919-02258 90919-C2003",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Fbobina_toyota.JPG?alt=media&token=afeeb85d-6ccb-4d45-b108-d890213a012f",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_Prius.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota RAV4",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota RAV4 (XA20 1.8L 1ZZ-FE - 2000 – 2005) | Motor: 0221504020",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Ftoyota_2.jpg?alt=media&token=c89311ba-1964-409d-b7c3-a61544b43fdf",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_RAV4.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota Rush",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota Rush (Primera Generacion 1.5L - 2006 – 2017) | Motor: 099700-0570",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FDaihatsu%2Fdaihatsu.jpg?alt=media&token=2c10c664-e035-4e6b-b902-ed7592e01e08",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_Rush.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Toyota Yaris",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Toyota Yaris 1.3L / 1.5L Motores 1NZ-FE / 2NZ-FE de 1999 a 2005 (Bobina de Encendido Tipo Lápiz de 4 Pines) | Motor: 90919-02236",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Ftoyota_yaris.JPG?alt=media&token=a3d9bab1-f82f-4b27-8b03-79b20d686d56",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/Toyota_Yaris.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "probox",
+      "Marca": "toyota",
+      "Descripcion": "Modelo: Probox | Motor: 1.6",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Ftoyota%2Ftoyota_probox.jpg?alt=media&token=28116ca7-e9c7-41c3-9974-0e4be21aaeb2",
+      "RutaLocal": "archivos_almacenamiento/bobinas/toyota/probox.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "volkswagen": [
+    {
+      "Codigo": "Volkswagen Fox",
+      "Marca": "volkswagen",
+      "Descripcion": "Modelo: Volkswagen Fox (1.2L 3 Cilindros / 1.4L - 2005 – 2011) | Motor: 030905115A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FVolkswagen%2Fvolkswagen_2.jpg?alt=media&token=86261afa-ac3d-48e1-8fd9-cd42f829f05a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/volkswagen/Volkswagen_Fox.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Volkswagen Gol",
+      "Marca": "volkswagen",
+      "Descripcion": "Modelo: Volkswagen Gol (MK5 / G5 Motores 1.0L / 1.4L - 2008 – 2012) | Motor: 030905115A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FVolkswagen%2Fvolkswagen_2.jpg?alt=media&token=86261afa-ac3d-48e1-8fd9-cd42f829f05a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/volkswagen/Volkswagen_Gol.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Volkswagen Golf",
+      "Marca": "volkswagen",
+      "Descripcion": "Modelo: Volkswagen Golf (MK4 R32 y MK5 R32 VR6 3.2L - 2002 – 2008) | Motor: 022905100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FPorsche%2Fporsche_2.jpg?alt=media&token=ec5dbe10-8a4d-4e77-ae86-4c225bb9d530",
+      "RutaLocal": "archivos_almacenamiento/bobinas/volkswagen/Volkswagen_Golf.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Volkswagen Passat",
+      "Marca": "volkswagen",
+      "Descripcion": "Modelo: Volkswagen Passat (B6 / B7 R36 VR6 3.2L / 3.6L - 2005 – 2015) | Motor: 022905100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FPorsche%2Fporsche_2.jpg?alt=media&token=ec5dbe10-8a4d-4e77-ae86-4c225bb9d530",
+      "RutaLocal": "archivos_almacenamiento/bobinas/volkswagen/Volkswagen_Passat.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Volkswagen Phaeton",
+      "Marca": "volkswagen",
+      "Descripcion": "Modelo: Volkswagen Phaeton (VR6 3.2L / 3.6L - 2002 – 2016) | Motor: 022905100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FPorsche%2Fporsche_2.jpg?alt=media&token=ec5dbe10-8a4d-4e77-ae86-4c225bb9d530",
+      "RutaLocal": "archivos_almacenamiento/bobinas/volkswagen/Volkswagen_Phaeton.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Volkswagen Polo",
+      "Marca": "volkswagen",
+      "Descripcion": "Modelo: Volkswagen Polo (MK4 y MK5 1.2L 3 Cilindros / 1.4L - 2002 – 2014) | Motor: 030905115A",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FVolkswagen%2Fvolkswagen_2.jpg?alt=media&token=86261afa-ac3d-48e1-8fd9-cd42f829f05a",
+      "RutaLocal": "archivos_almacenamiento/bobinas/volkswagen/Volkswagen_Polo.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "Volkswagen Touareg",
+      "Marca": "volkswagen",
+      "Descripcion": "Modelo: Volkswagen Touareg (7L / 7P VR6 3.2L / 3.6L - 2002 – 2018) | Motor: 022905100B",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2FPorsche%2Fporsche_2.jpg?alt=media&token=ec5dbe10-8a4d-4e77-ae86-4c225bb9d530",
+      "RutaLocal": "archivos_almacenamiento/bobinas/volkswagen/Volkswagen_Touareg.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "jetta . bora",
+      "Marca": "volkswagen",
+      "Descripcion": "Modelo: Volkwagen Jetta / Bora | Motor: 0986221023",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Faudi%2Faudi_bobina.jpg?alt=media&token=a31d2750-c9bb-4753-8818-74b823a16ff3",
+      "RutaLocal": "archivos_almacenamiento/bobinas/volkswagen/jetta___bora.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "passat",
+      "Marca": "volkswagen",
+      "Descripcion": "Modelo: Volkwagen Passat | Motor: 06F905115",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Faudi%2Faudi_bobina_2.jpg?alt=media&token=8ac83bfb-3bac-4f81-b180-2f3c08e4ebf1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/volkswagen/passat.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "tiguan2008",
+      "Marca": "volkswagen",
+      "Descripcion": "Modelo: Volkwagen Tiguan (2008 - 2016) | Motor: 06F905115",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Faudi%2Faudi_bobina_2.jpg?alt=media&token=8ac83bfb-3bac-4f81-b180-2f3c08e4ebf1",
+      "RutaLocal": "archivos_almacenamiento/bobinas/volkswagen/tiguan2008.jpg",
+      "Tipo": "COP"
+    },
+    {
+      "Codigo": "volkswagen",
+      "Marca": "volkswagen",
+      "Descripcion": "Modelo: Volkwagen Golf | Motor: 0986221023",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Faudi%2Faudi_bobina.jpg?alt=media&token=a31d2750-c9bb-4753-8818-74b823a16ff3",
+      "RutaLocal": "archivos_almacenamiento/bobinas/volkswagen/volkswagen.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "wuling": [
+    {
+      "Codigo": "Wuling Hongguang",
+      "Marca": "wuling",
+      "Descripcion": "Modelo: Wuling Hongguang (Plataforma Origen del Motor Sail 1.4L - 2010 – 2015) | Motor: 9023781",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fchevrolet%2Fchevrolet_sail.jpg?alt=media&token=1ab3a383-f3b9-472e-bf5f-97ec8fbb0528",
+      "RutaLocal": "archivos_almacenamiento/bobinas/wuling/Wuling_Hongguang.jpg",
+      "Tipo": "COP"
+    }
+  ],
+  "zotye": [
+    {
+      "Codigo": "zotye_bobina",
+      "Marca": "zotye",
+      "Descripcion": "Modelo: Zotye Bobina | Motor: 1.6",
+      "ImagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/bobinas%2Fzotye%2Fzotye_motor.jpg?alt=media&token=c6145104-8351-4122-8696-0ea465f756cc",
+      "RutaLocal": "archivos_almacenamiento/bobinas/zotye/zotye_bobina.jpg",
+      "Tipo": "COP"
+    }
+  ]
+}
