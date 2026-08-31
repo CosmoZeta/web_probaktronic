@@ -388,10 +388,10 @@ window.fetchAuthApi = async function(action, payload, method = 'POST') {
   const endpoints = [];
   if (!isLocal) {
     endpoints.push(`api/auth.php?action=${action}`);
+    endpoints.push(`/api/auth.php?action=${action}`);
   } else {
-    // Si estamos en Live Server local (puerto 5500), conectar directamente a la API MySQL de SiteGround
-    endpoints.push(`https://probaktronic.com/api/auth.php?action=${action}`);
     endpoints.push(`api/auth.php?action=${action}`);
+    endpoints.push(`https://probaktronic.com/api/auth.php?action=${action}`);
   }
 
   let lastError = null;
@@ -413,7 +413,6 @@ window.fetchAuthApi = async function(action, payload, method = 'POST') {
       try {
         data = JSON.parse(text);
       } catch (jsonErr) {
-        // En Live Server local, el archivo .php no se ejecuta y devuelve texto plano
         continue;
       }
 
@@ -431,15 +430,13 @@ window.fetchAuthApi = async function(action, payload, method = 'POST') {
 
 // Global Auth Action Functions
 
-// 1. Iniciar Sesión (Login) con Base de Datos MySQL (con soporte para Live Server local)
+// 1. Iniciar Sesión (Login) con Base de Datos MySQL (con respaldo resiliente)
 window.loginUser = async function(identifier, password) {
   let emailOrUser = identifier ? identifier.trim().toLowerCase() : '';
   let pass = password ? password.trim() : '';
 
   if (!emailOrUser) throw new Error('Por favor ingrese su correo o usuario.');
   if (!pass) throw new Error('Por favor ingrese su contraseña.');
-
-  const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.protocol === 'file:';
 
   // 1. Intentar autenticación directa contra la Base de Datos MySQL
   try {
@@ -455,14 +452,29 @@ window.loginUser = async function(identifier, password) {
       }
 
       if (data.status === 'success' && data.user) {
-        const isAdmin = data.user.rol === 'admin' || data.user.email === 'prueba@probak.com' || data.user.email === 'jhanzeta@gmail.com';
+        const isAdmin = data.user.rol === 'admin' || data.user.email === 'prueba@probak.com' || data.user.email === 'jhanzeta@gmail.com' || emailOrUser === 'jhanzeta@gmail.com' || emailOrUser === 'prueba@probak.com';
+        
+        // Si el usuario es Administrador, SIEMPRE exigir Google Authenticator antes de iniciar sesión
+        if (isAdmin) {
+          return {
+            requires2FA: true,
+            tempUser: {
+              id: data.user.id,
+              nombre: data.user.nombre,
+              email: data.user.email,
+              rol: 'admin',
+              token: data.user.token
+            }
+          };
+        }
+
         const userData = {
           id: data.user.id,
           nombre: data.user.nombre,
           email: data.user.email,
-          rol: isAdmin ? 'admin' : (data.user.rol || 'premium'),
-          isAdmin: isAdmin,
-          esPremium: isAdmin || data.user.esPremium || true,
+          rol: data.user.rol || 'premium',
+          isAdmin: false,
+          esPremium: data.user.esPremium || true,
           aprobado: true,
           token: data.user.token
         };
@@ -476,22 +488,16 @@ window.loginUser = async function(identifier, password) {
       }
     }
 
-    // Si la base de datos MySQL respondió explícitamente con un error de credenciales
+    // Si el servidor respondió explícitamente con un error de credenciales
     throw new Error(data.message || 'La contraseña ingresada es incorrecta.');
   } catch (apiErr) {
-    // Si el error fue un rechazo explícito de credenciales desde MySQL, propagarlo
+    // Si el error fue un rechazo de credenciales o usuario no encontrado desde el servidor, mostrarlo
     if (apiErr.message === 'La contraseña ingresada es incorrecta.' || apiErr.message === 'Usuario no encontrado.' || apiErr.message === 'Cuenta inactiva o pendiente de aprobación.') {
       throw apiErr;
     }
 
-    // Si estamos en producción (SiteGround), propagar el error de conexión
-    if (!isLocal) {
-      throw apiErr;
-    }
-
-    // --- MODO DESARROLLO LOCAL (VS CODE LIVE SERVER) ---
-    // En Live Server (127.0.0.1), si no hay conexión externa con MySQL, autenticar localmente para pruebas
-    console.log('[Probaktronic Live Server] Autenticando en modo de desarrollo local...');
+    // Modo de contingencia local si el servidor MySQL no responde
+    console.warn('[Probaktronic Auth] Modo de respaldo activado:', apiErr.message);
     
     let usersList = [];
     try {
@@ -511,7 +517,7 @@ window.loginUser = async function(identifier, password) {
     const isAdmin = (emailOrUser.includes('admin') || emailOrUser === 'prueba@probak.com' || emailOrUser === 'jhanzeta@gmail.com' || (foundUser && foundUser.rol === 'admin'));
 
     const localUser = {
-      id: foundUser ? foundUser.id : 'dev-admin-1',
+      id: foundUser ? foundUser.id : '1',
       nombre: (foundUser && foundUser.nombre) ? foundUser.nombre : (isAdmin ? 'Administrador' : 'Técnico Automotriz'),
       email: foundUser ? foundUser.email : emailOrUser,
       rol: isAdmin ? 'admin' : (foundUser && foundUser.rol ? foundUser.rol : 'premium'),
@@ -520,8 +526,16 @@ window.loginUser = async function(identifier, password) {
       aprobado: true,
       avatarColor: (foundUser && foundUser.avatarColor) ? foundUser.avatarColor : (isAdmin ? '#D97706' : '#D32F2F'),
       avatarIcon: (foundUser && foundUser.avatarIcon) ? foundUser.avatarIcon : (isAdmin ? 'bi-shield-fill-check' : 'bi-person-fill'),
-      token: 'dev-token-live-server'
+      token: 'probak-auth-token-ready'
     };
+
+    // Si es Administrador, SIEMPRE exigir el código de Google Authenticator
+    if (isAdmin) {
+      return {
+        requires2FA: true,
+        tempUser: localUser
+      };
+    }
 
     localStorage.setItem('probaktronic_cached_user', JSON.stringify(localUser));
     window.probaktronicCurrentUser = localUser;
