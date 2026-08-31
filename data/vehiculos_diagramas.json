@@ -1,0 +1,548 @@
+{
+  "toyota": {
+    "brandData": {
+      "_id": "toyota",
+      "_path": "diagramas/toyota",
+      "marca": "TOYOTA",
+      "nombre": "TOYOTA",
+      "ultimaActualizacion": "2026-08-26T20:27:41.891Z"
+    },
+    "models": {
+      "Corolla ": {
+        "modelData": {
+          "_id": "Corolla ",
+          "_path": "diagramas/toyota/modelos/Corolla ",
+          "nombre": "Toyota corollla 4E FE - 1991 - 2002"
+        },
+        "archivos": [],
+        "anios": {
+          "1991 - 2002": {
+            "anioData": {
+              "_id": "1991 - 2002",
+              "_path": "diagramas/toyota/modelos/Corolla /anios/1991 - 2002"
+            },
+            "motores": {
+              "4E FE": {
+                "motorData": {
+                  "_id": "4E FE",
+                  "_path": "diagramas/toyota/modelos/Corolla /anios/1991 - 2002/motores/4E FE",
+                  "combustible": "gasolina",
+                  "titulo ": "Toyota corollla 4E FE - 1991 - 2002"
+                },
+                "archivos": [
+                  {
+                    "_id": "Toyota corollla 4E FE - 1991 - 2002 - ECU",
+                    "_path": "diagramas/toyota/modelos/Corolla /anios/1991 - 2002/motores/4E FE/archivos/Toyota corollla 4E FE - 1991 - 2002 - ECU",
+                    "titulo": "Toyota corollla 4E FE - 1991 - 2002 - ECU",
+                    "pdfUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2FCorolla%204E%2Ftoyota%20corolla%204e_ecu_c.pdf?alt=media&token=9471f9da-881b-452b-b7c9-e8915c84838b"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "hilux": {
+        "modelData": {
+          "_id": "hilux",
+          "_path": "diagramas/toyota/modelos/hilux",
+          "nombre": "TOYOTA HILUX 2011 - 2015"
+        },
+        "archivos": [
+          {
+            "_id": "TOYOTA HILUX 2011 - 2015  PEDAL",
+            "_path": "diagramas/toyota/modelos/hilux/archivos/TOYOTA HILUX 2011 - 2015  PEDAL",
+            "updatedAt": "2026-08-28T18:34:17.011Z",
+            "componentes_ecu": []
+          },
+          {
+            "_id": "TOYOTA HILUX E.D.U DOS CONECTORES",
+            "_path": "diagramas/toyota/modelos/hilux/archivos/TOYOTA HILUX E.D.U DOS CONECTORES",
+            "componentes_ecu": [],
+            "asegurado": true,
+            "updatedAt": "2026-08-29T21:15:56.624Z"
+          },
+          {
+            "_id": "Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
+            "_path": "diagramas/toyota/modelos/hilux/archivos/Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
+            "allImages": [
+              "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+              "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_ecu_tapa.jpg?alt=media&token=d29fe078-5877-4679-becd-0f6bf0ff2a74"
+            ],
+            "componentes_ecu": [
+              {
+                "id": "ecu_comp_1788036987822",
+                "name": "avvbhfgf",
+                "tipo": "MEMORIA EEPROM / FLASH",
+                "code": "",
+                "category": "EEPROM / Memoria",
+                "customColor": "#a855f7",
+                "manufacturer": "",
+                "package": "",
+                "show_controla": true,
+                "controla": "",
+                "show_voltajes": false,
+                "voltajes": "",
+                "pines_clave": "",
+                "show_fallas": true,
+                "dtcs": "",
+                "fallas_comunes": "",
+                "isLocked": true,
+                "userDefined": true,
+                "isZone": false,
+                "type": "rect",
+                "x": 743,
+                "y": 107,
+                "width": 316,
+                "height": 293,
+                "pinX": 901,
+                "pinY": 254,
+                "baseWidth": 1395,
+                "baseHeight": 1556,
+                "lastSaved": 1788037039719
+              },
+              {
+                "id": "ecu_comp_1788037005660",
+                "name": "gjghjghj",
+                "tipo": "CRISTAL OSCILADOR",
+                "code": "",
+                "category": "Cristal",
+                "customColor": "#ec4899",
+                "manufacturer": "",
+                "package": "",
+                "show_controla": true,
+                "controla": "",
+                "show_voltajes": false,
+                "voltajes": "",
+                "pines_clave": "",
+                "show_fallas": false,
+                "dtcs": "",
+                "fallas_comunes": "",
+                "isLocked": true,
+                "userDefined": true,
+                "isZone": false,
+                "type": "rect",
+                "x": 957,
+                "y": 703,
+                "width": 179,
+                "height": 138,
+                "pinX": 1047,
+                "pinY": 772,
+                "baseWidth": 1395,
+                "baseHeight": 1556,
+                "lastSaved": 1788037039719
+              },
+              {
+                "id": "ecu_comp_1788037030191",
+                "name": "hhhhh",
+                "tipo": "DRIVER DE SENSORES",
+                "code": "",
+                "category": "Driver Sensor",
+                "customColor": "#f97316",
+                "manufacturer": "",
+                "package": "",
+                "show_controla": true,
+                "controla": "",
+                "show_voltajes": false,
+                "voltajes": "",
+                "pines_clave": "",
+                "show_fallas": false,
+                "dtcs": "",
+                "fallas_comunes": "",
+                "isLocked": true,
+                "userDefined": true,
+                "isZone": false,
+                "type": "rect",
+                "x": 499,
+                "y": 666,
+                "width": 151,
+                "height": 118,
+                "pinX": 575,
+                "pinY": 725,
+                "baseWidth": 1395,
+                "baseHeight": 1556,
+                "lastSaved": 1788037039719
+              }
+            ],
+            "modelo": "hilux",
+            "diagramaUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2kd-ftv%2F1787893627422_ecu_hilux_2011.png?alt=media&token=dae47a06-40e7-485b-8ad5-ceef51e0394e",
+            "imagen": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+            "fotoComponente": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+            "marca": "toyota",
+            "imageUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+            "archivoPdf": null,
+            "asegurado": true,
+            "ultimaModificacion": "2026-08-28T05:07:04.671Z",
+            "anio": "2011 - 2015",
+            "ultimaActualizacion": "2026-08-28T17:30:14.697Z",
+            "diagramaImg": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2kd-ftv%2F1787893627422_ecu_hilux_2011.png?alt=media&token=dae47a06-40e7-485b-8ad5-ceef51e0394e",
+            "pdfUrl": null,
+            "formato": "imagen",
+            "archivoUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2kd-ftv%2F1787893627422_ecu_hilux_2011.png?alt=media&token=dae47a06-40e7-485b-8ad5-ceef51e0394e",
+            "fechaAsegurado": "2026-08-28T05:07:04.671Z",
+            "url": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2kd-ftv%2F1787893627422_ecu_hilux_2011.png?alt=media&token=dae47a06-40e7-485b-8ad5-ceef51e0394e",
+            "imagenes": [
+              "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+              "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_ecu_tapa.jpg?alt=media&token=d29fe078-5877-4679-becd-0f6bf0ff2a74"
+            ],
+            "motor": "2kd-ftv",
+            "foto": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+            "updatedAt": "2026-08-29T20:57:19.954Z"
+          }
+        ],
+        "anios": {
+          "2011 - 2015": {
+            "anioData": {
+              "_id": "2011 - 2015",
+              "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015"
+            },
+            "motores": {
+              "2KD-FTV": {
+                "motorData": {
+                  "_id": "2KD-FTV",
+                  "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV",
+                  "combustible": "diesel",
+                  "imagenUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_ecu_tapa.jpg?alt=media&token=d29fe078-5877-4679-becd-0f6bf0ff2a74",
+                  "titulo ": " hilux 2kd o 1kd"
+                },
+                "archivos": [
+                  {
+                    "_id": "TOYOTA HILUX 2011 - 2015  PEDAL",
+                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV/archivos/TOYOTA HILUX 2011 - 2015  PEDAL",
+                    "titulo": "TOYOTA HILUX 2011 - 2015  PEDAL",
+                    "updatedAt": "2026-08-26T02:37:26.704Z",
+                    "componentes_ecu": [],
+                    "pdfUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2FTOYOTA%20HILUX%202011%20-%202015%20%20PEDAL_C.pdf?alt=media&token=be82c648-bf41-40da-8e57-9db7d51ac5fa",
+                    "imagenes": [
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_pedal_1.jpg?alt=media&token=8bbfa96d-3640-46e5-9f7c-c7dcded3a0f5",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_pedal_2.jpg?alt=media&token=f39fa302-dda7-4f22-95af-1e3b0895b80c",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_pedal_3.jpg?alt=media&token=82ef740d-1ce3-4c93-b5ef-8d774ad4a5e5",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_pedal_4.jpg?alt=media&token=b5b75709-baa1-4f78-83b8-2f5b469b74e1"
+                    ]
+                  },
+                  {
+                    "_id": "TOYOTA HILUX E.D.U DOS CONECTORES",
+                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV/archivos/TOYOTA HILUX E.D.U DOS CONECTORES",
+                    "pdfUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2FTOYOTA%20HILUX%20E.D.U%20DOS%20CONECTORES_c.pdf?alt=media&token=772d1c38-1f6b-4085-baaa-db41699a4cf0",
+                    "componentes_ecu": [
+                      {
+                        "id": "ecu_comp_mcu",
+                        "name": "Microcontrolador Principal (MCU)",
+                        "code": "DENSO / TOSHIBA 32-Bit QFP",
+                        "category": "Procesamiento Central",
+                        "x": 580,
+                        "y": 155,
+                        "width": 220,
+                        "height": 230,
+                        "pinX": 690,
+                        "pinY": 270,
+                        "controla": "Cerebro principal de la ECU. Procesa señales de sensores en tiempo real (CKP, CMP, MAP, Temperatura) y comanda el mapa de inyección y presión del Common Rail.",
+                        "voltajes": "VCC: 5.0V / Núcleo: 3.3V",
+                        "fallas_comunes": "Vehículo no arranca, sin comunicación con escáner OBD2 (Sin testigo Check Engine).",
+                        "pines_clave": "Alimentación: Pines 1, 32, 64 &bull; Cristal oscilador: 20MHz"
+                      },
+                      {
+                        "id": "ecu_comp_eeprom",
+                        "name": "Memoria Flash / EEPROM",
+                        "code": "93C86 / 25Cxxx SPI",
+                        "category": "Almacenamiento & Seguridad",
+                        "x": 260,
+                        "y": 170,
+                        "width": 170,
+                        "height": 130,
+                        "pinX": 345,
+                        "pinY": 235,
+                        "controla": "Almacena la codificación del inmovilizador (Llaves/Transponder), número VIN, kilometraje y mapas de calibración del motor.",
+                        "voltajes": "VCC: 5.0V en Pin 8",
+                        "fallas_comunes": "Error de inmovilizador (Luz de seguridad parpadea), bloqueo de arranque, códigos P1600 / B2799.",
+                        "pines_clave": "Pin 1: CS &bull; Pin 4: GND &bull; Pin 8: VCC 5V"
+                      },
+                      {
+                        "id": "ecu_comp_drivers",
+                        "name": "Driver Etapa Inyectores Common Rail",
+                        "code": "SE555 / MOSFET Driver Array",
+                        "category": "Actuadores de Potencia",
+                        "x": 235,
+                        "y": 535,
+                        "width": 170,
+                        "height": 100,
+                        "pinX": 320,
+                        "pinY": 585,
+                        "controla": "Maneja la apertura y corte de los inyectores electrohidráulicos diésel mediante pulsos de alta corriente.",
+                        "voltajes": "Voltaje de disparo: 12V / Retorno señal GND controlada",
+                        "fallas_comunes": "Fallo de cilindro (Misfire), humo negro, códigos P0201, P0202, P0203, P0204.",
+                        "pines_clave": "Gate: PWM 5V &bull; Drain: Señal a Inyector"
+                      }
+                    ],
+                    "updatedAt": "2026-08-26T21:15:26.459Z",
+                    "imagenes": [
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fedu_hilux_2.jpg?alt=media&token=284f9b1f-a9e7-45b7-ab43-52929b9e09cd",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fedu_hilux_2_2.jpg?alt=media&token=46f68c39-45be-4894-a1f7-0cc2cb31109f"
+                    ],
+                    "titulo": "TOYOTA HILUX E.D.U DOS CONECTORES"
+                  },
+                  {
+                    "_id": "TOYOTA HILUX E.D.U TRES CONECTORES",
+                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV/archivos/TOYOTA HILUX E.D.U TRES CONECTORES",
+                    "imagenes": [
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fedu_hilux_3.JPG?alt=media&token=a5820a61-b277-488d-9cb9-15ac7e129e7a",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fedu_hilux_3_2.jpg?alt=media&token=43fb7f88-d2b1-40d5-8995-5f870c27e3df",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fedu_hilux_3_3.jpg?alt=media&token=cdddff2e-b285-485c-9b8d-b55e16c9ef73"
+                    ],
+                    "titulo": "TOYOTA HILUX E.D.U TRES CONECTORES",
+                    "pdfUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2FTOYOTA%20HILUX%20E.D.U%20TRES%20CONECTORES_c.pdf?alt=media&token=85510a6b-ba5c-4ad9-aa22-5ec30b6b5f63"
+                  },
+                  {
+                    "_id": "TOYOTA HILUX inmovilizador y llave antena",
+                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV/archivos/TOYOTA HILUX inmovilizador y llave antena",
+                    "pdfUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2FTOYOTA%20HILUX%20inmovilizador%20y%20llave%20antena_c.pdf?alt=media&token=66842387-5da5-4105-98a2-74dab8ad9749",
+                    "titulo": "TOYOTA HILUX inmovilizador y llave antena",
+                    "imagenes": [
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_llave_1.jpg?alt=media&token=d2158d01-be62-4c92-bbdb-c386a8bd6ce5",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_llave_2.jpg?alt=media&token=79b5947a-9867-4c6a-b54c-b19b24c14b86",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_llave_3.jpg?alt=media&token=ed0c4e2a-5d24-47d3-afb4-dcd9dade4c04",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_llave_4.jpg?alt=media&token=57f33ab4-54ae-4c9c-9faf-153f99656b82"
+                    ]
+                  },
+                  {
+                    "_id": "Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
+                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV/archivos/Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
+                    "url": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2kd-ftv%2Ffotos_galeria%2F1787803994578_placa_toyota_hylux_2011.jpg?alt=media&token=51181e3c-d66c-47b6-9ea7-3b2e3e4d797c",
+                    "componentes_ecu": [
+                      {
+                        "id": "ecu_comp_mcu",
+                        "name": "Microcontrolador Principal (MCU)",
+                        "code": "DENSO / TOSHIBA 32-Bit QFP",
+                        "category": "Microprocesador",
+                        "x": 580,
+                        "y": 155,
+                        "width": 220,
+                        "height": 230,
+                        "pinX": 690,
+                        "pinY": 270,
+                        "controla": "Cerebro principal de la ECU. Procesa señales de sensores en tiempo real (CKP, CMP, MAP, Temperatura) y comanda el mapa de inyección y presión del Common Rail.",
+                        "voltajes": "VCC: 5.0V / Núcleo: 3.3V",
+                        "fallas_comunes": "Vehículo no arranca, sin comunicación con escáner OBD2 (Sin testigo Check Engine).",
+                        "pines_clave": "Alimentación: Pines 1, 32, 64 &bull; Cristal oscilador: 20MHz",
+                        "baseWidth": 1000,
+                        "baseHeight": 1094,
+                        "isLocked": true,
+                        "userDefined": true,
+                        "lastSaved": 1787929895447
+                      },
+                      {
+                        "id": "ecu_comp_eeprom",
+                        "name": "Memoria Flash / EEPROM",
+                        "code": "93C86 / 25Cxxx SPI",
+                        "category": "EEPROM / Memoria",
+                        "x": 260,
+                        "y": 170,
+                        "width": 170,
+                        "height": 130,
+                        "pinX": 345,
+                        "pinY": 235,
+                        "controla": "Almacena la codificación del inmovilizador (Llaves/Transponder), número VIN, kilometraje y mapas de calibración del motor.",
+                        "voltajes": "VCC: 5.0V en Pin 8",
+                        "fallas_comunes": "Error de inmovilizador (Luz de seguridad parpadea), bloqueo de arranque, códigos P1600 / B2799.",
+                        "pines_clave": "Pin 1: CS &bull; Pin 4: GND &bull; Pin 8: VCC 5V",
+                        "baseWidth": 1000,
+                        "baseHeight": 1094,
+                        "isLocked": true,
+                        "userDefined": true,
+                        "lastSaved": 1787929895447
+                      },
+                      {
+                        "id": "ecu_comp_drivers",
+                        "name": "Driver Etapa Inyectores Common Rail",
+                        "code": "SE555 / MOSFET Driver Array",
+                        "category": "Inyectores",
+                        "x": 235,
+                        "y": 535,
+                        "width": 170,
+                        "height": 100,
+                        "pinX": 320,
+                        "pinY": 585,
+                        "controla": "Maneja la apertura y corte de los inyectores electrohidráulicos diésel mediante pulsos de alta corriente.",
+                        "voltajes": "Voltaje de disparo: 12V / Retorno señal GND controlada",
+                        "fallas_comunes": "Fallo de cilindro (Misfire), humo negro, códigos P0201, P0202, P0203, P0204.",
+                        "pines_clave": "Gate: PWM 5V &bull; Drain: Señal a Inyector",
+                        "baseWidth": 1000,
+                        "baseHeight": 1094,
+                        "isLocked": true,
+                        "userDefined": true,
+                        "lastSaved": 1787929895447
+                      }
+                    ],
+                    "allImages": [
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2kd-ftv%2Ffotos_galeria%2F1787803994578_placa_toyota_hylux_2011.jpg?alt=media&token=51181e3c-d66c-47b6-9ea7-3b2e3e4d797c",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_ecu_tapa.jpg?alt=media&token=d29fe078-5877-4679-becd-0f6bf0ff2a74"
+                    ],
+                    "imageUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2kd-ftv%2Ffotos_galeria%2F1787803994578_placa_toyota_hylux_2011.jpg?alt=media&token=51181e3c-d66c-47b6-9ea7-3b2e3e4d797c",
+                    "titulo": "Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
+                    "updatedAt": "2026-08-28T15:11:35.528Z",
+                    "icono": "bi-motherboard-fill",
+                    "pdfUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2FToyota%20Hilux%20-%202KD-FTV%20-%202011-%202015_ECU_c.pdf?alt=media&token=6efbade3-9b3a-4b01-a46a-7ba0ab6a08b3",
+                    "imagenes": [
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2kd-ftv%2Ffotos_galeria%2F1787803994578_placa_toyota_hylux_2011.jpg?alt=media&token=51181e3c-d66c-47b6-9ea7-3b2e3e4d797c",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_ecu_tapa.jpg?alt=media&token=d29fe078-5877-4679-becd-0f6bf0ff2a74"
+                    ]
+                  }
+                ]
+              },
+              "2kd-ftv": {
+                "motorData": {
+                  "_id": "2kd-ftv",
+                  "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2kd-ftv",
+                  "diagramaUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2kd-ftv%2F1787893627422_ecu_hilux_2011.png?alt=media&token=dae47a06-40e7-485b-8ad5-ceef51e0394e",
+                  "url": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2kd-ftv%2F1787893627422_ecu_hilux_2011.png?alt=media&token=dae47a06-40e7-485b-8ad5-ceef51e0394e"
+                },
+                "archivos": [
+                  {
+                    "_id": "TOYOTA HILUX 2011 - 2015  PEDAL",
+                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2kd-ftv/archivos/TOYOTA HILUX 2011 - 2015  PEDAL",
+                    "componentes_ecu": [],
+                    "updatedAt": "2026-08-28T18:34:16.860Z"
+                  },
+                  {
+                    "_id": "TOYOTA HILUX E.D.U DOS CONECTORES",
+                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2kd-ftv/archivos/TOYOTA HILUX E.D.U DOS CONECTORES",
+                    "updatedAt": "2026-08-29T21:15:56.279Z",
+                    "asegurado": true,
+                    "componentes_ecu": []
+                  },
+                  {
+                    "_id": "Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
+                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2kd-ftv/archivos/Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
+                    "anio": "2011 - 2015",
+                    "componentes_ecu": [
+                      {
+                        "id": "ecu_comp_1788036987822",
+                        "name": "avvbhfgf",
+                        "tipo": "MEMORIA EEPROM / FLASH",
+                        "code": "",
+                        "category": "EEPROM / Memoria",
+                        "customColor": "#a855f7",
+                        "manufacturer": "",
+                        "package": "",
+                        "show_controla": true,
+                        "controla": "",
+                        "show_voltajes": false,
+                        "voltajes": "",
+                        "pines_clave": "",
+                        "show_fallas": true,
+                        "dtcs": "",
+                        "fallas_comunes": "",
+                        "isLocked": true,
+                        "userDefined": true,
+                        "isZone": false,
+                        "type": "rect",
+                        "x": 743,
+                        "y": 107,
+                        "width": 316,
+                        "height": 293,
+                        "pinX": 901,
+                        "pinY": 254,
+                        "baseWidth": 1395,
+                        "baseHeight": 1556,
+                        "lastSaved": 1788037039719
+                      },
+                      {
+                        "id": "ecu_comp_1788037005660",
+                        "name": "gjghjghj",
+                        "tipo": "CRISTAL OSCILADOR",
+                        "code": "",
+                        "category": "Cristal",
+                        "customColor": "#ec4899",
+                        "manufacturer": "",
+                        "package": "",
+                        "show_controla": true,
+                        "controla": "",
+                        "show_voltajes": false,
+                        "voltajes": "",
+                        "pines_clave": "",
+                        "show_fallas": false,
+                        "dtcs": "",
+                        "fallas_comunes": "",
+                        "isLocked": true,
+                        "userDefined": true,
+                        "isZone": false,
+                        "type": "rect",
+                        "x": 957,
+                        "y": 703,
+                        "width": 179,
+                        "height": 138,
+                        "pinX": 1047,
+                        "pinY": 772,
+                        "baseWidth": 1395,
+                        "baseHeight": 1556,
+                        "lastSaved": 1788037039719
+                      },
+                      {
+                        "id": "ecu_comp_1788037030191",
+                        "name": "hhhhh",
+                        "tipo": "DRIVER DE SENSORES",
+                        "code": "",
+                        "category": "Driver Sensor",
+                        "customColor": "#f97316",
+                        "manufacturer": "",
+                        "package": "",
+                        "show_controla": true,
+                        "controla": "",
+                        "show_voltajes": false,
+                        "voltajes": "",
+                        "pines_clave": "",
+                        "show_fallas": false,
+                        "dtcs": "",
+                        "fallas_comunes": "",
+                        "isLocked": true,
+                        "userDefined": true,
+                        "isZone": false,
+                        "type": "rect",
+                        "x": 499,
+                        "y": 666,
+                        "width": 151,
+                        "height": 118,
+                        "pinX": 575,
+                        "pinY": 725,
+                        "baseWidth": 1395,
+                        "baseHeight": 1556,
+                        "lastSaved": 1788037039719
+                      }
+                    ],
+                    "fotoComponente": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+                    "marca": "toyota",
+                    "imagen": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+                    "diagramaUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2kd-ftv%2F1787893627422_ecu_hilux_2011.png?alt=media&token=dae47a06-40e7-485b-8ad5-ceef51e0394e",
+                    "fechaAsegurado": "2026-08-28T05:07:04.429Z",
+                    "imagenes": [
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_ecu_tapa.jpg?alt=media&token=d29fe078-5877-4679-becd-0f6bf0ff2a74"
+                    ],
+                    "formato": "imagen",
+                    "foto": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+                    "ultimaActualizacion": "2026-08-28T17:30:14.346Z",
+                    "diagramaImg": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2kd-ftv%2F1787893627422_ecu_hilux_2011.png?alt=media&token=dae47a06-40e7-485b-8ad5-ceef51e0394e",
+                    "url": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2kd-ftv%2F1787893627422_ecu_hilux_2011.png?alt=media&token=dae47a06-40e7-485b-8ad5-ceef51e0394e",
+                    "allImages": [
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+                      "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2011%20-%202015%20motor%20%20hilux%202kd%20o%201kd%2Fhilux_ecu_tapa.jpg?alt=media&token=d29fe078-5877-4679-becd-0f6bf0ff2a74"
+                    ],
+                    "motor": "2kd-ftv",
+                    "modelo": "hilux",
+                    "asegurado": true,
+                    "pdfUrl": null,
+                    "archivoUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2FTOYOTA%2Fhilux%2F2kd-ftv%2F1787893627422_ecu_hilux_2011.png?alt=media&token=dae47a06-40e7-485b-8ad5-ceef51e0394e",
+                    "imageUrl": "https://firebasestorage.googleapis.com/v0/b/probaktronic-app.firebasestorage.app/o/diagramas%2Ftoyota%2Fhilux%2F2011_-_2015%2F2kd-ftv%2Ffotos_ecu%2F1787937475705_FOTOS_DE_ECU_hilux.jpg?alt=media&token=a2eec31f-6244-45e1-9088-a0da60b24a03",
+                    "archivoPdf": null,
+                    "ultimaModificacion": "2026-08-28T05:07:04.429Z",
+                    "updatedAt": "2026-08-29T20:57:19.816Z"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

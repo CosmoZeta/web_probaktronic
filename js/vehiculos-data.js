@@ -16,40 +16,26 @@
       storageUrls: new Map()
     },
 
-    // 1. Resolve Firebase Storage URLs (gs://, storage path, or HTTP)
-    resolveStorageUrl: async function(rawUrl) {
+    // 1. Resolve Storage URLs to local archivos_almacenamiento/
+    resolveStorageUrl: function(rawUrl) {
       if (!rawUrl || typeof rawUrl !== 'string') return '';
       rawUrl = rawUrl.trim();
       if (!rawUrl || rawUrl.includes('logo_probaktronic')) return '';
 
-      if (this.cache.storageUrls.has(rawUrl)) {
-        return this.cache.storageUrls.get(rawUrl);
-      }
-
-      // Direct HTTP / Data URL / Blob URL
-      if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('data:') || rawUrl.startsWith('blob:')) {
-        this.cache.storageUrls.set(rawUrl, rawUrl);
-        return rawUrl;
-      }
-
-      // Local relative paths
-      if (rawUrl.startsWith('imagenes ') || rawUrl.startsWith('imagenes/') || (rawUrl.endsWith('.png') || rawUrl.endsWith('.jpg') || rawUrl.endsWith('.svg')) && !rawUrl.startsWith('diagramas/') && !rawUrl.startsWith('gs://')) {
-        this.cache.storageUrls.set(rawUrl, rawUrl);
-        return rawUrl;
-      }
-
-      // Firebase Storage resolution
-      if (typeof firebase !== 'undefined' && firebase.storage) {
+      // Si es una URL de Firebase Storage, convertir a ruta local en archivos_almacenamiento/
+      if (rawUrl.includes('firebasestorage.googleapis.com') && rawUrl.includes('/o/')) {
         try {
-          const storage = firebase.storage();
-          const ref = rawUrl.startsWith('gs://') ? storage.refFromURL(rawUrl) : storage.ref(rawUrl);
-          const downloadUrl = await ref.getDownloadURL();
-          this.cache.storageUrls.set(rawUrl, downloadUrl);
-          return downloadUrl;
-        } catch (err) {
-          console.warn('Storage resolve notice for [' + rawUrl + ']:', err.message || err);
-        }
+          const encPath = rawUrl.split('/o/')[1].split('?')[0];
+          const decPath = decodeURIComponent(encPath);
+          return `archivos_almacenamiento/${decPath}`;
+        } catch (e) {}
       }
+
+      if (rawUrl.startsWith('gs://')) {
+        const clean = rawUrl.replace('gs://probaktronic-app.firebasestorage.app/', '').replace('gs://probaktronic-app.appspot.com/', '');
+        return `archivos_almacenamiento/${clean}`;
+      }
+
       return rawUrl;
     },
 
@@ -80,91 +66,80 @@
       if (this.cache.diagrams.has(cacheKey)) {
         return this.cache.diagrams.get(cacheKey);
       }
-
       let rawList = [];
-      if (typeof firebase === 'undefined' || !firebase.firestore) return [];
-
-      const db = firebase.firestore();
       const cleanBrand = (brandId || '').toLowerCase().trim();
       const cleanDoc = (modelId || '').toLowerCase().trim();
       const cleanModel = (modelName || '').toLowerCase().trim();
 
       try {
-        const allBrandsSnap = await db.collection('diagramas').get().catch(() => null);
-        const matchingBrandDocs = [];
-
-        if (allBrandsSnap && !allBrandsSnap.empty) {
-          allBrandsSnap.forEach(bDoc => {
-            const bId = bDoc.id.toLowerCase().trim();
-            const bData = bDoc.data() || {};
-            const bName = (bData.nombre || bData.marca || '').toLowerCase().trim();
-            if (bId === cleanBrand || bName === cleanBrand || cleanBrand.includes(bId) || bId.includes(cleanBrand)) {
-              matchingBrandDocs.push(bDoc);
-            }
-          });
-        }
-
-        if (matchingBrandDocs.length === 0) {
-          const brandDirect = Array.from(new Set([brandId, cleanBrand, brandId.toUpperCase(), 'Toyota', 'toyota', 'TOYOTA']));
-          for (const bd of brandDirect) {
-            matchingBrandDocs.push(db.collection('diagramas').doc(bd));
+        if (!window._cachedVehiculosDiagramasTree) {
+          const res = await fetch('data/vehiculos_diagramas.json');
+          if (res.ok) {
+            window._cachedVehiculosDiagramasTree = await res.json();
           }
         }
 
-        for (const bDocRef of matchingBrandDocs) {
-          const bRef = bDocRef.ref || bDocRef;
-          const bVar = bDocRef.id || brandId;
+        const tree = window._cachedVehiculosDiagramasTree || {};
 
-          try {
-            const modelosSnap = await bRef.collection('modelos').get().catch(() => null);
-            if (modelosSnap && !modelosSnap.empty) {
-              for (const mDoc of modelosSnap.docs) {
-                const mId = mDoc.id.toLowerCase().trim();
-                const mData = mDoc.data() || {};
-                const mName = (mData.modelo || mData.nombre || '').toLowerCase().trim();
+        // Buscar marca en el árbol
+        for (const [bKey, bVal] of Object.entries(tree)) {
+          const bClean = bKey.toLowerCase().trim();
+          const bDataName = ((bVal.brandData && bVal.brandData.nombre) || '').toLowerCase().trim();
+          
+          if (bClean === cleanBrand || bClean.includes(cleanBrand) || cleanBrand.includes(bClean) || bDataName.includes(cleanBrand)) {
+            const models = bVal.models || {};
 
-                const isMatch = (
-                  mId === cleanDoc || mId === cleanModel ||
-                  cleanDoc.includes(mId) || mId.includes(cleanDoc) ||
-                  cleanModel.includes(mId) || mId.includes(cleanModel) ||
-                  (cleanDoc.includes('corolla') && mId.includes('corolla')) ||
-                  (cleanDoc.includes('hilux') && mId.includes('hilux')) ||
-                  (cleanDoc.includes('accent') && mId.includes('accent'))
-                );
+            for (const [mKey, mVal] of Object.entries(models)) {
+              const mClean = mKey.toLowerCase().trim();
+              const mDataName = ((mVal.modelData && mVal.modelData.nombre) || '').toLowerCase().trim();
 
-                if (isMatch) {
-                  const aniosSnap = await mDoc.ref.collection('anios').get().catch(() => null);
-                  if (aniosSnap && !aniosSnap.empty) {
-                    for (const anioDoc of aniosSnap.docs) {
-                      const motoresSnap = await anioDoc.ref.collection('motores').get().catch(() => null);
-                      if (motoresSnap && !motoresSnap.empty) {
-                        for (const motorDoc of motoresSnap.docs) {
-                          const archivosSnap = await motorDoc.ref.collection('archivos').get().catch(() => null);
-                          if (archivosSnap && !archivosSnap.empty) {
-                            archivosSnap.forEach(aDoc => {
-                              const aData = aDoc.data() || {};
-                              rawList.push({
-                                id: aDoc.id,
-                                brandDocId: bVar,
-                                modelDocId: mDoc.id,
-                                anioDocId: anioDoc.id,
-                                motorDocId: motorDoc.id,
-                                archDocId: aDoc.id,
-                                ...aData
-                              });
-                            });
-                          }
-                        }
-                      }
+              const isMatch = (
+                mClean === cleanDoc || mClean === cleanModel ||
+                cleanDoc.includes(mClean) || mClean.includes(cleanDoc) ||
+                cleanModel.includes(mClean) || mClean.includes(cleanModel) ||
+                mDataName.includes(cleanModel) || cleanModel.includes(mDataName) ||
+                (cleanDoc.includes('corolla') && mClean.includes('corolla')) ||
+                (cleanDoc.includes('hilux') && mClean.includes('hilux'))
+              );
+
+              if (isMatch) {
+                // 1. Archivos directos del modelo
+                if (Array.isArray(mVal.archivos)) {
+                  mVal.archivos.forEach(a => {
+                    rawList.push({
+                      id: a._id || a.id || a.titulo,
+                      brandDocId: bKey,
+                      modelDocId: mKey,
+                      ...a
+                    });
+                  });
+                }
+
+                // 2. Archivos bajo años -> motores
+                const anios = mVal.anios || {};
+                for (const [aKey, aVal] of Object.entries(anios)) {
+                  const motores = aVal.motores || {};
+                  for (const [motKey, motVal] of Object.entries(motores)) {
+                    if (Array.isArray(motVal.archivos)) {
+                      motVal.archivos.forEach(a => {
+                        rawList.push({
+                          id: a._id || a.id || a.titulo,
+                          brandDocId: bKey,
+                          modelDocId: mKey,
+                          anioDocId: aKey,
+                          motorDocId: motKey,
+                          ...a
+                        });
+                      });
                     }
                   }
                 }
               }
             }
-          } catch (errM) {}
+          }
         }
       } catch (e) {
-        console.warn('Error fetching model diagrams:', e);
+        console.warn('Error cargando árbol local de diagramas:', e);
       }
 
       // Smart Merge: Preserve allImages, photos and hotspots across duplicate document variants

@@ -1,0 +1,54 @@
+[
+  {
+    "id": "0C8bCRDD9sPqGmwfpKNOSvh53aI2",
+    "email": "jhanzeta3@gmail.com",
+    "esPremium": true,
+    "nombre": "jhan zeta",
+    "nombreTecnico": "jhan zeta",
+    "nombreTaller": "Taller Automotriz",
+    "fechaRegistro": "2026-08-25T15:36:25.006Z",
+    "aprobado": true,
+    "rol": "premium"
+  },
+  {
+    "id": "awpdySNYWwN2M9ipENpymvGoA2t2",
+    "nombre": "SEÑOR GATO",
+    "nombreTecnico": "SEÑOR GATO",
+    "avatarSvg": "",
+    "telefono": "",
+    "avatarIcon": "bi-star-fill",
+    "especialidad": "Diagnóstico Electrónico & Scanner",
+    "avatarPhotoURL": "",
+    "updatedAt": "2026-08-27T18:56:18.392Z",
+    "esPremium": true,
+    "email": "prueba@probak.com",
+    "nombreTaller": "Probaktronic Central",
+    "avatarColor": "#D32F2F",
+    "rol": "admin",
+    "aprobado": true,
+    "ubicacion": ""
+  },
+  {
+    "id": "phzBp6fdYLWl2TV1lCEhid5dIIz2",
+    "email": "plataformaprobaktronic@gmail.com",
+    "esPremium": true,
+    "nombreTaller": "Taller Automotriz",
+    "nombre": "jose rucoba",
+    "nombreTecnico": "jose rucoba",
+    "fechaRegistro": "2026-08-29T21:06:58.165Z",
+    "aprobado": true,
+    "rol": "premium"
+  },
+  {
+    "id": "wRmmGpDTU6PeVTKJBPB3H0WQspR2",
+    "rol": "admin",
+    "email": "jhanzeta@gmail.com",
+    "aprobado": true,
+    "esPremium": true,
+    "nombreTaller": "Taller Automotriz",
+    "updatedAt": "2026-08-27T18:56:34.672Z",
+    "fechaRegistro": "2026-08-27T18:32:06.724Z",
+    "nombre": "SR GATO",
+    "nombreTecnico": "SR GATO"
+  }
+]

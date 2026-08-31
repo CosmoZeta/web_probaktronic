@@ -5,27 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Probaktronic - Dashboard Automotriz</title>
   
-  <script>
-    if (sessionStorage.getItem('sidebar_locked') === 'true') {
-      document.documentElement.classList.add('sidebar-minimized-init');
-    }
-  </script>
-
-  <!-- Bootstrap 5 & Icons -->
+  <!-- Google Fonts: Inter & Rajdhani -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap 5 & Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   
   <!-- Stylesheets -->
-  <link href="css/global.css?v=2.7" rel="stylesheet">
+  <link href="css/global.css?v=3.0" rel="stylesheet">
 </head>
 <body>
-
   <div class="app-container">
-    <!-- Tech Circuit Vector Background Watermark -->
+    <!-- Electronic Watermark in Background -->
     <svg class="bg-circuit-watermark" viewBox="0 0 800 600" fill="none">
-      <path d="M 300 0 L 450 150 L 700 150 L 800 250" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 4"/>
-      <circle cx="450" cy="150" r="4" fill="#94A3B8"/>
-      <circle cx="700" cy="150" r="4" fill="#94A3B8"/>
       <path d="M 500 0 L 600 100 L 800 100" stroke="#E2E8F0" stroke-width="1.5"/>
       <circle cx="600" cy="100" r="3" fill="#CBD5E1"/>
     </svg>
@@ -47,7 +42,7 @@
             <i class="bi bi-house-door-fill"></i>
             <span>Página Principal</span>
           </a>
-          <a href="vehiculos.html" class="nav-link-item" title="Vehículos">
+          <a href="vehiculos.html" class="nav-link-item" title="Vehículos" onclick="return window.handleVehiculosNavigation ? window.handleVehiculosNavigation(event) : true;">
             <i class="bi bi-car-front-fill"></i>
             <span>Vehículos</span>
           </a>
@@ -60,8 +55,12 @@
             <span>Galería & Medios</span>
           </a>
           <a href="sensores-actuadores.html" class="nav-link-item" title="Sensores y Actuadores">
-            <i class="bi bi-cpu-fill"></i>
-            <span class="two-lines">Sensores y<br>Actuadores</span>
+            <i class="bi bi-gear-wide-connected"></i>
+            <span>Sensores y Actuadores</span>
+          </a>
+          <a href="bobinas.html" class="nav-link-item" title="Bobinas de Encendido">
+            <i class="bi bi-lightning-charge-fill"></i>
+            <span>Bobinas</span>
           </a>
           <a href="catalogo.html" class="nav-link-item" title="Catálogo">
             <i class="bi bi-journal-text"></i>
@@ -78,15 +77,15 @@
             <i class="bi bi-gear-fill"></i>
             <span>Configuración</span>
           </a>
-          <a href="#" class="nav-link-item" title="Actualizaciones">
+          <a href="#" class="nav-link-item" title="Actualizaciones" onclick="showGlobalToast('Buscando actualizaciones...')">
             <i class="bi bi-arrow-repeat"></i>
             <span>Actualizaciones</span>
           </a>
-          <a href="#" class="nav-link-item" title="Herramientas">
+          <a href="#" class="nav-link-item" title="Herramientas" onclick="showGlobalToast('Herramientas avanzadas...')">
             <i class="bi bi-tools"></i>
             <span>Herramientas</span>
           </a>
-          <a href="#" class="nav-link-item" title="Soporte">
+          <a href="#" class="nav-link-item" title="Soporte" onclick="showGlobalToast('Contactando a Soporte Técnico...')">
             <i class="bi bi-headset"></i>
             <span>Soporte</span>
           </a>
@@ -213,7 +212,7 @@
           <h2 class="card-main-title">CATÁLOGO</h2>
           <div class="title-underline"></div>
           <p class="card-description">
-            Biblioteca técnica y repuestos sincronizados en tiempo real con Firebase.
+            Biblioteca técnica y repuestos sincronizados con Base de Datos MySQL.
           </p>
 
           <div class="card-vehicle-half-illustration">
@@ -293,16 +292,9 @@
     </main>
   </div>
 
-  <!-- Firebase Web SDK Compat Libraries -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/global.js?v=2.5"></script>
-  <script src="js/firebase-catalog.js?v=2.5"></script>
-  <script src="js/auth.js?v=2.5"></script>
-  <script src="js/vehiculos-diagramas.js?v=2.5"></script>
+  <script src="js/global.js?v=5.0"></script>
+  <script src="js/auth.js?v=5.0"></script>
 </body>
 </html>

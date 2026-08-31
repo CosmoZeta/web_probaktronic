@@ -319,56 +319,83 @@ function getBrandLogoUrl(brandKey) {
 }
 
 function loadFirestoreBobinas(grid) {
-  if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function' || !grid) return;
+  if (!grid) return;
 
-  // Show Centered 0-100% Loader Card
-  const loader = window.createCenteredFirebaseLoader(grid, 'Conectando con Cloud Firestore para descargar marcas...');
+  const loader = window.createCenteredFirebaseLoader(grid, 'Conectando con Base de Datos de Bobinas...');
 
-  const db = firebase.firestore();
-  console.log('Querying Firestore collection [bobinas]...');
-
-  db.collection('bobinas').get()
-    .then(snapshot => {
-      loader.finish(() => {
-        if (!snapshot.empty) {
-          console.log(`Loaded ${snapshot.size} brand documents from Firestore [bobinas]`);
-          grid.innerHTML = ''; // Clear loader
-
-          snapshot.forEach(doc => {
-            const docId = doc.id;
-            const data = doc.data() || {};
-            const brandName = (data.nombre || data.marca || docId).trim();
-            const displayName = brandName.charAt(0).toUpperCase() + brandName.slice(1);
-            const logoSrc = data.logo || data.imagen || getBrandLogoUrl(docId);
-
-            const card = document.createElement('div');
-            card.className = 'brand-card';
-            card.setAttribute('data-brand', displayName);
-            card.setAttribute('data-doc-id', docId);
-            card.innerHTML = `
-              <img src="${logoSrc}" alt="${displayName}" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
-              <h4 class="brand-name-title">${displayName}</h4>
-            `;
-            card.onclick = () => openBrandModels(docId, displayName, logoSrc);
-
-            grid.appendChild(card);
-          });
-        } else {
-          grid.innerHTML = `
-            <div class="w-100 text-center py-4" style="grid-column: 1 / -1;">
-              <p class="text-muted">No se encontraron marcas en la colección bobinas.</p>
-            </div>
-          `;
+  // Intentar cargar desde API MySQL, fallback a data/bobinas.json
+  const fetchBrands = async () => {
+    let brandList = [];
+    try {
+      const res = await fetch('api/bobinas.php');
+      if (res.ok) {
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          const json = await res.json();
+          brandList = (json.data || []).map(b => ({
+            id: b.Slug || b.Nombre.toLowerCase(),
+            nombre: b.Nombre,
+            logo: b.LogoUrl || getBrandLogoUrl(b.Slug || b.Nombre)
+          }));
         }
-      });
-    })
-    .catch(err => {
-      console.error('Error querying bobinas:', err);
+      }
+    } catch (e) {
+      console.log('API PHP no disponible, usando almacén local de bobinas...');
+    }
+
+    if (!brandList || brandList.length === 0) {
+      try {
+        const localRes = await fetch('data/bobinas.json');
+        if (localRes.ok) {
+          const localData = await localRes.json();
+          window.localBobinasStore = localData;
+          brandList = Object.keys(localData).map(k => ({
+            id: k,
+            nombre: k.charAt(0).toUpperCase() + k.slice(1),
+            logo: getBrandLogoUrl(k)
+          }));
+        }
+      } catch (err) {
+        console.error('Error cargando almacén local:', err);
+      }
+    }
+
+    loader.finish(() => {
+      if (brandList && brandList.length > 0) {
+        grid.innerHTML = '';
+        brandList.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+        brandList.forEach(brand => {
+          const docId = brand.id;
+          const displayName = brand.nombre;
+          const logoSrc = brand.logo || getBrandLogoUrl(docId);
+
+          const card = document.createElement('div');
+          card.className = 'brand-card';
+          card.setAttribute('data-brand', displayName);
+          card.setAttribute('data-doc-id', docId);
+          card.innerHTML = `
+            <img src="${logoSrc}" alt="${displayName}" class="brand-logo-img" onerror="this.src='logo_probaktronic_solo.png'">
+            <h4 class="brand-name-title">${displayName}</h4>
+          `;
+          card.onclick = () => openBrandModels(docId, displayName, logoSrc);
+          grid.appendChild(card);
+        });
+      } else {
+        grid.innerHTML = `
+          <div class="w-100 text-center py-4" style="grid-column: 1 / -1;">
+            <p class="text-muted">No se encontraron marcas de bobinas registradas.</p>
+          </div>
+        `;
+      }
     });
+  };
+
+  fetchBrands();
 }
 
 // Open Models for Selected Brand
-window.openBrandModels = function(brandDocId, brandName, logoSrc) {
+window.openBrandModels = async function(brandDocId, brandName, logoSrc) {
   const mSearch = document.getElementById('modelSearchInput');
   if (mSearch) mSearch.value = '';
   const mClear = document.getElementById('clearModelSearchBtn');
@@ -393,72 +420,90 @@ window.openBrandModels = function(brandDocId, brandName, logoSrc) {
   if (brandLogo) brandLogo.src = logoSrc || 'logo_probaktronic_solo.png';
   if (brandTitle) brandTitle.textContent = `${brandName} - Modelos de Bobinas`;
 
-  if (modelsListGrid) {
-    // Show Centered 0-100% Loader Card for Models
-    const loader = window.createCenteredFirebaseLoader(modelsListGrid, `Conectando con Cloud Firestore para descargar modelos de ${brandName}...`);
+  if (!modelsListGrid) return;
 
-    const db = firebase.firestore();
-        db.collection('bobinas').doc(brandDocId).collection('modelos').get()
-      .then(snapshot => {
-        loader.finish(() => {
-          if (!snapshot.empty) {
-            modelsListGrid.innerHTML = '';
-            
-            snapshot.forEach(doc => {
-              const data = doc.data() || {};
-              const docId = doc.id;
-              
-              window.currentModelsDataStore[docId] = data;
+  const loader = window.createCenteredFirebaseLoader(modelsListGrid, `Cargando modelos de ${brandName}...`);
 
-              const modelName = data.modelo || docId;
-              const motor = data.motor || 'Estándar';
+  let models = [];
+  const cleanBrand = brandDocId.toLowerCase().trim();
 
-              const carPhotoUrl = getVehicleCarPhotoUrl(brandName, modelName, docId);
-              const thumbHtml = carPhotoUrl ? `
-                <div class="model-car-thumb-wrap">
-                  <img src="${carPhotoUrl}" alt="${modelName}" class="model-car-thumb-img" onerror="this.parentElement.innerHTML='<div class=\\\'model-car-thumb-placeholder\\\'><i class=\\\'bi bi-question-lg\\\'></i></div>'">
-                </div>
-              ` : `
-                <div class="model-car-thumb-wrap">
-                  <div class="model-car-thumb-placeholder"><i class="bi bi-question-lg"></i></div>
-                </div>
-              `;
+  // 1. Intentar desde API MySQL
+  try {
+    const res = await fetch(`api/bobinas.php?marca=${encodeURIComponent(cleanBrand)}`);
+    if (res.ok) {
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        const json = await res.json();
+        models = json.data || [];
+      }
+    }
+  } catch (e) {}
 
-              const card = document.createElement('div');
-              card.className = 'model-item-card';
-              card.innerHTML = `
-                <div class="model-card-header">
-                  ${thumbHtml}
-                  <div class="model-card-info">
-                    <span class="model-card-badge badge-gasolina">Bobina COP / DIS</span>
-                    <h4 class="model-card-title" title="${docId}">${docId}</h4>
-                    <p class="model-card-subtitle" title="${modelName}">${modelName}</p>
-                  </div>
-                </div>
-                <div class="model-card-footer">
-                  <span class="model-card-motor">Motor / Parte: <strong>${motor}</strong></span>
-                  <i class="bi bi-chevron-right"></i>
-                </div>
-              `;
-
-              card.onclick = () => openDiagramViewer(docId);
-              modelsListGrid.appendChild(card);
-            });
-
-            setupModelSearchFilter();
-          } else {
-            modelsListGrid.innerHTML = `
-              <div class="w-100 text-center py-4" style="grid-column: 1 / -1;">
-                <p class="text-muted">No se encontraron modelos para ${brandName}.</p>
-              </div>
-            `;
-          }
-        });
-      })
-      .catch(err => {
-        console.error('Error querying subcollection modelos:', err);
-      });
+  // 2. Fallback a data/bobinas.json
+  if (!models || models.length === 0) {
+    if (!window.localBobinasStore) {
+      try {
+        const localRes = await fetch('data/bobinas.json');
+        if (localRes.ok) window.localBobinasStore = await localRes.json();
+      } catch (err) {}
+    }
+    if (window.localBobinasStore && window.localBobinasStore[cleanBrand]) {
+      models = window.localBobinasStore[cleanBrand];
+    }
   }
+
+  loader.finish(() => {
+    if (models && models.length > 0) {
+      modelsListGrid.innerHTML = '';
+      
+      models.forEach((item, index) => {
+        const docId = item.Codigo || item.modelo || `Bobina #${index + 1}`;
+        window.currentModelsDataStore[docId] = item;
+
+        const modelName = item.modelo || item.Descripcion || docId;
+        const motor = item.motor || item.TipoBobina || 'COP';
+
+        const carPhotoUrl = getVehicleCarPhotoUrl(brandName, modelName, docId);
+        const thumbHtml = carPhotoUrl ? `
+          <div class="model-car-thumb-wrap">
+            <img src="${carPhotoUrl}" alt="${modelName}" class="model-car-thumb-img" onerror="this.parentElement.innerHTML='<div class=\\\'model-car-thumb-placeholder\\\'><i class=\\\'bi bi-question-lg\\\'></i></div>'">
+          </div>
+        ` : `
+          <div class="model-car-thumb-wrap">
+            <div class="model-car-thumb-placeholder"><i class="bi bi-question-lg"></i></div>
+          </div>
+        `;
+
+        const card = document.createElement('div');
+        card.className = 'model-item-card';
+        card.innerHTML = `
+          <div class="model-card-header">
+            ${thumbHtml}
+            <div class="model-card-info">
+              <span class="model-card-badge badge-gasolina">Bobina COP / DIS</span>
+              <h4 class="model-card-title" title="${docId}">${docId}</h4>
+              <p class="model-card-subtitle" title="${modelName}">${modelName}</p>
+            </div>
+          </div>
+          <div class="model-card-footer">
+            <span class="model-card-motor">Motor / Tipo: <strong>${motor}</strong></span>
+            <i class="bi bi-chevron-right"></i>
+          </div>
+        `;
+
+        card.onclick = () => openDiagramViewer(docId);
+        modelsListGrid.appendChild(card);
+      });
+
+      setupModelSearchFilter();
+    } else {
+      modelsListGrid.innerHTML = `
+        <div class="w-100 text-center py-4" style="grid-column: 1 / -1;">
+          <p class="text-muted">No se encontraron modelos para ${brandName}.</p>
+        </div>
+      `;
+    }
+  });
 };
 
 // Open Diagram Viewer for Selected Model (Protected View)
@@ -476,42 +521,35 @@ window.openDiagramViewer = async function(docId) {
   const motorEl = document.getElementById('diagramMotorCode');
   const imgContainer = document.getElementById('diagramImgContainer');
 
-  const modelTitle = data.modelo || docId;
-  const motorCode = data.motor || 'N/A';
+  const modelTitle = data.modelo || data.Descripcion || docId;
+  const motorCode = data.motor || data.TipoBobina || 'N/A';
 
   if (titleEl) titleEl.textContent = `${currentSelectedBrandName} - ${modelTitle}`;
-  if (motorEl) motorEl.textContent = `Código de Motor / Parte: ${motorCode}`;
+  if (motorEl) motorEl.textContent = `Código / Tipo: ${motorCode}`;
 
-  // Dynamically update Pinout and Procedure from Firestore fields (or fallback)
   const pinoutEl = document.getElementById('diagramPinoutText');
   const procedureEl = document.getElementById('diagramProcedureText');
 
-  const customPinout = data.pinout || data.senial || data.pinoutSenial || data.pins || 'Pin 1: +12V Batería | Pin 2: Tierra Chasis | Pin 3: Pulso ECU';
-  const customProcedure = data.procedimiento || data.descripcion || data.procedimientoDiagnostico || data.notas || 'Medir señal PWM con osciloscopio o punta lógica Probaktronic';
+  const customPinout = data.pinout || data.Pinout || data.senial || 'Pin 1: +12V Batería | Pin 2: Tierra Chasis | Pin 3: Pulso ECU';
+  const customProcedure = data.procedimiento || data.Descripcion || 'Medir señal PWM con osciloscopio o punta lógica Probaktronic';
 
-  if (pinoutEl) pinoutEl.textContent = customPinout;
+  if (pinoutEl) pinoutEl.textContent = typeof customPinout === 'object' ? JSON.stringify(customPinout) : customPinout;
   if (procedureEl) procedureEl.textContent = customProcedure;
 
   if (!imgContainer) return;
 
-  // Show Centered 0-100% Loader Card for Diagram Image
-  const loader = window.createCenteredFirebaseLoader(imgContainer, `Conectando con Firebase Storage para obtener el esquema de ${docId}...`);
+  const loader = window.createCenteredFirebaseLoader(imgContainer, `Cargando esquema de ${docId}...`);
 
-  // Find image URL or path in document fields
-  let rawUrl = '';
-  for (const key of Object.keys(data)) {
-    const val = data[key];
-    if (typeof val === 'string' && (val.includes('firebasestorage') || val.includes('http') || val.includes('.png') || val.includes('.jpg') || val.includes('gs://'))) {
-      rawUrl = val.trim();
-      break;
-    }
+  // Ruta local del esquema descargado
+  const brandSlug = (currentSelectedBrandId || '').toLowerCase().trim();
+  const cleanCode = docId.replace(/[^a-zA-Z0-9_-]/g, '_');
+  let finalImageUrl = data.RutaLocal || `archivos_almacenamiento/bobinas/${brandSlug}/${cleanCode}.png`;
+
+  if (!data.RutaLocal && data.ImagenUrl) {
+    finalImageUrl = data.ImagenUrl;
   }
 
-  if (!rawUrl && (data.imageUrl || data.image || data.imagen || data.url)) {
-    rawUrl = (data.imageUrl || data.image || data.imagen || data.url).trim();
-  }
-
-  if (!rawUrl) {
+  if (!finalImageUrl) {
     loader.finish(() => {
       imgContainer.innerHTML = `
         <div class="p-4 text-center text-muted">
@@ -521,20 +559,6 @@ window.openDiagramViewer = async function(docId) {
       `;
     });
     return;
-  }
-
-  // Resolve storage path or gs:// URL if needed
-  let finalImageUrl = rawUrl;
-  if (rawUrl.startsWith('gs://') || (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://'))) {
-    try {
-      if (typeof firebase !== 'undefined' && typeof firebase.storage === 'function') {
-        const storage = firebase.storage();
-        const ref = rawUrl.startsWith('gs://') ? storage.refFromURL(rawUrl) : storage.ref(rawUrl);
-        finalImageUrl = await ref.getDownloadURL();
-      }
-    } catch (err) {
-      console.warn('Firebase Storage ref error:', err.message);
-    }
   }
 
   // Render Image directly with Protection + Multi-level Click & Hover Zoom System

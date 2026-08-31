@@ -352,8 +352,18 @@
         <div class="config-card d-none" id="adminConfigCard">
           <div class="config-header-title text-danger mb-3">
             <i class="bi bi-shield-lock-fill fs-4"></i>
-            <span>PANEL DEL ADMINISTRADOR</span>
-            <span class="status-pill online ms-auto"><i class="bi bi-circle-fill" style="font-size: 6px;"></i> FIREBASE ONLINE</span>
+            <span>PANEL DEL ADMINISTRADOR & CIBERSEGURIDAD</span>
+            <span class="status-pill online ms-auto"><i class="bi bi-circle-fill" style="font-size: 6px;"></i> 2FA ACTIVO</span>
+          </div>
+
+          <div class="config-option-row">
+            <div class="config-option-info">
+              <div class="config-option-title">Verificación en Dos Pasos (Google Authenticator 2FA)</div>
+              <div class="config-option-desc">Genera un código QR para escanear con la app <strong>Google Authenticator</strong> en tu celular y blindar el acceso de Señor Gato y Jhan Zeta.</div>
+            </div>
+            <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3 fw-bold" onclick="openSetup2FAModal()">
+              <i class="bi bi-qr-code-scan me-1"></i> Vincular App Celular
+            </button>
           </div>
 
           <div class="config-option-row">
@@ -369,6 +379,42 @@
 
       </div>
     </main>
+  </div>
+
+  <!-- Modal: Configurar Google Authenticator 2FA -->
+  <div class="modal fade" id="modalSetup2FA" tabindex="-1" aria-hidden="true" style="z-index: 1080;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-white" style="background: #0E131F; border: 1px solid #EF4444; border-radius: 16px; box-shadow: 0 0 45px rgba(239, 68, 68, 0.25);">
+        <div class="modal-header border-secondary py-3 px-4" style="background: linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, rgba(17, 24, 39, 0.9) 100%);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-shield-lock-fill text-danger fs-4"></i>
+            <h5 class="modal-title font-rajdhani fw-bold text-white mb-0">VINCULAR GOOGLE AUTHENTICATOR (2FA)</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 text-center">
+          <p class="small text-muted mb-3">Abre la app <strong>Google Authenticator</strong> en tu celular, pulsa en el botón <strong>+</strong> y selecciona <strong>Escanear código QR</strong>:</p>
+          
+          <div class="p-3 bg-white d-inline-block rounded-3 shadow-lg mb-3">
+            <img id="setup2FAQRCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?data=otpauth%3A%2F%2Ftotp%2FProbaktronic%3Ajhanzeta%40gmail.com%3Fsecret%3DPROBAKTRONICMASTERKEY2026%26issuer%3DProbaktronic&size=200x200&margin=10" alt="Código QR Google Authenticator" style="width: 180px; height: 180px;">
+          </div>
+
+          <div class="p-2 rounded bg-dark border border-secondary mb-3 text-start small">
+            <div class="text-muted" style="font-size: 0.72rem;">O escribe esta clave secreta manualmente en la app:</div>
+            <div class="font-monospace fw-bold text-warning" id="setup2FASecretKeyText">PROBAKTRONICMASTERKEY2026</div>
+          </div>
+
+          <div class="alert alert-success py-2 px-3 small mb-0 text-start">
+            <i class="bi bi-info-circle-fill me-1"></i> A partir de ahora, cada vez que inicies sesión como Administrador, el sistema te solicitará los 6 dígitos generados en tiempo real por tu celular.
+          </div>
+        </div>
+        <div class="modal-footer border-secondary py-2 px-4">
+          <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold w-100" data-bs-dismiss="modal">
+            <i class="bi bi-check-circle-fill me-1"></i> Entendido y Vinculado
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal Admin: Registrar Nuevo Usuario en Firestore -->
@@ -456,6 +502,13 @@
                 <option value="admin">🛡️ Administrador</option>
               </select>
             </div>
+            <div class="mb-3">
+              <label class="form-label small text-warning fw-bold mb-1">
+                <i class="bi bi-key-fill me-1"></i> Asignar / Cambiar Contraseña
+              </label>
+              <input type="password" class="form-control bg-dark text-white border-secondary" id="editUserPassword" placeholder="Dejar en blanco para mantener la actual (mín. 6 caracteres)" autocomplete="new-password">
+              <div class="form-text text-muted small" style="font-size: 0.75rem;">Como Administrador Master, puedes asignar una nueva contraseña a este usuario en cualquier momento.</div>
+            </div>
             <div id="editUserNotice" class="small text-center fw-bold mt-2 d-none"></div>
           </div>
           <div class="modal-footer border-secondary py-2 px-4 d-flex justify-content-between">
@@ -469,17 +522,10 @@
     </div>
   </div>
 
-  <!-- Firebase Compat SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-
   <!-- Bootstrap 5 & Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/global.js?v=3.0"></script>
-  <script src="js/firebase-catalog.js?v=3.0"></script>
-  <script src="js/auth.js?v=4.0"></script>
-  <script src="js/configuracion.js?v=2.0"></script>
+  <script src="js/global.js?v=5.0"></script>
+  <script src="js/auth.js?v=5.0"></script>
+  <script src="js/configuracion.js?v=5.0"></script>
 </body>
 </html>

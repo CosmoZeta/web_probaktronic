@@ -286,7 +286,12 @@ function initVehiculosDiagramasModule() {
         showFuelSelectorView();
         return;
       }
-      // If at Level 1 (fuelView), default link to index.html takes effect!
+
+      if (fuelView && !fuelView.classList.contains('d-none')) {
+        e.preventDefault();
+        window.location.href = 'index.html';
+        return;
+      }
     };
   }
 
@@ -343,19 +348,7 @@ function ensureFirebaseSDKReady(callback) {
     }
   }, 100);
 
-  // Inject scripts if not present
-  if (!document.querySelector('script[src*="firebase-app-compat"]')) {
-    const s1 = document.createElement('script');
-    s1.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
-    s1.onload = () => {
-      if (!document.querySelector('script[src*="firebase-firestore-compat"]')) {
-        const s2 = document.createElement('script');
-        s2.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js';
-        document.head.appendChild(s2);
-      }
-    };
-    document.head.appendChild(s1);
-  }
+  if (callback) callback();
 }
 
 function safeCreateCenteredLoader(container, text) {
@@ -953,93 +946,13 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
 
   if (!connectionListContainer) return;
 
-  const loader = safeCreateCenteredLoader(connectionListContainer, 'Cargando opciones de conexión desde Firebase...');
+  const loader = safeCreateCenteredLoader(connectionListContainer, 'Cargando opciones de conexión...');
 
-  // Query subcollection 'archivos' from Firestore (Universal Case-Insensitive Deep Search)
   let archivosList = [];
   try {
-    const db = firebase.firestore();
-    const cleanBrand = (brandId || '').toLowerCase().trim();
-    const cleanDoc = (docId || '').toLowerCase().trim();
-    const cleanModel = (modelName || '').toLowerCase().trim();
-
-    // 1. Fetch matching brand documents in collection 'diagramas'
-    const allBrandsSnap = await db.collection('diagramas').get().catch(() => null);
-    const matchingBrandDocs = [];
-
-    if (allBrandsSnap && !allBrandsSnap.empty) {
-      allBrandsSnap.forEach(bDoc => {
-        const bId = bDoc.id.toLowerCase().trim();
-        const bData = bDoc.data() || {};
-        const bName = (bData.nombre || bData.marca || '').toLowerCase().trim();
-        if (bId === cleanBrand || bName === cleanBrand || cleanBrand.includes(bId) || bId.includes(cleanBrand)) {
-          matchingBrandDocs.push(bDoc);
-        }
-      });
-    }
-
-    if (matchingBrandDocs.length === 0) {
-      const brandDirect = Array.from(new Set([brandId, cleanBrand, brandId.toUpperCase(), 'Toyota', 'toyota', 'TOYOTA']));
-      for (const bd of brandDirect) {
-        matchingBrandDocs.push(db.collection('diagramas').doc(bd));
-      }
-    }
-
-    // 2. Traverse matching brand docs -> modelos -> anios -> motores -> archivos
-    for (const bDocRef of matchingBrandDocs) {
-      const bRef = bDocRef.ref || bDocRef;
-      const bVar = bDocRef.id || brandId;
-
-      try {
-        const modelosSnap = await bRef.collection('modelos').get().catch(() => null);
-        if (modelosSnap && !modelosSnap.empty) {
-          for (const mDoc of modelosSnap.docs) {
-            const mId = mDoc.id.toLowerCase().trim();
-            const mData = mDoc.data() || {};
-            const mName = (mData.modelo || mData.nombre || '').toLowerCase().trim();
-
-            const isMatch = (
-              mId === cleanDoc || mId === cleanModel ||
-              cleanDoc.includes(mId) || mId.includes(cleanDoc) ||
-              cleanModel.includes(mId) || mId.includes(cleanModel) ||
-              (cleanDoc.includes('corolla') && mId.includes('corolla')) ||
-              (cleanDoc.includes('hilux') && mId.includes('hilux')) ||
-              (cleanDoc.includes('accent') && mId.includes('accent'))
-            );
-
-            if (isMatch) {
-              const aniosSnap = await mDoc.ref.collection('anios').get().catch(() => null);
-              if (aniosSnap && !aniosSnap.empty) {
-                for (const anioDoc of aniosSnap.docs) {
-                  const motoresSnap = await anioDoc.ref.collection('motores').get().catch(() => null);
-                  if (motoresSnap && !motoresSnap.empty) {
-                    for (const motorDoc of motoresSnap.docs) {
-                      const archivosSnap = await motorDoc.ref.collection('archivos').get().catch(() => null);
-                      if (archivosSnap && !archivosSnap.empty) {
-                        archivosSnap.forEach(aDoc => {
-                          const aData = aDoc.data() || {};
-                          archivosList.push({
-                            id: aDoc.id,
-                            brandDocId: bVar,
-                            modelDocId: mDoc.id,
-                            anioDocId: anioDoc.id,
-                            motorDocId: motorDoc.id,
-                            archDocId: aDoc.id,
-                            ...aData
-                          });
-                        });
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      } catch (errM) {}
-    }
+    archivosList = await VehiculosData.fetchModelDiagrams(brandId, docId, modelName);
   } catch (e) {
-    console.warn('Error querying archivos subcollection:', e);
+    console.warn('Error cargando diagramas:', e);
   }
 
   // Filter out any deleted diagrams
@@ -1284,22 +1197,18 @@ window.checkIsAdmin = function() {
   return !!(u && (u.email === 'prueba@probak.com' || u.rol === 'admin' || u.isAdmin === true));
 };
 
-// Universal Cached Resolver for Firebase Storage URIs
+// Universal Cached Resolver for Storage URIs to local files
 window.resolveFirebaseStorageUrl = async function(rawUrl) {
   if (window.VehiculosData && typeof window.VehiculosData.resolveStorageUrl === 'function') {
-    return await window.VehiculosData.resolveStorageUrl(rawUrl);
+    return window.VehiculosData.resolveStorageUrl(rawUrl);
   }
   if (!rawUrl || typeof rawUrl !== 'string') return '';
   rawUrl = rawUrl.trim();
-  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('data:') || rawUrl.startsWith('blob:')) return rawUrl;
-  if (typeof firebase !== 'undefined' && firebase.storage) {
+  if (rawUrl.includes('firebasestorage.googleapis.com') && rawUrl.includes('/o/')) {
     try {
-      const storage = firebase.storage();
-      const ref = rawUrl.startsWith('gs://') ? storage.refFromURL(rawUrl) : storage.ref(rawUrl);
-      return await ref.getDownloadURL();
-    } catch (err) {
-      console.warn('Storage resolve notice for [' + rawUrl + ']:', err.message || err);
-    }
+      const encPath = rawUrl.split('/o/')[1].split('?')[0];
+      return `archivos_almacenamiento/${decodeURIComponent(encPath)}`;
+    } catch (e) {}
   }
   return rawUrl;
 };

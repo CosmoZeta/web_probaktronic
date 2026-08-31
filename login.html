@@ -111,7 +111,7 @@
         <span id="authAlertText">Mensaje de error</span>
       </div>
 
-      <!-- Login Form -->
+      <!-- Login Form (Paso 1: Credenciales) -->
       <form id="loginAuthForm" novalidate>
         <!-- Email or Username Input -->
         <div class="mb-3">
@@ -145,8 +145,33 @@
         </button>
       </form>
 
+      <!-- 2FA Form (Paso 2: Verificación de Seguridad Google Authenticator) -->
+      <form id="twoFactorAuthForm" class="d-none" novalidate>
+        <div class="text-center mb-3">
+          <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center p-3 mb-2 text-danger shadow-sm">
+            <i class="bi bi-shield-lock-fill fs-2"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-1">Verificación en Dos Pasos (2FA)</h5>
+          <p class="text-muted small mb-0">Cuenta Administrador Maestro protegida. Ingrese el código de 6 dígitos de su app <strong>Google Authenticator</strong> en su celular.</p>
+        </div>
+
+        <div class="mb-3">
+          <label for="twoFactorCodeInput" class="form-label text-dark fw-semibold small text-center w-100 mb-1">CÓDIGO DE 6 DÍGITOS</label>
+          <input type="text" class="form-control text-center font-monospace fw-bold fs-2" id="twoFactorCodeInput" placeholder="000000" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" style="letter-spacing: 8px;">
+        </div>
+
+        <button type="submit" class="btn btn-auth-submit w-100 d-flex align-items-center justify-content-center gap-2 mb-2" id="btnVerify2FASubmit">
+          <span id="btn2FAText">VERIFICAR Y ACCEDER</span>
+          <div class="spinner-border spinner-border-sm d-none" id="twoFactorSpinner" role="status"></div>
+        </button>
+
+        <button type="button" class="btn btn-link text-secondary w-100 btn-sm text-decoration-none" id="btnCancel2FA">
+          <i class="bi bi-arrow-left me-1"></i> Cancelar y volver
+        </button>
+      </form>
+
       <!-- Bottom Links -->
-      <div class="text-center pt-3 border-top">
+      <div class="text-center pt-3 border-top" id="authBottomLinks">
         <p class="small text-muted mb-2">
           ¿No tienes una cuenta activada? 
           <a href="registro.html" class="text-danger fw-bold text-decoration-none">Regístrate aquí</a>
@@ -159,27 +184,31 @@
     </div>
   </div>
 
-  <!-- Firebase Compatibility SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
   <!-- Bootstrap & Auth JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/global.js"></script>
-  <script src="js/auth.js?v=4.0"></script>
+  <script src="js/global.js?v=5.0"></script>
+  <script src="js/auth.js?v=6.0"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('loginAuthForm');
+      const loginForm = document.getElementById('loginAuthForm');
+      const twoFactorForm = document.getElementById('twoFactorAuthForm');
       const emailInput = document.getElementById('emailInput');
       const passwordInput = document.getElementById('passwordInput');
+      const twoFactorCodeInput = document.getElementById('twoFactorCodeInput');
       const togglePasswordBtn = document.getElementById('togglePasswordBtn');
       const alertEl = document.getElementById('authAlert');
       const alertText = document.getElementById('authAlertText');
       const btnSubmit = document.getElementById('btnLoginSubmit');
       const btnSubmitText = document.getElementById('btnSubmitText');
       const spinner = document.getElementById('loginSpinner');
+      const btnVerify2FA = document.getElementById('btnVerify2FASubmit');
+      const btn2FAText = document.getElementById('btn2FAText');
+      const twoFactorSpinner = document.getElementById('twoFactorSpinner');
+      const btnCancel2FA = document.getElementById('btnCancel2FA');
+      const authBottomLinks = document.getElementById('authBottomLinks');
+
+      let pending2FAUser = null;
 
       // Toggle Password Visibility
       togglePasswordBtn.addEventListener('click', () => {
@@ -188,8 +217,18 @@
         togglePasswordBtn.querySelector('i').className = type === 'password' ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill';
       });
 
-      // Handle Login Form Submit
-      form.addEventListener('submit', async (e) => {
+      // Cancel 2FA and return to Step 1
+      btnCancel2FA.addEventListener('click', () => {
+        pending2FAUser = null;
+        twoFactorForm.classList.add('d-none');
+        loginForm.classList.remove('d-none');
+        if (authBottomLinks) authBottomLinks.classList.remove('d-none');
+        alertEl.classList.add('d-none');
+        twoFactorCodeInput.value = '';
+      });
+
+      // Handle Step 1: Login Form Submit
+      loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         alertEl.classList.add('d-none');
 
@@ -201,34 +240,72 @@
           return;
         }
 
-        // Show Spinner
         btnSubmit.disabled = true;
         btnSubmitText.textContent = 'AUTENTICANDO...';
         spinner.classList.remove('d-none');
 
         try {
-          await window.loginUser(email, password);
+          const authResult = await window.loginUser(email, password);
+
+          // Si requiere verificación en dos pasos (Google Authenticator)
+          if (authResult && authResult.requires2FA) {
+            pending2FAUser = authResult.tempUser;
+            loginForm.classList.add('d-none');
+            twoFactorForm.classList.remove('d-none');
+            if (authBottomLinks) authBottomLinks.classList.add('d-none');
+            twoFactorCodeInput.focus();
+            return;
+          }
+
           if (typeof showGlobalToast === 'function') {
             showGlobalToast('¡Inicio de sesión exitoso!');
           }
           setTimeout(() => {
             window.location.href = 'index.html';
-          }, 600);
+          }, 500);
+
         } catch (err) {
           console.error('Error al iniciar sesión:', err);
-          let msg = err.message || 'Error al iniciar sesión.';
-          if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-            msg = 'La contraseña o correo/usuario ingresado es incorrecto.';
-          } else if (err.code === 'auth/user-not-found') {
-            msg = 'No existe una cuenta registrada con este correo o usuario.';
-          } else if (err.code === 'auth/invalid-email') {
-            msg = 'El formato del correo electrónico es inválido.';
-          }
-          showError(msg);
+          showError(err.message || 'La contraseña o usuario ingresado es incorrecto.');
         } finally {
           btnSubmit.disabled = false;
           btnSubmitText.textContent = 'INGRESAR AL SISTEMA';
           spinner.classList.add('d-none');
+        }
+      });
+
+      // Handle Step 2: 2FA Google Authenticator Submit
+      twoFactorForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        alertEl.classList.add('d-none');
+
+        const code = twoFactorCodeInput.value.trim();
+        if (!code || code.length < 6) {
+          showError('Por favor ingrese el código de 6 dígitos.');
+          return;
+        }
+
+        btnVerify2FA.disabled = true;
+        btn2FAText.textContent = 'VERIFICANDO...';
+        twoFactorSpinner.classList.remove('d-none');
+
+        try {
+          await window.verify2FALogin(pending2FAUser, code);
+
+          if (typeof showGlobalToast === 'function') {
+            showGlobalToast('¡Verificación 2FA completada! Bienvenido Administrador.');
+          }
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 500);
+
+        } catch (err) {
+          console.error('Error 2FA:', err);
+          showError(err.message || 'Código de seguridad incorrecto.');
+        } finally {
+          btnVerify2FA.disabled = false;
+          btn2FAText.textContent = 'VERIFICAR Y ACCEDER';
+          twoFactorSpinner.classList.add('d-none');
         }
       });
 

@@ -984,9 +984,9 @@
             <i class="bi bi-list"></i>
             <span class="menu-pill-text">MENÚ</span>
           </button>
-        <a href="index.html" class="btn-back-square" id="btnBackView" title="Volver a la Página Principal">
+        <button type="button" class="btn-back-square border-0" id="btnBackView" title="Volver">
           <i class="bi bi-arrow-left"></i>
-        </a>
+        </button>
         <div class="flex-grow-1">
           <h1 class="page-title fs-2 mb-0" id="vehiculosHeaderTitle">SELECCIONAR VEHÍCULO</h1>
           <div class="page-subtitle mt-1" id="vehiculosHeaderSubtitle">Seleccione la marca y modelo para consultar los esquemas de conexión y diagnóstico</div>
@@ -1027,7 +1027,7 @@
           <!-- Card Gasolina -->
           <div class="col-md-5">
             <div class="fuel-type-card h-100 position-relative" onclick="selectFuelType('gasolina')">
-              <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'fuel_gasolina', 'Gasolina')" title="Personalizar ícono de Gasolina">
+              <button type="button" class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'fuel_gasolina', 'Gasolina')" title="Personalizar ícono de Gasolina">
                 <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
               </button>
               <div class="fuel-icon-wrap bg-danger-subtle text-danger" data-icon-key="fuel_gasolina">
@@ -1035,7 +1035,7 @@
               </div>
               <h3 class="font-rajdhani fw-bold text-dark fs-2 mb-2">GASOLINA</h3>
               <p class="text-muted small mb-3">Sistemas de inyección electrónica MPFI, GDI, cuerpos de aceleración TPS y sensores ciclo Otto.</p>
-              <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold" onclick="selectFuelType('gasolina')">
+              <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold" onclick="event.stopPropagation(); selectFuelType('gasolina')">
                 Ingresar a Gasolina <i class="bi bi-arrow-right ms-1"></i>
               </button>
             </div>
@@ -1044,7 +1044,7 @@
           <!-- Card Diesel -->
           <div class="col-md-5">
             <div class="fuel-type-card h-100 position-relative cursor-pointer" onclick="selectFuelType('diesel')">
-              <button class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'fuel_diesel', 'Diesel')" title="Personalizar ícono de Diésel">
+              <button type="button" class="btn btn-outline-danger admin-card-icon-edit-btn position-absolute top-0 end-0 m-2 rounded-circle p-1 shadow-sm d-none" onclick="openAdminMechanicalIconPicker(event, 'fuel_diesel', 'Diesel')" title="Personalizar ícono de Diésel">
                 <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
               </button>
               <div class="fuel-icon-wrap bg-dark text-white" data-icon-key="fuel_diesel">
@@ -1052,7 +1052,7 @@
               </div>
               <h3 class="font-rajdhani fw-bold text-dark fs-2 mb-2">DIESEL</h3>
               <p class="text-muted small mb-3">Sistemas Common Rail, inyectores piezoeléctricos, bombas EDC y unidades de control Heavy Duty.</p>
-              <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold" onclick="selectFuelType('diesel')">
+              <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold" onclick="event.stopPropagation(); selectFuelType('diesel')">
                 Ingresar a Diesel <i class="bi bi-arrow-right ms-1"></i>
               </button>
             </div>
@@ -1089,7 +1089,7 @@
               </div>
               <h4 class="font-rajdhani fw-bold text-dark fs-4 mb-1">PICKUP</h4>
               <p class="text-muted small mb-3" style="font-size: 0.8rem;">Camionetas 4x4 / 4x2 (Toyota Hilux, Nissan Frontier, Ford Ranger...)</p>
-              <button class="btn btn-danger btn-sm rounded-pill w-100 fw-bold shadow-sm">
+              <button type="button" class="btn btn-danger btn-sm rounded-pill w-100 fw-bold shadow-sm" onclick="event.stopPropagation(); selectVehicleCategory('pickup', 'diesel', 'PICKUP / CAMIONETAS', 1)">
                 Ver Toyota Hilux <i class="bi bi-arrow-right ms-1"></i>
               </button>
             </div>
@@ -1192,7 +1192,7 @@
               </div>
               <h4 class="font-rajdhani fw-bold text-dark fs-4 mb-1">SEDÁN / HATCHBACK</h4>
               <p class="text-muted small mb-3" style="font-size: 0.8rem;">Vehículos livianos de ciudad y carretera (Corolla, Yaris...)</p>
-              <button class="btn btn-danger btn-sm rounded-pill w-100 fw-bold shadow-sm">
+              <button type="button" class="btn btn-danger btn-sm rounded-pill w-100 fw-bold shadow-sm" onclick="event.stopPropagation(); selectVehicleCategory('sedan', 'gasolina', 'SEDÁN / HATCHBACK', 1)">
                 Ver Autos Sedán <i class="bi bi-arrow-right ms-1"></i>
               </button>
             </div>
@@ -2475,17 +2475,10 @@
   <!-- PDF.js Engine for Pure Image Rendering without Browser PDF Chrome -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-  <!-- Firebase Web SDK Compat Libraries (App, Auth, Firestore & Storage) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/global.js?v=3.0"></script>
-  <script src="js/firebase-catalog.js?v=3.0"></script>
-  <script src="js/auth.js?v=3.0"></script>
+  <script src="js/global.js?v=5.0"></script>
+  <script src="js/auth.js?v=5.0"></script>
   <script src="js/vehiculos-data.js?v=1.0"></script>
   <script src="js/vehiculos-diagramas.js?v=40.0"></script>
 </body>

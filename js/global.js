@@ -542,3 +542,65 @@ function cleanVehicleImageBackground(selector) {
   });
 }
 
+// =========================================================================
+// 🔒 Módulo de Seguridad Silencioso Probaktronic (Invisible al Usuario)
+// (Aplica para usuarios FREE y PREMIUM - Administrador con libertad total)
+// =========================================================================
+(function initProbaktronicSecurityLayer() {
+  function isUserAdmin() {
+    try {
+      if (typeof window.isProbaktronicAdmin === 'function') {
+        return window.isProbaktronicAdmin();
+      }
+      const raw = localStorage.getItem('probaktronic_cached_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        return (u.email === 'prueba@probak.com' || u.email === 'jhanzeta@gmail.com' || u.rol === 'admin' || u.isAdmin === true);
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  // 1. Bloqueo Silencioso de Clic Derecho (Context Menu) para Free y Premium
+  document.addEventListener('contextmenu', (e) => {
+    // Si es Administrador, permitir clic derecho normalmente
+    if (isUserAdmin()) return;
+
+    // Permitir clic derecho en campos de texto para copiar/pegar
+    const isTextInput = e.target.closest('input, textarea, [contenteditable="true"]');
+    if (isTextInput) return;
+
+    // Bloquear de forma silenciosa sin mostrar ningún mensaje ni cartel
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }, { capture: true });
+
+  // 2. Bloqueo Silencioso de Arrastre de Imágenes para Free y Premium
+  document.addEventListener('dragstart', (e) => {
+    // Si es Administrador, permitir arrastre
+    if (isUserAdmin()) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }, { capture: true });
+
+  // 3. Bloqueo Silencioso de Atajos de Guardado para Free y Premium (Ctrl+S, Ctrl+U)
+  document.addEventListener('keydown', (e) => {
+    // Si es Administrador, permitir atajos
+    if (isUserAdmin()) return;
+
+    const isCtrlOrCmd = (e.ctrlKey || e.metaKey);
+    const key = e.key ? e.key.toLowerCase() : '';
+
+    if (isCtrlOrCmd && (key === 's' || key === 'u')) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  }, { capture: true });
+})();
+
+
+

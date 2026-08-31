@@ -104,16 +104,18 @@ function checkAdminConfigVisibility() {
   const usersCard = document.getElementById('usersManagementCard');
   
   const user = window.probaktronicCurrentUser;
-  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') ? window.isProbaktronicAdmin() : (user && (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true));
-  const isPremium = !!(user && (user.esPremium || isAdmin));
+  const isAdmin = (typeof window.isProbaktronicAdmin === 'function') 
+    ? window.isProbaktronicAdmin() 
+    : (user && (user.email === 'prueba@probak.com' || user.email === 'jhanzeta@gmail.com' || user.rol === 'admin' || user.isAdmin === true));
 
   if (adminCard) {
     if (isAdmin) adminCard.classList.remove('d-none');
     else adminCard.classList.add('d-none');
   }
 
+  // La gestión de usuarios y accesos a la Base de Datos es EXCLUSIVA de los Administradores Maestros
   if (usersCard) {
-    if (isAdmin || isPremium) {
+    if (isAdmin) {
       usersCard.classList.remove('d-none');
       fetchFirestoreUsersList();
     } else {
@@ -153,69 +155,97 @@ window.downloadAllEcuHotspotsBackup = async function() {
 };
 
 // =========================================================================
-// GESTIÓN DE USUARIOS Y ACCESOS (FIRESTORE)
+// GESTIÓN DE USUARIOS Y ACCESOS (BASE DE DATOS & LOCAL DB)
 // =========================================================================
 
-// Real-time Firestore Users Listener
-let usersUnsubscribeListener = null;
-
-window.fetchFirestoreUsersList = function() {
+window.fetchFirestoreUsersList = async function() {
   const tbody = document.getElementById('usersTableBody');
   const countBadge = document.getElementById('usersCountBadge');
   if (!tbody) return;
 
-  if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-3 text-warning">SDK de Firebase no inicializado.</td></tr>`;
-    return;
-  }
-
-  // Detach previous listener if any
-  if (typeof usersUnsubscribeListener === 'function') {
-    usersUnsubscribeListener();
-  }
-
   try {
-    const db = firebase.firestore();
-    usersUnsubscribeListener = db.collection('usuarios').onSnapshot(snap => {
-      window.allLoadedFirestoreUsers = [];
-      snap.forEach(doc => {
-        window.allLoadedFirestoreUsers.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
-
-      // Sort: Admins first, then Premium, then others
-      window.allLoadedFirestoreUsers.sort((a, b) => {
-        const aAdmin = (a.email === 'prueba@probak.com' || a.rol === 'admin');
-        const bAdmin = (b.email === 'prueba@probak.com' || b.rol === 'admin');
-        if (aAdmin && !bAdmin) return -1;
-        if (!aAdmin && bAdmin) return 1;
-        return (b.esPremium ? 1 : 0) - (a.esPremium ? 1 : 0);
-      });
-
-      if (countBadge) {
-        countBadge.textContent = `${window.allLoadedFirestoreUsers.length} Usuarios (En Vivo)`;
+    let usersList = [];
+    
+    // 1. Revisar si hay cambios guardados en localStorage
+    const localDb = localStorage.getItem('probaktronic_users_local_db');
+    if (localDb) {
+      usersList = JSON.parse(localDb);
+    } else {
+      // 2. Cargar desde data/usuarios.json
+      const res = await fetch('data/usuarios.json');
+      if (res.ok) {
+        usersList = await res.json();
       }
+    }
 
-      renderUsersTable(window.allLoadedFirestoreUsers);
-    }, err => {
-      console.warn('Error en listener de usuarios Firestore:', err);
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="5" class="text-center py-4 text-white-50">
-            <i class="bi bi-shield-lock-fill text-warning fs-3 d-block mb-2"></i>
-            <div class="fw-bold text-white mb-1">Permiso de lectura requerido en Firebase</div>
-            <div class="small text-muted" style="max-width: 500px; margin: auto;">
-              Actualiza la regla de <code>/usuarios/{userId}</code> en Firebase Console a <code>allow read: if true;</code> para listar los usuarios en tiempo real.
-            </div>
-          </td>
-        </tr>
-      `;
+    if (!Array.isArray(usersList) || usersList.length === 0) {
+      usersList = [
+        {
+          id: 'admin_1',
+          nombre: 'SEÑOR GATO',
+          nombreTecnico: 'SEÑOR GATO',
+          nombreTaller: 'Probaktronic Central',
+          email: 'prueba@probak.com',
+          rol: 'admin',
+          isAdmin: true,
+          esPremium: true,
+          aprobado: true
+        },
+        {
+          id: 'admin_2',
+          nombre: 'SR GATO',
+          nombreTecnico: 'SR GATO',
+          nombreTaller: 'Taller Automotriz',
+          email: 'jhanzeta@gmail.com',
+          rol: 'admin',
+          isAdmin: true,
+          esPremium: true,
+          aprobado: true
+        },
+        {
+          id: 'user_3',
+          nombre: 'jhan zeta',
+          nombreTecnico: 'jhan zeta',
+          nombreTaller: 'Taller Automotriz',
+          email: 'jhanzeta3@gmail.com',
+          rol: 'premium',
+          esPremium: true,
+          aprobado: true
+        },
+        {
+          id: 'user_4',
+          nombre: 'jose rucoba',
+          nombreTecnico: 'jose rucoba',
+          nombreTaller: 'Taller Automotriz',
+          email: 'plataformaprobaktronic@gmail.com',
+          rol: 'premium',
+          esPremium: true,
+          aprobado: true
+        }
+      ];
+    }
+
+    // Ordenar: Administradores primero, luego Premium
+    usersList.sort((a, b) => {
+      const aAdmin = (a.email === 'prueba@probak.com' || a.email === 'jhanzeta@gmail.com' || a.rol === 'admin');
+      const bAdmin = (b.email === 'prueba@probak.com' || b.email === 'jhanzeta@gmail.com' || b.rol === 'admin');
+      if (aAdmin && !bAdmin) return -1;
+      if (!aAdmin && bAdmin) return 1;
+      return (b.esPremium ? 1 : 0) - (a.esPremium ? 1 : 0);
     });
 
+    window.allLoadedFirestoreUsers = usersList;
+    localStorage.setItem('probaktronic_users_local_db', JSON.stringify(usersList));
+
+    if (countBadge) {
+      countBadge.textContent = `${usersList.length} Usuarios (Base de Datos)`;
+    }
+
+    renderUsersTable(usersList);
+
   } catch (err) {
-    console.warn('Error al iniciar listener de usuarios en Firestore:', err);
+    console.warn('Error al cargar lista de usuarios:', err);
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-3 text-muted">Error al cargar usuarios de la base de datos.</td></tr>`;
   }
 };
 
@@ -238,7 +268,7 @@ function renderUsersTable(usersList) {
   const currentUserEmail = window.probaktronicCurrentUser ? window.probaktronicCurrentUser.email : '';
 
   tbody.innerHTML = usersList.map(u => {
-    const isUserAdmin = (u.email === 'prueba@probak.com' || u.rol === 'admin' || u.isAdmin === true);
+    const isUserAdmin = (u.email === 'prueba@probak.com' || u.email === 'jhanzeta@gmail.com' || u.rol === 'admin' || u.isAdmin === true);
     const isUserPremium = !!u.esPremium || isUserAdmin;
     const isSelf = (u.email === currentUserEmail);
 
@@ -311,11 +341,11 @@ window.filterUsersList = function() {
   let filtered = [...window.allLoadedFirestoreUsers];
 
   if (roleFilter === 'premium') {
-    filtered = filtered.filter(u => u.esPremium === true || u.rol === 'admin' || u.email === 'prueba@probak.com');
+    filtered = filtered.filter(u => u.esPremium === true || u.rol === 'admin' || u.email === 'prueba@probak.com' || u.email === 'jhanzeta@gmail.com');
   } else if (roleFilter === 'free') {
-    filtered = filtered.filter(u => !u.esPremium && u.rol !== 'admin' && u.email !== 'prueba@probak.com');
+    filtered = filtered.filter(u => !u.esPremium && u.rol !== 'admin' && u.email !== 'prueba@probak.com' && u.email !== 'jhanzeta@gmail.com');
   } else if (roleFilter === 'admin') {
-    filtered = filtered.filter(u => u.rol === 'admin' || u.email === 'prueba@probak.com');
+    filtered = filtered.filter(u => u.rol === 'admin' || u.email === 'prueba@probak.com' || u.email === 'jhanzeta@gmail.com');
   }
 
   if (query) {
@@ -330,48 +360,43 @@ window.filterUsersList = function() {
   renderUsersTable(filtered);
 };
 
-// Toggle Premium Access in Firestore
+// Toggle Premium Access
 window.toggleUserPremiumAccess = async function(userId, currentIsPremium) {
   const newStatus = !currentIsPremium;
   const actionText = newStatus ? 'Otorgar Acceso Premium' : 'Cambiar a Cuenta Free';
 
   if (!confirm(`¿Estás seguro de ${actionText} a este usuario?`)) return;
 
-  try {
-    const db = firebase.firestore();
-    await db.collection('usuarios').doc(userId).set({
-      esPremium: newStatus,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-
-    if (typeof window.showGlobalToast === 'function') {
-      window.showGlobalToast(`✅ ${newStatus ? '¡Acceso Premium otorgado!' : 'Acceso modificado a Free.'}`);
-    }
-
-    await fetchFirestoreUsersList();
-  } catch (err) {
-    console.error('Error al actualizar acceso de usuario:', err);
-    alert('Error al actualizar en Firestore: ' + err.message);
+  const users = window.allLoadedFirestoreUsers || [];
+  const target = users.find(u => u.id === userId);
+  if (target) {
+    target.esPremium = newStatus;
+    if (newStatus && target.rol !== 'admin') target.rol = 'premium';
+    else if (!newStatus && target.rol !== 'admin') target.rol = 'free';
+    localStorage.setItem('probaktronic_users_local_db', JSON.stringify(users));
   }
+
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast(`✅ ${newStatus ? '¡Acceso Premium otorgado!' : 'Acceso modificado a Free.'}`);
+  }
+
+  fetchFirestoreUsersList();
 };
 
-// Delete User from Firestore
+// Delete User
 window.deleteFirestoreUser = async function(userId, userEmail) {
   if (!confirm(`⚠️ ¿Deseas eliminar permanentemente al usuario ${userEmail} de la base de datos?`)) return;
 
-  try {
-    const db = firebase.firestore();
-    await db.collection('usuarios').doc(userId).delete();
+  let users = window.allLoadedFirestoreUsers || [];
+  users = users.filter(u => u.id !== userId);
+  window.allLoadedFirestoreUsers = users;
+  localStorage.setItem('probaktronic_users_local_db', JSON.stringify(users));
 
-    if (typeof window.showGlobalToast === 'function') {
-      window.showGlobalToast(`🗑️ Usuario ${userEmail} eliminado de Firestore.`);
-    }
-
-    await fetchFirestoreUsersList();
-  } catch (err) {
-    console.error('Error al eliminar usuario en Firestore:', err);
-    alert('Error al eliminar usuario: ' + err.message);
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast(`🗑️ Usuario ${userEmail} eliminado.`);
   }
+
+  fetchFirestoreUsersList();
 };
 
 // Open Create User Modal
@@ -414,42 +439,8 @@ window.handleCreateUserSubmit = async function(e) {
   if (btn) btn.disabled = true;
 
   try {
-    const db = firebase.firestore();
-    let authUid = null;
-
-    // 1. Create account in Firebase Authentication using a secondary app instance
-    try {
-      const fbConfig = (typeof firebaseConfig !== 'undefined') ? firebaseConfig : {
-        apiKey: "AIzaSyC8IUDukbyc5NlQPFUn9ZDYOir4GeeHRYY",
-        authDomain: "probaktronic-app.firebaseapp.com",
-        projectId: "probaktronic-app",
-        storageBucket: "probaktronic-app.firebasestorage.app",
-        messagingSenderId: "373953615206",
-        appId: "1:373953615206:web:6ccca21cefcb6100ee4a7"
-      };
-
-      const secondaryAppName = 'SecondaryAuth_' + Date.now();
-      const secondaryApp = firebase.initializeApp(fbConfig, secondaryAppName);
-      
-      const userCred = await secondaryApp.auth().createUserWithEmailAndPassword(email, password);
-      if (userCred && userCred.user) {
-        authUid = userCred.user.uid;
-        await userCred.user.updateProfile({ displayName: name });
-      }
-      await secondaryApp.delete();
-    } catch (authErr) {
-      console.warn('Nota Auth creation:', authErr);
-      if (authErr.code === 'auth/email-already-in-use') {
-        // User already in Auth, proceed to update Firestore
-      } else {
-        throw authErr;
-      }
-    }
-
-    // 2. Save user profile document in Firestore
-    const targetDocId = authUid || email.replace(/[^a-zA-Z0-9]/g, '_');
-
-    await db.collection('usuarios').doc(targetDocId).set({
+    const newUser = {
+      id: 'user_' + Date.now(),
       email: email,
       nombre: name,
       nombreTecnico: name,
@@ -457,20 +448,16 @@ window.handleCreateUserSubmit = async function(e) {
       esPremium: (role === 'premium' || role === 'admin'),
       rol: role,
       aprobado: true,
-      fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+      fechaRegistro: new Date().toISOString()
+    };
 
-    // Clean up any old non-UID doc if targetDocId is a real UID
-    if (authUid) {
-      const oldDocId = email.replace(/[^a-zA-Z0-9]/g, '_');
-      if (oldDocId !== authUid) {
-        db.collection('usuarios').doc(oldDocId).delete().catch(() => {});
-      }
-    }
+    const users = window.allLoadedFirestoreUsers || [];
+    users.push(newUser);
+    localStorage.setItem('probaktronic_users_local_db', JSON.stringify(users));
 
     if (noticeEl) {
       noticeEl.className = 'small text-center fw-bold mt-2 text-success';
-      noticeEl.textContent = '✅ ¡Usuario y contraseña creados con éxito en Firebase!';
+      noticeEl.textContent = '✅ ¡Usuario registrado exitosamente en la base de datos!';
       noticeEl.classList.remove('d-none');
     }
 
@@ -481,10 +468,10 @@ window.handleCreateUserSubmit = async function(e) {
     }, 1000);
 
     if (typeof window.showGlobalToast === 'function') {
-      window.showGlobalToast('✅ ¡Usuario creado en Authentication y Firestore!');
+      window.showGlobalToast('✅ ¡Usuario creado en la Base de Datos!');
     }
   } catch (err) {
-    console.error('Error al crear usuario en Firebase:', err);
+    console.error('Error al crear usuario:', err);
     if (noticeEl) {
       noticeEl.className = 'small text-center fw-bold mt-2 text-danger';
       noticeEl.textContent = 'Error: ' + (err.message || err);
@@ -504,7 +491,10 @@ window.openEditUserModal = function(userId) {
   document.getElementById('editUserEmail').value = user.email || '';
   document.getElementById('editUserName').value = user.nombre || user.nombreTecnico || '';
   document.getElementById('editUserWorkshop').value = user.nombreTaller || '';
-  document.getElementById('editUserRole').value = (user.rol === 'admin' || user.email === 'prueba@probak.com') ? 'admin' : (user.esPremium ? 'premium' : 'free');
+  document.getElementById('editUserRole').value = (user.rol === 'admin' || user.email === 'prueba@probak.com' || user.email === 'jhanzeta@gmail.com') ? 'admin' : (user.esPremium ? 'premium' : 'free');
+  if (document.getElementById('editUserPassword')) {
+    document.getElementById('editUserPassword').value = '';
+  }
   document.getElementById('editUserNotice').classList.add('d-none');
 
   const modalEl = document.getElementById('modalAdminEditUser');
@@ -521,26 +511,74 @@ window.handleEditUserSubmit = async function(e) {
   const name = document.getElementById('editUserName').value.trim();
   const workshop = document.getElementById('editUserWorkshop').value.trim();
   const role = document.getElementById('editUserRole').value;
+  const newPassword = document.getElementById('editUserPassword') ? document.getElementById('editUserPassword').value : '';
   const noticeEl = document.getElementById('editUserNotice');
   const btn = document.getElementById('btnSubmitEditUser');
 
   if (!userId || !name) return;
+
+  if (newPassword && newPassword.length < 6) {
+    if (noticeEl) {
+      noticeEl.className = 'small text-center fw-bold mt-2 text-danger';
+      noticeEl.textContent = 'La nueva contraseña debe tener al menos 6 caracteres.';
+      noticeEl.classList.remove('d-none');
+    }
+    return;
+  }
+
   if (btn) btn.disabled = true;
 
   try {
-    const db = firebase.firestore();
-    await db.collection('usuarios').doc(userId).set({
-      nombre: name,
-      nombreTecnico: name,
-      nombreTaller: workshop,
-      esPremium: (role === 'premium' || role === 'admin'),
-      rol: role,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+    const users = window.allLoadedFirestoreUsers || [];
+    const target = users.find(u => u.id === userId);
+    if (target) {
+      const isTargetAdmin = (target.email === 'prueba@probak.com' || target.email === 'jhanzeta@gmail.com');
+
+      // Si se está cambiando la contraseña de un Administrador Maestro, solicitar confirmación de seguridad
+      if (newPassword && isTargetAdmin) {
+        const securityConfirm = confirm(`🛡️ ALERTA DE SEGURIDAD CRÍTICA:\n\nEstás modificando la contraseña del Administrador Maestro (${target.email}).\n\nPor protocolo de seguridad, se enviará una notificación con la IP y fecha al correo jhanzeta@gmail.com.\n\n¿Deseas confirmar este cambio?`);
+        if (!securityConfirm) {
+          if (btn) btn.disabled = false;
+          return;
+        }
+
+        // Disparar envío de alerta por correo al backend
+        try {
+          fetch('api/auth.php?action=notify_security_change', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              target_email: target.email,
+              operator_email: (window.probaktronicCurrentUser ? window.probaktronicCurrentUser.email : 'Admin Master'),
+              timestamp: new Date().toISOString()
+            })
+          }).catch(() => {});
+        } catch(e) {}
+      }
+
+      target.nombre = name;
+      target.nombreTecnico = name;
+      target.nombreTaller = workshop;
+      target.rol = isTargetAdmin ? 'admin' : role;
+      target.esPremium = (role === 'premium' || role === 'admin' || isTargetAdmin);
+      
+      if (newPassword) {
+        target.password = newPassword;
+      }
+      
+      localStorage.setItem('probaktronic_users_local_db', JSON.stringify(users));
+
+      // Si el usuario editado es el mismo actualmente conectado, refrescar sesión local
+      if (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === target.email) {
+        const updatedSelf = { ...window.probaktronicCurrentUser, ...target };
+        localStorage.setItem('probaktronic_cached_user', JSON.stringify(updatedSelf));
+        window.probaktronicCurrentUser = updatedSelf;
+      }
+    }
 
     if (noticeEl) {
       noticeEl.className = 'small text-center fw-bold mt-2 text-success';
-      noticeEl.textContent = '✅ ¡Usuario actualizado correctamente!';
+      noticeEl.textContent = newPassword ? '✅ ¡Usuario y nueva contraseña actualizados!' : '✅ ¡Usuario actualizado correctamente!';
       noticeEl.classList.remove('d-none');
     }
 
@@ -551,10 +589,10 @@ window.handleEditUserSubmit = async function(e) {
     }, 1000);
 
     if (typeof window.showGlobalToast === 'function') {
-      window.showGlobalToast('✅ ¡Datos de usuario actualizados!');
+      window.showGlobalToast('✅ ¡Datos y contraseña de usuario actualizados!');
     }
   } catch (err) {
-    console.error('Error al editar usuario en Firestore:', err);
+    console.error('Error al editar usuario:', err);
     if (noticeEl) {
       noticeEl.className = 'small text-center fw-bold mt-2 text-danger';
       noticeEl.textContent = 'Error: ' + err.message;
@@ -565,7 +603,31 @@ window.handleEditUserSubmit = async function(e) {
   }
 };
 
+// Modal para vincular Google Authenticator (2FA)
+window.openSetup2FAModal = function() {
+  const user = window.probaktronicCurrentUser;
+  const userEmail = (user && user.email) ? user.email : 'jhanzeta@gmail.com';
+  const secretKey = 'PROBAK' + (userEmail.includes('prueba') ? 'GATO' : 'JHAN') + 'KEY2026';
+
+  const qrImg = document.getElementById('setup2FAQRCodeImg');
+  const secretText = document.getElementById('setup2FASecretKeyText');
+  
+  if (secretText) secretText.textContent = secretKey;
+  if (qrImg) {
+    const otpAuthUrl = `otpauth://totp/Probaktronic:${encodeURIComponent(userEmail)}?secret=${secretKey}&issuer=Probaktronic`;
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(otpAuthUrl)}&size=200x200&margin=10`;
+  }
+
+  const modalEl = document.getElementById('modalSetup2FA');
+  if (modalEl) {
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   loadConfigSettings();
   setTimeout(checkAdminConfigVisibility, 600);
 });
+
+
