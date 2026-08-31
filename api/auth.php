@@ -77,46 +77,9 @@ switch ($action) {
             exit();
         }
 
-        $user = null;
-        if ($pdo !== null) {
-            try {
-                $stmt = $pdo->prepare("SELECT UsuarioID, Nombre, Email, PasswordHash, Rol, Activo, TwoFactorSecret, TwoFactorEnabled FROM usuarios WHERE Email = ? OR Nombre = ?");
-                $stmt->execute([$email, $email]);
-                $user = $stmt->fetch();
-            } catch (Exception $e) {
-                $user = null;
-            }
-        }
-
-        if (!$user) {
-            // Fallback a data/usuarios.json si MySQL aún no está enlazado
-            $jsonFile = __DIR__ . '/../data/usuarios.json';
-            if (file_exists($jsonFile)) {
-                $rawList = json_decode(file_get_contents($jsonFile), true);
-                if (is_array($rawList)) {
-                    foreach ($rawList as $item) {
-                        $itemEmail = strtolower(trim($item['email'] ?? ''));
-                        $itemName = strtolower(trim($item['nombre'] ?? ''));
-                        $itemTech = strtolower(trim($item['nombreTecnico'] ?? ''));
-                        $target = strtolower($email);
-                        if ($itemEmail === $target || $itemName === $target || $itemTech === $target) {
-                            $isAdminUser = ($item['email'] === 'jhanzeta@gmail.com' || $item['email'] === 'prueba@probak.com' || ($item['rol'] ?? '') === 'admin');
-                            $user = [
-                                'UsuarioID' => $item['id'] ?? 1,
-                                'Nombre' => $item['nombre'] ?? 'Usuario',
-                                'Email' => $item['email'],
-                                'PasswordHash' => $item['password'] ?? '',
-                                'Rol' => $isAdminUser ? 'admin' : ($item['rol'] ?? 'premium'),
-                                'Activo' => 1,
-                                'TwoFactorSecret' => 'PROBAKTRONICMASTERKEY2026',
-                                'TwoFactorEnabled' => 1
-                            ];
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        $stmt = $pdo->prepare("SELECT UsuarioID, Nombre, Email, PasswordHash, Rol, Activo, TwoFactorSecret, TwoFactorEnabled FROM usuarios WHERE Email = ? OR Nombre = ?");
+        $stmt->execute([$email, $email]);
+        $user = $stmt->fetch();
 
         if (!$user) {
             http_response_code(401);
@@ -200,37 +163,9 @@ switch ($action) {
             exit();
         }
 
-        $user = null;
-        if ($pdo !== null) {
-            try {
-                $stmt = $pdo->prepare("SELECT UsuarioID, Nombre, Email, Rol, TwoFactorSecret FROM usuarios WHERE UsuarioID = ? OR Email = ?");
-                $stmt->execute([$userId, $email]);
-                $user = $stmt->fetch();
-            } catch(Exception $e) {
-                $user = null;
-            }
-        }
-
-        if (!$user) {
-            $jsonFile = __DIR__ . '/../data/usuarios.json';
-            if (file_exists($jsonFile)) {
-                $rawList = json_decode(file_get_contents($jsonFile), true);
-                if (is_array($rawList)) {
-                    foreach ($rawList as $item) {
-                        if (strtolower(trim($item['email'] ?? '')) === strtolower($email) || ($item['id'] ?? '') === $userId) {
-                            $user = [
-                                'UsuarioID' => $item['id'] ?? 1,
-                                'Nombre' => $item['nombre'] ?? 'SR GATO',
-                                'Email' => $item['email'],
-                                'Rol' => 'admin',
-                                'TwoFactorSecret' => 'PROBAKTRONICMASTERKEY2026'
-                            ];
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        $stmt = $pdo->prepare("SELECT UsuarioID, Nombre, Email, Rol, TwoFactorSecret FROM usuarios WHERE UsuarioID = ? OR Email = ?");
+        $stmt->execute([$userId, $email]);
+        $user = $stmt->fetch();
 
         if (!$user) {
             http_response_code(401);
@@ -247,11 +182,7 @@ switch ($action) {
             exit();
         }
 
-        if ($pdo) {
-            try {
-                $pdo->prepare("UPDATE usuarios SET UltimoAcceso = NOW() WHERE UsuarioID = ?")->execute([$user['UsuarioID']]);
-            } catch(Exception $e) {}
-        }
+        $pdo->prepare("UPDATE usuarios SET UltimoAcceso = NOW() WHERE UsuarioID = ?")->execute([$user['UsuarioID']]);
 
         echo json_encode([
             'status' => 'success',

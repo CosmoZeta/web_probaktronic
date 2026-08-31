@@ -1197,18 +1197,19 @@ window.checkIsAdmin = function() {
   return !!(u && (u.email === 'prueba@probak.com' || u.rol === 'admin' || u.isAdmin === true));
 };
 
-// Universal Cached Resolver for Storage URIs to local files
+// Universal Cached Resolver for Storage URIs
 window.resolveFirebaseStorageUrl = async function(rawUrl) {
   if (window.VehiculosData && typeof window.VehiculosData.resolveStorageUrl === 'function') {
     return window.VehiculosData.resolveStorageUrl(rawUrl);
   }
   if (!rawUrl || typeof rawUrl !== 'string') return '';
   rawUrl = rawUrl.trim();
-  if (rawUrl.includes('firebasestorage.googleapis.com') && rawUrl.includes('/o/')) {
-    try {
-      const encPath = rawUrl.split('/o/')[1].split('?')[0];
-      return `archivos_almacenamiento/${decodeURIComponent(encPath)}`;
-    } catch (e) {}
+  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('data:') || rawUrl.startsWith('blob:')) {
+    return rawUrl;
+  }
+  if (rawUrl.startsWith('gs://')) {
+    const clean = rawUrl.replace('gs://probaktronic-app.firebasestorage.app/', '').replace('gs://probaktronic-app.appspot.com/', '');
+    return `archivos_almacenamiento/${clean}`;
   }
   return rawUrl;
 };
@@ -1581,6 +1582,7 @@ window.showGalleryImageAtIndex = async function(index) {
     let resolvedSrc = await window.resolveFirebaseStorageUrl(rawSrc);
 
     imgEl.onload = () => {
+      delete imgEl.dataset.triedFallback;
       if (stageLoader) stageLoader.classList.add('d-none');
       window.hideConsoleNoDiagramMessage();
       imgEl.classList.remove('d-none');
@@ -1593,6 +1595,22 @@ window.showGalleryImageAtIndex = async function(index) {
     };
 
     imgEl.onerror = () => {
+      // Intelligent fallback: if HTTPS URL failed or local path failed, try alternative before showing error
+      if (!imgEl.dataset.triedFallback) {
+        imgEl.dataset.triedFallback = 'true';
+        if (resolvedSrc.includes('firebasestorage.googleapis.com') && resolvedSrc.includes('/o/')) {
+          try {
+            const encPath = resolvedSrc.split('/o/')[1].split('?')[0];
+            const localFallback = `archivos_almacenamiento/${decodeURIComponent(encPath)}`;
+            imgEl.src = localFallback;
+            return;
+          } catch (e) {}
+        } else if (rawSrc && rawSrc !== resolvedSrc) {
+          imgEl.src = rawSrc;
+          return;
+        }
+      }
+      delete imgEl.dataset.triedFallback;
       if (stageLoader) stageLoader.classList.add('d-none');
       console.warn('Gallery image failed to load:', resolvedSrc);
       imgEl.classList.add('d-none');
@@ -1601,6 +1619,7 @@ window.showGalleryImageAtIndex = async function(index) {
     };
 
     if (resolvedSrc) {
+      delete imgEl.dataset.triedFallback;
       window.hideConsoleNoDiagramMessage();
       imgEl.classList.remove('d-none');
       imgEl.style.display = 'block';

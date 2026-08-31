@@ -16,19 +16,15 @@
       storageUrls: new Map()
     },
 
-    // 1. Resolve Storage URLs to local archivos_almacenamiento/
+    // 1. Resolve Storage URLs
     resolveStorageUrl: function(rawUrl) {
       if (!rawUrl || typeof rawUrl !== 'string') return '';
       rawUrl = rawUrl.trim();
       if (!rawUrl || rawUrl.includes('logo_probaktronic')) return '';
 
-      // Si es una URL de Firebase Storage, convertir a ruta local en archivos_almacenamiento/
-      if (rawUrl.includes('firebasestorage.googleapis.com') && rawUrl.includes('/o/')) {
-        try {
-          const encPath = rawUrl.split('/o/')[1].split('?')[0];
-          const decPath = decodeURIComponent(encPath);
-          return `archivos_almacenamiento/${decPath}`;
-        } catch (e) {}
+      // Direct HTTP / HTTPS / Data / Blob URLs - keep authentic cloud URL
+      if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('data:') || rawUrl.startsWith('blob:')) {
+        return rawUrl;
       }
 
       if (rawUrl.startsWith('gs://')) {

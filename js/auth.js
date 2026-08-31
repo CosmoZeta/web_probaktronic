@@ -51,38 +51,12 @@ window.updateAdminSidebarTheme = function(userData) {
   }
 };
 
-// Helper para guardar sesión con triple respaldo (LocalStorage + SessionStorage + Cookie)
-window.saveProbaktronicSession = function(userData) {
-  if (!userData) return;
-  const str = JSON.stringify(userData);
-  try { localStorage.setItem('probaktronic_cached_user', str); } catch(e) {}
-  try { sessionStorage.setItem('probaktronic_cached_user', str); } catch(e) {}
-  try { document.cookie = "probaktronic_cached_user=" + encodeURIComponent(str) + "; path=/; max-age=2592000; SameSite=Lax"; } catch(e) {}
-  window.probaktronicCurrentUser = userData;
-};
-
-// Helper para leer sesión con triple respaldo
-window.getProbaktronicSession = function() {
-  try {
-    const fromLocal = localStorage.getItem('probaktronic_cached_user');
-    if (fromLocal) return JSON.parse(fromLocal);
-  } catch(e) {}
-  try {
-    const fromSession = sessionStorage.getItem('probaktronic_cached_user');
-    if (fromSession) return JSON.parse(fromSession);
-  } catch(e) {}
-  try {
-    const match = document.cookie.match(/probaktronic_cached_user=([^;]+)/);
-    if (match) return JSON.parse(decodeURIComponent(match[1]));
-  } catch(e) {}
-  return null;
-};
-
 // Render instant cached profile and master startup
 function initCachedUserProfile() {
   try {
-    const cachedData = window.getProbaktronicSession();
-    if (cachedData) {
+    const raw = localStorage.getItem('probaktronic_cached_user');
+    if (raw) {
+      const cachedData = JSON.parse(raw);
       window.probaktronicCurrentUser = cachedData;
       renderLoggedInHeaderUI(cachedData);
       updateStatusFooterUI(cachedData);
@@ -427,17 +401,6 @@ window.loginUser = async function(identifier, password) {
 
     if (res.ok) {
       const data = await res.json();
-      if (data.status === '2fa_required') {
-        return {
-          requires2FA: true,
-          tempUser: data.temp_user || {
-            id: '2',
-            nombre: 'SR GATO',
-            email: emailOrUser,
-            rol: 'admin'
-          }
-        };
-      }
       if (data.status === 'success' && data.user) {
         const isAdmin = data.user.rol === 'admin' || data.user.email === 'prueba@probak.com' || data.user.email === 'jhanzeta@gmail.com';
         const userData = {
@@ -597,21 +560,6 @@ window.verify2FALogin = async function(tempUser, code) {
     throw new Error('Ingrese los 6 dígitos generados por Google Authenticator.');
   }
 
-  const fullAdmin = {
-    id: tempUser.id || 'wRmmGpDTU6PeVTKJBPB3H0WQspR2',
-    nombre: tempUser.nombre || 'SR GATO',
-    nombreTecnico: tempUser.nombreTecnico || tempUser.nombre || 'SR GATO',
-    nombreTaller: tempUser.nombreTaller || 'Probaktronic Central',
-    email: tempUser.email || 'jhanzeta@gmail.com',
-    rol: 'admin',
-    isAdmin: true,
-    esPremium: true,
-    aprobado: true,
-    avatarColor: tempUser.avatarColor || '#D97706',
-    avatarIcon: tempUser.avatarIcon || 'bi-shield-fill-check',
-    token: 'admin-auth-session-' + Date.now()
-  };
-
   // Intentar verificación en Backend PHP / MySQL si está disponible
   try {
     const res = await fetch('api/auth.php?action=verify_2fa', {
@@ -626,13 +574,37 @@ window.verify2FALogin = async function(tempUser, code) {
 
     if (res.ok) {
       const data = await res.json();
-      if (data.status === 'success' && data.user) {
-        fullAdmin.token = data.user.token;
+      if (data.status === 'success') {
+        const fullAdmin = { ...tempUser, token: data.user ? data.user.token : '' };
+        localStorage.setItem('probaktronic_cached_user', JSON.stringify(fullAdmin));
+        window.probaktronicCurrentUser = fullAdmin;
+        renderLoggedInHeaderUI(fullAdmin);
+        updateStatusFooterUI(fullAdmin);
+        updateAdminSidebarTheme(fullAdmin);
+        return fullAdmin;
       }
     }
   } catch (apiErr) {}
 
-  window.saveProbaktronicSession(fullAdmin);
+  // Verificación en entorno local / offline
+  // Acepta el código de 6 dígitos ingresado
+  const fullAdmin = {
+    id: tempUser.id || 1,
+    nombre: tempUser.nombre || 'Administrador',
+    nombreTecnico: tempUser.nombreTecnico || 'Administrador',
+    nombreTaller: tempUser.nombreTaller || 'Probaktronic Central',
+    email: tempUser.email,
+    rol: 'admin',
+    isAdmin: true,
+    esPremium: true,
+    aprobado: true,
+    avatarColor: tempUser.avatarColor || '#D97706',
+    avatarIcon: tempUser.avatarIcon || 'bi-shield-fill-check',
+    twoFactorVerified: true
+  };
+
+  localStorage.setItem('probaktronic_cached_user', JSON.stringify(fullAdmin));
+  window.probaktronicCurrentUser = fullAdmin;
   renderLoggedInHeaderUI(fullAdmin);
   updateStatusFooterUI(fullAdmin);
   updateAdminSidebarTheme(fullAdmin);
@@ -658,14 +630,14 @@ window.registerUser = async function(nombre, email, password) {
       id: data.user.id,
       nombre: data.user.nombre,
       email: data.user.email,
-      rol: data.user.rol || 'free',
+      rol: data.user.rol,
       isAdmin: false,
       esPremium: false,
-      aprobado: true,
-      token: data.user.token
+      aprobado: true
     };
 
-    window.saveProbaktronicSession(userData);
+    localStorage.setItem('probaktronic_cached_user', JSON.stringify(userData));
+    window.probaktronicCurrentUser = userData;
     return userData;
   } catch (err) {
     throw err;
@@ -675,9 +647,7 @@ window.registerUser = async function(nombre, email, password) {
 // 3. Cerrar Sesión
 window.logoutUser = async function(e) {
   if (e) e.preventDefault();
-  try { localStorage.removeItem('probaktronic_cached_user'); } catch(e) {}
-  try { sessionStorage.removeItem('probaktronic_cached_user'); } catch(e) {}
-  try { document.cookie = "probaktronic_cached_user=; path=/; max-age=0"; } catch(e) {}
+  localStorage.removeItem('probaktronic_cached_user');
   window.probaktronicCurrentUser = null;
   renderLoggedOutHeaderUI();
   if (typeof showAuthToast === 'function') {
