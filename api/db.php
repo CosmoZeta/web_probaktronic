@@ -25,6 +25,6 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false
     ]);
 } catch (PDOException $e) {
-    // Si falla la conexión a MySQL, se permite fallback a base local JSON
+    // Si falla la conexión a MySQL por credenciales en configuración, se permite fallback transparente
     $pdo = null;
 }
