@@ -95,33 +95,28 @@ switch ($action) {
 
         $isAdmin = ($user['Rol'] === 'admin' || $user['Email'] === 'prueba@probak.com' || $user['Email'] === 'jhanzeta@gmail.com');
 
-        // Si tiene PasswordHash verificado o contraseña directa
+        // Validar contraseña estrictamente contra la Base de Datos MySQL
         $passwordOk = false;
         if (!empty($user['PasswordHash']) && $password !== '') {
             if (password_verify($password, $user['PasswordHash'])) {
                 $passwordOk = true;
             } elseif ($password === $user['PasswordHash']) {
+                // Si la contraseña en MySQL estaba en texto plano, encriptarla automáticamente con bcrypt
                 $passwordOk = true;
+                try {
+                    $newHash = password_hash($password, PASSWORD_DEFAULT);
+                    $pdo->prepare("UPDATE usuarios SET PasswordHash = ? WHERE UsuarioID = ?")->execute([$newHash, $user['UsuarioID']]);
+                } catch (Exception $e) {}
             }
-        }
-
-        // Si es Administrador Maestro, admitir contraseñas maestras de setup
-        if ($isAdmin && ($password === 'ecu2026' || $password === '0!KG#Ptgh1XSx6d)GJ4wsEtV' || $password === "w=J|r-g{s\\&-£GV0c+q7'$859" || $password === 'admin' || $password === '123456')) {
-            $passwordOk = true;
-            // Sincronizar hash en la base de datos si es necesario
-            try {
-                $newHash = password_hash($password, PASSWORD_DEFAULT);
-                $pdo->prepare("UPDATE usuarios SET PasswordHash = ? WHERE UsuarioID = ?")->execute([$newHash, $user['UsuarioID']]);
-            } catch (Exception $e) {}
         }
 
         if (!$passwordOk) {
             http_response_code(401);
-            echo json_encode(['status' => 'error', 'message' => 'Contraseña incorrecta.']);
+            echo json_encode(['status' => 'error', 'message' => 'La contraseña ingresada es incorrecta.']);
             exit();
         }
 
-        // Si es Administrador y tiene 2FA explícitamente activado, solicitar Google Authenticator
+        // Si es Administrador y tiene 2FA activado explícitamente, solicitar Google Authenticator
         if ($isAdmin && !empty($user['TwoFactorEnabled']) && $user['TwoFactorEnabled'] == 1 && !empty($user['TwoFactorSecret'])) {
             echo json_encode([
                 'status' => '2fa_required',

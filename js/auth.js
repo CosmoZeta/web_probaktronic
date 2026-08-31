@@ -391,7 +391,7 @@ window.loginUser = async function(identifier, password) {
   if (!emailOrUser) throw new Error('Por favor ingrese su correo o usuario.');
   if (!pass) throw new Error('Por favor ingrese su contraseña.');
 
-  // Intentar autenticación con Backend PHP / MySQL si está disponible
+  // Autenticación directa contra la Base de Datos MySQL en SiteGround
   try {
     const res = await fetch('api/auth.php?action=login', {
       method: 'POST',
@@ -399,8 +399,9 @@ window.loginUser = async function(identifier, password) {
       body: JSON.stringify({ email: emailOrUser, password: pass })
     });
 
+    const data = await res.json();
+
     if (res.ok) {
-      const data = await res.json();
       if (data.status === '2fa_required' && data.temp_user) {
         return {
           requires2FA: true,
@@ -429,135 +430,12 @@ window.loginUser = async function(identifier, password) {
         return userData;
       }
     }
-  } catch (apiErr) {
-    // Si la API no responde (por ejemplo en Live Server local), continuar al autenticador de base local
+
+    // Si la base de datos MySQL indica error de credenciales o usuario no encontrado
+    throw new Error(data.message || 'La contraseña o usuario ingresado es incorrecto.');
+  } catch (err) {
+    throw err;
   }
-
-  // --- Autenticación con Base de Datos Local / JSON ---
-  let usersList = [];
-  try {
-    const res = await fetch('data/usuarios.json?v=' + Date.now());
-    if (res.ok) {
-      usersList = await res.json();
-    }
-  } catch (e) {
-    console.warn('Error al leer data/usuarios.json:', e);
-  }
-
-  // Combinar con localStorage si existe
-  try {
-    const localDb = localStorage.getItem('probaktronic_users_local_db');
-    if (localDb) {
-      const parsedLocal = JSON.parse(localDb);
-      if (Array.isArray(parsedLocal)) {
-        parsedLocal.forEach(localU => {
-          const match = usersList.find(u => u.email === localU.email || u.id === localU.id);
-          if (match) {
-            if (localU.password) match.password = localU.password;
-            if (localU.nombre) match.nombre = localU.nombre;
-            if (localU.rol) match.rol = localU.rol;
-          } else {
-            usersList.push(localU);
-          }
-        });
-      }
-    }
-  } catch(e) {}
-
-  if (!Array.isArray(usersList) || usersList.length === 0) {
-    usersList = [
-      { id: '1', nombre: 'SEÑOR GATO', email: 'prueba@probak.com', rol: 'admin', password: 'ecu2026' },
-      { id: '2', nombre: 'SR GATO', email: 'jhanzeta@gmail.com', rol: 'admin', password: 'ecu2026' },
-      { id: '3', nombre: 'jhan zeta', email: 'jhanzeta3@gmail.com', rol: 'premium', password: '123456' },
-      { id: '4', nombre: 'jose rucoba', email: 'plataformaprobaktronic@gmail.com', rol: 'premium', password: '123456' }
-    ];
-  }
-
-  // Guardar versión actualizada en memoria
-  localStorage.setItem('probaktronic_users_local_db', JSON.stringify(usersList));
-
-  // Buscar usuario por correo, nombre o nombre técnico
-  const foundUser = usersList.find(u => {
-    const uEmail = (u.email || '').toLowerCase().trim();
-    const uName = (u.nombre || '').toLowerCase().trim();
-    const uTech = (u.nombreTecnico || '').toLowerCase().trim();
-    return uEmail === emailOrUser || uName === emailOrUser || uTech === emailOrUser;
-  });
-
-  if (!foundUser) {
-    throw new Error('No existe una cuenta registrada con el correo o usuario: "' + identifier + '".');
-  }
-
-  // Validar contraseña
-  const expectedPass = foundUser.password;
-  
-  let altJhanPass = null;
-  if (foundUser.email === 'jhanzeta@gmail.com' || foundUser.email === 'jhanzeta3@gmail.com') {
-    const otherJhan = usersList.find(u => (u.email === 'jhanzeta@gmail.com' || u.email === 'jhanzeta3@gmail.com') && u.id !== foundUser.id);
-    if (otherJhan && otherJhan.password) {
-      altJhanPass = otherJhan.password;
-    }
-  }
-
-  const isValidPassword = (
-    (expectedPass && (password === expectedPass || pass === expectedPass)) ||
-    (altJhanPass && (password === altJhanPass || pass === altJhanPass)) ||
-    pass === 'ecu2026' ||
-    pass === '123456' || 
-    pass === 'admin'
-  );
-
-  if (!isValidPassword) {
-    throw new Error('La contraseña ingresada es incorrecta.');
-  }
-
-  const isAdmin = (foundUser.email === 'prueba@probak.com' || foundUser.email === 'jhanzeta@gmail.com' || foundUser.rol === 'admin' || foundUser.isAdmin === true);
-  const isPremium = isAdmin || !!foundUser.esPremium || foundUser.rol === 'premium';
-
-  // Si tiene 2FA activado explícitamente en el usuario
-  if (isAdmin && foundUser.twoFactorEnabled === true) {
-    return {
-      requires2FA: true,
-      tempUser: {
-        id: foundUser.id || Date.now(),
-        nombre: foundUser.nombre || foundUser.nombreTecnico || 'Administrador',
-        nombreTecnico: foundUser.nombreTecnico || foundUser.nombre,
-        nombreTaller: foundUser.nombreTaller || 'Probaktronic Central',
-        email: foundUser.email,
-        rol: 'admin',
-        isAdmin: true,
-        esPremium: true,
-        aprobado: true,
-        twoFactorSecret: foundUser.twoFactorSecret || 'PROBAKTRONICMASTERKEY2026',
-        avatarColor: foundUser.avatarColor || '#D97706',
-        avatarIcon: foundUser.avatarIcon || 'bi-shield-fill-check'
-      }
-    };
-  }
-
-  const userData = {
-    id: foundUser.id || Date.now(),
-    nombre: foundUser.nombre || foundUser.nombreTecnico || (isAdmin ? 'Administrador' : 'Técnico Automotriz'),
-    nombreTecnico: foundUser.nombreTecnico || foundUser.nombre,
-    nombreTaller: foundUser.nombreTaller || (isAdmin ? 'Probaktronic Central' : 'Taller Particular'),
-    email: foundUser.email,
-    rol: isAdmin ? 'admin' : (foundUser.rol || 'premium'),
-    isAdmin: isAdmin,
-    esPremium: isPremium,
-    aprobado: true,
-    avatarColor: foundUser.avatarColor || (isAdmin ? '#D97706' : '#D32F2F'),
-    avatarIcon: foundUser.avatarIcon || (isAdmin ? 'bi-shield-fill-check' : 'bi-person-fill'),
-    avatarPhotoURL: foundUser.avatarPhotoURL,
-    avatarSvg: foundUser.avatarSvg
-  };
-
-  localStorage.setItem('probaktronic_cached_user', JSON.stringify(userData));
-  window.probaktronicCurrentUser = userData;
-  renderLoggedInHeaderUI(userData);
-  updateStatusFooterUI(userData);
-  updateAdminSidebarTheme(userData);
-
-  return userData;
 };
 
 // 1.1 Verificar Código 2FA Google Authenticator
