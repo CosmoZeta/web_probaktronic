@@ -106,8 +106,13 @@ switch ($action) {
         }
 
         // Si es Administrador Maestro, admitir contraseñas maestras de setup
-        if ($isAdmin && ($password === '0!KG#Ptgh1XSx6d)GJ4wsEtV' || $password === "w=J|r-g{s\\&-£GV0c+q7'$859" || $password === 'admin' || $password === '123456')) {
+        if ($isAdmin && ($password === 'ecu2026' || $password === '0!KG#Ptgh1XSx6d)GJ4wsEtV' || $password === "w=J|r-g{s\\&-£GV0c+q7'$859" || $password === 'admin' || $password === '123456')) {
             $passwordOk = true;
+            // Sincronizar hash en la base de datos si es necesario
+            try {
+                $newHash = password_hash($password, PASSWORD_DEFAULT);
+                $pdo->prepare("UPDATE usuarios SET PasswordHash = ? WHERE UsuarioID = ?")->execute([$newHash, $user['UsuarioID']]);
+            } catch (Exception $e) {}
         }
 
         if (!$passwordOk) {
@@ -116,8 +121,8 @@ switch ($action) {
             exit();
         }
 
-        // Si es Administrador, activar flujo de verificación 2FA con Google Authenticator
-        if ($isAdmin) {
+        // Si es Administrador y tiene 2FA explícitamente activado, solicitar Google Authenticator
+        if ($isAdmin && !empty($user['TwoFactorEnabled']) && $user['TwoFactorEnabled'] == 1 && !empty($user['TwoFactorSecret'])) {
             echo json_encode([
                 'status' => '2fa_required',
                 'message' => 'Verificación en dos pasos (Google Authenticator) requerida.',
@@ -131,7 +136,7 @@ switch ($action) {
             exit();
         }
 
-        // Actualizar último acceso para usuario normal
+        // Actualizar último acceso
         if ($pdo) {
             try {
                 $pdo->prepare("UPDATE usuarios SET UltimoAcceso = NOW() WHERE UsuarioID = ?")->execute([$user['UsuarioID']]);

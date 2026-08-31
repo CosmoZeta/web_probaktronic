@@ -1197,20 +1197,27 @@ window.checkIsAdmin = function() {
   return !!(u && (u.email === 'prueba@probak.com' || u.rol === 'admin' || u.isAdmin === true));
 };
 
-// Universal Cached Resolver for Storage URIs
+// Universal Cached Resolver for Storage URIs (Prioridad a archivos_almacenamiento/ local)
 window.resolveFirebaseStorageUrl = async function(rawUrl) {
   if (window.VehiculosData && typeof window.VehiculosData.resolveStorageUrl === 'function') {
     return window.VehiculosData.resolveStorageUrl(rawUrl);
   }
   if (!rawUrl || typeof rawUrl !== 'string') return '';
   rawUrl = rawUrl.trim();
-  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('data:') || rawUrl.startsWith('blob:')) {
-    return rawUrl;
+  if (!rawUrl || rawUrl.includes('logo_probaktronic')) return '';
+
+  if (rawUrl.includes('firebasestorage.googleapis.com') && rawUrl.includes('/o/')) {
+    try {
+      const encPath = rawUrl.split('/o/')[1].split('?')[0];
+      return `archivos_almacenamiento/${decodeURIComponent(encPath)}`;
+    } catch (e) {}
   }
+
   if (rawUrl.startsWith('gs://')) {
     const clean = rawUrl.replace('gs://probaktronic-app.firebasestorage.app/', '').replace('gs://probaktronic-app.appspot.com/', '');
     return `archivos_almacenamiento/${clean}`;
   }
+
   return rawUrl;
 };
 

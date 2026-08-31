@@ -2,6 +2,7 @@
   {
     "id": "0C8bCRDD9sPqGmwfpKNOSvh53aI2",
     "email": "jhanzeta3@gmail.com",
+    "password": "123456",
     "esPremium": true,
     "nombre": "jhan zeta",
     "nombreTecnico": "jhan zeta",
@@ -22,6 +23,7 @@
     "updatedAt": "2026-08-27T18:56:18.392Z",
     "esPremium": true,
     "email": "prueba@probak.com",
+    "password": "ecu2026",
     "nombreTaller": "Probaktronic Central",
     "avatarColor": "#D32F2F",
     "rol": "admin",
@@ -31,6 +33,7 @@
   {
     "id": "phzBp6fdYLWl2TV1lCEhid5dIIz2",
     "email": "plataformaprobaktronic@gmail.com",
+    "password": "123456",
     "esPremium": true,
     "nombreTaller": "Taller Automotriz",
     "nombre": "jose rucoba",
@@ -43,6 +46,7 @@
     "id": "wRmmGpDTU6PeVTKJBPB3H0WQspR2",
     "rol": "admin",
     "email": "jhanzeta@gmail.com",
+    "password": "ecu2026",
     "aprobado": true,
     "esPremium": true,
     "nombreTaller": "Taller Automotriz",

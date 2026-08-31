@@ -564,6 +564,13 @@ window.handleEditUserSubmit = async function(e) {
       
       if (newPassword) {
         target.password = newPassword;
+        try {
+          fetch('api/auth.php?action=update_password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: target.email, password: newPassword })
+          }).catch(() => {});
+        } catch (e) {}
       }
       
       localStorage.setItem('probaktronic_users_local_db', JSON.stringify(users));

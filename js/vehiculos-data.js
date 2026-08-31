@@ -16,15 +16,18 @@
       storageUrls: new Map()
     },
 
-    // 1. Resolve Storage URLs
+    // 1. Resolve Storage URLs (Prioridad total a archivos_almacenamiento/ local de SiteGround)
     resolveStorageUrl: function(rawUrl) {
       if (!rawUrl || typeof rawUrl !== 'string') return '';
       rawUrl = rawUrl.trim();
       if (!rawUrl || rawUrl.includes('logo_probaktronic')) return '';
 
-      // Direct HTTP / HTTPS / Data / Blob URLs - keep authentic cloud URL
-      if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('data:') || rawUrl.startsWith('blob:')) {
-        return rawUrl;
+      // Si es una URL de Firebase Storage, convertir directamente a ruta local de archivos_almacenamiento
+      if (rawUrl.includes('firebasestorage.googleapis.com') && rawUrl.includes('/o/')) {
+        try {
+          const encPath = rawUrl.split('/o/')[1].split('?')[0];
+          return `archivos_almacenamiento/${decodeURIComponent(encPath)}`;
+        } catch (e) {}
       }
 
       if (rawUrl.startsWith('gs://')) {
@@ -32,6 +35,7 @@
         return `archivos_almacenamiento/${clean}`;
       }
 
+      // URLs directas locales o externas no Firebase
       return rawUrl;
     },
 
