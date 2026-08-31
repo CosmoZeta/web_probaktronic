@@ -381,9 +381,57 @@ function updateStatusFooterUI(userData) {
   }
 }
 
+// Helper universal para comunicación con el Backend MySQL (compatible con Live Server y SiteGround)
+window.fetchAuthApi = async function(action, payload, method = 'POST') {
+  const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.protocol === 'file:';
+  
+  const endpoints = [];
+  if (!isLocal) {
+    endpoints.push(`api/auth.php?action=${action}`);
+  } else {
+    // Si estamos en Live Server local (puerto 5500), conectar directamente a la API MySQL de SiteGround
+    endpoints.push(`https://probaktronic.com/api/auth.php?action=${action}`);
+    endpoints.push(`api/auth.php?action=${action}`);
+  }
+
+  let lastError = null;
+  for (const endpoint of endpoints) {
+    try {
+      const options = {
+        method: method,
+        headers: { 'Content-Type': 'application/json' }
+      };
+      if (payload && method !== 'GET') {
+        options.body = JSON.stringify(payload);
+      }
+
+      const res = await fetch(endpoint, options);
+      const text = await res.text();
+      if (!text || !text.trim()) continue;
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (jsonErr) {
+        // En Live Server local, el archivo .php no se ejecuta y devuelve texto plano
+        continue;
+      }
+
+      return { ok: res.ok, status: res.status, data: data };
+    } catch (netErr) {
+      lastError = netErr;
+    }
+  }
+
+  if (lastError) {
+    throw new Error('Error al conectar con la base de datos de Probaktronic: ' + (lastError.message || 'Sin conexión'));
+  }
+  throw new Error('No se pudo establecer comunicación con el servidor MySQL.');
+};
+
 // Global Auth Action Functions
 
-// 1. Iniciar Sesión (Login) con API MySQL / Base de Datos Local
+// 1. Iniciar Sesión (Login) con Base de Datos MySQL
 window.loginUser = async function(identifier, password) {
   let emailOrUser = identifier ? identifier.trim().toLowerCase() : '';
   let pass = password ? password.trim() : '';
@@ -391,51 +439,42 @@ window.loginUser = async function(identifier, password) {
   if (!emailOrUser) throw new Error('Por favor ingrese su correo o usuario.');
   if (!pass) throw new Error('Por favor ingrese su contraseña.');
 
-  // Autenticación directa contra la Base de Datos MySQL en SiteGround
-  try {
-    const res = await fetch('api/auth.php?action=login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: emailOrUser, password: pass })
-    });
+  // Autenticación directa contra la Base de Datos MySQL
+  const response = await window.fetchAuthApi('login', { email: emailOrUser, password: pass });
+  const data = response.data || {};
 
-    const data = await res.json();
-
-    if (res.ok) {
-      if (data.status === '2fa_required' && data.temp_user) {
-        return {
-          requires2FA: true,
-          tempUser: data.temp_user
-        };
-      }
-
-      if (data.status === 'success' && data.user) {
-        const isAdmin = data.user.rol === 'admin' || data.user.email === 'prueba@probak.com' || data.user.email === 'jhanzeta@gmail.com';
-        const userData = {
-          id: data.user.id,
-          nombre: data.user.nombre,
-          email: data.user.email,
-          rol: isAdmin ? 'admin' : (data.user.rol || 'premium'),
-          isAdmin: isAdmin,
-          esPremium: isAdmin || data.user.esPremium || true,
-          aprobado: true,
-          token: data.user.token
-        };
-
-        localStorage.setItem('probaktronic_cached_user', JSON.stringify(userData));
-        window.probaktronicCurrentUser = userData;
-        renderLoggedInHeaderUI(userData);
-        updateStatusFooterUI(userData);
-        updateAdminSidebarTheme(userData);
-        return userData;
-      }
+  if (response.ok) {
+    if (data.status === '2fa_required' && data.temp_user) {
+      return {
+        requires2FA: true,
+        tempUser: data.temp_user
+      };
     }
 
-    // Si la base de datos MySQL indica error de credenciales o usuario no encontrado
-    throw new Error(data.message || 'La contraseña o usuario ingresado es incorrecto.');
-  } catch (err) {
-    throw err;
+    if (data.status === 'success' && data.user) {
+      const isAdmin = data.user.rol === 'admin' || data.user.email === 'prueba@probak.com' || data.user.email === 'jhanzeta@gmail.com';
+      const userData = {
+        id: data.user.id,
+        nombre: data.user.nombre,
+        email: data.user.email,
+        rol: isAdmin ? 'admin' : (data.user.rol || 'premium'),
+        isAdmin: isAdmin,
+        esPremium: isAdmin || data.user.esPremium || true,
+        aprobado: true,
+        token: data.user.token
+      };
+
+      localStorage.setItem('probaktronic_cached_user', JSON.stringify(userData));
+      window.probaktronicCurrentUser = userData;
+      renderLoggedInHeaderUI(userData);
+      updateStatusFooterUI(userData);
+      updateAdminSidebarTheme(userData);
+      return userData;
+    }
   }
+
+  // Si la base de datos MySQL indica error de credenciales
+  throw new Error(data.message || 'La contraseña o usuario ingresado es incorrecto.');
 };
 
 // 1.1 Verificar Código 2FA Google Authenticator
@@ -446,69 +485,38 @@ window.verify2FALogin = async function(tempUser, code) {
     throw new Error('Ingrese los 6 dígitos generados por Google Authenticator.');
   }
 
-  // Intentar verificación en Backend PHP / MySQL si está disponible
   try {
-    const res = await fetch('api/auth.php?action=verify_2fa', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: tempUser.id,
-        email: tempUser.email,
-        code: trimmedCode
-      })
+    const response = await window.fetchAuthApi('verify_2fa', {
+      user_id: tempUser.id,
+      email: tempUser.email,
+      code: trimmedCode
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.status === 'success') {
-        const fullAdmin = { ...tempUser, token: data.user ? data.user.token : '' };
-        localStorage.setItem('probaktronic_cached_user', JSON.stringify(fullAdmin));
-        window.probaktronicCurrentUser = fullAdmin;
-        renderLoggedInHeaderUI(fullAdmin);
-        updateStatusFooterUI(fullAdmin);
-        updateAdminSidebarTheme(fullAdmin);
-        return fullAdmin;
-      }
+    if (response.ok && response.data && response.data.status === 'success') {
+      const fullAdmin = { ...tempUser, token: response.data.user ? response.data.user.token : '' };
+      localStorage.setItem('probaktronic_cached_user', JSON.stringify(fullAdmin));
+      window.probaktronicCurrentUser = fullAdmin;
+      renderLoggedInHeaderUI(fullAdmin);
+      updateStatusFooterUI(fullAdmin);
+      updateAdminSidebarTheme(fullAdmin);
+      return fullAdmin;
+    } else if (response.data && response.data.message) {
+      throw new Error(response.data.message);
     }
-  } catch (apiErr) {}
+  } catch (apiErr) {
+    if (apiErr && apiErr.message) throw apiErr;
+  }
 
-  // Verificación en entorno local / offline
-  // Acepta el código de 6 dígitos ingresado
-  const fullAdmin = {
-    id: tempUser.id || 1,
-    nombre: tempUser.nombre || 'Administrador',
-    nombreTecnico: tempUser.nombreTecnico || 'Administrador',
-    nombreTaller: tempUser.nombreTaller || 'Probaktronic Central',
-    email: tempUser.email,
-    rol: 'admin',
-    isAdmin: true,
-    esPremium: true,
-    aprobado: true,
-    avatarColor: tempUser.avatarColor || '#D97706',
-    avatarIcon: tempUser.avatarIcon || 'bi-shield-fill-check',
-    twoFactorVerified: true
-  };
-
-  localStorage.setItem('probaktronic_cached_user', JSON.stringify(fullAdmin));
-  window.probaktronicCurrentUser = fullAdmin;
-  renderLoggedInHeaderUI(fullAdmin);
-  updateStatusFooterUI(fullAdmin);
-  updateAdminSidebarTheme(fullAdmin);
-
-  return fullAdmin;
+  throw new Error('Código de Google Authenticator no válido.');
 };
 
 // 2. Registro de Usuario con API MySQL
 window.registerUser = async function(nombre, email, password) {
   try {
-    const res = await fetch('api/auth.php?action=register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, email, password })
-    });
+    const response = await window.fetchAuthApi('register', { nombre, email, password });
+    const data = response.data || {};
 
-    const data = await res.json();
-    if (!res.ok || data.status !== 'success') {
+    if (!response.ok || data.status !== 'success') {
       throw new Error(data.message || 'Error al registrar usuario.');
     }
 

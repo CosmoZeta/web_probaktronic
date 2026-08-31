@@ -544,16 +544,14 @@ window.handleEditUserSubmit = async function(e) {
 
         // Disparar envío de alerta por correo al backend
         try {
-          fetch('api/auth.php?action=notify_security_change', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          if (typeof window.fetchAuthApi === 'function') {
+            window.fetchAuthApi('notify_security_change', {
               target_email: target.email,
               operator_email: (window.probaktronicCurrentUser ? window.probaktronicCurrentUser.email : 'Admin Master'),
               timestamp: new Date().toISOString()
-            })
-          }).catch(() => {});
-        } catch(e) {}
+            }).catch(() => {});
+          }
+        } catch (e) {}
       }
 
       target.nombre = name;
@@ -565,11 +563,9 @@ window.handleEditUserSubmit = async function(e) {
       if (newPassword) {
         target.password = newPassword;
         try {
-          fetch('api/auth.php?action=update_password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: target.email, password: newPassword })
-          }).catch(() => {});
+          if (typeof window.fetchAuthApi === 'function') {
+            window.fetchAuthApi('update_password', { email: target.email, password: newPassword }).catch(() => {});
+          }
         } catch (e) {}
       }
       
