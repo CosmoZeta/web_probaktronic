@@ -265,15 +265,15 @@ function initBobinasModule() {
   loadFirestoreBobinas(brandGrid);
 }
 
-// Universal Helper: Render Centered 0-100% Firebase Loader Card
-window.createCenteredFirebaseLoader = function(container, subtitleText = 'Conectando con Cloud Firestore...') {
+// Universal Helper: Render Centered 0-100% Loader Card
+window.createCenteredFirebaseLoader = function(container, subtitleText = 'Cargando datos del servidor...') {
   if (!container) return null;
 
   container.innerHTML = `
     <div class="catalog-loader-container w-100 py-4" style="grid-column: 1 / -1;">
       <div class="loader-card mx-auto">
         <img src="logo_probaktronic_solo.png" alt="Probaktronic" height="52" class="pulse-animation mb-3">
-        <h4 class="font-rajdhani fw-bold text-uppercase mb-1 text-dark">CARGANDO DESDE FIREBASE</h4>
+        <h4 class="font-rajdhani fw-bold text-uppercase mb-1 text-dark">CARGANDO INFORMACIÓN</h4>
         <p class="text-muted small mb-3">${subtitleText}</p>
         <div class="progress w-100 mb-2" style="height: 8px; border-radius: 4px; background-color: #E2E8F0;">
           <div class="loader-progress-bar progress-bar progress-bar-striped progress-bar-animated bg-danger" style="width: 0%;"></div>

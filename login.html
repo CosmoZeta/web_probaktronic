@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -186,8 +186,8 @@
 
   <!-- Bootstrap & Auth JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/global.js?v=20.0"></script>
-  <script src="js/auth.js?v=20.0"></script>
+  <script src="js/global.js?v=300.0"></script>
+  <script src="js/auth.js?v=300.0"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -280,8 +280,8 @@
         alertEl.classList.add('d-none');
 
         const code = twoFactorCodeInput.value.trim();
-        if (!code || code.length < 6) {
-          showError('Por favor ingrese el código de 6 dígitos.');
+        if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+          showError('Por favor ingrese los 6 dígitos de Google Authenticator.');
           return;
         }
 
@@ -290,6 +290,16 @@
         twoFactorSpinner.classList.remove('d-none');
 
         try {
+          // 1. Validación estricta con TOTP HMAC-SHA1
+          if (typeof window.verifyClientSideTotp === 'function') {
+            const secret = pending2FAUser?.two_factor_secret || 'JHANZETAPROBAK26';
+            const isValidTotp = await window.verifyClientSideTotp(code, secret);
+            if (!isValidTotp) {
+              throw new Error('Código 2FA incorrecto o expirado. Verifique su app Google Authenticator.');
+            }
+          }
+
+          // 2. Procesar Login
           await window.verify2FALogin(pending2FAUser, code);
 
           if (typeof showGlobalToast === 'function') {
@@ -317,3 +327,4 @@
   </script>
 </body>
 </html>
+

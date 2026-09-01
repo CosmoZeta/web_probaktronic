@@ -610,7 +610,7 @@ window.handleEditUserSubmit = async function(e) {
 window.openSetup2FAModal = function() {
   const user = window.probaktronicCurrentUser;
   const userEmail = (user && user.email) ? user.email : 'jhanzeta@gmail.com';
-  const secretKey = 'PROBAK' + (userEmail.includes('prueba') ? 'GATO' : 'JHAN') + 'KEY2026';
+  const secretKey = 'JHANZETAPROBAK26';
 
   const qrImg = document.getElementById('setup2FAQRCodeImg');
   const secretText = document.getElementById('setup2FASecretKeyText');

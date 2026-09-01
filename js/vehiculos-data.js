@@ -52,17 +52,128 @@
       }
 
       if (photos.length === 0) {
-        const single = docData.imageUrl || docData.fotoComponente || docData.foto || docData.imagen || docData.archivoUrl;
-        if (single && typeof single === 'string' && !single.toLowerCase().includes('.pdf')) {
-          photos = [single];
+        const candidates = [
+          docData.imageUrl, docData.url, docData.archivoUrl, 
+          docData.diagramaUrl, docData.fotoComponente, docData.foto, 
+          docData.imagen, docData.diagramaImg, docData.downloadUrl
+        ];
+        for (const single of candidates) {
+          if (single && typeof single === 'string') {
+            const lower = single.toLowerCase();
+            if (!lower.includes('.pdf') && !lower.includes('%2epdf')) {
+              photos.push(single);
+              break;
+            }
+          }
         }
       }
       return photos.filter(Boolean);
     },
 
+    // Helper to extract year ranges or single years from strings
+    extractYears: function(str) {
+      if (!str || typeof str !== 'string') return [];
+      const years = [];
+      const rangeMatches = str.match(/\b(19\d{2}|20\d{2})\s*-\s*(19\d{2}|20\d{2})\b/g);
+      if (rangeMatches) {
+        rangeMatches.forEach(r => {
+          const parts = r.split('-').map(p => parseInt(p.trim(), 10)).filter(n => !isNaN(n));
+          if (parts.length === 2) {
+            years.push({ start: parts[0], end: parts[1], raw: r.replace(/\s+/g, ' ').trim() });
+          }
+        });
+      }
+      const singleMatches = str.match(/\b(19\d{2}|20\d{2})\b/g);
+      if (singleMatches) {
+        singleMatches.forEach(s => {
+          const y = parseInt(s.trim(), 10);
+          if (!isNaN(y) && !years.some(yr => yr.start <= y && yr.end >= y)) {
+            years.push({ start: y, end: y, raw: s.trim() });
+          }
+        });
+      }
+      return years;
+    },
+
+    // Helper to get normalized core model name (stripping brand, years, and non-alphanumeric)
+    normalizeCoreName: function(name, brand) {
+      if (!name) return '';
+      let clean = name.toLowerCase();
+      if (brand) clean = clean.replace(new RegExp(`\\b${brand.toLowerCase()}\\b`, 'g'), '');
+      clean = clean.replace(/\b(19\d{2}|20\d{2})\s*-\s*(19\d{2}|20\d{2})\b/g, '');
+      clean = clean.replace(/\b(19\d{2}|20\d{2})\b/g, '');
+      clean = clean.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+      return clean;
+    },
+
+    // Checks if candidate model in database matches requested model without cross-polluting across distinct generations/models
+    isModelMatching: function(targetDoc, targetName, targetMotor, candidateKey, candidateModelData, candidateAniosObj, brandClean) {
+      const cleanTargetDoc = (targetDoc || '').toLowerCase().trim();
+      const cleanTargetName = (targetName || '').toLowerCase().trim();
+      const candidateKeyClean = (candidateKey || '').toLowerCase().trim();
+      const candidateNameClean = ((candidateModelData && candidateModelData.nombre) || '').toLowerCase().trim();
+
+      // 1. Direct exact match
+      if (cleanTargetName && candidateNameClean && cleanTargetName === candidateNameClean) {
+        return true;
+      }
+      if (cleanTargetDoc && candidateKeyClean && cleanTargetDoc === candidateKeyClean && cleanTargetName === candidateNameClean) {
+        return true;
+      }
+
+      // 2. Extract and strictly compare year spans
+      const targetYears = this.extractYears(`${cleanTargetDoc} ${cleanTargetName}`);
+      let candidateYears = this.extractYears(`${candidateKeyClean} ${candidateNameClean}`);
+      if (candidateAniosObj && typeof candidateAniosObj === 'object') {
+        Object.keys(candidateAniosObj).forEach(aKey => {
+          candidateYears = candidateYears.concat(this.extractYears(aKey));
+        });
+      }
+
+      // If both define years, they MUST match (different generations like 2011-2015 vs 2015-2020 must NOT match)
+      if (targetYears.length > 0 && candidateYears.length > 0) {
+        const exactMatch = targetYears.some(ty =>
+          candidateYears.some(cy => (ty.raw === cy.raw || (ty.start === cy.start && ty.end === cy.end)))
+        );
+        if (!exactMatch) {
+          return false;
+        }
+      } else if (targetYears.length > 0 && candidateYears.length === 0) {
+        // Target specified a specific generation (e.g., 2015 - 2020), but candidate has no matching year
+        if (candidateKeyClean !== cleanTargetDoc && candidateNameClean !== cleanTargetName) {
+          return false;
+        }
+      }
+
+      // 3. Compare core model tokens (e.g., "hilux", "corolla", "accent")
+      const targetCore = this.normalizeCoreName(`${cleanTargetDoc} ${cleanTargetName}`, brandClean);
+      const candidateCore = this.normalizeCoreName(`${candidateKeyClean} ${candidateNameClean}`, brandClean);
+
+      if (!targetCore || !candidateCore) return false;
+
+      const targetTokens = targetCore.split(' ').filter(t => t.length >= 3);
+      const candidateTokens = candidateCore.split(' ').filter(t => t.length >= 3);
+
+      const sharesPrimaryToken = targetTokens.some(t => candidateTokens.includes(t));
+      if (!sharesPrimaryToken) return false;
+
+      // 4. Verify motor code if specified in both
+      if (targetMotor && candidateModelData && candidateModelData.motor) {
+        const tMot = targetMotor.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const cMot = candidateModelData.motor.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (tMot && cMot && tMot !== 'estandar' && cMot !== 'estandar') {
+          if (!tMot.includes(cMot) && !cMot.includes(tMot)) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    },
+
     // 3. Fetch all diagram cards for a model with Smart Merge
-    fetchModelDiagrams: async function(brandId, modelId, modelName) {
-      const cacheKey = `${brandId}_${modelId}_${modelName}`.toLowerCase();
+    fetchModelDiagrams: async function(brandId, modelId, modelName, motorCode) {
+      const cacheKey = `${brandId}_${modelId}_${modelName}_${motorCode || ''}`.toLowerCase();
       if (this.cache.diagrams.has(cacheKey)) {
         return this.cache.diagrams.get(cacheKey);
       }
@@ -70,6 +181,7 @@
       const cleanBrand = (brandId || '').toLowerCase().trim();
       const cleanDoc = (modelId || '').toLowerCase().trim();
       const cleanModel = (modelName || '').toLowerCase().trim();
+      const cleanMotor = (motorCode || '').toLowerCase().trim();
 
       try {
         if (!window._cachedVehiculosDiagramasTree) {
@@ -90,17 +202,7 @@
             const models = bVal.models || {};
 
             for (const [mKey, mVal] of Object.entries(models)) {
-              const mClean = mKey.toLowerCase().trim();
-              const mDataName = ((mVal.modelData && mVal.modelData.nombre) || '').toLowerCase().trim();
-
-              const isMatch = (
-                mClean === cleanDoc || mClean === cleanModel ||
-                cleanDoc.includes(mClean) || mClean.includes(cleanDoc) ||
-                cleanModel.includes(mClean) || mClean.includes(cleanModel) ||
-                mDataName.includes(cleanModel) || cleanModel.includes(mDataName) ||
-                (cleanDoc.includes('corolla') && mClean.includes('corolla')) ||
-                (cleanDoc.includes('hilux') && mClean.includes('hilux'))
-              );
+              const isMatch = this.isModelMatching(cleanDoc, cleanModel, cleanMotor, mKey, mVal.modelData, mVal.anios, cleanBrand);
 
               if (isMatch) {
                 // 1. Archivos directos del modelo
@@ -140,6 +242,88 @@
         }
       } catch (e) {
         console.warn('Error cargando árbol local de diagramas:', e);
+      }
+
+      // 4. Buscar en Firestore si está conectado para este modelo específico
+      if (typeof firebase !== 'undefined' && firebase.firestore) {
+        try {
+          const db = firebase.firestore();
+          const snap = await db.collection('diagramas').doc(cleanBrand).collection('modelos').doc(cleanDoc).collection('archivos').get().catch(() => null);
+          if (snap && !snap.empty) {
+            snap.docs.forEach(docSnap => {
+              const data = docSnap.data() || {};
+              rawList.push({
+                id: docSnap.id,
+                archDocId: docSnap.id,
+                brandDocId: cleanBrand,
+                modelDocId: cleanDoc,
+                ...data
+              });
+            });
+          }
+        } catch (fbErr) {
+          console.warn('Firestore diagrams lookup notice:', fbErr);
+        }
+      }
+
+      // 5. Buscar diagramas en LocalStorage creados localmente para este modelo
+      try {
+        const customStores = [];
+        
+        // Almacén unificado
+        const globalStore = JSON.parse(localStorage.getItem('probak_custom_diagrams_store') || '[]');
+        if (Array.isArray(globalStore)) customStores.push(...globalStore);
+
+        // Claves por marca/modelo
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('probak_custom_diagrams') && k !== 'probak_custom_diagrams_store') {
+            try {
+              const list = JSON.parse(localStorage.getItem(k) || '[]');
+              if (Array.isArray(list)) customStores.push(...list);
+            } catch (e) {}
+          }
+        }
+
+        // Filtrar y normalizar diagramas para este vehículo
+        customStores.forEach(item => {
+          if (!item) return;
+          const itemBrand = (item.brandDocId || item.marca || '').toLowerCase().trim();
+          const bMatch = !itemBrand || itemBrand === cleanBrand || cleanBrand.includes(itemBrand) || itemBrand.includes(cleanBrand);
+          if (bMatch) {
+            const itemModel = (item.modelDocId || item.modelo || item.model || '').toLowerCase().trim();
+            const itemYears = (item.anio || item.anios || item.year || '').trim();
+            const itemMotor = (item.motor || item.motorDocId || '').trim();
+            const itemTitle = (item.titulo || item.nombre || item.id || '').toLowerCase().trim();
+
+            const isMatch = this.isModelMatching(
+              cleanDoc, 
+              cleanModel, 
+              cleanMotor, 
+              itemModel, 
+              { nombre: `${itemModel} ${itemYears}`.trim(), motor: itemMotor }, 
+              itemYears ? { [itemYears]: true } : null, 
+              cleanBrand
+            );
+
+            // Coincidencia por modelo o inclusión en título
+            const titleMatches = (
+              itemTitle.includes(cleanDoc) || cleanDoc.includes(itemModel) ||
+              cleanModel.includes(itemModel) || (itemYears && cleanModel.includes(itemYears))
+            );
+
+            if (isMatch || titleMatches) {
+              rawList.push({
+                id: item.id || item.titulo,
+                brandDocId: cleanBrand,
+                modelDocId: cleanDoc,
+                ...item
+              });
+            }
+          }
+        });
+      } catch (locErr) {
+        console.warn('LocalStorage diagrams scan notice:', locErr);
       }
 
       // Smart Merge: Preserve allImages, photos and hotspots across duplicate document variants

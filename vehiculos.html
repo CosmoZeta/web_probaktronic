@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -38,8 +38,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   
   <!-- Stylesheets -->
-  <link href="css/global.css?v=3.0" rel="stylesheet">
-  <link href="css/vehiculos.css?v=5.5" rel="stylesheet">
+  <link href="css/global.css?v=300.0" rel="stylesheet">
+  <link href="css/vehiculos.css?v=300.0" rel="stylesheet">
   
   <style>
     .select-vehicle-header {
@@ -1002,17 +1002,21 @@
       </div>
 
       <!-- Interactive Breadcrumb Path Bar -->
-      <div class="vehicle-breadcrumb-nav mb-4 d-none align-items-center gap-2 px-3 py-2 bg-white rounded-3 border shadow-sm" id="vehicleBreadcrumbNav">
+      <div class="vehicle-breadcrumb-nav mb-4 d-none align-items-center gap-2 px-3 py-2 bg-white rounded-3 border shadow-sm flex-wrap" id="vehicleBreadcrumbNav">
         <a href="#" class="breadcrumb-item text-dark fw-bold text-decoration-none small d-flex align-items-center gap-1" onclick="showFuelSelectorView(event)">
-          Vehículos
+          <i class="bi bi-house-door-fill text-danger"></i> Vehículos
         </a>
         <span class="text-muted small breadcrumb-sep d-none" id="bcrumbSep1"><i class="bi bi-chevron-right fs-7"></i></span>
         <a href="#" class="breadcrumb-item text-dark fw-semibold text-decoration-none small d-none" id="bcrumbFuelType" onclick="returnFuelTypeView(event)">
           Diesel
         </a>
         <span class="text-muted small breadcrumb-sep d-none" id="bcrumbSep2"><i class="bi bi-chevron-right fs-7"></i></span>
-        <span class="breadcrumb-item text-danger fw-bold small d-none" id="bcrumbCategory">
+        <a href="#" class="breadcrumb-item text-dark fw-semibold text-decoration-none small d-none" id="bcrumbCategory" onclick="returnBrandsView(event)">
           Pickup
+        </a>
+        <span class="text-muted small breadcrumb-sep d-none" id="bcrumbSep3"><i class="bi bi-chevron-right fs-7"></i></span>
+        <span class="breadcrumb-item text-danger fw-bold small d-none" id="bcrumbBrand">
+          Toyota
         </span>
       </div>
 
@@ -1307,7 +1311,11 @@
         </div>
 
         <!-- Brand Grid (Populated dynamically from Cloud Firestore with only active brands) -->
-        <section class="brand-grid" id="vehiculosBrandGrid">
+        <section class="brand-grid mt-4" id="vehiculosBrandGrid">
+          <div class="brand-card position-relative" data-brand="Toyota" data-doc-id="toyota" onclick="openBrandDiagramModels('toyota', 'Toyota', 'imagenes svg/ico_logo_toyota.svg', 'diagramas')">
+            <img src="imagenes svg/ico_logo_toyota.svg" alt="Toyota" class="brand-logo-img" style="max-height: 56px; max-width: 120px; width: auto; height: auto; object-fit: contain; margin-bottom: 12px; display: block;" onerror="this.src='logo_probaktronic_solo.png'">
+            <h4 class="brand-name-title">Toyota</h4>
+          </div>
         </section>
       </div>
 
@@ -1320,7 +1328,7 @@
               <h3 class="font-rajdhani fw-bold mb-0 text-uppercase" id="selectedBrandTitle">Modelos Disponibles</h3>
             </div>
             <div class="d-flex align-items-center gap-2">
-              <button class="btn btn-outline-danger btn-sm rounded-pill fw-bold shadow-sm font-rajdhani d-none" id="btnAdminTopAddModel" onclick="openAdminAddModelModal(currentSelectedBrandName)" title="Agregar nuevo modelo a esta marca">
+              <button class="btn btn-outline-danger btn-sm rounded-pill fw-bold shadow-sm font-rajdhani" id="btnAdminTopAddModel" onclick="openAdminAddModelModal(window.currentSelectedBrandName || 'Toyota')" title="Agregar nuevo modelo a esta marca">
                 <i class="bi bi-car-front-fill me-1"></i> + AGREGAR MODELO
               </button>
               <button class="btn btn-outline-secondary btn-sm" onclick="showBrandsView()"><i class="bi bi-arrow-left me-1"></i> Cambiar Marca</button>
@@ -1335,7 +1343,6 @@
               <button id="clearModelSearchBtn" class="model-search-clear d-none" title="Limpiar búsqueda"><i class="bi bi-x-circle-fill"></i></button>
             </div>
           </div>
-          
           <div class="model-list-grid" id="modelsListGrid"></div>
         </div>
       </div>
@@ -1836,7 +1843,7 @@
           <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
             <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow" id="btnAdminSubmitDiagram">
-              <i class="bi bi-cloud-check-fill me-1"></i> Subir y Publicar en Firebase
+              <i class="bi bi-cloud-check-fill me-1"></i> Subir y Publicar Diagrama
             </button>
           </div>
         </form>
@@ -2129,7 +2136,7 @@
               <div class="d-flex gap-2">
                 <button type="button" class="btn btn-sm btn-secondary px-3" data-bs-dismiss="modal" onclick="cancelAdminEcuDrawing()">Cancelar</button>
                 <button type="submit" class="btn btn-sm btn-info text-dark fw-bold font-rajdhani px-4 shadow">
-                  <i class="bi bi-check-circle-fill me-1"></i> GUARDAR COMPONENTE EN FIREBASE
+                  <i class="bi bi-check-circle-fill me-1"></i> GUARDAR COMPONENTE EN EL SERVIDOR
                 </button>
               </div>
             </div>
@@ -2192,7 +2199,7 @@
             </div>
             <div>
               <h5 class="modal-title font-rajdhani fw-bold mb-0" id="adminAddPhotoDirectModalLabel">SUBIR FOTO A ESTE COMPONENTE</h5>
-              <div class="text-white opacity-75" style="font-size: 0.75rem;">Sube una imagen manteniendo el orden jerárquico exacto en Firebase</div>
+              <div class="text-white opacity-75" style="font-size: 0.75rem;">Sube una imagen manteniendo el orden jerárquico del vehículo</div>
             </div>
           </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -2254,20 +2261,20 @@
               <div class="progress" style="height: 8px;">
                 <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger" id="adminDirectPhotoProgressBar" role="progressbar" style="width: 0%;"></div>
               </div>
-              <div class="small text-center text-muted mt-1 font-rajdhani fw-bold" id="adminDirectPhotoStatusText">Subiendo imagen a Firebase Storage...</div>
+              <div class="small text-center text-muted mt-1 font-rajdhani fw-bold" id="adminDirectPhotoStatusText">Subiendo imagen al servidor...</div>
             </div>
           </div>
 
           <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between flex-wrap gap-2">
             <div>
-              <button type="button" class="btn btn-outline-danger rounded-pill px-3 fw-bold font-rajdhani" id="btnAdminDeleteCurrentPhoto" onclick="handleAdminDeleteCurrentPhoto()" title="Eliminar permanentemente la foto actual de Firebase">
+              <button type="button" class="btn btn-outline-danger rounded-pill px-3 fw-bold font-rajdhani" id="btnAdminDeleteCurrentPhoto" onclick="handleAdminDeleteCurrentPhoto()" title="Eliminar permanentemente la foto actual">
                 <i class="bi bi-trash3-fill me-1"></i> Eliminar Foto Actual
               </button>
             </div>
             <div class="d-flex gap-2">
               <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnAdminSubmitDirectPhoto">
-                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Subir y Guardar en Firebase
+                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Subir y Guardar Imagen
               </button>
             </div>
           </div>
@@ -2349,7 +2356,7 @@
           <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
             <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnAdminSubmitNewBrand">
-              <i class="bi bi-check2-circle me-1"></i> Registrar Marca en Firebase
+              <i class="bi bi-check2-circle me-1"></i> Registrar Marca
             </button>
           </div>
         </form>
@@ -2435,7 +2442,7 @@
           <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
             <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnAdminSubmitNewModel">
-              <i class="bi bi-check2-circle me-1"></i> Registrar Modelo en Firebase
+              <i class="bi bi-check2-circle me-1"></i> Registrar Modelo
             </button>
           </div>
         </form>
@@ -2457,7 +2464,7 @@
         <div class="modal-body p-4">
           <div class="alert alert-dark border border-info border-opacity-25 small text-light mb-3">
             <i class="bi bi-info-circle-fill text-info me-2"></i>
-            <strong>¿Para qué sirve?</strong> Al subir tu proyecto a <strong>GitHub / GitHub Pages</strong>, otros usuarios no tienen acceso al <em>LocalStorage</em> de tu máquina. Con este botón puedes copiar el JSON generado y pegarlo como predeterminado en el archivo <code>js/vehiculos-diagramas.js</code> para que el dibujo se muestre idéntico en cualquier dispositivo y sin necesidad de iniciar sesión.
+            <strong>¿Para qué sirve?</strong> Al subir tu proyecto a tu hosting o GitHub, con este botón puedes respaldar y copiar el JSON generado para que el dibujo se muestre idéntico en cualquier dispositivo.
           </div>
           <label class="form-label small text-info fw-bold mb-1">Estructura JSON (Coordenadas y Datos 1:1):</label>
           <textarea id="adminExportEcuJsonArea" class="form-control bg-black text-info font-monospace small" rows="12" readonly style="font-size: 0.78rem; border-color: rgba(0, 240, 255, 0.3);"></textarea>
@@ -2475,11 +2482,14 @@
   <!-- PDF.js Engine for Pure Image Rendering without Browser PDF Chrome -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
+
+
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/global.js?v=10.0"></script>
-  <script src="js/auth.js?v=10.0"></script>
-  <script src="js/vehiculos-data.js?v=10.0"></script>
-  <script src="js/vehiculos-diagramas.js?v=50.0"></script>
+  <script src="js/global.js?v=300.0"></script>
+  <script src="js/auth.js?v=300.0"></script>
+  <script src="js/vehiculos-data.js?v=300.0"></script>
+  <script src="js/vehiculos-diagramas.js?v=300.0"></script>
 </body>
 </html>
+

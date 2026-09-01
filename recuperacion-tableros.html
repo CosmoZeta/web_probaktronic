@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -16,8 +16,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   
   <!-- Master & Custom Stylesheets -->
-  <link href="css/global.css?v=2.4" rel="stylesheet">
-  <link href="css/recuperacion.css?v=1.0" rel="stylesheet">
+  <link href="css/global.css?v=300.0" rel="stylesheet">
+  <link href="css/recuperacion.css?v=300.0" rel="stylesheet">
 </head>
 <body>
 
@@ -107,17 +107,13 @@
         </div>
 
         <!-- User profile widget -->
-        <div class="d-flex align-items-center gap-3">
-          <button class="btn btn-light rounded-circle p-2" title="Notificaciones">
-            <i class="bi bi-bell-fill text-secondary"></i>
-          </button>
-          <div class="d-flex align-items-center gap-2">
-            <div class="avatar-circle">
+        <div class="user-profile-section">
+          <div class="user-profile-card">
+            <div class="user-avatar" style="background-color: #94A3B8;">
               <i class="bi bi-person-fill"></i>
             </div>
-            <div class="d-none d-md-block">
-              <div class="user-name">Técnico Admin</div>
-              <div class="user-role">Administrador</div>
+            <div class="user-info">
+              <span class="user-name">Cargando...</span>
             </div>
           </div>
         </div>
@@ -257,9 +253,11 @@
 
   <!-- JavaScript Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/global.js"></script>
-  <script src="js/recuperacion-data.js"></script>
-  <script src="js/recuperacion.js"></script>
-  <script src="js/auth.js"></script>
+  <script src="js/global.js?v=300.0"></script>
+  <script src="js/auth.js?v=300.0"></script>
+  <script src="js/recuperacion-data.js?v=300.0"></script>
+  <script src="js/recuperacion.js?v=300.0"></script>
 </body>
 </html>
+
+

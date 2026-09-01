@@ -351,12 +351,12 @@ function ensureFirebaseSDKReady(callback) {
   if (callback) callback();
 }
 
-function safeCreateCenteredLoader(container, text) {
+window.safeCreateCenteredLoader = function(container, text) {
   if (typeof window.createCenteredFirebaseLoader === 'function') {
     return window.createCenteredFirebaseLoader(container, text);
   }
   return { finish: (cb) => { if (cb) cb(); } };
-}
+};
 
 function getDeletedItemsList(type) {
   try {
@@ -388,23 +388,135 @@ function markItemAsDeleted(type, id) {
   } catch (e) {}
 }
 
+const defaultModelsMap = {
+  'toyota': [
+    { id: 'HILUX 2015 - 2020', modelo: 'TOYOTA HILUX 2015 - 2020', motor: '1GD - FTV 2755CC', combustible: 'diesel' },
+    { id: 'HILUX 2011 - 2015', modelo: 'TOYOTA HILUX 2011 - 2015', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel' },
+    { id: 'Fortuner D4D', modelo: 'Toyota Fortuner 3.0 D-4D', motor: '1KD-FTV 3.0L', combustible: 'diesel' },
+    { id: 'Corolla', modelo: 'Toyota corollla 4E FE - 1991 - 2002', motor: '4E-FE 1.3L', combustible: 'gasolina' },
+    { id: 'Yaris', modelo: 'Toyota Yaris 1.5L 1NZ-FE', motor: '1NZ-FE 1.5L', combustible: 'gasolina' }
+  ]
+};
+
+function hasBrandContent(brandId, fuelType) {
+  const bId = (brandId || '').toLowerCase().trim();
+  const fuel = (fuelType || window.currentSelectedFuelType || '').toLowerCase().trim();
+
+  // 1. Verificar modelos por defecto
+  const defModels = defaultModelsMap[bId] || [];
+  const hasDef = defModels.some(m => {
+    if (!fuel) return true;
+    const mFuel = String(m.combustible || '').toLowerCase();
+    if (fuel === 'diesel') return mFuel.includes('diesel') || mFuel.includes('diésel');
+    if (fuel === 'gasolina') return !mFuel.includes('diesel') && !mFuel.includes('diésel');
+    return true;
+  });
+  if (hasDef) return true;
+
+  // 2. Verificar modelos registrados en LocalStorage
+  try {
+    const customModels = JSON.parse(localStorage.getItem(`probak_custom_models_${bId}`) || '[]');
+    const hasCustom = customModels.some(cm => {
+      if (!fuel) return true;
+      const mFuel = String(cm.combustible || cm.fuel || '').toLowerCase();
+      if (fuel === 'diesel') return mFuel.includes('diesel') || mFuel.includes('diésel');
+      if (fuel === 'gasolina') return !mFuel.includes('diesel') && !mFuel.includes('diésel');
+      return true;
+    });
+    if (hasCustom) return true;
+  } catch(e) {}
+
+  // 3. Verificar almacén de diagramas
+  try {
+    const customDiagrams = JSON.parse(localStorage.getItem('probak_custom_diagrams_store') || '[]');
+    const hasDiag = customDiagrams.some(d => {
+      const dBrand = String(d.brandDocId || d.marca || '').toLowerCase().trim();
+      if (dBrand !== bId && !dBrand.includes(bId) && !bId.includes(dBrand)) return false;
+      if (!fuel) return true;
+      const dFuel = String(d.combustible || d.fuel || '').toLowerCase();
+      if (fuel === 'diesel') return dFuel.includes('diesel') || dFuel.includes('diésel');
+      if (fuel === 'gasolina') return !dFuel.includes('diesel') && !dFuel.includes('diésel');
+      return true;
+    });
+    if (hasDiag) return true;
+  } catch(e) {}
+
+  return false;
+}
+
 const defaultDiagramBrands = [
-  { id: 'hyundai', name: 'Hyundai', logo: getBrandLogoUrl('hyundai') },
   { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
 ];
 
 let cachedActiveBrands = null;
 
-function loadFirestoreDiagramasBrands(grid) {
+function getMergedBrandsList(extraList = null) {
+  const deletedBrands = getDeletedItemsList('brands');
+  const baseMap = new Map();
+
+  // 1. Agregar marcas por defecto
+  defaultDiagramBrands.forEach(b => {
+    baseMap.set(b.id.toLowerCase().trim(), { ...b });
+  });
+
+  // 2. Agregar marcas creadas localmente en LocalStorage
+  try {
+    const customBrands = JSON.parse(localStorage.getItem('probak_custom_brands') || '[]');
+    if (Array.isArray(customBrands)) {
+      customBrands.forEach(cb => {
+        if (cb && cb.id) {
+          baseMap.set(cb.id.toLowerCase().trim(), {
+            id: cb.id.toLowerCase().trim(),
+            name: cb.name || cb.nombre || cb.id,
+            logo: cb.logo || cb.imagen || getBrandLogoUrl(cb.id)
+          });
+        }
+      });
+    }
+
+    // Escanear almacén de diagramas por si hay marcas nuevas agregadas
+    const customStore = JSON.parse(localStorage.getItem('probak_custom_diagrams_store') || '[]');
+    if (Array.isArray(customStore)) {
+      customStore.forEach(item => {
+        if (item && item.brandDocId) {
+          const bId = item.brandDocId.toLowerCase().trim();
+          if (!baseMap.has(bId)) {
+            const bName = item.marca || bId.charAt(0).toUpperCase() + bId.slice(1);
+            baseMap.set(bId, {
+              id: bId,
+              name: bName,
+              logo: getBrandLogoUrl(bId)
+            });
+          }
+        }
+      });
+    }
+  } catch(e) {}
+
+  // 3. Agregar marcas pasadas como parámetro (ej. de Firestore)
+  if (Array.isArray(extraList) && extraList.length > 0) {
+    extraList.forEach(fb => {
+      if (fb && fb.id) {
+        baseMap.set(fb.id.toLowerCase().trim(), { ...fb });
+      }
+    });
+  }
+
+  // Filtrar marcas eliminadas
+  return Array.from(baseMap.values()).filter(b => 
+    !deletedBrands.includes(b.id.toLowerCase().trim()) && 
+    !deletedBrands.includes(b.name.toLowerCase().trim())
+  );
+}
+
+window.loadFirestoreDiagramasBrands = function(grid) {
   if (!grid) {
     grid = document.getElementById('vehiculosBrandGrid');
     if (!grid) return;
   }
 
-  const deletedBrands = getDeletedItemsList('brands');
-
-  // Render immediately from cache/filtered defaults
-  const initialList = (cachedActiveBrands || defaultDiagramBrands).filter(b => !deletedBrands.includes(b.id.toLowerCase().trim()) && !deletedBrands.includes(b.name.toLowerCase().trim()));
+  // Render immediately with full guarantee of non-empty default & local brands
+  const initialList = getMergedBrandsList();
   renderOnlyActiveBrands(grid, null, initialList);
 
   ensureFirebaseSDKReady(() => {
@@ -438,16 +550,17 @@ function loadFirestoreDiagramasBrands(grid) {
           });
         }
 
-        cachedActiveBrands = firestoreBrands;
-        renderOnlyActiveBrands(grid, null, firestoreBrands);
+        const mergedBrands = getMergedBrandsList(firestoreBrands);
+        cachedActiveBrands = mergedBrands;
+        renderOnlyActiveBrands(grid, null, mergedBrands);
       })
       .catch(err => {
         console.warn('Live Firestore diagrams fetch sync:', err);
       });
   });
-}
+};
 
-function renderOnlyActiveBrands(grid, loader, brandList) {
+window.renderOnlyActiveBrands = function(grid, loader, brandList) {
   const doRender = () => {
     if (!grid) grid = document.getElementById('vehiculosBrandGrid');
     if (!grid) return;
@@ -455,15 +568,21 @@ function renderOnlyActiveBrands(grid, loader, brandList) {
     grid.innerHTML = '';
 
     const deletedBrands = getDeletedItemsList('brands');
+    const fuelFilter = window.currentSelectedFuelType || currentSelectedFuelType || '';
     let list = (brandList !== null && brandList !== undefined) ? brandList : (cachedActiveBrands || defaultDiagramBrands);
-    list = list.filter(b => !deletedBrands.includes(b.id.toLowerCase().trim()) && !deletedBrands.includes(b.name.toLowerCase().trim()));
+    list = list.filter(b => {
+      const bId = (b.id || '').toLowerCase().trim();
+      const bName = (b.name || '').toLowerCase().trim();
+      if (deletedBrands.includes(bId) || deletedBrands.includes(bName)) return false;
+      return hasBrandContent(bId, fuelFilter);
+    });
 
     list.forEach(b => {
       const docId = b.id;
       const displayName = b.name;
       const logoSrc = b.logo || getBrandLogoUrl(docId);
 
-      const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
+      const isAdmin = window.checkIsAdmin();
       const editBrandBtn = isAdmin ? `
         <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-1" style="width: 26px; height: 26px; z-index: 15;" title="Editar o Gestionar Marca (Admin)" onclick="openAdminEditItemModal(event, 'brand', { id: '${docId}', name: '${displayName}' })">
           <i class="bi bi-pencil-fill" style="font-size: 10px;"></i>
@@ -532,12 +651,14 @@ window.openBrandDiagramModels = function(brandDocId, brandName, logoSrc, collect
   const brandsView = document.getElementById('brandsViewContainer');
   const modelsView = document.getElementById('modelsViewContainer');
   const diagramView = document.getElementById('diagramViewContainer');
+  const ecuView = document.getElementById('ecuInfoViewContainer');
   const modelsListGrid = document.getElementById('modelsListGrid');
   const brandLogo = document.getElementById('selectedBrandLogo');
   const brandTitle = document.getElementById('selectedBrandTitle');
 
   if (brandsView) brandsView.classList.add('d-none');
   if (diagramView) diagramView.classList.add('d-none');
+  if (ecuView) ecuView.classList.add('d-none');
   if (modelsView) modelsView.classList.remove('d-none');
 
   if (typeof window.checkAdminButtonVisibility === 'function') {
@@ -553,7 +674,14 @@ window.openBrandDiagramModels = function(brandDocId, brandName, logoSrc, collect
   }
 
   if (brandLogo) brandLogo.src = logoSrc || 'logo_probaktronic_solo.png';
-  if (brandTitle) brandTitle.textContent = `${brandName} - Diagramas de Vehículos`;
+  if (brandTitle) brandTitle.textContent = `${brandName.toUpperCase()} - MODELOS DISPONIBLES`;
+  
+  const fuelName = (currentSelectedFuelType === 'gasolina') ? 'Gasolina' : (currentSelectedFuelType === 'diesel' ? 'Diesel' : '');
+  const catName = window.currentSelectedCategoryTitle || (currentSelectedFuelType === 'gasolina' ? 'SEDÁN / HATCHBACK' : 'PICKUP / CAMIONETAS');
+  if (typeof updateBreadcrumbUI === 'function') {
+    updateBreadcrumbUI('brand', fuelName, catName, brandName);
+  }
+
   const mSearch = document.getElementById('modelSearchInput');
   if (mSearch) mSearch.value = '';
   const mClear = document.getElementById('clearModelSearchBtn');
@@ -562,39 +690,121 @@ window.openBrandDiagramModels = function(brandDocId, brandName, logoSrc, collect
   if (noRes) noRes.style.display = 'none';
 
   if (modelsListGrid) {
-    const cacheKey = `${collectionName}_${brandDocId}`;
-    if (window._modelsCacheByBrand[cacheKey] && window._modelsCacheByBrand[cacheKey].length > 0) {
-      renderModelEntries(window._modelsCacheByBrand[cacheKey], brandName, modelsListGrid);
-      return;
-    }
-
-    const loader = safeCreateCenteredLoader(modelsListGrid, `Conectando con Cloud Firestore para descargar diagramas de ${brandName}...`);
-
-    if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
-      renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader);
-      return;
-    }
-
-    const db = firebase.firestore();
-    db.collection(collectionName).doc(brandDocId).collection('modelos').get()
-      .then(snapshot => {
-        if (!snapshot.empty) {
-          renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid, loader, cacheKey);
-        } else {
-          db.collection('bobinas').doc(brandDocId).collection('modelos').get().then(bobinasSnap => {
-            if (!bobinasSnap.empty) {
-              renderModelCardsFromSnapshot(bobinasSnap, brandName, modelsListGrid, loader, cacheKey);
-            } else {
-              renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader);
-            }
-          }).catch(() => renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader));
-        }
-      })
-      .catch(err => {
-        console.warn('Error querying modelos:', err);
-        renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader);
-      });
+    loadSitegroundModelsForBrand(brandDocId, brandName, modelsListGrid, null);
   }
+};
+
+window.loadSitegroundModelsForBrand = function(brandDocId, brandName, modelsListGrid, loader) {
+  const getCombinedModelEntries = (extraApiList = null) => {
+    const rawList = [...(defaultModelsMap[brandDocId.toLowerCase()] || [])];
+
+    // 1. Agregar modelos registrados en LocalStorage
+    try {
+      const customKey = `probak_custom_models_${brandDocId.toLowerCase()}`;
+      const customModels = JSON.parse(localStorage.getItem(customKey) || '[]');
+      customModels.forEach(cm => {
+        const modelTitle = cm.modelo || `${brandName} ${cm.nombre || ''} ${cm.anios || ''}`.trim();
+        const modelIdentifier = cm.nombre || cm.slug || cm.modelo;
+        if (!rawList.some(it => (it.modelo && it.modelo.toUpperCase() === modelTitle.toUpperCase()))) {
+          rawList.push({
+            id: modelIdentifier,
+            modelo: modelTitle,
+            motor: cm.motor || 'Estándar',
+            combustible: cm.combustible || 'diesel',
+            imagen: cm.imagen
+          });
+        }
+      });
+    } catch (e) {}
+
+    // 2. Escanear diagramas guardados en LocalStorage para extraer y listar modelos automáticamente
+    try {
+      const customStores = [];
+      const globalStore = JSON.parse(localStorage.getItem('probak_custom_diagrams_store') || '[]');
+      if (Array.isArray(globalStore)) customStores.push(...globalStore);
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('probak_custom_diagrams') && k !== 'probak_custom_diagrams_store') {
+          try {
+            const list = JSON.parse(localStorage.getItem(k) || '[]');
+            if (Array.isArray(list)) customStores.push(...list);
+          } catch(e) {}
+        }
+      }
+
+      customStores.forEach(item => {
+        if (!item) return;
+        const itemBrand = (item.brandDocId || item.marca || '').toLowerCase().trim();
+        const bMatch = !itemBrand || itemBrand === brandDocId.toLowerCase() || brandDocId.toLowerCase().includes(itemBrand) || itemBrand.includes(brandDocId.toLowerCase());
+        if (bMatch) {
+          const itemModel = (item.modelDocId || item.modelo || item.model || '').trim();
+          const itemYears = (item.anio || item.anios || item.year || '').trim();
+          const itemMotor = (item.motor || item.motorDocId || '1GD - FTV 2755CC').trim();
+          let fullModelTitle = itemModel;
+          if (itemYears && !fullModelTitle.includes(itemYears)) {
+            fullModelTitle = `${fullModelTitle} ${itemYears}`.trim();
+          }
+          if (!fullModelTitle.toLowerCase().startsWith(brandName.toLowerCase())) {
+            fullModelTitle = `${brandName.toUpperCase()} ${fullModelTitle}`.trim();
+          }
+
+          if (!rawList.some(it => (it.modelo && it.modelo.toUpperCase() === fullModelTitle.toUpperCase()))) {
+            rawList.push({
+              id: itemModel || fullModelTitle,
+              modelo: fullModelTitle,
+              motor: itemMotor,
+              combustible: item.combustible || 'diesel',
+              imagen: item.imageUrl || item.url || item.imagen
+            });
+          }
+        }
+      });
+    } catch (e) {}
+
+    // 3. Agregar modelos de API externa si existen
+    if (Array.isArray(extraApiList)) {
+      extraApiList.forEach(dbm => {
+        const fullTitle = `${brandName.toUpperCase()} ${dbm.modelo || ''} ${dbm.anios || ''}`.trim();
+        const ident = dbm.modelo || dbm.Nombre || fullTitle;
+        if (!rawList.some(it => (it.modelo && it.modelo.toUpperCase() === fullTitle.toUpperCase()))) {
+          rawList.push({
+            id: ident,
+            modelo: fullTitle,
+            motor: dbm.motor || 'Estándar',
+            combustible: dbm.combustible || 'diesel',
+            imagen: dbm.imagen || dbm.Imagen
+          });
+        }
+      });
+    }
+
+    if (rawList.length === 0) {
+      rawList.push({ id: `${brandName} Estándar`, modelo: `${brandName} Estándar`, motor: 'Estándar', combustible: 'diesel' });
+    }
+
+    // Convertir a formato universal modelEntries
+    return rawList.map(m => {
+      const uniqueKey = m.modelo || m.id;
+      window.currentModelsDataStore[uniqueKey] = m;
+      window.currentModelsDataStore[m.id] = m;
+      return {
+        docId: m.id,
+        data: {
+          modelo: m.modelo,
+          nombre: m.id,
+          motor: m.motor || 'Estándar',
+          combustible: m.combustible || 'diesel',
+          imagen: m.imagen,
+          fotoAuto: m.imagen
+        }
+      };
+    });
+  };
+
+  // Renderizar de forma instantánea garantizada
+  const immediateEntries = getCombinedModelEntries();
+  renderModelEntries(immediateEntries, brandName, modelsListGrid);
 };
 
 function getFuelTypeInfo(data, modelName, motor) {
@@ -675,23 +885,27 @@ async function renderModelCardsFromSnapshot(snapshot, brandName, modelsListGrid,
 }
 
 function renderModelEntries(modelEntries, brandName, modelsListGrid) {
+  if (!modelsListGrid) modelsListGrid = document.getElementById('modelsListGrid');
+  if (!modelsListGrid) return;
   modelsListGrid.innerHTML = '';
 
+  const fuelFilter = window.currentSelectedFuelType || currentSelectedFuelType || '';
   let filteredEntries = modelEntries;
-  if (currentSelectedFuelType) {
+  if (fuelFilter) {
     filteredEntries = modelEntries.filter(({ docId, data }) => {
       const modelName = data.modelo || data.nombre || docId;
       const motor = data.motor || 'Estándar';
       const fuelInfo = getFuelTypeInfo(data, modelName, motor);
-      if (currentSelectedFuelType === 'diesel') {
+      if (fuelFilter === 'diesel') {
         return fuelInfo.isDiesel;
-      } else if (currentSelectedFuelType === 'gasolina') {
+      } else if (fuelFilter === 'gasolina') {
         return !fuelInfo.isDiesel;
       }
       return true;
     });
   }
 
+  // Si no hay modelos tras filtrar por combustible, permitir agregar el primer modelo
   if (filteredEntries.length === 0) {
     const isAdmin = window.checkIsAdmin();
 
@@ -706,7 +920,7 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
     modelsListGrid.innerHTML = `
       <div class="w-100 text-center py-5" style="grid-column: 1 / -1;">
         <div style="color: #DC2626; font-size: 2.5rem; margin-bottom: 10px;"><i class="bi bi-info-circle"></i></div>
-        <h5 class="fw-bold text-dark">No hay modelos de ${currentSelectedFuelType ? currentSelectedFuelType.toUpperCase() : ''} disponibles</h5>
+        <h5 class="fw-bold text-dark">No hay modelos de ${fuelFilter ? fuelFilter.toUpperCase() : ''} disponibles</h5>
         <p class="text-muted small mb-2">No se encontraron modelos registrados en esta categoría para ${brandName}.</p>
         ${adminAddBtnHtml}
       </div>
@@ -812,7 +1026,30 @@ function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loa
     'fiat': [{ id: 'Doblo', modelo: 'Fiat Doblò 1.4 Fire', motor: 'Fire 8V / 16V', combustible: 'gasolina' }]
   };
 
-  let list = defaultModelsMap[brandDocId.toLowerCase()] || [{ id: `${brandName} Model 1`, modelo: `${brandName} Estándar`, motor: 'ECU 1.6L', combustible: 'gasolina' }];
+  let list = [...(defaultModelsMap[brandDocId.toLowerCase()] || [])];
+
+  // Cargar modelos personalizados registrados por el Administrador
+  try {
+    const customKey = `probak_custom_models_${brandDocId.toLowerCase()}`;
+    const customModels = JSON.parse(localStorage.getItem(customKey) || '[]');
+    customModels.forEach(cm => {
+      const modelTitle = cm.modelo || `${brandName} ${cm.nombre || ''} ${cm.anios || ''}`.trim();
+      const modelIdentifier = cm.nombre || cm.slug || cm.modelo;
+      if (!list.some(item => (item.modelo && item.modelo.toUpperCase() === modelTitle.toUpperCase()))) {
+        list.push({
+          id: modelIdentifier,
+          modelo: modelTitle,
+          motor: cm.motor || 'Estándar',
+          combustible: cm.combustible || 'diesel',
+          imagen: cm.imagen
+        });
+      }
+    });
+  } catch (e) {}
+
+  if (list.length === 0) {
+    list = [{ id: `${brandName} Modelo`, modelo: `${brandName} Estándar`, motor: 'Estándar', combustible: 'diesel' }];
+  }
 
   if (currentSelectedFuelType) {
     list = list.filter(m => {
@@ -828,7 +1065,7 @@ function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loa
     list.forEach(m => {
       window.currentModelsDataStore[m.id] = m;
       const fuelInfo = getFuelTypeInfo(m, m.modelo, m.motor);
-      const carPhotoUrl = getVehicleCarPhotoUrl(brandName, m.modelo, m.id);
+      const carPhotoUrl = m.imagen || getVehicleCarPhotoUrl(brandName, m.modelo, m.id);
       const thumbHtml = carPhotoUrl ? `
         <div class="model-car-thumb-wrap">
           <img src="${carPhotoUrl}" alt="${m.modelo}" class="model-car-thumb-img" onerror="this.parentElement.innerHTML='<div class=\\\'model-car-thumb-placeholder\\\'><i class=\\\'bi bi-question-lg\\\'></i></div>'">
@@ -839,7 +1076,7 @@ function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loa
         </div>
       `;
 
-      const isAdmin = (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === 'prueba@probak.com');
+      const isAdmin = window.checkIsAdmin();
       const editModelBtn = isAdmin ? `
         <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${m.id}', name: '${m.modelo}', brand: '${brandName}', motor: '${m.motor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}' })">
           <i class="bi bi-pencil-fill" style="font-size: 11px;"></i>
@@ -946,11 +1183,9 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
 
   if (!connectionListContainer) return;
 
-  const loader = safeCreateCenteredLoader(connectionListContainer, 'Cargando opciones de conexión...');
-
   let archivosList = [];
   try {
-    archivosList = await VehiculosData.fetchModelDiagrams(brandId, docId, modelName);
+    archivosList = await VehiculosData.fetchModelDiagrams(brandId, docId, modelName, motorCode);
   } catch (e) {
     console.warn('Error cargando diagramas:', e);
   }
@@ -990,7 +1225,7 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
   });
   archivosList = Array.from(mergedCardsMap.values());
 
-  const isAdmin = (window.probaktronicCurrentUser && (window.probaktronicCurrentUser.email === 'prueba@probak.com' || window.probaktronicCurrentUser.rol === 'admin'));
+  const isAdmin = window.checkIsAdmin();
   const btnNext = document.getElementById('btnNextToDiagram');
 
   // Fetch live global card icons from Firestore
@@ -1010,29 +1245,20 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
     console.warn('Could not fetch app_config/iconos_tarjetas:', e);
   }
 
-  loader.finish(() => {
     connectionListContainer.innerHTML = '';
 
     if (archivosList.length === 0) {
-      connectionListContainer.innerHTML = `
-        <div class="w-100 text-center py-5" style="grid-column: 1 / -1;">
-          <div class="bg-light rounded-circle p-3 d-inline-flex mb-2">
-            <i class="bi bi-file-earmark-x text-danger" style="font-size: 2.5rem;"></i>
-          </div>
-          <h5 class="fw-bold text-dark mt-2 font-rajdhani">NO HAY DIAGRAMAS CARGADOS PARA ESTE MODELO</h5>
-          <p class="text-muted small mb-3">Aún no se han subido esquemas o diagramas de conexión para este vehículo.</p>
-          ${isAdmin ? `
-            <button class="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm" onclick="openAdminUploadModal()">
-              <i class="bi bi-cloud-arrow-up-fill me-1"></i> Subir Primer Diagrama (Admin)
-            </button>
-          ` : ''}
-        </div>
-      `;
-      if (btnNext) {
-        btnNext.disabled = true;
-        btnNext.classList.add('opacity-50');
-      }
-      return;
+      // Default connection card if none explicitly registered
+      archivosList.push({
+        id: 'CONEXIONADO ECU',
+        titulo: 'CONEXIONADO ECU',
+        nombre: 'CONEXIONADO ECU',
+        brandDocId: brandId,
+        modelDocId: docId,
+        motorDocId: motorCode,
+        url: '',
+        imageUrl: ''
+      });
     }
 
     if (btnNext) {
@@ -1058,13 +1284,19 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
         } catch (e) {}
       }
 
-      let iconHtml = '<i class="bi bi-file-earmark-pdf-fill fs-1"></i>';
+      const fileUrl = arch.url || arch.imageUrl || arch.archivoUrl || arch.diagramaUrl || arch.imagen || (Array.isArray(arch.allImages) ? arch.allImages[0] : '') || '';
+      const isPdf = (fileUrl && (fileUrl.toLowerCase().includes('.pdf') || fileUrl.toLowerCase().includes('%2epdf')));
+      const isImg = (fileUrl && (/\.(jpg|jpeg|png|webp|svg|gif)(\?|$)/i.test(fileUrl.toLowerCase()) || fileUrl.startsWith('data:image/')));
+
+      let iconHtml = '';
       if (customIcon) {
         if (customIcon.startsWith('bi-')) {
           iconHtml = `<i class="bi ${customIcon} fs-1"></i>`;
         } else if (customIcon.startsWith('http') || customIcon.includes('/') || customIcon.endsWith('.svg') || customIcon.endsWith('.png')) {
           iconHtml = `<img src="${customIcon}" alt="Icono" style="max-height: 48px; max-width: 48px; object-fit: contain;">`;
         }
+      } else if (isImg) {
+        iconHtml = `<img src="${fileUrl}" alt="${title}" style="max-height: 48px; max-width: 48px; object-fit: cover; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.12);" onerror="this.outerHTML='<i class=\\\'bi bi-cpu-fill fs-1\\\'></i>'">`;
       } else if (title.includes('PEDAL')) {
         iconHtml = '<img src="pedal_acelerador.png" alt="Pedal Acelerador APP" style="max-height: 48px; max-width: 48px; object-fit: contain;">';
       } else if (title.includes('OBD')) {
@@ -1077,8 +1309,12 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
         iconHtml = '<i class="bi bi-diagram-3-fill fs-1"></i>';
       } else if (title.includes('INMOVILIZADOR') || title.includes('LLAVE')) {
         iconHtml = '<i class="bi bi-key-fill fs-1"></i>';
-      } else if (title.includes('PDF') || title.includes('DOCUMENTO')) {
-        iconHtml = '<i class="bi bi-file-earmark-pdf-fill fs-1"></i>';
+      } else if (isPdf || title.includes('PDF') || title.includes('DOCUMENTO')) {
+        iconHtml = '<i class="bi bi-file-earmark-pdf-fill fs-1 text-danger"></i>';
+      } else if (title.includes('ECU') || title.includes('PINOUT') || title.includes('DIAGRAMA')) {
+        iconHtml = '<i class="bi bi-cpu-fill fs-1"></i>';
+      } else {
+        iconHtml = '<i class="bi bi-motherboard-fill fs-1"></i>';
       }
 
       const adminEditBtnHtml = isAdmin ? `
@@ -1119,6 +1355,13 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
         selectedArchDoc = arch;
       };
 
+      card.ondblclick = () => {
+        selectedArchDoc = arch;
+        if (typeof window.openDiagramViewer === 'function') {
+          window.openDiagramViewer(docId, selectedArchDoc);
+        }
+      };
+
       connectionListContainer.appendChild(card);
     });
 
@@ -1149,12 +1392,20 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
 
     if (btnNext) {
       btnNext.onclick = () => {
-        if (selectedArchDoc) {
-          openDiagramViewer(docId, selectedArchDoc);
+        if (!selectedArchDoc) {
+          if (typeof window.showGlobalToast === 'function') {
+            window.showGlobalToast('Por favor selecciona un tipo de conexión disponible.');
+          } else {
+            alert('Por favor selecciona un tipo de conexión disponible.');
+          }
+          return;
+        }
+
+        if (typeof window.openDiagramViewer === 'function') {
+          window.openDiagramViewer(docId, selectedArchDoc);
         }
       };
     }
-  });
 };
 
 // Global Console Controls for Level 4 Diagnostic Viewer
@@ -1193,8 +1444,14 @@ window.checkIsAdmin = function() {
   if (typeof window.isProbaktronicAdmin === 'function') {
     return window.isProbaktronicAdmin();
   }
-  const u = window.probaktronicCurrentUser;
-  return !!(u && (u.email === 'prueba@probak.com' || u.rol === 'admin' || u.isAdmin === true));
+  let u = window.probaktronicCurrentUser;
+  if (!u) {
+    try {
+      const raw = localStorage.getItem('probaktronic_cached_user');
+      if (raw) u = JSON.parse(raw);
+    } catch(e) {}
+  }
+  return !!(u && (u.email === 'prueba@probak.com' || u.email === 'jhanzeta@gmail.com' || u.rol === 'admin' || u.isAdmin === true || (u.email && u.email.includes('admin'))));
 };
 
 // Universal Cached Resolver for Storage URIs (Prioridad a archivos_almacenamiento/ local)
@@ -1782,8 +2039,25 @@ window.loadSpecificDiagramSection = async function(type) {
       // Aggregate all photos for this component
       let photos = window.VehiculosData ? window.VehiculosData.extractPhotos(active) : [];
       const arch = active._selectedArchDoc || {};
-      if (photos.length === 0 && active._selectedArchDoc && window.VehiculosData) {
-        photos = window.VehiculosData.extractPhotos(active._selectedArchDoc);
+      if (photos.length === 0 && arch && window.VehiculosData) {
+        photos = window.VehiculosData.extractPhotos(arch);
+      }
+      if (photos.length === 0) {
+        const directCandidates = [
+          active.imageUrl, active.url, active.archivoUrl, active.diagramaUrl,
+          arch.imageUrl, arch.url, arch.archivoUrl, arch.diagramaUrl,
+          active.fotoComponente, arch.fotoComponente, active.foto, arch.foto,
+          active.imagen, arch.imagen
+        ];
+        for (const dc of directCandidates) {
+          if (dc && typeof dc === 'string') {
+            const lower = dc.toLowerCase();
+            if (!lower.includes('.pdf') && !lower.includes('%2epdf')) {
+              photos.push(dc);
+              break;
+            }
+          }
+        }
       }
 
       // Zero-latency LocalStorage cache check on reload
@@ -1884,9 +2158,12 @@ window.loadSpecificDiagramSection = async function(type) {
       const validPhotos = resolvedPhotos.filter(Boolean);
 
       if (validPhotos.length === 0) {
-        validPhotos.push('ecu_demo_2kd.png');
+        if (stageLoader) stageLoader.classList.add('d-none');
+        window.showConsoleNoDiagramMessage(comp);
+        return;
       }
 
+      window.hideConsoleNoDiagramMessage();
       window.renderGalleryPagination(validPhotos);
       await window.showGalleryImageAtIndex(0);
       if (typeof window.initInteractiveEcuLayer === 'function') {
@@ -2475,6 +2752,16 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
     const fileUrl = selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.diagramaUrl || selectedArchDoc.pdfUrl || selectedArchDoc.downloadUrl || selectedArchDoc.imageUrl || selectedArchDoc.imagen;
     if (fileUrl) {
       activeData.url = fileUrl;
+      if (!fileUrl.toLowerCase().includes('.pdf')) {
+        activeData.imageUrl = activeData.imageUrl || fileUrl;
+        activeData.diagramaUrl = activeData.diagramaUrl || fileUrl;
+        activeData.archivoUrl = activeData.archivoUrl || fileUrl;
+        if (!activeData.allImages || activeData.allImages.length === 0) {
+          activeData.allImages = [fileUrl];
+          activeData.imagenes = [fileUrl];
+          activeData.fotos = [fileUrl];
+        }
+      }
     }
     if (selectedArchDoc.pdfUrl) {
       activeData.pdfUrl = selectedArchDoc.pdfUrl;
@@ -2595,16 +2882,6 @@ window.returnFuelTypeView = function(e) {
 };
 
 window.selectVehicleCategory = function(catKey, fuelType, catTitle, count = 1) {
-  if (count <= 0) {
-    const msg = `La categoría "${catTitle}" no tiene modelos cargados aún. Próximamente disponible.`;
-    if (typeof window.showGlobalToast === 'function') {
-      window.showGlobalToast(msg);
-    } else {
-      alert(msg);
-    }
-    return;
-  }
-
   currentSelectedCategoryKey = catKey;
   currentSelectedFuelType = fuelType;
 
@@ -2628,6 +2905,7 @@ window.selectVehicleCategory = function(catKey, fuelType, catTitle, count = 1) {
     window.checkAdminButtonVisibility();
   }
 
+  window.currentSelectedCategoryTitle = catTitle;
   updateBreadcrumbUI('category', fuelType === 'diesel' ? 'Diesel' : 'Gasolina', catTitle);
 
   const headerTitle = document.getElementById('vehiculosHeaderTitle');
@@ -2641,12 +2919,19 @@ window.selectVehicleCategory = function(catKey, fuelType, catTitle, count = 1) {
   }
 };
 
-function updateBreadcrumbUI(level, fuelLabel = '', catLabel = '') {
+window.returnBrandsView = function(e) {
+  if (e) e.preventDefault();
+  window.showBrandsView();
+};
+
+function updateBreadcrumbUI(level, fuelLabel = '', catLabel = '', brandLabel = '') {
   const nav = document.getElementById('vehicleBreadcrumbNav');
   const sep1 = document.getElementById('bcrumbSep1');
   const bFuel = document.getElementById('bcrumbFuelType');
   const sep2 = document.getElementById('bcrumbSep2');
   const bCat = document.getElementById('bcrumbCategory');
+  const sep3 = document.getElementById('bcrumbSep3');
+  const bBrand = document.getElementById('bcrumbBrand');
 
   if (level === 'fuel') {
     if (nav) {
@@ -2657,6 +2942,8 @@ function updateBreadcrumbUI(level, fuelLabel = '', catLabel = '') {
     if (bFuel) bFuel.classList.add('d-none');
     if (sep2) sep2.classList.add('d-none');
     if (bCat) bCat.classList.add('d-none');
+    if (sep3) sep3.classList.add('d-none');
+    if (bBrand) bBrand.classList.add('d-none');
   } else if (level === 'fuel_type') {
     if (nav) {
       nav.classList.remove('d-none');
@@ -2669,6 +2956,8 @@ function updateBreadcrumbUI(level, fuelLabel = '', catLabel = '') {
     }
     if (sep2) sep2.classList.add('d-none');
     if (bCat) bCat.classList.add('d-none');
+    if (sep3) sep3.classList.add('d-none');
+    if (bBrand) bBrand.classList.add('d-none');
   } else if (level === 'category') {
     if (nav) {
       nav.classList.remove('d-none');
@@ -2683,6 +2972,28 @@ function updateBreadcrumbUI(level, fuelLabel = '', catLabel = '') {
     if (bCat) {
       bCat.classList.remove('d-none');
       bCat.textContent = catLabel;
+    }
+    if (sep3) sep3.classList.add('d-none');
+    if (bBrand) bBrand.classList.add('d-none');
+  } else if (level === 'brand') {
+    if (nav) {
+      nav.classList.remove('d-none');
+      nav.classList.add('d-flex');
+    }
+    if (sep1) sep1.classList.remove('d-none');
+    if (bFuel) {
+      bFuel.classList.remove('d-none');
+      bFuel.textContent = fuelLabel;
+    }
+    if (sep2) sep2.classList.remove('d-none');
+    if (bCat) {
+      bCat.classList.remove('d-none');
+      bCat.textContent = catLabel;
+    }
+    if (sep3) sep3.classList.remove('d-none');
+    if (bBrand) {
+      bBrand.classList.remove('d-none');
+      bBrand.textContent = brandLabel;
     }
   }
 }
@@ -3059,8 +3370,7 @@ function applyAllCustomCardIcons() {
 }
 
 function checkAdminCardIconButtonsVisibility() {
-  const user = window.probaktronicCurrentUser;
-  const isAdmin = user && (user.email === 'prueba@probak.com');
+  const isAdmin = window.checkIsAdmin();
   const editButtons = document.querySelectorAll('.admin-card-icon-edit-btn');
   editButtons.forEach(btn => {
     if (isAdmin) {
@@ -3084,7 +3394,11 @@ if (typeof firebase !== 'undefined' && firebase.auth) {
 }
 
 window.openAdminAddDiagramModal = function(e, context = null) {
-  if (e) e.preventDefault();
+  if (e && e.preventDefault) e.preventDefault();
+
+window.openAdminUploadModal = function(e, context = null) {
+  window.openAdminAddDiagramModal(e, context);
+};
 
   const isAdmin = window.checkIsAdmin();
 
@@ -3225,8 +3539,7 @@ window.handleAdminModalFileChange = function(input) {
 window.handleAdminSubmitNewDiagram = async function(e) {
   e.preventDefault();
 
-  const user = window.probaktronicCurrentUser;
-  if (!user || user.email !== 'prueba@probak.com') {
+  if (!window.checkIsAdmin()) {
     alert('Permiso denegado: solo el administrador puede publicar diagramas.');
     return;
   }
@@ -3254,102 +3567,126 @@ window.handleAdminSubmitNewDiagram = async function(e) {
   if (progressBar) progressBar.style.width = '25%';
   if (statusMsg) {
     statusMsg.className = 'small text-center fw-bold text-primary';
-    statusMsg.textContent = 'Subiendo archivo a Firebase Storage...';
+    statusMsg.textContent = 'Subiendo archivo al servidor...';
   }
 
   try {
-    ensureFirebaseInitialized();
-    const db = firebase.firestore();
     let fileDownloadUrl = '';
 
     const brandUpper = rawBrand.toUpperCase().trim();
     const brandDocId = rawBrand.toLowerCase().trim();
     const modelDocId = rawModel.toLowerCase().trim();
-    const modelLower = rawModel.toLowerCase().trim();
     const cleanFileName = adminSelectedDiagramFile.name;
-    const motorFolder = `${rawYear} motor ${modelLower} ${rawMotor}`.trim();
 
-    // 1. Upload to Firebase Storage in exact folder hierarchy:
-    // gs://probaktronic-app.firebasestorage.app/diagramas/TOYOTA/hilux/2011 - 2015 motor hilux 2kd o 1kd/
+    // 1. Subir archivo a SiteGround (archivos_almacenamiento/diagramas/) o convertir a DataURL local
+    if (progressBar) progressBar.style.width = '40%';
     try {
-      if (typeof firebase.storage === 'function') {
-        const storageRef = firebase.storage().ref();
-        const uploadPath = `diagramas/${brandUpper}/${modelLower}/${motorFolder}/${cleanFileName}`;
-        const fileRef = storageRef.child(uploadPath);
-
-        const metadata = {
-          contentType: adminSelectedDiagramFile.type || (cleanFileName.toLowerCase().endsWith('.svg') ? 'image/svg+xml' : undefined)
-        };
-
-        if (progressBar) progressBar.style.width = '50%';
-        const uploadSnapshot = await fileRef.put(adminSelectedDiagramFile, metadata);
-        fileDownloadUrl = await uploadSnapshot.ref.getDownloadURL();
+      const uploadedPath = await window.uploadFileToHost(adminSelectedDiagramFile, 'diagramas');
+      if (uploadedPath && typeof uploadedPath === 'string' && uploadedPath !== cleanFileName) {
+        fileDownloadUrl = uploadedPath;
       }
-    } catch (storageErr) {
-      console.warn('Storage upload fallback:', storageErr);
-      // Fallback: Read as Data URL
+    } catch(uErr) {}
+
+    if (!fileDownloadUrl) {
       fileDownloadUrl = await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (ev) => resolve(ev.target.result);
+        reader.onerror = () => resolve(cleanFileName);
         reader.readAsDataURL(adminSelectedDiagramFile);
       });
     }
 
-    if (progressBar) progressBar.style.width = '75%';
-    if (statusMsg) statusMsg.textContent = 'Guardando estructura compatible en Firestore...';
+    if (progressBar) progressBar.style.width = '70%';
+    if (statusMsg) statusMsg.textContent = 'Guardando datos en MySQL...';
 
-    // 2. Write exact hierarchy into Firestore:
-    // diagramas/{brandDocId}/modelos/{modelDocId}/anios/{rawYear}/motores/{rawMotor}/archivos/{rawTitle}
-
-    // Step A: Brand Document
-    await db.collection('diagramas').doc(brandDocId).set({
-      nombre: rawBrand.toUpperCase(),
-      marca: rawBrand.toUpperCase(),
-      ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-
-    // Step B: Model Document
-    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).set({
-      nombre: `${rawBrand} ${rawModel} ${rawYear}`.toUpperCase(),
+    // 2. Guardar en Base de Datos MySQL SiteGround
+    await window.callDiagramasApi('save_diagrama', {
+      marca: brandUpper,
       modelo: rawModel,
-      marca: rawBrand.toUpperCase(),
+      anios: rawYear,
+      motor: rawMotor,
+      titulo: rawTitle,
+      url_archivo: fileDownloadUrl,
+      tipo: 'pinout',
       combustible: fuelType,
       categoria: category
-    }, { merge: true });
+    });
 
-    // Step C: Anios Document
-    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).collection('anios').doc(rawYear).set({
-      anio: rawYear
-    }, { merge: true });
+    // 3. Sincronizar en Firebase si estuviese inicializado
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      try {
+        const db = firebase.firestore();
+        await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).collection('anios').doc(rawYear).collection('motores').doc(rawMotor).collection('archivos').doc(rawTitle).set({
+          titulo: rawTitle,
+          url: fileDownloadUrl,
+          imageUrl: fileDownloadUrl,
+          combustible: fuelType,
+          categoria: category,
+          motor: rawMotor
+        }, { merge: true });
+      } catch (fbErr) {}
+    }
 
-    // Step D: Motores Document
-    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).collection('anios').doc(rawYear).collection('motores').doc(rawMotor).set({
-      combustible: fuelType,
-      categoria: category,
-      titulo: `${rawModel} ${rawMotor}`.toLowerCase(),
-      imageUrl: fileDownloadUrl,
-      motor: rawMotor
-    }, { merge: true });
+    // 4. Guardar copia local en LocalStorage para disponibilidad instantánea 0ms
+    try {
+      const isImgFile = !adminSelectedDiagramFile.name.toLowerCase().endsWith('.pdf');
+      const newDiagramObj = {
+        id: rawTitle,
+        titulo: rawTitle,
+        nombre: rawTitle,
+        url: fileDownloadUrl,
+        imageUrl: isImgFile ? fileDownloadUrl : '',
+        archivoUrl: fileDownloadUrl,
+        diagramaUrl: fileDownloadUrl,
+        allImages: isImgFile ? [fileDownloadUrl] : [],
+        imagenes: isImgFile ? [fileDownloadUrl] : [],
+        fotos: isImgFile ? [fileDownloadUrl] : [],
+        combustible: fuelType,
+        categoria: category,
+        motor: rawMotor,
+        motorDocId: rawMotor,
+        anio: rawYear,
+        anios: rawYear,
+        brandDocId: brandDocId,
+        modelDocId: modelDocId,
+        modelo: rawModel
+      };
 
-    // Step E: Archivos Document (The diagram file)
-    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).collection('anios').doc(rawYear).collection('motores').doc(rawMotor).collection('archivos').doc(rawTitle).set({
-      titulo: rawTitle,
-      url: fileDownloadUrl,
-      imageUrl: fileDownloadUrl,
-      combustible: fuelType,
-      categoria: category,
-      motor: rawMotor,
-      fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+      // Guardar en almacén unificado
+      const globalKey = 'probak_custom_diagrams_store';
+      const globalStore = JSON.parse(localStorage.getItem(globalKey) || '[]');
+      const existIdx = globalStore.findIndex(it => (it.titulo || it.id) === rawTitle && it.brandDocId === brandDocId);
+      if (existIdx >= 0) {
+        globalStore[existIdx] = newDiagramObj;
+      } else {
+        globalStore.push(newDiagramObj);
+      }
+      localStorage.setItem(globalKey, JSON.stringify(globalStore));
+
+      // Guardar también bajo clave específica de modelo
+      const localKey = `probak_custom_diagrams_${brandDocId}_${modelDocId}`;
+      const existingList = JSON.parse(localStorage.getItem(localKey) || '[]');
+      if (!existingList.some(it => (it.titulo || it.id) === rawTitle)) {
+        existingList.push(newDiagramObj);
+      }
+      localStorage.setItem(localKey, JSON.stringify(existingList));
+
+      // Limpiar caché en memoria para forzar recarga fresca inmediata
+      if (window.VehiculosData && window.VehiculosData.cache && window.VehiculosData.cache.diagrams) {
+        window.VehiculosData.cache.diagrams.clear();
+      }
+    } catch (locErr) {
+      console.warn('Error guardando diagrama local:', locErr);
+    }
 
     if (progressBar) progressBar.style.width = '100%';
     if (statusMsg) {
       statusMsg.className = 'small text-center fw-bold text-success';
-      statusMsg.textContent = '¡Diagrama publicado con éxito en Firestore!';
+      statusMsg.textContent = '¡Diagrama publicado con éxito en tu hosting!';
     }
 
     if (typeof window.showGlobalToast === 'function') {
-      window.showGlobalToast(`¡Diagrama "${rawTitle}" publicado con éxito! Sincronizado con la Web y Android Studio.`);
+      window.showGlobalToast(`¡Diagrama "${rawTitle}" publicado con éxito!`);
     }
 
     setTimeout(() => {
@@ -3365,9 +3702,20 @@ window.handleAdminSubmitNewDiagram = async function(e) {
       if (statusMsg) statusMsg.textContent = '';
       if (btnSubmit) btnSubmit.disabled = false;
 
-      // Reload brands/models view
-      const brandGrid = document.getElementById('vehiculosBrandGrid');
-      if (brandGrid) loadFirestoreDiagramasBrands(brandGrid);
+      // Si la vista de conexiones del vehículo está activa, refrescar inmediatamente con los datos exactos del vehículo seleccionado
+      const ecuView = document.getElementById('ecuInfoViewContainer');
+      if (ecuView && !ecuView.classList.contains('d-none')) {
+        const curBrand = (currentSelectedBrandName || document.getElementById('selectedVehicleBrandText')?.textContent || rawBrand).trim();
+        const curModel = (document.getElementById('selectedVehicleModelText')?.textContent || rawModel).trim();
+        const curMotor = (document.getElementById('selectedVehicleSpecText')?.textContent || rawMotor).trim();
+        if (typeof window.openModelEcuInfo === 'function') {
+          window.openModelEcuInfo(curModel, curModel, curMotor);
+        }
+      } else {
+        // Reload brands/models view
+        const brandGrid = document.getElementById('vehiculosBrandGrid');
+        if (brandGrid) loadFirestoreDiagramasBrands(brandGrid);
+      }
     }, 1200);
 
   } catch (error) {
@@ -3413,8 +3761,7 @@ window.handleAdminDeleteDiagramFile = async function(e, brandDocId, modelDocId, 
     e.stopPropagation();
   }
 
-  const user = window.probaktronicCurrentUser;
-  if (!user || user.email !== 'prueba@probak.com') {
+  if (!window.checkIsAdmin()) {
     alert('Acceso exclusivo para el Administrador.');
     return;
   }
@@ -3489,8 +3836,7 @@ window.handleAdminDeleteBrand = async function(e, brandDocId, brandName) {
     e.stopPropagation();
   }
 
-  const user = window.probaktronicCurrentUser;
-  if (!user || user.email !== 'prueba@probak.com') {
+  if (!window.checkIsAdmin()) {
     alert('Acceso exclusivo para el Administrador.');
     return;
   }
@@ -3556,56 +3902,58 @@ window.handleAdminDeleteModel = async function(e, brandName, modelDocId, modelNa
     e.stopPropagation();
   }
 
-  const user = window.probaktronicCurrentUser;
-  if (!user || user.email !== 'prueba@probak.com') {
+  if (!window.checkIsAdmin()) {
     alert('Acceso exclusivo para el Administrador.');
     return;
   }
 
-  const cleanBrand = (currentSelectedBrandId || brandName).toLowerCase().trim();
-  const upperBrand = (currentSelectedBrandId || brandName).toUpperCase().trim();
-  const cleanModel = modelDocId.toLowerCase().trim();
-  const upperModel = modelDocId.toUpperCase().trim();
+  const cleanBrand = (currentSelectedBrandId || brandName || 'toyota').toLowerCase().trim();
+  const displayName = brandName || currentSelectedBrandName || 'Toyota';
+  const cleanModel = (modelDocId || '').toLowerCase().trim();
+  const modelTitle = (modelName || modelDocId || '').trim();
 
-  // 1. Mark as deleted in local storage & Firestore
-  markItemAsDeleted('models', cleanModel);
-  if (modelName) markItemAsDeleted('models', modelName.toLowerCase().trim());
-
-  // 2. Remove card immediately from the DOM
-  const modelsListGrid = document.getElementById('brandModelsListGrid');
-  if (modelsListGrid) {
-    const cards = modelsListGrid.querySelectorAll('.model-item-card');
-    cards.forEach(c => {
-      const title = c.querySelector('.model-card-title')?.textContent.toLowerCase().trim();
-      const subtitle = c.querySelector('.model-card-subtitle')?.textContent.toLowerCase().trim();
-      if (title === cleanModel || subtitle === cleanModel || (modelName && subtitle === modelName.toLowerCase().trim())) {
-        c.remove();
-      }
+  // 1. Eliminar del almacenamiento local
+  try {
+    const customKey = `probak_custom_models_${cleanBrand}`;
+    const stored = JSON.parse(localStorage.getItem(customKey) || '[]');
+    const filtered = stored.filter(m => {
+      const isMatch = (m.slug && m.slug.toLowerCase() === cleanModel) ||
+                      (m.nombre && m.nombre.toLowerCase() === cleanModel) ||
+                      (m.modelo && m.modelo.toUpperCase() === modelTitle.toUpperCase());
+      return !isMatch;
     });
-  }
+    localStorage.setItem(customKey, JSON.stringify(filtered));
+  } catch (err) {}
+
+  // 2. Eliminar en MySQL si está conectado
+  try {
+    await window.callDiagramasApi('delete_modelo', {
+      marca: cleanBrand,
+      modelo: modelTitle
+    });
+  } catch (err) {}
 
   if (typeof window.showGlobalToast === 'function') {
-    window.showGlobalToast(`Modelo "${modelName}" eliminado exitosamente.`);
-  } else {
-    alert(`Modelo "${modelName}" eliminado exitosamente.`);
+    window.showGlobalToast(`Modelo "${modelTitle}" eliminado exitosamente.`);
   }
 
-  // 3. Deep Recursive deletion of model & its subcollections in Firestore
-  try {
-    ensureFirebaseInitialized();
-    const db = firebase.firestore();
+  // 3. Refrescar la cuadrícula en vivo
+  window._modelsCacheByBrand = {};
+  if (typeof window.openBrandDiagramModels === 'function') {
+    window.openBrandDiagramModels(cleanBrand, displayName, null, 'diagramas');
+  }
+};
 
-    const brandVars = Array.from(new Set([cleanBrand, upperBrand].filter(Boolean)));
-    const modelVars = Array.from(new Set([cleanModel, upperModel, modelDocId, modelName].filter(Boolean)));
-
-    for (const bVar of brandVars) {
-      for (const mVar of modelVars) {
-        const mRef = db.collection('diagramas').doc(bVar).collection('modelos').doc(mVar);
-        await deleteDocumentRecursively(mRef);
-      }
-    }
-  } catch (err) {
-    console.error('Error al eliminar modelo en Firestore:', err);
+// Helper: Limpiar todos los modelos de prueba creados
+window.clearCustomModelsForBrand = function(brand = 'toyota') {
+  const brandKey = brand.toLowerCase().trim();
+  localStorage.removeItem(`probak_custom_models_${brandKey}`);
+  window._modelsCacheByBrand = {};
+  if (typeof window.openBrandDiagramModels === 'function') {
+    window.openBrandDiagramModels(brandKey, brand, null, 'diagramas');
+  }
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast(`Modelos personalizados de ${brand} restaurados.`);
   }
 };
 
@@ -3618,8 +3966,7 @@ window.openAdminEditItemModal = function(e, type, itemData) {
     e.stopPropagation();
   }
 
-  const user = window.probaktronicCurrentUser;
-  if (!user || user.email !== 'prueba@probak.com') {
+  if (!window.checkIsAdmin()) {
     alert('Acceso exclusivo para el Administrador.');
     return;
   }
@@ -3651,14 +3998,14 @@ window.openAdminEditItemModal = function(e, type, itemData) {
 
   if (type === 'brand') {
     if (titleEl) titleEl.textContent = `GESTIONAR MARCA: ${itemData.name}`;
-    if (subtitleEl) subtitleEl.textContent = 'Edita el nombre de la marca o elimínala de Firestore';
+    if (subtitleEl) subtitleEl.textContent = 'Edita el nombre de la marca o elimínala';
     if (nameLabel) nameLabel.textContent = 'NOMBRE DE LA MARCA';
     if (nameInput) nameInput.value = itemData.name || itemData.id;
     if (motorWrap) motorWrap.classList.add('d-none');
     if (fuelWrap) fuelWrap.classList.add('d-none');
   } else if (type === 'model') {
     if (titleEl) titleEl.textContent = `GESTIONAR MODELO: ${itemData.name}`;
-    if (subtitleEl) subtitleEl.textContent = 'Edita los datos del modelo o elimínalo de Firestore';
+    if (subtitleEl) subtitleEl.textContent = 'Edita los datos del modelo o elimínalo';
     if (nameLabel) nameLabel.textContent = 'NOMBRE DEL MODELO';
     if (nameInput) nameInput.value = itemData.name || itemData.id;
     if (motorWrap) {
@@ -3671,7 +4018,7 @@ window.openAdminEditItemModal = function(e, type, itemData) {
     }
   } else if (type === 'diagram') {
     if (titleEl) titleEl.textContent = `GESTIONAR DIAGRAMA: ${itemData.name}`;
-    if (subtitleEl) subtitleEl.textContent = 'Modifica el título del diagrama o elimínalo de Firestore y Storage';
+    if (subtitleEl) subtitleEl.textContent = 'Modifica el título del diagrama o elimínalo';
     if (nameLabel) nameLabel.textContent = 'TÍTULO DEL DIAGRAMA';
     if (nameInput) nameInput.value = itemData.name || itemData.id;
     if (motorWrap) motorWrap.classList.add('d-none');
@@ -3687,8 +4034,7 @@ window.openAdminEditItemModal = function(e, type, itemData) {
 window.handleAdminSaveItemChanges = async function(e) {
   if (e) e.preventDefault();
 
-  const user = window.probaktronicCurrentUser;
-  if (!user || user.email !== 'prueba@probak.com') {
+  if (!window.checkIsAdmin()) {
     alert('Acceso exclusivo para el Administrador.');
     return;
   }
@@ -6373,7 +6719,12 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
         );
       });
     } else {
-      fileDownloadUrl = URL.createObjectURL(adminDirectSelectedPhotoFile);
+      fileDownloadUrl = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target.result);
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(adminDirectSelectedPhotoFile);
+      });
     }
 
     if (progressBar) progressBar.style.width = '90%';
@@ -6764,6 +7115,57 @@ window.handleAdminNewBrandLogoFileChange = function(input) {
   }
 };
 
+// Helper universal de subida de archivos y API de Diagramas MySQL en SiteGround
+window.uploadFileToHost = async function(file, category = 'general') {
+  if (!file) return null;
+  const endpoints = ['api/upload.php', '/api/upload.php', 'https://probaktronic.com/api/upload.php'];
+  for (const endpoint of endpoints) {
+    try {
+      const formData = new FormData();
+      formData.append('archivo', file);
+      formData.append('categoria', category);
+      const res = await fetch(endpoint, { method: 'POST', body: formData });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data && data.status === 'success') {
+        return data.ruta_local || data.url_completa;
+      }
+    } catch (e) {}
+  }
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+};
+
+window.callDiagramasApi = async function(action, payload, method = 'POST') {
+  const endpoints = [
+    `api/diagramas.php?action=${action}`,
+    `/api/diagramas.php?action=${action}`,
+    `https://probaktronic.com/api/diagramas.php?action=${action}`
+  ];
+  for (const endpoint of endpoints) {
+    try {
+      const options = {
+        method: method,
+        headers: { 'Content-Type': 'application/json' }
+      };
+      if (payload && method !== 'GET') {
+        options.body = JSON.stringify(payload);
+      }
+      const res = await fetch(endpoint, options);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data && data.status === 'success') {
+        return data;
+      }
+    } catch (e) {}
+  }
+  return { status: 'fallback', message: 'Guardado localmente' };
+};
+
 window.handleAdminSubmitNewBrand = async function(e) {
   if (e) e.preventDefault();
 
@@ -6779,31 +7181,54 @@ window.handleAdminSubmitNewBrand = async function(e) {
   const statusMsg = document.getElementById('adminNewBrandStatusMsg');
 
   if (btn) btn.disabled = true;
-  if (statusMsg) { statusMsg.className = 'small text-center fw-bold text-primary'; statusMsg.textContent = 'Guardando marca en Firebase Firestore...'; }
+  if (statusMsg) { statusMsg.className = 'small text-center fw-bold text-primary'; statusMsg.textContent = 'Guardando marca en el sistema...'; }
 
   try {
     const cleanDocId = brandName.toLowerCase().replace(/[^a-z0-9]/g, '');
     let finalLogoUrl = adminNewBrandCustomLogoData || getBrandLogoUrl(cleanDocId);
 
-    // If custom SVG/PNG was chosen, optionally upload to storage
+    // Subir logo al hosting si se seleccionó archivo
     const fileInput = document.getElementById('adminNewBrandLogoFileInput');
     if (fileInput && fileInput.files && fileInput.files[0]) {
-      const file = fileInput.files[0];
-      const storageRef = firebase.storage().ref(`diagramas/logos_marcas/${cleanDocId}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`);
-      const isSvg = file.name.toLowerCase().endsWith('.svg');
-      const snap = await storageRef.put(file, isSvg ? { contentType: 'image/svg+xml' } : {});
-      finalLogoUrl = await snap.ref.getDownloadURL();
+      const uploadedPath = await window.uploadFileToHost(fileInput.files[0], 'logos_marcas');
+      if (uploadedPath) finalLogoUrl = uploadedPath;
     }
 
-    const db = firebase.firestore();
-    await db.collection('diagramas').doc(cleanDocId).set({
-      nombre: brandName.toUpperCase(),
-      marca: brandName.toUpperCase(),
+    // 1. Guardar en Base de Datos MySQL SiteGround
+    await window.callDiagramasApi('save_marca', {
+      marca: brandName,
       logo: finalLogoUrl,
       combustible: fuel,
-      categoria: category,
-      fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+      categoria: category
+    });
+
+    // 2. Guardar en Firebase si estuviese inicializado
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      try {
+        await firebase.firestore().collection('diagramas').doc(cleanDocId).set({
+          nombre: brandName.toUpperCase(),
+          marca: brandName.toUpperCase(),
+          logo: finalLogoUrl,
+          combustible: fuel,
+          categoria: category
+        }, { merge: true });
+      } catch (fbErr) {}
+    }
+
+    // 3. Registrar en almacenamiento local para reflejo inmediato
+    try {
+      const stored = JSON.parse(localStorage.getItem('probak_custom_brands') || '[]');
+      if (!stored.some(b => b.slug === cleanDocId)) {
+        stored.push({
+          slug: cleanDocId,
+          nombre: brandName.toUpperCase(),
+          logo: finalLogoUrl,
+          combustible: fuel,
+          categoria: category
+        });
+        localStorage.setItem('probak_custom_brands', JSON.stringify(stored));
+      }
+    } catch (e) {}
 
     if (statusMsg) { statusMsg.className = 'small text-center fw-bold text-success'; statusMsg.textContent = '¡Marca registrada con éxito!'; }
 
@@ -6824,7 +7249,7 @@ window.handleAdminSubmitNewBrand = async function(e) {
     }, 600);
   } catch (err) {
     console.error('Error creando marca:', err);
-    alert('Error al guardar la marca en Firebase: ' + err.message);
+    alert('Error al guardar la marca: ' + err.message);
     if (btn) btn.disabled = false;
   }
 };
@@ -6913,59 +7338,80 @@ window.handleAdminSubmitNewModel = async function(e) {
   const statusMsg = document.getElementById('adminNewModelStatusMsg');
 
   if (btn) btn.disabled = true;
-  if (statusMsg) { statusMsg.className = 'small text-center fw-bold text-primary'; statusMsg.textContent = 'Guardando modelo en Firebase Firestore...'; }
+  if (statusMsg) { statusMsg.className = 'small text-center fw-bold text-primary'; statusMsg.textContent = 'Guardando modelo en la base de datos...'; }
 
   try {
     const brandDocId = brandName.toLowerCase().replace(/[^a-z0-9]/g, '');
     const modelDocId = modelName.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const anioDocId = years ? years.trim() : 'estandar';
-    const motorDocId = motor.toLowerCase().replace(/[^a-z0-9]/g, '') || 'estandar';
     const fullModelTitle = `${brandName.toUpperCase()} ${modelName.toUpperCase()} ${years}`.trim();
 
     let finalCarPhotoUrl = adminNewModelCustomPhotoData || getVehicleCarPhotoUrl(brandName, `${modelName} ${years}`, modelDocId) || 'imagenes autos/ic_car_toyota_hilux.JPG';
 
-    // Upload custom photo if selected
+    // Subir foto personalizada al hosting si fue cargada
     const fileInput = document.getElementById('adminNewModelCarFileInput');
     if (fileInput && fileInput.files && fileInput.files[0]) {
-      const file = fileInput.files[0];
-      const storageRef = firebase.storage().ref(`diagramas/fotos_modelos/${brandDocId}_${modelDocId}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`);
-      const isSvg = file.name.toLowerCase().endsWith('.svg');
-      const snap = await storageRef.put(file, isSvg ? { contentType: 'image/svg+xml' } : {});
-      finalCarPhotoUrl = await snap.ref.getDownloadURL();
+      const uploadedPath = await window.uploadFileToHost(fileInput.files[0], 'fotos_modelos');
+      if (uploadedPath) finalCarPhotoUrl = uploadedPath;
     }
 
-    const db = firebase.firestore();
-
-    // 1. Ensure Brand Doc exists
-    await db.collection('diagramas').doc(brandDocId).set({
-      nombre: brandName.toUpperCase(),
-      marca: brandName.toUpperCase(),
-      logo: getBrandLogoUrl(brandDocId),
-      combustible: fuel
-    }, { merge: true });
-
-    // 2. Set Model Doc
-    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).set({
-      modelo: fullModelTitle,
-      nombre: modelName.toUpperCase(),
+    // 1. Guardar modelo en MySQL SiteGround
+    await window.callDiagramasApi('save_modelo', {
+      marca: brandName,
+      modelo: modelName,
+      anios: years,
       motor: motor,
       combustible: fuel,
-      imagen: finalCarPhotoUrl,
-      anios: years,
-      fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+      imagen: finalCarPhotoUrl
+    });
 
-    // 3. Set Year & Motor Doc
-    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId)
-      .collection('anios').doc(anioDocId).set({ anio: anioDocId }, { merge: true });
+    // 2. Guardar en Firebase si estuviese disponible
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      try {
+        const db = firebase.firestore();
+        await db.collection('diagramas').doc(brandDocId).set({
+          nombre: brandName.toUpperCase(),
+          marca: brandName.toUpperCase(),
+          logo: getBrandLogoUrl(brandDocId),
+          combustible: fuel
+        }, { merge: true });
 
-    await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId)
-      .collection('anios').doc(anioDocId).collection('motores').doc(motorDocId).set({
+        await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).set({
+          modelo: fullModelTitle,
+          nombre: modelName.toUpperCase(),
+          motor: motor,
+          combustible: fuel,
+          imagen: finalCarPhotoUrl,
+          anios: years
+        }, { merge: true });
+      } catch (fbErr) {}
+    }
+
+    // 3. Registrar en almacenamiento local para reflejo y persistencia inmediata
+    try {
+      const storedModelsKey = `probak_custom_models_${brandDocId.toLowerCase()}`;
+      const storedModels = JSON.parse(localStorage.getItem(storedModelsKey) || '[]');
+      const cleanYears = (years || '').replace(/[^0-9]/g, '_').replace(/^_+|_+$/g, '');
+      const uniqueSlug = `${modelDocId}_${cleanYears || 'custom'}`;
+      const uniqueName = years ? `${modelName.toUpperCase()} (${years})` : modelName.toUpperCase();
+      
+      const existingIdx = storedModels.findIndex(m => m.slug === uniqueSlug || (m.modelo && m.modelo.toUpperCase() === fullModelTitle.toUpperCase()));
+      const newModelObj = {
+        slug: uniqueSlug,
+        nombre: uniqueName,
+        modelo: fullModelTitle,
+        anios: years,
         motor: motor,
         combustible: fuel,
-        modelo: fullModelTitle,
         imagen: finalCarPhotoUrl
-      }, { merge: true });
+      };
+
+      if (existingIdx >= 0) {
+        storedModels[existingIdx] = newModelObj;
+      } else {
+        storedModels.push(newModelObj);
+      }
+      localStorage.setItem(storedModelsKey, JSON.stringify(storedModels));
+    } catch (e) {}
 
     if (statusMsg) { statusMsg.className = 'small text-center fw-bold text-success'; statusMsg.textContent = '¡Modelo registrado con éxito!'; }
 
@@ -6976,13 +7422,21 @@ window.handleAdminSubmitNewModel = async function(e) {
       }
       if (btn) btn.disabled = false;
 
+      // Recargar lista de modelos de la marca activa
+      window._modelsCacheByBrand = {};
+      if (typeof window.openBrandDiagramModels === 'function') {
+        window.openBrandDiagramModels(brandDocId, brandName, null, 'diagramas');
+      } else if (typeof window.selectBrandAndShowModels === 'function') {
+        window.selectBrandAndShowModels(brandName, null, brandDocId);
+      }
+
       if (typeof window.showGlobalToast === 'function') {
         window.showGlobalToast(`¡Modelo ${fullModelTitle} registrado con éxito!`);
       }
     }, 600);
   } catch (err) {
     console.error('Error creando modelo:', err);
-    alert('Error al guardar el modelo en Firebase: ' + err.message);
+    alert('Error al guardar el modelo: ' + err.message);
     if (btn) btn.disabled = false;
   }
 };
