@@ -1132,8 +1132,15 @@ function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loa
   });
 }
 
-// Open Level 3: ECU Info & Connection Type Selector (Reference Design Flow)
 window.openModelEcuInfo = async function(docId, modelName, motorCode) {
+  window.currentSelectedModelDocId = docId;
+  window.currentSelectedModelName = modelName;
+  window.currentSelectedMotorCode = motorCode;
+
+  if (window.VehiculosData && window.VehiculosData.cache && window.VehiculosData.cache.diagrams) {
+    window.VehiculosData.cache.diagrams.clear();
+  }
+
   const brandId = currentSelectedBrandId || 'toyota';
   const brandName = currentSelectedBrandName || 'TOYOTA';
 
@@ -2050,7 +2057,7 @@ window.loadSpecificDiagramSection = async function(type) {
           active.imagen, arch.imagen
         ];
         for (const dc of directCandidates) {
-          if (dc && typeof dc === 'string') {
+          if (dc && typeof dc === 'string' && dc.length > 5) {
             const lower = dc.toLowerCase();
             if (!lower.includes('.pdf') && !lower.includes('%2epdf')) {
               photos.push(dc);
@@ -2058,6 +2065,24 @@ window.loadSpecificDiagramSection = async function(type) {
             }
           }
         }
+      }
+
+      // Check probak_custom_diagrams_store if still empty
+      if (photos.length === 0) {
+        try {
+          const customStore = JSON.parse(localStorage.getItem('probak_custom_diagrams_store') || '[]');
+          const cardTitle = (arch.titulo || arch.nombre || arch.id || active.tituloArchivo || '').toUpperCase().trim();
+          const foundInStore = customStore.find(it => {
+            const itTitle = (it.titulo || it.nombre || it.id || '').toUpperCase().trim();
+            return (itTitle === cardTitle || itTitle.includes(cardTitle) || cardTitle.includes(itTitle));
+          });
+          if (foundInStore) {
+            const foundUrl = foundInStore.imageUrl || foundInStore.url || foundInStore.diagramaUrl || foundInStore.archivoUrl;
+            if (foundUrl && !foundUrl.toLowerCase().includes('.pdf')) {
+              photos.push(foundUrl);
+            }
+          }
+        } catch(e) {}
       }
 
       // Zero-latency LocalStorage cache check on reload
@@ -2155,7 +2180,15 @@ window.loadSpecificDiagramSection = async function(type) {
 
       // Resolve all photos if they are gs:// or storage paths
       const resolvedPhotos = await Promise.all(photos.map(p => window.resolveFirebaseStorageUrl(p)));
-      const validPhotos = resolvedPhotos.filter(Boolean);
+      let validPhotos = resolvedPhotos.filter(Boolean);
+
+      if (validPhotos.length === 0) {
+        const fallbackImg = active.imageUrl || active.url || active.diagramaUrl || active.archivoUrl || arch.imageUrl || arch.url;
+        if (fallbackImg && typeof fallbackImg === 'string' && !fallbackImg.toLowerCase().includes('.pdf') && fallbackImg.length > 5) {
+          const resolvedFallback = await window.resolveFirebaseStorageUrl(fallbackImg);
+          if (resolvedFallback) validPhotos.push(resolvedFallback);
+        }
+      }
 
       if (validPhotos.length === 0) {
         if (stageLoader) stageLoader.classList.add('d-none');
@@ -2375,13 +2408,18 @@ window.loadSpecificDiagramSection = async function(type) {
         };
 
         imgEl.onerror = () => {
+          if (imgEl.src && imgEl.src.includes('/archivos_almacenamiento/') && !imgEl.src.startsWith('https://probaktronic.com')) {
+            // Reintentar directamente desde el hosting de SiteGround en vivo
+            imgEl.src = imgEl.src.replace(/^https?:\/\/[^\/]+/, 'https://probaktronic.com');
+            return;
+          }
           const sl = document.getElementById('consoleDiagramStageLoader');
           if (sl) sl.classList.add('d-none');
           console.warn('Image failed to load URL:', targetPdfOrImg);
           imgEl.classList.add('d-none');
           imgEl.style.display = 'none';
           imgEl.removeAttribute('src');
-          window.showConsoleNoDiagramMessage(comp, 'No se pudo cargar la imagen desde Firebase Storage.');
+          window.showConsoleNoDiagramMessage(comp, 'No se pudo cargar la imagen del diagrama.');
         };
 
         imgEl.classList.add('d-none');
@@ -2791,8 +2829,13 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
   activeData._componentMeta = compMeta;
   window._currentActiveDiagramData = activeData;
 
-  // Show splash view exactly like Image 1
-  window.showConsoleSplashView();
+  // Si existe imagen o diagrama, cargar directamente la sección activa:
+  const hasContent = activeData.url || activeData.imageUrl || activeData.diagramaUrl || activeData.pdfUrl || (Array.isArray(activeData.allImages) && activeData.allImages.length > 0) || (selectedArchDoc && (selectedArchDoc.url || selectedArchDoc.imageUrl || selectedArchDoc.diagramaUrl || selectedArchDoc.pdfUrl));
+  if (hasContent) {
+    window.loadSpecificDiagramSection('pcb');
+  } else {
+    window.showConsoleSplashView();
+  }
 };
 
 

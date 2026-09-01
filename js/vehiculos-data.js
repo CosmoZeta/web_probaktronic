@@ -22,20 +22,25 @@
       rawUrl = rawUrl.trim();
       if (!rawUrl || rawUrl.includes('logo_probaktronic')) return '';
 
-      // Si es una URL de Firebase Storage, convertir directamente a ruta local de archivos_almacenamiento
+      // Si es una URL de Firebase Storage, convertir directamente a ruta de archivos_almacenamiento
       if (rawUrl.includes('firebasestorage.googleapis.com') && rawUrl.includes('/o/')) {
         try {
           const encPath = rawUrl.split('/o/')[1].split('?')[0];
-          return `archivos_almacenamiento/${decodeURIComponent(encPath)}`;
+          rawUrl = `archivos_almacenamiento/${decodeURIComponent(encPath)}`;
         } catch (e) {}
       }
 
       if (rawUrl.startsWith('gs://')) {
         const clean = rawUrl.replace('gs://probaktronic-app.firebasestorage.app/', '').replace('gs://probaktronic-app.appspot.com/', '');
-        return `archivos_almacenamiento/${clean}`;
+        rawUrl = `archivos_almacenamiento/${clean}`;
       }
 
-      // URLs directas locales o externas no Firebase
+      // Si estamos en entorno local (127.0.0.1 / localhost) y el archivo está en archivos_almacenamiento/, cargarlo desde el hosting
+      const isLocalDev = (typeof window !== 'undefined' && (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'));
+      if (isLocalDev && rawUrl.startsWith('archivos_almacenamiento/')) {
+        return `https://probaktronic.com/${rawUrl}`;
+      }
+
       return rawUrl;
     },
 
@@ -217,9 +222,18 @@
                   });
                 }
 
-                // 2. Archivos bajo años -> motores
+                // 2. Archivos bajo años -> motores (verificar que el año coincida)
                 const anios = mVal.anios || {};
                 for (const [aKey, aVal] of Object.entries(anios)) {
+                  const targetYears = this.extractYears(`${cleanDoc} ${cleanModel}`);
+                  const anioYears = this.extractYears(aKey);
+                  if (targetYears.length > 0 && anioYears.length > 0) {
+                    const matchYear = targetYears.some(ty =>
+                      anioYears.some(ay => ty.raw === ay.raw || (ty.start === ay.start && ty.end === ay.end))
+                    );
+                    if (!matchYear) continue; // Saltar años no correspondientes
+                  }
+
                   const motores = aVal.motores || {};
                   for (const [motKey, motVal] of Object.entries(motores)) {
                     if (Array.isArray(motVal.archivos)) {
@@ -285,7 +299,7 @@
           }
         }
 
-        // Filtrar y normalizar diagramas para este vehículo
+        // Filtrar y normalizar diagramas para este vehículo estricto
         customStores.forEach(item => {
           if (!item) return;
           const itemBrand = (item.brandDocId || item.marca || '').toLowerCase().trim();
@@ -294,7 +308,6 @@
             const itemModel = (item.modelDocId || item.modelo || item.model || '').toLowerCase().trim();
             const itemYears = (item.anio || item.anios || item.year || '').trim();
             const itemMotor = (item.motor || item.motorDocId || '').trim();
-            const itemTitle = (item.titulo || item.nombre || item.id || '').toLowerCase().trim();
 
             const isMatch = this.isModelMatching(
               cleanDoc, 
@@ -306,13 +319,7 @@
               cleanBrand
             );
 
-            // Coincidencia por modelo o inclusión en título
-            const titleMatches = (
-              itemTitle.includes(cleanDoc) || cleanDoc.includes(itemModel) ||
-              cleanModel.includes(itemModel) || (itemYears && cleanModel.includes(itemYears))
-            );
-
-            if (isMatch || titleMatches) {
+            if (isMatch) {
               rawList.push({
                 id: item.id || item.titulo,
                 brandDocId: cleanBrand,
@@ -325,6 +332,33 @@
       } catch (locErr) {
         console.warn('LocalStorage diagrams scan notice:', locErr);
       }
+
+      // 6. Strict Isolation Filter: Eliminar cualquier tarjeta que pertenezca a otra generación/motor
+      const targetYears = this.extractYears(`${cleanDoc} ${cleanModel}`);
+      rawList = rawList.filter(item => {
+        if (!item) return false;
+        const itemTitle = (item.titulo || item.nombre || item.id || '').toUpperCase();
+        const itemYears = this.extractYears(`${item.anioDocId || ''} ${item.anio || ''} ${item.anios || ''} ${itemTitle}`);
+        
+        // Si el vehículo actual tiene años definidos (ej. 2011-2015 vs 2015-2020)
+        if (targetYears.length > 0 && itemYears.length > 0) {
+          const match = targetYears.some(ty =>
+            itemYears.some(iy => ty.raw === iy.raw || (ty.start === iy.start && ty.end === iy.end))
+          );
+          if (!match) return false;
+        }
+
+        // Si el vehículo actual tiene motor definido (ej. 1GD vs 2KD)
+        if (cleanMotor && cleanMotor !== 'estandar') {
+          const tMotorClean = cleanMotor.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const itemMotorClean = `${item.motorDocId || ''} ${item.motor || ''} ${itemTitle}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+          
+          if (tMotorClean.includes('1gd') && itemMotorClean.includes('2kd') && !itemMotorClean.includes('1gd')) return false;
+          if (tMotorClean.includes('2kd') && itemMotorClean.includes('1gd') && !itemMotorClean.includes('2kd')) return false;
+        }
+
+        return true;
+      });
 
       // Smart Merge: Preserve allImages, photos and hotspots across duplicate document variants
       const mergedCardsMap = new Map();
