@@ -2009,19 +2009,8 @@ window.loadSpecificDiagramSection = async function(type) {
         } catch(e) {}
       }
 
-      // Zero-latency LocalStorage cache check on reload
-      const storageKey = getActiveEcuStorageKey();
-      if (photos.length === 0) {
-        try {
-          const cachedPhotosRaw = localStorage.getItem(storageKey + '_photos') || localStorage.getItem('default_ecu_2kd_photos');
-          if (cachedPhotosRaw) {
-            const parsedP = JSON.parse(cachedPhotosRaw);
-            if (Array.isArray(parsedP) && parsedP.length > 0) {
-              photos = parsedP;
-            }
-          }
-        } catch (e) {}
-      }
+      // No inyectar fotos viejas de localStorage
+
 
       const extractPhotosFromDoc = (d) => {
         if (!d) return null;
