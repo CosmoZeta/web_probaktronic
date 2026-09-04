@@ -390,11 +390,8 @@ function markItemAsDeleted(type, id) {
 
 const defaultModelsMap = {
   'toyota': [
-    { id: 'HILUX 2015 - 2020', modelo: 'TOYOTA HILUX 2015 - 2020', motor: '1GD - FTV 2755CC', combustible: 'diesel' },
-    { id: 'HILUX 2011 - 2015', modelo: 'TOYOTA HILUX 2011 - 2015', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel' },
-    { id: 'Fortuner D4D', modelo: 'Toyota Fortuner 3.0 D-4D', motor: '1KD-FTV 3.0L', combustible: 'diesel' },
-    { id: 'Corolla', modelo: 'Toyota corollla 4E FE - 1991 - 2002', motor: '4E-FE 1.3L', combustible: 'gasolina' },
-    { id: 'Yaris', modelo: 'Toyota Yaris 1.5L 1NZ-FE', motor: '1NZ-FE 1.5L', combustible: 'gasolina' }
+    { id: 'hilux', modelo: 'TOYOTA HILUX 2011 - 2015', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel', categoria: 'pickup', anios: '2011 - 2015', imagen: 'diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg' },
+    { id: 'corolla', modelo: 'TOYOTA COROLLA 4E-FE', motor: '4E-FE 1.3L', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '1993 - 1997', imagen: '' }
   ]
 };
 
@@ -698,69 +695,8 @@ window.loadSitegroundModelsForBrand = function(brandDocId, brandName, modelsList
   const getCombinedModelEntries = (extraApiList = null) => {
     const rawList = [...(defaultModelsMap[brandDocId.toLowerCase()] || [])];
 
-    // 1. Agregar modelos registrados en LocalStorage
-    try {
-      const customKey = `probak_custom_models_${brandDocId.toLowerCase()}`;
-      const customModels = JSON.parse(localStorage.getItem(customKey) || '[]');
-      customModels.forEach(cm => {
-        const modelTitle = cm.modelo || `${brandName} ${cm.nombre || ''} ${cm.anios || ''}`.trim();
-        const modelIdentifier = cm.nombre || cm.slug || cm.modelo;
-        if (!rawList.some(it => (it.modelo && it.modelo.toUpperCase() === modelTitle.toUpperCase()))) {
-          rawList.push({
-            id: modelIdentifier,
-            modelo: modelTitle,
-            motor: cm.motor || 'Estándar',
-            combustible: cm.combustible || 'diesel',
-            imagen: cm.imagen
-          });
-        }
-      });
-    } catch (e) {}
+    // Modelos limpios obtenidos de la definición oficial
 
-    // 2. Escanear diagramas guardados en LocalStorage para extraer y listar modelos automáticamente
-    try {
-      const customStores = [];
-      const globalStore = JSON.parse(localStorage.getItem('probak_custom_diagrams_store') || '[]');
-      if (Array.isArray(globalStore)) customStores.push(...globalStore);
-
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith('probak_custom_diagrams') && k !== 'probak_custom_diagrams_store') {
-          try {
-            const list = JSON.parse(localStorage.getItem(k) || '[]');
-            if (Array.isArray(list)) customStores.push(...list);
-          } catch(e) {}
-        }
-      }
-
-      customStores.forEach(item => {
-        if (!item) return;
-        const itemBrand = (item.brandDocId || item.marca || '').toLowerCase().trim();
-        const bMatch = !itemBrand || itemBrand === brandDocId.toLowerCase() || brandDocId.toLowerCase().includes(itemBrand) || itemBrand.includes(brandDocId.toLowerCase());
-        if (bMatch) {
-          const itemModel = (item.modelDocId || item.modelo || item.model || '').trim();
-          const itemYears = (item.anio || item.anios || item.year || '').trim();
-          const itemMotor = (item.motor || item.motorDocId || '1GD - FTV 2755CC').trim();
-          let fullModelTitle = itemModel;
-          if (itemYears && !fullModelTitle.includes(itemYears)) {
-            fullModelTitle = `${fullModelTitle} ${itemYears}`.trim();
-          }
-          if (!fullModelTitle.toLowerCase().startsWith(brandName.toLowerCase())) {
-            fullModelTitle = `${brandName.toUpperCase()} ${fullModelTitle}`.trim();
-          }
-
-          if (!rawList.some(it => (it.modelo && it.modelo.toUpperCase() === fullModelTitle.toUpperCase()))) {
-            rawList.push({
-              id: itemModel || fullModelTitle,
-              modelo: fullModelTitle,
-              motor: itemMotor,
-              combustible: item.combustible || 'diesel',
-              imagen: item.imageUrl || item.url || item.imagen
-            });
-          }
-        }
-      });
-    } catch (e) {}
 
     // 3. Agregar modelos de API externa si existen
     if (Array.isArray(extraApiList)) {
@@ -1001,51 +937,17 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
 
 function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader) {
   const defaultModelsMap = {
-    'hyundai': [{ id: 'accent', modelo: 'Hyundai Accent 2020', motor: '1.6 Gamma', combustible: 'gasolina' }],
+    'hyundai': [{ id: 'accent', modelo: 'Hyundai Accent 2020', motor: '1.6 Gamma', combustible: 'gasolina', imagen: '' }],
     'toyota': [
-      { id: 'hilux', modelo: 'TOYOTA HILUX 2011 - 2015', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel' },
-      { id: 'Corolla', modelo: 'Toyota corollla 4E FE - 1991 - 2002', motor: '4E-FE 1.3L', combustible: 'gasolina' }
-    ],
-    'audi': [
-      { id: 'Audi A3', modelo: 'Audi A3 (8P VR6 3.2L)', motor: '022905100B', combustible: 'gasolina' },
-      { id: 'Audi A4', modelo: 'Audi A4 2.0 TFSI', motor: '06H 905 115', combustible: 'gasolina' },
-      { id: 'Audi Q7', modelo: 'Audi Q7 3.0 TDI', motor: 'V6 Quattro TDI', combustible: 'diesel' },
-      { id: 'Audi TT', modelo: 'Audi TT Coupe 1.8T', motor: '06B 905 115', combustible: 'gasolina' }
-    ],
-    'bmw': [{ id: 'BMW 118i', modelo: 'BMW 118i (E87 / F20)', motor: '12137575010', combustible: 'gasolina' }],
-    'chevrolet': [
-      { id: 'Captiva', modelo: 'Chevrolet Captiva 2.4L', motor: '12638824', combustible: 'gasolina' },
-      { id: 'Sail', modelo: 'Chevrolet Sail 1.4L', motor: 'Módulo DIS 4-Salidas', combustible: 'gasolina' }
-    ],
-    'citroen': [
-      { id: 'Berlingo', modelo: 'Citroën Berlingo 1.6 VTi', motor: 'Regleta 4-Pines', combustible: 'gasolina' },
-      { id: 'Cactus', modelo: 'Citroën C4 Cactus', motor: 'PureTech 110', combustible: 'gasolina' }
-    ],
-    'dacia': [{ id: 'Duster', modelo: 'Dacia Duster 1.6L / 2.0L', motor: 'Renault K4M', combustible: 'gasolina' }],
-    'daihatsu': [{ id: 'Terios', modelo: 'Daihatsu Terios 1.3L', motor: 'K3-VE / 3SZ-VE', combustible: 'gasolina' }],
-    'fiat': [{ id: 'Doblo', modelo: 'Fiat Doblò 1.4 Fire', motor: 'Fire 8V / 16V', combustible: 'gasolina' }]
+      { id: 'hilux', modelo: 'TOYOTA HILUX 2011 - 2015', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel', categoria: 'pickup', anios: '2011 - 2015', imagen: 'diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg' },
+      { id: 'corolla_4e', modelo: 'Toyota Corolla Motor 4E', motor: '4E-FE 1.3L', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '1993 - 1997', imagen: '' }
+    ]
   };
 
   let list = [...(defaultModelsMap[brandDocId.toLowerCase()] || [])];
 
-  // Cargar modelos personalizados registrados por el Administrador
-  try {
-    const customKey = `probak_custom_models_${brandDocId.toLowerCase()}`;
-    const customModels = JSON.parse(localStorage.getItem(customKey) || '[]');
-    customModels.forEach(cm => {
-      const modelTitle = cm.modelo || `${brandName} ${cm.nombre || ''} ${cm.anios || ''}`.trim();
-      const modelIdentifier = cm.nombre || cm.slug || cm.modelo;
-      if (!list.some(item => (item.modelo && item.modelo.toUpperCase() === modelTitle.toUpperCase()))) {
-        list.push({
-          id: modelIdentifier,
-          modelo: modelTitle,
-          motor: cm.motor || 'Estándar',
-          combustible: cm.combustible || 'diesel',
-          imagen: cm.imagen
-        });
-      }
-    });
-  } catch (e) {}
+  // Modelos limpios y oficiales
+
 
   if (list.length === 0) {
     list = [{ id: `${brandName} Modelo`, modelo: `${brandName} Estándar`, motor: 'Estándar', combustible: 'diesel' }];
@@ -1486,13 +1388,28 @@ window.resolveFirebaseStorageUrl = async function(rawUrl) {
 };
 
 // UI Helpers for Missing/Error Diagram State
-window.showConsoleNoDiagramMessage = function(compMeta, customMessage) {
+window.showConsoleNoDiagramMessage = function(compMeta, customMessage, keepPagination = false) {
   const dropzone = document.getElementById('consoleEmptyUploadDropzone');
   const imgWrap = document.getElementById('consoleImgViewerWrap');
   const stage = document.getElementById('consoleDiagramStage');
   const imgEl = document.getElementById('consoleMainDiagramImg');
   const svgOverlay = document.getElementById('consoleEcuSvgOverlay');
   const stageLoader = document.getElementById('consoleDiagramStageLoader');
+  const paginationEl = document.getElementById('consoleGalleryPagination');
+  const prevBtn = document.getElementById('btnPrevGalleryImg');
+  const nextBtn = document.getElementById('btnNextGalleryImg');
+
+  if (!keepPagination) {
+    if (paginationEl) {
+      paginationEl.classList.add('d-none');
+      paginationEl.style.display = 'none';
+      paginationEl.innerHTML = '';
+    }
+    if (prevBtn) prevBtn.classList.add('d-none');
+    if (nextBtn) nextBtn.classList.add('d-none');
+    currentGalleryImages = [];
+    currentGalleryIndex = 0;
+  }
 
   if (stageLoader) stageLoader.classList.add('d-none');
   if (imgEl) {
@@ -1852,6 +1769,13 @@ window.showGalleryImageAtIndex = async function(index) {
     let rawSrc = currentGalleryImages[currentGalleryIndex];
     let resolvedSrc = await window.resolveFirebaseStorageUrl(rawSrc);
 
+    // Update active pill button
+    const pills = document.querySelectorAll('#consoleGalleryPagination .btn-photo-pill');
+    pills.forEach((p, idx) => {
+      if (idx === currentGalleryIndex) p.classList.add('active');
+      else p.classList.remove('active');
+    });
+
     imgEl.onload = () => {
       delete imgEl.dataset.triedFallback;
       if (stageLoader) stageLoader.classList.add('d-none');
@@ -1886,7 +1810,7 @@ window.showGalleryImageAtIndex = async function(index) {
       console.warn('Gallery image failed to load:', resolvedSrc);
       imgEl.classList.add('d-none');
       imgEl.removeAttribute('src');
-      window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta, 'No se pudo cargar la imagen.');
+      window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta, 'No se pudo cargar la imagen.', true);
     };
 
     if (resolvedSrc) {
@@ -1909,7 +1833,7 @@ window.showGalleryImageAtIndex = async function(index) {
       if (stageLoader) stageLoader.classList.add('d-none');
       imgEl.classList.add('d-none');
       imgEl.removeAttribute('src');
-      window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta);
+      window.showConsoleNoDiagramMessage(window._currentActiveDiagramData?._componentMeta, null, true);
     }
   }
 
@@ -2349,11 +2273,14 @@ window.loadSpecificDiagramSection = async function(type) {
           window.hideConsoleNoDiagramMessage();
           currentPdfDoc = pdfDoc;
           currentPdfPageNum = 1;
-          if (frameEl) {
-            frameEl.classList.add('d-none');
-            frameEl.src = '';
+          if (canvasEl) {
+            canvasEl.classList.remove('d-none');
+            canvasEl.style.display = 'block';
           }
-          if (canvasEl) canvasEl.classList.remove('d-none');
+          if (stageEl) {
+            stageEl.classList.remove('d-none');
+            stageEl.style.display = 'flex';
+          }
           if (pdfPaginationEl) {
             if (pdfDoc.numPages > 1) pdfPaginationEl.classList.remove('d-none');
             else pdfPaginationEl.classList.add('d-none');
@@ -3621,10 +3548,11 @@ window.handleAdminSubmitNewDiagram = async function(e) {
     const modelDocId = rawModel.toLowerCase().trim();
     const cleanFileName = adminSelectedDiagramFile.name;
 
-    // 1. Subir archivo a SiteGround (archivos_almacenamiento/diagramas/) o convertir a DataURL local
+    // 1. Subir archivo a SiteGround (archivos_almacenamiento/diagramas/[MARCA]/[MODELO]/[AÑO])
     if (progressBar) progressBar.style.width = '40%';
     try {
-      const uploadedPath = await window.uploadFileToHost(adminSelectedDiagramFile, 'diagramas');
+      const subpath = `${rawBrand}/${rawModel}/${rawYear}`.replace(/[^a-zA-Z0-9_\-\/]/g, '_');
+      const uploadedPath = await window.uploadFileToHost(adminSelectedDiagramFile, 'diagramas', subpath);
       if (uploadedPath && typeof uploadedPath === 'string' && uploadedPath !== cleanFileName) {
         fileDownloadUrl = uploadedPath;
       }
@@ -3809,49 +3737,58 @@ window.handleAdminDeleteDiagramFile = async function(e, brandDocId, modelDocId, 
     return;
   }
 
-  const confirmDelete = confirm(`¿Está seguro de eliminar el diagrama/documento "${diagramTitle}"?\n\nEsta acción borrará el archivo de Firestore y Storage de forma segura sin afectar el resto de la base de datos ni la app de Android Studio.`);
-  if (!confirmDelete) return;
+  const cleanTitle = (diagramTitle || archDocId || '').trim();
+  const cleanId = (archDocId || diagramTitle || '').trim();
 
+  // 1. Marcar como eliminado en persistent storage
+  markItemAsDeleted('diagrams', cleanId.toLowerCase());
+  markItemAsDeleted('diagrams', cleanTitle.toLowerCase());
+
+  // 2. Eliminar de probak_custom_diagrams_store
   try {
-    ensureFirebaseInitialized();
-    const db = firebase.firestore();
+    const customStore = JSON.parse(localStorage.getItem('probak_custom_diagrams_store') || '[]');
+    const filteredStore = customStore.filter(it => {
+      const itT = (it.titulo || it.nombre || it.id || '').toLowerCase().trim();
+      return itT !== cleanTitle.toLowerCase() && itT !== cleanId.toLowerCase();
+    });
+    localStorage.setItem('probak_custom_diagrams_store', JSON.stringify(filteredStore));
+  } catch (e) {}
 
-    // 1. Delete from Firebase Storage if URL is available
-    if (fileUrl && fileUrl.startsWith('http') && typeof firebase.storage === 'function') {
-      try {
-        const storageRef = firebase.storage().refFromURL(fileUrl);
-        await storageRef.delete();
-        console.log('Archivo de Storage eliminado con éxito');
-      } catch (stErr) {
-        console.warn('Nota Storage al eliminar:', stErr);
+  // 3. Eliminar en MySQL
+  try {
+    await window.callDiagramasApi('delete_diagrama', {
+      titulo: cleanTitle,
+      archivo_id: cleanId
+    });
+  } catch (err) {}
+
+  // 4. Eliminar en Firestore si aplica
+  try {
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      const db = firebase.firestore();
+      if (brandDocId && modelDocId && anioDocId && motorDocId && archDocId) {
+        await db.collection('diagramas').doc(brandDocId.toLowerCase().trim())
+          .collection('modelos').doc(modelDocId.toLowerCase().trim())
+          .collection('anios').doc(anioDocId)
+          .collection('motores').doc(motorDocId)
+          .collection('archivos').doc(archDocId).delete().catch(() => null);
       }
     }
+  } catch (err) {}
 
-    // 2. Delete specific document in Firestore
-    if (brandDocId && modelDocId && anioDocId && motorDocId && archDocId) {
-      await db.collection('diagramas').doc(brandDocId.toLowerCase().trim())
-        .collection('modelos').doc(modelDocId.toLowerCase().trim())
-        .collection('anios').doc(anioDocId)
-        .collection('motores').doc(motorDocId)
-        .collection('archivos').doc(archDocId).delete();
-    }
+  if (window.VehiculosData && window.VehiculosData.cache && window.VehiculosData.cache.diagrams) {
+    window.VehiculosData.cache.diagrams.clear();
+  }
 
-    if (typeof window.showGlobalToast === 'function') {
-      window.showGlobalToast(`Diagrama "${diagramTitle}" eliminado exitosamente.`);
-    } else {
-      alert(`Diagrama "${diagramTitle}" eliminado exitosamente.`);
-    }
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast(`Diagrama "${cleanTitle}" eliminado exitosamente.`);
+  }
 
-    // 3. Reload current vehicle connection cards
-    if (modelDocId) {
-      window.openModelEcuInfo(modelDocId, modelDocId, motorDocId);
-    } else {
-      location.reload();
-    }
-
-  } catch (err) {
-    console.error('Error al eliminar archivo:', err);
-    alert('Ocurrió un error al eliminar el archivo: ' + err.message);
+  // 5. Recargar la lista de conexiones
+  const curModel = modelDocId || window.currentSelectedModelDocId;
+  const curMotor = motorDocId || window.currentSelectedMotorCode;
+  if (curModel) {
+    window.openModelEcuInfo(curModel, window.currentSelectedModelName || curModel, curMotor);
   }
 };
 
@@ -3869,7 +3806,9 @@ async function deleteDocumentRecursively(docRef) {
       }
     } catch (e) {}
   }
-  await docRef.delete().catch(() => {});
+  try {
+    await docRef.delete().catch(() => null);
+  } catch (e) {}
 }
 
 // --- ADMIN DELETE BRAND CONTROLLER ---
@@ -3888,14 +3827,22 @@ window.handleAdminDeleteBrand = async function(e, brandDocId, brandName) {
   const upperBrand = (brandDocId || brandName).toUpperCase().trim();
   const titleBrand = brandName ? (brandName.charAt(0).toUpperCase() + brandName.slice(1).toLowerCase()).trim() : '';
 
-  // 1. Mark as deleted in local persistent storage & Firestore
+  // 1. Marcar como eliminado en persistent storage
   markItemAsDeleted('brands', cleanBrand);
   markItemAsDeleted('brands', upperBrand);
   if (brandName) {
     markItemAsDeleted('brands', brandName.toLowerCase().trim());
   }
 
-  // 2. Remove card immediately from the DOM
+  // 2. Eliminar en MySQL
+  try {
+    await window.callDiagramasApi('delete_marca', {
+      marca: cleanBrand,
+      nombre: upperBrand
+    });
+  } catch (err) {}
+
+  // 3. Eliminar de la cuadrícula DOM inmediatamente
   const brandGrid = document.getElementById('vehiculosBrandGrid');
   if (brandGrid) {
     const cards = brandGrid.querySelectorAll('.brand-card');
@@ -3912,29 +3859,25 @@ window.handleAdminDeleteBrand = async function(e, brandDocId, brandName) {
     cachedActiveBrands = cachedActiveBrands.filter(b => b.id.toLowerCase().trim() !== cleanBrand && b.name.toLowerCase().trim() !== cleanBrand);
   }
 
+  // 4. Eliminar en Firestore
+  try {
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      const db = firebase.firestore();
+      const variants = Array.from(new Set([cleanBrand, upperBrand, titleBrand, brandDocId, brandName].filter(Boolean)));
+      for (const bVar of variants) {
+        const bRef = db.collection('diagramas').doc(bVar);
+        await deleteDocumentRecursively(bRef);
+      }
+    }
+  } catch (err) {}
+
   if (typeof window.showGlobalToast === 'function') {
-    window.showGlobalToast(`Marca "${brandName}" eliminada exitosamente de Firestore.`);
-  } else {
-    alert(`Marca "${brandName}" eliminada exitosamente de Firestore.`);
+    window.showGlobalToast(`Marca "${brandName || brandDocId}" eliminada exitosamente.`);
   }
 
-  // 3. Deep Recursive deletion of brand doc & all subcollections in Firestore
-  try {
-    ensureFirebaseInitialized();
-    const db = firebase.firestore();
-
-    const variants = Array.from(new Set([cleanBrand, upperBrand, titleBrand, brandDocId, brandName].filter(Boolean)));
-    for (const bVar of variants) {
-      const bRef = db.collection('diagramas').doc(bVar);
-      await deleteDocumentRecursively(bRef);
-    }
-
-    // Refresh grid
-    if (brandGrid) {
-      loadFirestoreDiagramasBrands(brandGrid);
-    }
-  } catch (err) {
-    console.error('Error al eliminar marca en Firestore:', err);
+  // Refrescar cuadrícula
+  if (typeof window.renderOnlyActiveBrands === 'function') {
+    window.renderOnlyActiveBrands();
   }
 };
 
@@ -3955,20 +3898,35 @@ window.handleAdminDeleteModel = async function(e, brandName, modelDocId, modelNa
   const cleanModel = (modelDocId || '').toLowerCase().trim();
   const modelTitle = (modelName || modelDocId || '').trim();
 
-  // 1. Eliminar del almacenamiento local
+  // 1. Marcar como eliminado en persistent storage
+  markItemAsDeleted('models', cleanModel);
+  markItemAsDeleted('models', modelTitle.toLowerCase());
+  markItemAsDeleted('models', `${cleanBrand}_${cleanModel}`);
+
+  // 2. Eliminar del almacenamiento local de modelos
   try {
     const customKey = `probak_custom_models_${cleanBrand}`;
     const stored = JSON.parse(localStorage.getItem(customKey) || '[]');
     const filtered = stored.filter(m => {
-      const isMatch = (m.slug && m.slug.toLowerCase() === cleanModel) ||
-                      (m.nombre && m.nombre.toLowerCase() === cleanModel) ||
-                      (m.modelo && m.modelo.toUpperCase() === modelTitle.toUpperCase());
-      return !isMatch;
+      const mSlug = (m.slug || '').toLowerCase().trim();
+      const mNombre = (m.nombre || '').toLowerCase().trim();
+      const mModelo = (m.modelo || '').toLowerCase().trim();
+      return mSlug !== cleanModel && mNombre !== cleanModel && mModelo !== modelTitle.toLowerCase() && mNombre !== modelTitle.toLowerCase();
     });
     localStorage.setItem(customKey, JSON.stringify(filtered));
   } catch (err) {}
 
-  // 2. Eliminar en MySQL si está conectado
+  // 3. Eliminar de probak_custom_diagrams_store si aplica
+  try {
+    const customStore = JSON.parse(localStorage.getItem('probak_custom_diagrams_store') || '[]');
+    const filteredStore = customStore.filter(it => {
+      const itMod = (it.modelDocId || it.modelo || it.model || '').toLowerCase().trim();
+      return itMod !== cleanModel && itMod !== modelTitle.toLowerCase();
+    });
+    localStorage.setItem('probak_custom_diagrams_store', JSON.stringify(filteredStore));
+  } catch (e) {}
+
+  // 4. Eliminar en MySQL
   try {
     await window.callDiagramasApi('delete_modelo', {
       marca: cleanBrand,
@@ -3976,14 +3934,41 @@ window.handleAdminDeleteModel = async function(e, brandName, modelDocId, modelNa
     });
   } catch (err) {}
 
+  // 5. Eliminar en Firestore si aplica
+  try {
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      const db = firebase.firestore();
+      const mRef = db.collection('diagramas').doc(cleanBrand).collection('modelos').doc(cleanModel);
+      await deleteDocumentRecursively(mRef);
+    }
+  } catch (err) {}
+
+  // 6. Eliminar inmediatamente la tarjeta del DOM
+  const modelGrid = document.getElementById('modelsListContainer');
+  if (modelGrid) {
+    const cards = modelGrid.querySelectorAll('[data-model-id], .model-card');
+    cards.forEach(card => {
+      const mId = (card.getAttribute('data-model-id') || card.getAttribute('data-slug') || '').toLowerCase().trim();
+      const text = card.textContent.toLowerCase();
+      if (mId === cleanModel || text.includes(cleanModel) || text.includes(modelTitle.toLowerCase())) {
+        card.remove();
+      }
+    });
+  }
+
+  // 7. Limpiar cachés y refrescar
+  window._modelsCacheByBrand = {};
+  if (window.VehiculosData && window.VehiculosData.cache && window.VehiculosData.cache.diagrams) {
+    window.VehiculosData.cache.diagrams.clear();
+  }
+
   if (typeof window.showGlobalToast === 'function') {
     window.showGlobalToast(`Modelo "${modelTitle}" eliminado exitosamente.`);
   }
 
-  // 3. Refrescar la cuadrícula en vivo
-  window._modelsCacheByBrand = {};
-  if (typeof window.openBrandDiagramModels === 'function') {
-    window.openBrandDiagramModels(cleanBrand, displayName, null, 'diagramas');
+  // Refrescar cuadrícula de modelos
+  if (typeof window.loadSitegroundModelsForBrand === 'function') {
+    await window.loadSitegroundModelsForBrand(cleanBrand);
   }
 };
 
@@ -6717,51 +6702,57 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
 
   if (btnSubmit) btnSubmit.disabled = true;
   if (progressWrap) progressWrap.classList.remove('d-none');
-  if (progressBar) progressBar.style.width = '15%';
-  if (statusText) statusText.textContent = 'Subiendo a Firebase Storage...';
+  if (progressBar) progressBar.style.width = '25%';
+  if (statusText) statusText.textContent = 'Subiendo imagen al servidor de SiteGround...';
 
   try {
     const active = window._currentActiveDiagramData || {};
     const archDoc = active._selectedArchDoc || {};
 
     const brandDocId = (archDoc.brandDocId || (typeof currentSelectedBrandId !== 'undefined' && currentSelectedBrandId) || (typeof currentSelectedBrandName !== 'undefined' && currentSelectedBrandName) || 'toyota').toLowerCase().trim();
-    const modelDocId = (archDoc.modelDocId || (typeof currentSelectedModelDocId !== 'undefined' && currentSelectedModelDocId) || (typeof currentSelectedModelId !== 'undefined' && currentSelectedModelId) || (typeof currentSelectedModelName !== 'undefined' && currentSelectedModelName) || 'hilux').toLowerCase().trim();
-    const anioDocId = (archDoc.anioDocId || (typeof currentSelectedAnioDocId !== 'undefined' && currentSelectedAnioDocId) || document.getElementById('selectedVehicleSpecText')?.textContent?.match(/\d{4}\s*-\s*\d{4}/)?.[0] || '2011-2015').trim();
-    const motorDocId = (archDoc.motorDocId || (typeof currentSelectedMotorDocId !== 'undefined' && currentSelectedMotorDocId) || active.motor || '2kd-ftv').toLowerCase().trim();
+    const modelDocId = (archDoc.modelDocId || (typeof currentSelectedModelDocId !== 'undefined' && currentSelectedModelDocId) || (typeof currentSelectedModelId !== 'undefined' && currentSelectedModelId) || (typeof currentSelectedModelName !== 'undefined' && currentSelectedModelName) || 'corolla').toLowerCase().trim();
+    const anioDocId = (archDoc.anioDocId || (typeof currentSelectedAnioDocId !== 'undefined' && currentSelectedAnioDocId) || document.getElementById('selectedVehicleSpecText')?.textContent?.match(/\d{4}\s*-\s*\d{4}/)?.[0] || '1993-1997').trim();
+    const motorDocId = (archDoc.motorDocId || (typeof currentSelectedMotorDocId !== 'undefined' && currentSelectedMotorDocId) || active.motor || 'motor_4e').toLowerCase().trim();
     const archDocId = archDoc.archDocId || archDoc.id || active.id || active.tituloArchivo || 'ecu';
+    const posChoice = document.querySelector('input[name="adminPhotoPosition"]:checked')?.value || 'end';
 
-    // 1. Upload to Firebase Storage with clean structured path: Marca / Modelo / Año / Motor / fotos_ecu
-    const timestamp = Date.now();
-    const cleanFileName = adminDirectSelectedPhotoFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    const cleanAnio = anioDocId.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const cleanMotor = motorDocId.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const storagePath = `diagramas/${brandDocId}/${modelDocId}/${cleanAnio}/${cleanMotor}/fotos_ecu/${timestamp}_${cleanFileName}`;
-    
+    // 1. Subir archivo a SiteGround PHP API
+    const formData = new FormData();
+    formData.append('archivo', adminDirectSelectedPhotoFile);
+    formData.append('marca', brandDocId);
+    formData.append('modelo', modelDocId);
+    formData.append('anio', anioDocId);
+    formData.append('motor', motorDocId);
+    formData.append('componente', archDocId);
+    formData.append('tipo_carpeta', 'imagen');
+    formData.append('posicion', posChoice);
+
+    if (progressBar) progressBar.style.width = '55%';
+
     let fileDownloadUrl = '';
-    if (typeof firebase !== 'undefined' && firebase.storage) {
-      const storage = firebase.storage();
-      const storageRef = storage.ref(storagePath);
-      
-      const isSvg = adminDirectSelectedPhotoFile.name.toLowerCase().endsWith('.svg');
-      const isPng = adminDirectSelectedPhotoFile.name.toLowerCase().endsWith('.png');
-      const metadata = isSvg ? { contentType: 'image/svg+xml' } : { contentType: adminDirectSelectedPhotoFile.type || (isPng ? 'image/png' : 'image/jpeg') };
+    const endpoints = [
+      'https://probaktronic.com/api/diagramas.php?action=subir_foto',
+      '/api/diagramas.php?action=subir_foto',
+      'api/diagramas.php?action=subir_foto'
+    ];
 
-      const uploadTask = storageRef.put(adminDirectSelectedPhotoFile, metadata);
+    for (const endpoint of endpoints) {
+      try {
+        const resp = await fetch(endpoint, {
+          method: 'POST',
+          body: formData
+        });
+        if (!resp.ok) continue;
+        const data = await resp.json();
+        if (data && data.status === 'success' && data.url) {
+          fileDownloadUrl = data.url;
+          break;
+        }
+      } catch (err) {}
+    }
 
-      await new Promise((resolve, reject) => {
-        uploadTask.on('state_changed', 
-          (snapshot) => {
-            const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 75) + 15;
-            if (progressBar) progressBar.style.width = `${progress}%`;
-          },
-          (error) => reject(error),
-          async () => {
-            fileDownloadUrl = await uploadTask.snapshot.ref.getDownloadURL();
-            resolve();
-          }
-        );
-      });
-    } else {
+    if (!fileDownloadUrl) {
+      console.warn('Fallo subida PHP remota/local, usando FileReader como respaldo visual temporal');
       fileDownloadUrl = await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (ev) => resolve(ev.target.result);
@@ -6770,11 +6761,10 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
       });
     }
 
-    if (progressBar) progressBar.style.width = '90%';
-    if (statusText) statusText.textContent = 'Actualizando documento en Firestore...';
+    if (progressBar) progressBar.style.width = '85%';
+    if (statusText) statusText.textContent = 'Actualizando galería del componente...';
 
-    // 2. Determine Position: Add to End or Make Primary Cover (Foto 1)
-    const posChoice = document.querySelector('input[name="adminPhotoPosition"]:checked')?.value || 'end';
+    // 2. Determinar Posición en la Galería
     let newGallery = [];
     if (Array.isArray(currentGalleryImages) && currentGalleryImages.length > 0) {
       newGallery = [...currentGalleryImages];
@@ -6793,64 +6783,13 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
       newGallery.push(fileDownloadUrl);
     }
 
-    // Deduplicate gallery while preserving order
+    // Quitar duplicados
     newGallery = Array.from(new Set(newGallery));
 
-    // 3. Save to Firestore under exact hierarchical path and normalized fallbacks
-    if (typeof firebase !== 'undefined' && firebase.firestore) {
-      const db = firebase.firestore();
-      const storageKey = getActiveEcuStorageKey();
-      const updatePayload = {
-        fotoComponente: fileDownloadUrl,
-        imageUrl: (posChoice === 'first') ? fileDownloadUrl : (newGallery[0] || fileDownloadUrl),
-        imagen: (posChoice === 'first') ? fileDownloadUrl : (newGallery[0] || fileDownloadUrl),
-        foto: fileDownloadUrl,
-        imagenes: newGallery,
-        allImages: newGallery,
-        marca: brandDocId,
-        modelo: modelDocId,
-        anio: anioDocId,
-        motor: motorDocId,
-        ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-      };
-
-      // Write to deep hierarchy exact
-      await db.collection('diagramas').doc(brandDocId)
-        .collection('modelos').doc(modelDocId)
-        .collection('anios').doc(anioDocId)
-        .collection('motores').doc(motorDocId)
-        .collection('archivos').doc(archDocId)
-        .set(updatePayload, { merge: true }).catch(() => null);
-
-      // Write to deep hierarchy lowercase
-      await db.collection('diagramas').doc(brandDocId.toLowerCase())
-        .collection('modelos').doc(modelDocId.toLowerCase())
-        .collection('anios').doc(anioDocId)
-        .collection('motores').doc(motorDocId.toLowerCase())
-        .collection('archivos').doc(archDocId)
-        .set(updatePayload, { merge: true }).catch(() => null);
-
-      // Write to direct model collection
-      await db.collection('diagramas').doc(brandDocId.toLowerCase())
-        .collection('modelos').doc(modelDocId.toLowerCase())
-        .collection('archivos').doc(archDocId)
-        .set(updatePayload, { merge: true }).catch(() => null);
-
-      // Write to global app_config for universal instant discovery
-      await db.collection('app_config').doc('diagramas_imagenes')
-        .set({ [storageKey]: newGallery, [storageKey + '_main']: fileDownloadUrl }, { merge: true }).catch(() => null);
-    }
-
-    try {
-      const storageKey = getActiveEcuStorageKey();
-      localStorage.setItem(storageKey + '_photos', JSON.stringify(newGallery));
-      localStorage.setItem('default_ecu_2kd_photos', JSON.stringify(newGallery));
-    } catch(e) {}
-
     if (progressBar) progressBar.style.width = '100%';
-    if (statusText) statusText.textContent = '¡Foto vinculada con éxito!';
+    if (statusText) statusText.textContent = '¡Foto guardada con éxito en SiteGround!';
 
-    // 4. Update live state & reload viewer stage immediately
+    // 3. Actualizar estado en vivo del visor
     currentGalleryImages = newGallery;
     if (window._currentActiveDiagramData) {
       window._currentActiveDiagramData.allImages = newGallery;
@@ -6865,7 +6804,7 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
       }
     }
 
-    // Reveal image in viewer stage and hide empty dropzone
+    // Mostrar imagen en el visor
     const dropzoneEl = document.getElementById('consoleEmptyUploadDropzone');
     const stage = document.getElementById('consoleDiagramStage');
     const imgEl = document.getElementById('consoleMainDiagramImg');
@@ -6875,6 +6814,7 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
     }
     if (stage) {
       stage.classList.remove('d-none');
+      stage.style.display = 'flex';
     }
     if (imgEl) {
       imgEl.classList.remove('d-none');
@@ -6889,7 +6829,7 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
       window.initInteractiveEcuLayer();
     }
 
-    // 5. Close Modal & Reset Form
+    // 4. Cerrar Modal y Resetear Formulario
     setTimeout(() => {
       const modalEl = document.getElementById('adminAddPhotoDirectModal');
       if (modalEl && typeof bootstrap !== 'undefined') {
@@ -6906,11 +6846,11 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
     }, 500);
 
     if (typeof window.showGlobalToast === 'function') {
-      window.showGlobalToast(`📸 ¡Foto del componente subida y guardada en Firebase (${brandDocId.toUpperCase()} / ${modelDocId.toUpperCase()} / ${anioDocId} / ${motorDocId.toUpperCase()})!`);
+      window.showGlobalToast(`📸 ¡Foto del componente guardada en SiteGround (${brandDocId.toUpperCase()} / ${modelDocId.toUpperCase()} / ${archDocId.toUpperCase()})!`);
     }
   } catch (err) {
-    console.error('Error subiendo foto directa:', err);
-    alert('Error al subir la foto a Firebase: ' + err.message);
+    console.error('Error subiendo foto directa a SiteGround:', err);
+    alert('Error al subir la foto al servidor: ' + err.message);
     if (btnSubmit) btnSubmit.disabled = false;
     if (progressWrap) progressWrap.classList.add('d-none');
   }
@@ -7159,7 +7099,7 @@ window.handleAdminNewBrandLogoFileChange = function(input) {
 };
 
 // Helper universal de subida de archivos y API de Diagramas MySQL en SiteGround
-window.uploadFileToHost = async function(file, category = 'general') {
+window.uploadFileToHost = async function(file, category = 'diagramas', subcarpeta = '') {
   if (!file) return null;
   const endpoints = ['api/upload.php', '/api/upload.php', 'https://probaktronic.com/api/upload.php'];
   for (const endpoint of endpoints) {
@@ -7167,6 +7107,9 @@ window.uploadFileToHost = async function(file, category = 'general') {
       const formData = new FormData();
       formData.append('archivo', file);
       formData.append('categoria', category);
+      if (subcarpeta) {
+        formData.append('subcarpeta', subcarpeta);
+      }
       const res = await fetch(endpoint, { method: 'POST', body: formData });
       if (!res.ok) continue;
       const data = await res.json();
@@ -7393,7 +7336,8 @@ window.handleAdminSubmitNewModel = async function(e) {
     // Subir foto personalizada al hosting si fue cargada
     const fileInput = document.getElementById('adminNewModelCarFileInput');
     if (fileInput && fileInput.files && fileInput.files[0]) {
-      const uploadedPath = await window.uploadFileToHost(fileInput.files[0], 'fotos_modelos');
+      const modelSubpath = `${brandDocId}/${modelDocId}`.replace(/[^a-zA-Z0-9_\-\/]/g, '_');
+      const uploadedPath = await window.uploadFileToHost(fileInput.files[0], 'fotos_modelos', modelSubpath);
       if (uploadedPath) finalCarPhotoUrl = uploadedPath;
     }
 

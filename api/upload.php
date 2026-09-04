@@ -21,11 +21,30 @@ if (!isset($_FILES['archivo']) || $_FILES['archivo']['error'] !== UPLOAD_ERR_OK)
     exit();
 }
 
-$categoria = isset($_POST['categoria']) ? trim($_POST['categoria']) : 'general';
+$categoria = isset($_POST['categoria']) ? trim($_POST['categoria']) : 'diagramas';
 $categoriaLimpia = preg_replace('/[^a-zA-Z0-9_-]/', '', $categoria);
-if ($categoriaLimpia === '') $categoriaLimpia = 'general';
+if ($categoriaLimpia === '') $categoriaLimpia = 'diagramas';
 
-$directorioDestino = dirname(__DIR__) . '/archivos_almacenamiento/' . $categoriaLimpia;
+// Subcarpeta estructurada (ej. TOYOTA/hilux/2015_2020/fotos_ecu)
+$subcarpeta = isset($_POST['subcarpeta']) ? trim($_POST['subcarpeta']) : '';
+$subcarpetaLimpia = '';
+if ($subcarpeta !== '') {
+    $parts = explode('/', str_replace('\\', '/', $subcarpeta));
+    $cleanParts = [];
+    foreach ($parts as $p) {
+        $pClean = trim(preg_replace('/[^a-zA-Z0-9_ -]/', '_', $p));
+        if ($pClean !== '') {
+            $cleanParts[] = $pClean;
+        }
+    }
+    if (!empty($cleanParts)) {
+        $subcarpetaLimpia = implode('/', $cleanParts);
+    }
+}
+
+$directorioRelativo = 'archivos_almacenamiento/' . $categoriaLimpia . ($subcarpetaLimpia !== '' ? '/' . $subcarpetaLimpia : '');
+$directorioDestino = dirname(__DIR__) . '/' . $directorioRelativo;
+
 if (!is_dir($directorioDestino)) {
     mkdir($directorioDestino, 0755, true);
 }
@@ -45,7 +64,7 @@ $nombreOriginal = pathinfo($archivo['name'], PATHINFO_FILENAME);
 $nombreLimpio = preg_replace('/[^a-zA-Z0-9_-]/', '_', $nombreOriginal);
 $nombreFinal = time() . '_' . $nombreLimpio . '.' . $extension;
 $rutaFisica = $directorioDestino . '/' . $nombreFinal;
-$rutaWeb = 'archivos_almacenamiento/' . $categoriaLimpia . '/' . $nombreFinal;
+$rutaWeb = $directorioRelativo . '/' . $nombreFinal;
 
 if (move_uploaded_file($archivo['tmp_name'], $rutaFisica)) {
     echo json_encode([
@@ -54,6 +73,7 @@ if (move_uploaded_file($archivo['tmp_name'], $rutaFisica)) {
         'ruta_local' => $rutaWeb,
         'url_completa' => 'https://' . $_SERVER['HTTP_HOST'] . '/' . $rutaWeb,
         'nombre_archivo' => $nombreFinal,
+        'carpeta' => $directorioRelativo,
         'bytes' => $archivo['size']
     ]);
 } else {

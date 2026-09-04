@@ -1,548 +1,202 @@
 ﻿{
-  "toyota": {
-    "brandData": {
-      "_id": "toyota",
-      "_path": "diagramas/toyota",
-      "marca": "TOYOTA",
-      "nombre": "TOYOTA",
-      "ultimaActualizacion": "2026-08-26T20:27:41.891Z"
-    },
-    "models": {
-      "Corolla ": {
-        "modelData": {
-          "_id": "Corolla ",
-          "_path": "diagramas/toyota/modelos/Corolla ",
-          "nombre": "Toyota corollla 4E FE - 1991 - 2002"
-        },
-        "archivos": [],
-        "anios": {
-          "1991 - 2002": {
-            "anioData": {
-              "_id": "1991 - 2002",
-              "_path": "diagramas/toyota/modelos/Corolla /anios/1991 - 2002"
-            },
-            "motores": {
-              "4E FE": {
-                "motorData": {
-                  "_id": "4E FE",
-                  "_path": "diagramas/toyota/modelos/Corolla /anios/1991 - 2002/motores/4E FE",
-                  "combustible": "gasolina",
-                  "titulo ": "Toyota corollla 4E FE - 1991 - 2002"
-                },
-                "archivos": [
-                  {
-                    "_id": "Toyota corollla 4E FE - 1991 - 2002 - ECU",
-                    "_path": "diagramas/toyota/modelos/Corolla /anios/1991 - 2002/motores/4E FE/archivos/Toyota corollla 4E FE - 1991 - 2002 - ECU",
-                    "titulo": "Toyota corollla 4E FE - 1991 - 2002 - ECU",
-                    "pdfUrl": "archivos_almacenamiento/diagramas/TOYOTA/Corolla 4E/toyota corolla 4e_ecu_c.pdf"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      },
-      "hilux": {
-        "modelData": {
-          "_id": "hilux",
-          "_path": "diagramas/toyota/modelos/hilux",
-          "nombre": "TOYOTA HILUX 2011 - 2015"
-        },
-        "archivos": [
-          {
-            "_id": "TOYOTA HILUX 2011 - 2015  PEDAL",
-            "_path": "diagramas/toyota/modelos/hilux/archivos/TOYOTA HILUX 2011 - 2015  PEDAL",
-            "updatedAt": "2026-08-28T18:34:17.011Z",
-            "componentes_ecu": []
-          },
-          {
-            "_id": "TOYOTA HILUX E.D.U DOS CONECTORES",
-            "_path": "diagramas/toyota/modelos/hilux/archivos/TOYOTA HILUX E.D.U DOS CONECTORES",
-            "componentes_ecu": [],
-            "asegurado": true,
-            "updatedAt": "2026-08-29T21:15:56.624Z"
-          },
-          {
-            "_id": "Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
-            "_path": "diagramas/toyota/modelos/hilux/archivos/Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
-            "allImages": [
-              "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-              "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_ecu_tapa.jpg"
-            ],
-            "componentes_ecu": [
-              {
-                "id": "ecu_comp_1788036987822",
-                "name": "avvbhfgf",
-                "tipo": "MEMORIA EEPROM / FLASH",
-                "code": "",
-                "category": "EEPROM / Memoria",
-                "customColor": "#a855f7",
-                "manufacturer": "",
-                "package": "",
-                "show_controla": true,
-                "controla": "",
-                "show_voltajes": false,
-                "voltajes": "",
-                "pines_clave": "",
-                "show_fallas": true,
-                "dtcs": "",
-                "fallas_comunes": "",
-                "isLocked": true,
-                "userDefined": true,
-                "isZone": false,
-                "type": "rect",
-                "x": 743,
-                "y": 107,
-                "width": 316,
-                "height": 293,
-                "pinX": 901,
-                "pinY": 254,
-                "baseWidth": 1395,
-                "baseHeight": 1556,
-                "lastSaved": 1788037039719
-              },
-              {
-                "id": "ecu_comp_1788037005660",
-                "name": "gjghjghj",
-                "tipo": "CRISTAL OSCILADOR",
-                "code": "",
-                "category": "Cristal",
-                "customColor": "#ec4899",
-                "manufacturer": "",
-                "package": "",
-                "show_controla": true,
-                "controla": "",
-                "show_voltajes": false,
-                "voltajes": "",
-                "pines_clave": "",
-                "show_fallas": false,
-                "dtcs": "",
-                "fallas_comunes": "",
-                "isLocked": true,
-                "userDefined": true,
-                "isZone": false,
-                "type": "rect",
-                "x": 957,
-                "y": 703,
-                "width": 179,
-                "height": 138,
-                "pinX": 1047,
-                "pinY": 772,
-                "baseWidth": 1395,
-                "baseHeight": 1556,
-                "lastSaved": 1788037039719
-              },
-              {
-                "id": "ecu_comp_1788037030191",
-                "name": "hhhhh",
-                "tipo": "DRIVER DE SENSORES",
-                "code": "",
-                "category": "Driver Sensor",
-                "customColor": "#f97316",
-                "manufacturer": "",
-                "package": "",
-                "show_controla": true,
-                "controla": "",
-                "show_voltajes": false,
-                "voltajes": "",
-                "pines_clave": "",
-                "show_fallas": false,
-                "dtcs": "",
-                "fallas_comunes": "",
-                "isLocked": true,
-                "userDefined": true,
-                "isZone": false,
-                "type": "rect",
-                "x": 499,
-                "y": 666,
-                "width": 151,
-                "height": 118,
-                "pinX": 575,
-                "pinY": 725,
-                "baseWidth": 1395,
-                "baseHeight": 1556,
-                "lastSaved": 1788037039719
-              }
-            ],
-            "modelo": "hilux",
-            "diagramaUrl": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2kd-ftv/1787893627422_ecu_hilux_2011.png",
-            "imagen": "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-            "fotoComponente": "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-            "marca": "toyota",
-            "imageUrl": "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-            "archivoPdf": null,
-            "asegurado": true,
-            "ultimaModificacion": "2026-08-28T05:07:04.671Z",
-            "anio": "2011 - 2015",
-            "ultimaActualizacion": "2026-08-28T17:30:14.697Z",
-            "diagramaImg": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2kd-ftv/1787893627422_ecu_hilux_2011.png",
-            "pdfUrl": null,
-            "formato": "imagen",
-            "archivoUrl": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2kd-ftv/1787893627422_ecu_hilux_2011.png",
-            "fechaAsegurado": "2026-08-28T05:07:04.671Z",
-            "url": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2kd-ftv/1787893627422_ecu_hilux_2011.png",
-            "imagenes": [
-              "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-              "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_ecu_tapa.jpg"
-            ],
-            "motor": "2kd-ftv",
-            "foto": "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-            "updatedAt": "2026-08-29T20:57:19.954Z"
-          }
-        ],
-        "anios": {
-          "2011 - 2015": {
-            "anioData": {
-              "_id": "2011 - 2015",
-              "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015"
-            },
-            "motores": {
-              "2KD-FTV": {
-                "motorData": {
-                  "_id": "2KD-FTV",
-                  "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV",
-                  "combustible": "diesel",
-                  "imagenUrl": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_ecu_tapa.jpg",
-                  "titulo ": " hilux 2kd o 1kd"
-                },
-                "archivos": [
-                  {
-                    "_id": "TOYOTA HILUX 2011 - 2015  PEDAL",
-                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV/archivos/TOYOTA HILUX 2011 - 2015  PEDAL",
-                    "titulo": "TOYOTA HILUX 2011 - 2015  PEDAL",
-                    "updatedAt": "2026-08-26T02:37:26.704Z",
-                    "componentes_ecu": [],
-                    "pdfUrl": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/TOYOTA HILUX 2011 - 2015  PEDAL_C.pdf",
-                    "imagenes": [
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_pedal_1.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_pedal_2.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_pedal_3.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_pedal_4.jpg"
-                    ]
-                  },
-                  {
-                    "_id": "TOYOTA HILUX E.D.U DOS CONECTORES",
-                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV/archivos/TOYOTA HILUX E.D.U DOS CONECTORES",
-                    "pdfUrl": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/TOYOTA HILUX E.D.U DOS CONECTORES_c.pdf",
-                    "componentes_ecu": [
-                      {
-                        "id": "ecu_comp_mcu",
-                        "name": "Microcontrolador Principal (MCU)",
-                        "code": "DENSO / TOSHIBA 32-Bit QFP",
-                        "category": "Procesamiento Central",
-                        "x": 580,
-                        "y": 155,
-                        "width": 220,
-                        "height": 230,
-                        "pinX": 690,
-                        "pinY": 270,
-                        "controla": "Cerebro principal de la ECU. Procesa señales de sensores en tiempo real (CKP, CMP, MAP, Temperatura) y comanda el mapa de inyección y presión del Common Rail.",
-                        "voltajes": "VCC: 5.0V / Núcleo: 3.3V",
-                        "fallas_comunes": "Vehículo no arranca, sin comunicación con escáner OBD2 (Sin testigo Check Engine).",
-                        "pines_clave": "Alimentación: Pines 1, 32, 64 &bull; Cristal oscilador: 20MHz"
-                      },
-                      {
-                        "id": "ecu_comp_eeprom",
-                        "name": "Memoria Flash / EEPROM",
-                        "code": "93C86 / 25Cxxx SPI",
-                        "category": "Almacenamiento & Seguridad",
-                        "x": 260,
-                        "y": 170,
-                        "width": 170,
-                        "height": 130,
-                        "pinX": 345,
-                        "pinY": 235,
-                        "controla": "Almacena la codificación del inmovilizador (Llaves/Transponder), número VIN, kilometraje y mapas de calibración del motor.",
-                        "voltajes": "VCC: 5.0V en Pin 8",
-                        "fallas_comunes": "Error de inmovilizador (Luz de seguridad parpadea), bloqueo de arranque, códigos P1600 / B2799.",
-                        "pines_clave": "Pin 1: CS &bull; Pin 4: GND &bull; Pin 8: VCC 5V"
-                      },
-                      {
-                        "id": "ecu_comp_drivers",
-                        "name": "Driver Etapa Inyectores Common Rail",
-                        "code": "SE555 / MOSFET Driver Array",
-                        "category": "Actuadores de Potencia",
-                        "x": 235,
-                        "y": 535,
-                        "width": 170,
-                        "height": 100,
-                        "pinX": 320,
-                        "pinY": 585,
-                        "controla": "Maneja la apertura y corte de los inyectores electrohidráulicos diésel mediante pulsos de alta corriente.",
-                        "voltajes": "Voltaje de disparo: 12V / Retorno señal GND controlada",
-                        "fallas_comunes": "Fallo de cilindro (Misfire), humo negro, códigos P0201, P0202, P0203, P0204.",
-                        "pines_clave": "Gate: PWM 5V &bull; Drain: Señal a Inyector"
-                      }
-                    ],
-                    "updatedAt": "2026-08-26T21:15:26.459Z",
-                    "imagenes": [
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/edu_hilux_2.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/edu_hilux_2_2.jpg"
-                    ],
-                    "titulo": "TOYOTA HILUX E.D.U DOS CONECTORES"
-                  },
-                  {
-                    "_id": "TOYOTA HILUX E.D.U TRES CONECTORES",
-                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV/archivos/TOYOTA HILUX E.D.U TRES CONECTORES",
-                    "imagenes": [
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/edu_hilux_3.JPG",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/edu_hilux_3_2.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/edu_hilux_3_3.jpg"
-                    ],
-                    "titulo": "TOYOTA HILUX E.D.U TRES CONECTORES",
-                    "pdfUrl": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/TOYOTA HILUX E.D.U TRES CONECTORES_c.pdf"
-                  },
-                  {
-                    "_id": "TOYOTA HILUX inmovilizador y llave antena",
-                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV/archivos/TOYOTA HILUX inmovilizador y llave antena",
-                    "pdfUrl": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/TOYOTA HILUX inmovilizador y llave antena_c.pdf",
-                    "titulo": "TOYOTA HILUX inmovilizador y llave antena",
-                    "imagenes": [
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_llave_1.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_llave_2.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_llave_3.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_llave_4.jpg"
-                    ]
-                  },
-                  {
-                    "_id": "Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
-                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2KD-FTV/archivos/Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
-                    "url": "archivos_almacenamiento/diagramas/toyota/hilux/2kd-ftv/fotos_galeria/1787803994578_placa_toyota_hylux_2011.jpg",
-                    "componentes_ecu": [
-                      {
-                        "id": "ecu_comp_mcu",
-                        "name": "Microcontrolador Principal (MCU)",
-                        "code": "DENSO / TOSHIBA 32-Bit QFP",
-                        "category": "Microprocesador",
-                        "x": 580,
-                        "y": 155,
-                        "width": 220,
-                        "height": 230,
-                        "pinX": 690,
-                        "pinY": 270,
-                        "controla": "Cerebro principal de la ECU. Procesa señales de sensores en tiempo real (CKP, CMP, MAP, Temperatura) y comanda el mapa de inyección y presión del Common Rail.",
-                        "voltajes": "VCC: 5.0V / Núcleo: 3.3V",
-                        "fallas_comunes": "Vehículo no arranca, sin comunicación con escáner OBD2 (Sin testigo Check Engine).",
-                        "pines_clave": "Alimentación: Pines 1, 32, 64 &bull; Cristal oscilador: 20MHz",
-                        "baseWidth": 1000,
-                        "baseHeight": 1094,
-                        "isLocked": true,
-                        "userDefined": true,
-                        "lastSaved": 1787929895447
-                      },
-                      {
-                        "id": "ecu_comp_eeprom",
-                        "name": "Memoria Flash / EEPROM",
-                        "code": "93C86 / 25Cxxx SPI",
-                        "category": "EEPROM / Memoria",
-                        "x": 260,
-                        "y": 170,
-                        "width": 170,
-                        "height": 130,
-                        "pinX": 345,
-                        "pinY": 235,
-                        "controla": "Almacena la codificación del inmovilizador (Llaves/Transponder), número VIN, kilometraje y mapas de calibración del motor.",
-                        "voltajes": "VCC: 5.0V en Pin 8",
-                        "fallas_comunes": "Error de inmovilizador (Luz de seguridad parpadea), bloqueo de arranque, códigos P1600 / B2799.",
-                        "pines_clave": "Pin 1: CS &bull; Pin 4: GND &bull; Pin 8: VCC 5V",
-                        "baseWidth": 1000,
-                        "baseHeight": 1094,
-                        "isLocked": true,
-                        "userDefined": true,
-                        "lastSaved": 1787929895447
-                      },
-                      {
-                        "id": "ecu_comp_drivers",
-                        "name": "Driver Etapa Inyectores Common Rail",
-                        "code": "SE555 / MOSFET Driver Array",
-                        "category": "Inyectores",
-                        "x": 235,
-                        "y": 535,
-                        "width": 170,
-                        "height": 100,
-                        "pinX": 320,
-                        "pinY": 585,
-                        "controla": "Maneja la apertura y corte de los inyectores electrohidráulicos diésel mediante pulsos de alta corriente.",
-                        "voltajes": "Voltaje de disparo: 12V / Retorno señal GND controlada",
-                        "fallas_comunes": "Fallo de cilindro (Misfire), humo negro, códigos P0201, P0202, P0203, P0204.",
-                        "pines_clave": "Gate: PWM 5V &bull; Drain: Señal a Inyector",
-                        "baseWidth": 1000,
-                        "baseHeight": 1094,
-                        "isLocked": true,
-                        "userDefined": true,
-                        "lastSaved": 1787929895447
-                      }
-                    ],
-                    "allImages": [
-                      "archivos_almacenamiento/diagramas/toyota/hilux/2kd-ftv/fotos_galeria/1787803994578_placa_toyota_hylux_2011.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_ecu_tapa.jpg"
-                    ],
-                    "imageUrl": "archivos_almacenamiento/diagramas/toyota/hilux/2kd-ftv/fotos_galeria/1787803994578_placa_toyota_hylux_2011.jpg",
-                    "titulo": "Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
-                    "updatedAt": "2026-08-28T15:11:35.528Z",
-                    "icono": "bi-motherboard-fill",
-                    "pdfUrl": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/Toyota Hilux - 2KD-FTV - 2011- 2015_ECU_c.pdf",
-                    "imagenes": [
-                      "archivos_almacenamiento/diagramas/toyota/hilux/2kd-ftv/fotos_galeria/1787803994578_placa_toyota_hylux_2011.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_ecu_tapa.jpg"
-                    ]
-                  }
-                ]
-              },
-              "2kd-ftv": {
-                "motorData": {
-                  "_id": "2kd-ftv",
-                  "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2kd-ftv",
-                  "diagramaUrl": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2kd-ftv/1787893627422_ecu_hilux_2011.png",
-                  "url": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2kd-ftv/1787893627422_ecu_hilux_2011.png"
-                },
-                "archivos": [
-                  {
-                    "_id": "TOYOTA HILUX 2011 - 2015  PEDAL",
-                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2kd-ftv/archivos/TOYOTA HILUX 2011 - 2015  PEDAL",
-                    "componentes_ecu": [],
-                    "updatedAt": "2026-08-28T18:34:16.860Z"
-                  },
-                  {
-                    "_id": "TOYOTA HILUX E.D.U DOS CONECTORES",
-                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2kd-ftv/archivos/TOYOTA HILUX E.D.U DOS CONECTORES",
-                    "updatedAt": "2026-08-29T21:15:56.279Z",
-                    "asegurado": true,
-                    "componentes_ecu": []
-                  },
-                  {
-                    "_id": "Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
-                    "_path": "diagramas/toyota/modelos/hilux/anios/2011 - 2015/motores/2kd-ftv/archivos/Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
-                    "anio": "2011 - 2015",
-                    "componentes_ecu": [
-                      {
-                        "id": "ecu_comp_1788036987822",
-                        "name": "avvbhfgf",
-                        "tipo": "MEMORIA EEPROM / FLASH",
-                        "code": "",
-                        "category": "EEPROM / Memoria",
-                        "customColor": "#a855f7",
-                        "manufacturer": "",
-                        "package": "",
-                        "show_controla": true,
-                        "controla": "",
-                        "show_voltajes": false,
-                        "voltajes": "",
-                        "pines_clave": "",
-                        "show_fallas": true,
-                        "dtcs": "",
-                        "fallas_comunes": "",
-                        "isLocked": true,
-                        "userDefined": true,
-                        "isZone": false,
-                        "type": "rect",
-                        "x": 743,
-                        "y": 107,
-                        "width": 316,
-                        "height": 293,
-                        "pinX": 901,
-                        "pinY": 254,
-                        "baseWidth": 1395,
-                        "baseHeight": 1556,
-                        "lastSaved": 1788037039719
-                      },
-                      {
-                        "id": "ecu_comp_1788037005660",
-                        "name": "gjghjghj",
-                        "tipo": "CRISTAL OSCILADOR",
-                        "code": "",
-                        "category": "Cristal",
-                        "customColor": "#ec4899",
-                        "manufacturer": "",
-                        "package": "",
-                        "show_controla": true,
-                        "controla": "",
-                        "show_voltajes": false,
-                        "voltajes": "",
-                        "pines_clave": "",
-                        "show_fallas": false,
-                        "dtcs": "",
-                        "fallas_comunes": "",
-                        "isLocked": true,
-                        "userDefined": true,
-                        "isZone": false,
-                        "type": "rect",
-                        "x": 957,
-                        "y": 703,
-                        "width": 179,
-                        "height": 138,
-                        "pinX": 1047,
-                        "pinY": 772,
-                        "baseWidth": 1395,
-                        "baseHeight": 1556,
-                        "lastSaved": 1788037039719
-                      },
-                      {
-                        "id": "ecu_comp_1788037030191",
-                        "name": "hhhhh",
-                        "tipo": "DRIVER DE SENSORES",
-                        "code": "",
-                        "category": "Driver Sensor",
-                        "customColor": "#f97316",
-                        "manufacturer": "",
-                        "package": "",
-                        "show_controla": true,
-                        "controla": "",
-                        "show_voltajes": false,
-                        "voltajes": "",
-                        "pines_clave": "",
-                        "show_fallas": false,
-                        "dtcs": "",
-                        "fallas_comunes": "",
-                        "isLocked": true,
-                        "userDefined": true,
-                        "isZone": false,
-                        "type": "rect",
-                        "x": 499,
-                        "y": 666,
-                        "width": 151,
-                        "height": 118,
-                        "pinX": 575,
-                        "pinY": 725,
-                        "baseWidth": 1395,
-                        "baseHeight": 1556,
-                        "lastSaved": 1788037039719
-                      }
-                    ],
-                    "fotoComponente": "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-                    "marca": "toyota",
-                    "imagen": "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-                    "diagramaUrl": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2kd-ftv/1787893627422_ecu_hilux_2011.png",
-                    "fechaAsegurado": "2026-08-28T05:07:04.429Z",
-                    "imagenes": [
-                      "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_ecu_tapa.jpg"
-                    ],
-                    "formato": "imagen",
-                    "foto": "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-                    "ultimaActualizacion": "2026-08-28T17:30:14.346Z",
-                    "diagramaImg": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2kd-ftv/1787893627422_ecu_hilux_2011.png",
-                    "url": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2kd-ftv/1787893627422_ecu_hilux_2011.png",
-                    "allImages": [
-                      "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-                      "archivos_almacenamiento/diagramas/TOYOTA/hilux/2011 - 2015 motor  hilux 2kd o 1kd/hilux_ecu_tapa.jpg"
-                    ],
-                    "motor": "2kd-ftv",
-                    "modelo": "hilux",
-                    "asegurado": true,
-                    "pdfUrl": null,
-                    "archivoUrl": "archivos_almacenamiento/diagramas/TOYOTA/hilux/2kd-ftv/1787893627422_ecu_hilux_2011.png",
-                    "imageUrl": "archivos_almacenamiento/diagramas/toyota/hilux/2011_-_2015/2kd-ftv/fotos_ecu/1787937475705_FOTOS_DE_ECU_hilux.jpg",
-                    "archivoPdf": null,
-                    "ultimaModificacion": "2026-08-28T05:07:04.429Z",
-                    "updatedAt": "2026-08-29T20:57:19.816Z"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+    "toyota":  {
+                   "brandData":  {
+                                     "nombre":  "TOYOTA",
+                                     "logo":  "archivos_almacenamiento/fotos_modelos/toyota.png",
+                                     "combustible":  "diesel",
+                                     "categoria":  "pickup"
+                                 },
+                   "models":  {
+                                  "hilux":  {
+                                                "modelData":  {
+                                                                  "_id":  "hilux",
+                                                                  "nombre":  "Hilux",
+                                                                  "anios":  "2011 - 2015",
+                                                                  "motor":  "2KD-FTV (2011 - 2015)",
+                                                                  "combustible":  "diesel",
+                                                                  "imagen":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg",
+                                                                  "categoria":  "pickup"
+                                                              },
+                                                "anios":  {
+                                                              "2011 - 2015":  {
+                                                                                  "anioData":  {
+                                                                                                   "_id":  "2011 - 2015"
+                                                                                               },
+                                                                                  "motores":  {
+                                                                                                  "2KD-FTV (2011 - 2015)":  {
+                                                                                                                                "motorData":  {
+                                                                                                                                                  "_id":  "2KD-FTV (2011 - 2015)",
+                                                                                                                                                  "combustible":  "diesel",
+                                                                                                                                                  "imagenUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg",
+                                                                                                                                                  "titulo":  "2KD-FTV (2011 - 2015)"
+                                                                                                                                              },
+                                                                                                                                "archivos":  [
+                                                                                                                                                 {
+                                                                                                                                                     "_id":  "Toyota Hilux - 2KD-FTV - 2011- 2015_ECU",
+                                                                                                                                                     "titulo":  "TOYOTA HILUX - 2KD-FTV - 2011- 2015_ECU",
+                                                                                                                                                     "icono":  "bi-motherboard-fill",
+                                                                                                                                                     "tipo":  "ecu",
+                                                                                                                                                     "pdfUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/conexionado/diagrama_ecu_2kd_ftv.jpg",
+                                                                                                                                                     "diagramaUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/conexionado/diagrama_ecu_2kd_ftv.jpg",
+                                                                                                                                                     "url":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg",
+                                                                                                                                                     "imageUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg",
+                                                                                                                                                     "imagenes":  [
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg",
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_tapa.jpg"
+                                                                                                                                                                  ],
+                                                                                                                                                     "allImages":  [
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg",
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_tapa.jpg"
+                                                                                                                                                                   ],
+                                                                                                                                                     "componentes_ecu":  [
+
+                                                                                                                                                                         ]
+                                                                                                                                                 },
+                                                                                                                                                 {
+                                                                                                                                                     "_id":  "TOYOTA HILUX E.D.U DOS CONECTORES",
+                                                                                                                                                     "titulo":  "TOYOTA HILUX E.D.U DOS CONECTORES",
+                                                                                                                                                     "tipo":  "edu_dos_conectores",
+                                                                                                                                                     "pdfUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_dos_conectores/conexionado/diagrama_edu_dos_conectores.jpg",
+                                                                                                                                                     "diagramaUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_dos_conectores/conexionado/diagrama_edu_dos_conectores.jpg",
+                                                                                                                                                     "url":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_dos_conectores/imagen/edu_2_conectores_frontal.jpg",
+                                                                                                                                                     "imageUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_dos_conectores/imagen/edu_2_conectores_frontal.jpg",
+                                                                                                                                                     "imagenes":  [
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_dos_conectores/imagen/edu_2_conectores_frontal.jpg",
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_dos_conectores/imagen/edu_2_conectores_conector.jpg"
+                                                                                                                                                                  ],
+                                                                                                                                                     "allImages":  [
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_dos_conectores/imagen/edu_2_conectores_frontal.jpg",
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_dos_conectores/imagen/edu_2_conectores_conector.jpg"
+                                                                                                                                                                   ],
+                                                                                                                                                     "componentes_ecu":  [
+
+                                                                                                                                                                         ]
+                                                                                                                                                 },
+                                                                                                                                                 {
+                                                                                                                                                     "_id":  "TOYOTA HILUX E.D.U TRES CONECTORES",
+                                                                                                                                                     "titulo":  "TOYOTA HILUX E.D.U TRES CONECTORES",
+                                                                                                                                                     "tipo":  "edu_tres_conectores",
+                                                                                                                                                     "pdfUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_tres_conectores/conexionado/diagrama_edu_tres_conectores.jpg",
+                                                                                                                                                     "diagramaUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_tres_conectores/conexionado/diagrama_edu_tres_conectores.jpg",
+                                                                                                                                                     "url":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_tres_conectores/imagen/edu_3_conectores_frontal.jpg",
+                                                                                                                                                     "imageUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_tres_conectores/imagen/edu_3_conectores_frontal.jpg",
+                                                                                                                                                     "imagenes":  [
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_tres_conectores/imagen/edu_3_conectores_frontal.jpg",
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_tres_conectores/imagen/edu_3_conectores_conector.jpg",
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_tres_conectores/imagen/edu_3_conectores_posterior.jpg"
+                                                                                                                                                                  ],
+                                                                                                                                                     "allImages":  [
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_tres_conectores/imagen/edu_3_conectores_frontal.jpg",
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_tres_conectores/imagen/edu_3_conectores_conector.jpg",
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_tres_conectores/imagen/edu_3_conectores_posterior.jpg"
+                                                                                                                                                                   ],
+                                                                                                                                                     "componentes_ecu":  [
+
+                                                                                                                                                                         ]
+                                                                                                                                                 },
+                                                                                                                                                 {
+                                                                                                                                                     "_id":  "TOYOTA HILUX inmovilizador y llave antena",
+                                                                                                                                                     "titulo":  "TOYOTA HILUX inmovilizador y llave antena",
+                                                                                                                                                     "tipo":  "inmovilizador_llave",
+                                                                                                                                                     "pdfUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/conexionado/diagrama_inmovilizador_llave.jpg",
+                                                                                                                                                     "diagramaUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/conexionado/diagrama_inmovilizador_llave.jpg",
+                                                                                                                                                     "url":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/imagen/llave_antena_1.jpg",
+                                                                                                                                                     "imageUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/imagen/llave_antena_1.jpg",
+                                                                                                                                                     "imagenes":  [
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/imagen/llave_antena_1.jpg",
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/imagen/llave_antena_2.jpg",
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/imagen/llave_antena_3.jpg",
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/imagen/llave_antena_4.jpg"
+                                                                                                                                                                  ],
+                                                                                                                                                     "allImages":  [
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/imagen/llave_antena_1.jpg",
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/imagen/llave_antena_2.jpg",
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/imagen/llave_antena_3.jpg",
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/imagen/llave_antena_4.jpg"
+                                                                                                                                                                   ],
+                                                                                                                                                     "componentes_ecu":  [
+
+                                                                                                                                                                         ]
+                                                                                                                                                 },
+                                                                                                                                                 {
+                                                                                                                                                     "_id":  "TOYOTA HILUX 2011 - 2015  PEDAL",
+                                                                                                                                                     "titulo":  "TOYOTA HILUX 2011 - 2015  PEDAL",
+                                                                                                                                                     "tipo":  "pedal_acelerador",
+                                                                                                                                                     "pdfUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/conexionado/diagrama_pedal_acelerador.jpg",
+                                                                                                                                                     "diagramaUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/conexionado/diagrama_pedal_acelerador.jpg",
+                                                                                                                                                     "url":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/imagen/pedal_1.jpg",
+                                                                                                                                                     "imageUrl":  "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/imagen/pedal_1.jpg",
+                                                                                                                                                     "imagenes":  [
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/imagen/pedal_1.jpg",
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/imagen/pedal_2.jpg",
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/imagen/pedal_3.jpg",
+                                                                                                                                                                      "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/imagen/pedal_4.jpg"
+                                                                                                                                                                  ],
+                                                                                                                                                     "allImages":  [
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/imagen/pedal_1.jpg",
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/imagen/pedal_2.jpg",
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/imagen/pedal_3.jpg",
+                                                                                                                                                                       "diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/imagen/pedal_4.jpg"
+                                                                                                                                                                   ],
+                                                                                                                                                     "componentes_ecu":  [
+
+                                                                                                                                                                         ]
+                                                                                                                                                 }
+                                                                                                                                             ]
+                                                                                                                            }
+                                                                                              }
+                                                                              }
+                                                          }
+                                            },
+                                  "corolla":  {
+                                                  "modelData":  {
+                                                                    "_id":  "corolla",
+                                                                    "nombre":  "Corolla (Motor 4E)",
+                                                                    "anios":  "1993 - 1997",
+                                                                    "motor":  "4E-FE 1.3L",
+                                                                    "combustible":  "gasolina",
+                                                                    "imagen":  "archivos_almacenamiento/fotos_modelos/toyota.png",
+                                                                    "categoria":  "sedan_hatchback"
+                                                                },
+                                                  "anios":  {
+                                                                "1993 - 1997":  {
+                                                                                    "anioData":  {
+                                                                                                     "_id":  "1993 - 1997"
+                                                                                                 },
+                                                                                    "motores":  {
+                                                                                                    "4E-FE (1993 - 1997)":  {
+                                                                                                                                "motorData":  {
+                                                                                                                                                  "_id":  "4E-FE (1993 - 1997)",
+                                                                                                                                                  "combustible":  "gasolina",
+                                                                                                                                                  "imagenUrl":  "archivos_almacenamiento/fotos_modelos/toyota.png",
+                                                                                                                                                  "titulo":  "4E-FE (1993 - 1997)"
+                                                                                                                                              },
+                                                                                                                                "archivos":  [
+                                                                                                                                                 {
+                                                                                                                                                     "_id":  "TOYOTA COROLLA 4E-FE ECU",
+                                                                                                                                                     "titulo":  "TOYOTA COROLLA 4E-FE ECU",
+                                                                                                                                                     "icono":  "bi-motherboard-fill",
+                                                                                                                                                     "tipo":  "ecu",
+                                                                                                                                                     "pdfUrl":  "diagramas_PRUEBAS/TOYOTA/corolla/motor_4e/ecu/conexionado/diagrama_ecu_corolla_4e.pdf",
+                                                                                                                                                     "diagramaUrl":  "diagramas_PRUEBAS/TOYOTA/corolla/motor_4e/ecu/conexionado/diagrama_ecu_corolla_4e.pdf",
+                                                                                                                                                     "url":  "",
+                                                                                                                                                     "imageUrl":  "",
+                                                                                                                                                     "imagenes":  [
+
+                                                                                                                                                                  ],
+                                                                                                                                                     "allImages":  [
+
+                                                                                                                                                                   ],
+                                                                                                                                                     "componentes_ecu":  [
+
+                                                                                                                                                                         ]
+                                                                                                                                                 }
+                                                                                                                                             ]
+                                                                                                                            }
+                                                                                                }
+                                                                                }
+                                                            }
+                                              }
+                              }
+               }
 }
