@@ -79,36 +79,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize features on initial load
   initCurrentPageFeatures();
+  ensureHomepageCardsAndSidebar();
 
-  // Intercept clicks to Vehiculos section for Premium/Admin verification
+  // Intercept clicks to protected sections (Vehículos, Dashboard, Recuperación de Tableros) for Premium/Admin verification
   document.addEventListener('click', (e) => {
-    const targetLink = e.target.closest('a[href*="vehiculos.html"], .action-card-vehicle');
+    const targetLink = e.target.closest('a[href*="vehiculos.html"], .action-card-vehicle, a[href*="dashboard.html"], a[href*="recuperacion-tableros.html"], .action-card-dashboard');
     if (targetLink) {
-      if (typeof window.handleVehiculosNavigation === 'function') {
-        const allowed = window.handleVehiculosNavigation(e);
-        if (!allowed) {
-          e.preventDefault();
-          e.stopPropagation();
+      const isAuthOk = (typeof window.isProbaktronicPremiumOrAdmin === 'function')
+        ? window.isProbaktronicPremiumOrAdmin()
+        : (function() {
+            try {
+              const raw = localStorage.getItem('probaktronic_cached_user');
+              if (!raw) return false;
+              const u = JSON.parse(raw);
+              const isAdmin = (u.email === 'prueba@probak.com' || u.email === 'jhanzeta@gmail.com' || u.rol === 'admin' || u.isAdmin === true);
+              return isAdmin || (u.esPremium === true || u.esPremium === 'true' || u.tipo === 'premium');
+            } catch(err) {
+              return false;
+            }
+          })();
+
+      if (!isAuthOk) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof showGlobalToast === 'function') {
+          showGlobalToast('Acceso exclusivo para usuarios Premium o Administrador. Inicie sesión.', 'warning');
         }
-      } else {
-        try {
-          const raw = localStorage.getItem('probaktronic_cached_user');
-          let isAuthOk = false;
-          if (raw) {
-            const u = JSON.parse(raw);
-            const isAdmin = (u.email === 'prueba@probak.com' || u.email === 'jhanzeta@gmail.com' || u.rol === 'admin' || u.isAdmin === true);
-            isAuthOk = isAdmin || (u.esPremium === true || u.esPremium === 'true' || u.tipo === 'premium');
-          }
-          if (!isAuthOk) {
-            e.preventDefault();
-            e.stopPropagation();
-            window.location.href = 'login.html';
-          }
-        } catch (err) {
-          e.preventDefault();
-          e.stopPropagation();
-          window.location.href = 'login.html';
-        }
+        window.location.href = 'login.html';
       }
     }
   }, true);
@@ -602,5 +599,179 @@ function cleanVehicleImageBackground(selector) {
   }, { capture: true });
 })();
 
+// --- Enforcer Dinámico para la Página Principal y Sidebar ---
+function ensureHomepageCardsAndSidebar() {
+  // 1. Corregir enlace de Sidebar si dice Diagramas 3D
+  const sidebarLinks = document.querySelectorAll('.sidebar-nav .nav-link-item');
+  sidebarLinks.forEach(link => {
+    const href = link.getAttribute('href') || '';
+    if (href.includes('diagramas-3d.html') || link.textContent.includes('Diagramas 3D') || link.textContent.includes('Diagramas\n3D')) {
+      link.setAttribute('href', 'manuales-probadores.html');
+      link.setAttribute('title', 'Manuales Probadores');
+      link.innerHTML = '<i class="bi bi-journal-bookmark-fill"></i><span class="two-lines">Manuales<br>Probadores</span>';
+    }
+  });
 
+  // 2. Corregir y asegurar las 4 tarjetas en la página principal
+  const cardsContainer = document.querySelector('.cards-container');
+  if (cardsContainer) {
+    // A. Si la tarjeta 2 todavía dice "DIAGRAMAS 3D", convertirla a MANUALES PROBADORES
+    const diagramCard = cardsContainer.querySelector('.action-card-diagram, a[href*="diagramas-3d.html"]');
+    if (diagramCard && !diagramCard.textContent.includes('MANUALES PROBADORES')) {
+      diagramCard.setAttribute('href', 'manuales-probadores.html');
+      diagramCard.className = 'action-card action-card-diagram';
+      diagramCard.innerHTML = `
+        <div class="card-top-row">
+          <div class="card-badge-icon">
+            <i class="bi bi-file-earmark-pdf-fill"></i>
+          </div>
+          <svg class="card-dots-pattern" width="40" height="30" viewBox="0 0 40 30" fill="#94A3B8">
+            <circle cx="5" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="25" cy="5" r="2"/><circle cx="35" cy="5" r="2"/>
+            <circle cx="5" cy="15" r="2"/><circle cx="15" cy="15" r="2"/><circle cx="25" cy="15" r="2"/><circle cx="35" cy="15" r="2"/>
+            <circle cx="5" cy="25" r="2"/><circle cx="15" cy="25" r="2"/><circle cx="25" cy="25" r="2"/><circle cx="35" cy="25" r="2"/>
+          </svg>
+        </div>
+        <h2 class="card-main-title">MANUALES PROBADORES</h2>
+        <div class="title-underline"></div>
+        <p class="card-description">
+          Manuales técnicos y guías de uso en PDF para probadores de ECUs, bobinas, maquinaria pesada y simuladores.
+        </p>
+        <div class="card-vehicle-half-illustration">
+          <img src="fondo_tarjeta_diagrama.jpg" alt="Manuales Probadores" class="vehicle-half-img">
+        </div>
+        <div class="card-action-btn">
+          <i class="bi bi-arrow-right"></i>
+        </div>
+      `;
+    }
 
+    // B. Si falta la Tarjeta 4 (LABORATORIO), inyectarla dinámicamente
+    if (!cardsContainer.querySelector('.action-card-laboratorio')) {
+      const labCard = document.createElement('a');
+      labCard.href = 'javascript:void(0)';
+      labCard.className = 'action-card action-card-laboratorio';
+      labCard.title = 'Módulo de Laboratorio (Próximamente)';
+      labCard.onclick = () => window.showLaboratorioModal();
+      labCard.innerHTML = `
+        <div class="card-top-row">
+          <div class="card-badge-icon badge-icon-laboratorio">
+            <i class="bi bi-activity"></i>
+          </div>
+          <span class="badge-coming-soon">
+            <i class="bi bi-stars me-1"></i>PRÓXIMAMENTE
+          </span>
+        </div>
+        <h2 class="card-main-title text-dark">LABORATORIO</h2>
+        <div class="title-underline title-underline-gold"></div>
+        <p class="card-description">
+          Osciloscopio digital, probador de ECUs y generador de señales con interfaz web en tiempo real.
+        </p>
+        <div class="card-vehicle-half-illustration">
+          <div class="lab-oscilloscope-graphic">
+            <svg viewBox="0 0 160 100" class="lab-wave-svg" fill="none">
+              <defs>
+                <linearGradient id="labWaveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#D32F2F" stop-opacity="0.4"/>
+                  <stop offset="40%" stop-color="#F59E0B" stop-opacity="0.9"/>
+                  <stop offset="70%" stop-color="#0284C7" stop-opacity="0.9"/>
+                  <stop offset="100%" stop-color="#10B981" stop-opacity="1"/>
+                </linearGradient>
+              </defs>
+              <line x1="0" y1="25" x2="160" y2="25" stroke="#E2E8F0" stroke-dasharray="2 2" stroke-width="1"/>
+              <line x1="0" y1="50" x2="160" y2="50" stroke="#CBD5E1" stroke-dasharray="3 3" stroke-width="1.2"/>
+              <line x1="0" y1="75" x2="160" y2="75" stroke="#E2E8F0" stroke-dasharray="2 2" stroke-width="1"/>
+              <line x1="40" y1="0" x2="40" y2="100" stroke="#F1F5F9" stroke-dasharray="2 2" stroke-width="1"/>
+              <line x1="80" y1="0" x2="80" y2="100" stroke="#E2E8F0" stroke-dasharray="2 2" stroke-width="1"/>
+              <line x1="120" y1="0" x2="120" y2="100" stroke="#F1F5F9" stroke-dasharray="2 2" stroke-width="1"/>
+              <path d="M 0 50 Q 15 15, 30 50 T 60 50 L 70 20 L 90 20 L 90 80 L 110 80 L 110 50 Q 125 15, 140 50 T 160 50" stroke="url(#labWaveGrad)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="card-action-btn card-action-btn-lab">
+          <i class="bi bi-broadcast-pin"></i>
+        </div>
+      `;
+      cardsContainer.appendChild(labCard);
+    }
+  }
+}
+
+// Modal Global de Laboratorio (Próximamente)
+window.showLaboratorioModal = function() {
+  let modalEl = document.getElementById('modalLaboratorioSoon');
+  if (!modalEl) {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
+      <div class="modal fade" id="modalLaboratorioSoon" tabindex="-1" aria-labelledby="modalLabTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-md">
+          <div class="modal-content border-0 shadow-lg" style="border-radius: 18px; overflow: hidden; background: #0F172A; color: #FFFFFF;">
+            <div class="modal-header border-0 py-3 px-4" style="background: rgba(255,255,255,0.03);">
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="background: rgba(245, 158, 11, 0.2); color: #F59E0B; width: 40px; height: 40px;">
+                  <i class="bi bi-activity fs-4"></i>
+                </div>
+                <div>
+                  <h5 class="modal-title font-rajdhani fw-bold mb-0 text-white" id="modalLabTitle">MÓDULO DE LABORATORIO</h5>
+                  <span class="badge bg-warning text-dark fw-bold font-rajdhani" style="font-size: 0.68rem; letter-spacing: 0.5px;">PRÓXIMAMENTE</span>
+                </div>
+              </div>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+              <div class="p-3 rounded-4 mb-3" style="background: #020617; border: 1px solid rgba(255,255,255,0.08);">
+                <svg viewBox="0 0 200 70" style="width: 100%; height: 60px;" fill="none">
+                  <path d="M 0 35 Q 20 5, 40 35 T 80 35 L 90 10 L 115 10 L 115 60 L 140 60 L 140 35 Q 160 5, 180 35 T 200 35" stroke="#10B981" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <h5 class="fw-bold font-rajdhani text-white mb-2">INTEGRACIÓN DE HARDWARE & MEDICIÓN EN VIVO</h5>
+              <p class="small text-white-50 mb-3" style="line-height: 1.6;">
+                Estamos desarrollando la interfaz web en tiempo real para conectar tu equipo Probaktronic directamente a la pantalla:
+              </p>
+              <div class="text-start bg-dark p-3 rounded-3 border border-secondary border-opacity-25 mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <i class="bi bi-check2-circle text-success fs-5"></i>
+                  <span class="small text-white fw-bold">Osciloscopio Digital con gráficos de onda en tiempo real</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <i class="bi bi-check2-circle text-success fs-5"></i>
+                  <span class="small text-white fw-bold">Banco de Pruebas y Diagnóstico de ECUs</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-check2-circle text-success fs-5"></i>
+                  <span class="small text-white fw-bold">Generador de Señales CKP/CMP sincronizadas y PWM</span>
+                </div>
+              </div>
+              <p class="small text-warning mb-0 font-monospace" style="font-size: 0.76rem;">
+                <i class="bi bi-info-circle me-1"></i>Esta función estará disponible en las próximas actualizaciones oficiales.
+              </p>
+            </div>
+            <div class="modal-footer border-0 p-3 pt-0 justify-content-center">
+              <button type="button" class="btn btn-warning rounded-pill px-4 fw-bold font-rajdhani text-dark shadow-sm" data-bs-dismiss="modal">
+                ENTENDIDO
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(wrapper.firstElementChild);
+    modalEl = document.getElementById('modalLaboratorioSoon');
+  }
+
+  if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+    const m = new bootstrap.Modal(modalEl);
+    m.show();
+  } else if (typeof showGlobalToast === 'function') {
+    showGlobalToast('Módulo de Laboratorio: Próximamente integración en tiempo real.', 'info');
+  }
+};
+
+// Carga automática del Módulo de Telemetría y Analíticas de Visitas
+(function() {
+  if (typeof window.registrarVisitaGlobal !== 'function') {
+    const s = document.createElement('script');
+    s.src = 'js/admin-analytics.js?v=306.0';
+    s.async = true;
+    document.head.appendChild(s);
+  }
+})();

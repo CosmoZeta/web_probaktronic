@@ -1137,22 +1137,33 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
   const isAdmin = window.checkIsAdmin();
   const btnNext = document.getElementById('btnNextToDiagram');
 
-  // Fetch live global card icons from Firestore
+  // Fetch live global card icons from Hosting Server & Firestore
   let firestoreCardIcons = {};
+  try {
+    const srvRes = await fetch('api/diagramas.php?action=obtener_iconos').catch(() => null);
+    if (srvRes && srvRes.ok) {
+      const srvData = await srvRes.json();
+      if (srvData && srvData.status === 'success' && srvData.data) {
+        firestoreCardIcons = { ...srvData.data };
+      }
+    }
+  } catch (e) {}
+
   try {
     if (typeof firebase !== 'undefined' && firebase.firestore) {
       const iconDoc = await firebase.firestore().collection('app_config').doc('iconos_tarjetas').get().catch(() => null);
       if (iconDoc && iconDoc.exists) {
-        firestoreCardIcons = iconDoc.data() || {};
-        try {
-          const localSaved = JSON.parse(localStorage.getItem('probaktronic_card_icons') || '{}');
-          localStorage.setItem('probaktronic_card_icons', JSON.stringify({ ...localSaved, ...firestoreCardIcons }));
-        } catch (e) {}
+        firestoreCardIcons = { ...firestoreCardIcons, ...(iconDoc.data() || {}) };
       }
     }
   } catch (e) {
     console.warn('Could not fetch app_config/iconos_tarjetas:', e);
   }
+
+  try {
+    const localSaved = JSON.parse(localStorage.getItem('probaktronic_card_icons') || '{}');
+    localStorage.setItem('probaktronic_card_icons', JSON.stringify({ ...localSaved, ...firestoreCardIcons }));
+  } catch (e) {}
 
     connectionListContainer.innerHTML = '';
 
@@ -1384,6 +1395,10 @@ window.resolveFirebaseStorageUrl = async function(rawUrl) {
     return `archivos_almacenamiento/${clean}`;
   }
 
+  if (rawUrl.startsWith('diagramas_PRUEBAS/') || rawUrl.startsWith('diagramas/')) {
+    return `archivos_almacenamiento/${rawUrl}`;
+  }
+
   return rawUrl;
 };
 
@@ -1423,12 +1438,42 @@ window.showConsoleNoDiagramMessage = function(compMeta, customMessage, keepPagin
   if (stage) {
     stage.classList.add('d-none');
   }
+  const isAdmin = window.checkIsAdmin();
   if (dropzone) {
+    if (isAdmin) {
+      dropzone.innerHTML = `
+        <div class="p-4 p-md-5 rounded-4 border-2 border-dashed text-center mx-auto transition-all cursor-pointer" style="max-width: 520px; background: rgba(255, 255, 255, 0.02); border-color: rgba(220, 38, 38, 0.45) !important;" onclick="openAdminAddPhotoDirectModal()">
+          <div class="bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-circle p-3 d-inline-flex mb-3">
+            <i class="bi bi-file-earmark-image-fill text-danger fs-1"></i>
+          </div>
+          <h5 class="font-rajdhani fw-bold text-white text-uppercase mb-2">AGREGAR IMAGEN DE LA ECU (PNG)</h5>
+          <p class="text-white-50 small mb-3">Sube la foto de la placa de la ECU para empezar a marcar y asignar áreas interactivas.</p>
+          <button class="btn btn-danger rounded-pill font-rajdhani fw-bold px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2" onclick="event.stopPropagation(); openAdminAddPhotoDirectModal();">
+            <i class="bi bi-cloud-arrow-up-fill fs-5"></i>
+            <span>SELECCIONAR IMAGEN PNG</span>
+          </button>
+        </div>
+      `;
+    } else {
+      dropzone.innerHTML = `
+        <div class="p-4 p-md-5 rounded-4 text-center mx-auto border shadow-sm" style="max-width: 520px; background: rgba(255, 255, 255, 0.02); border-color: rgba(255, 255, 255, 0.1) !important;">
+          <div class="bg-secondary bg-opacity-10 border border-secondary border-opacity-25 rounded-circle p-3 d-inline-flex mb-3">
+            <i class="bi bi-camera-fill text-muted fs-1"></i>
+          </div>
+          <h5 class="font-rajdhani fw-bold text-white text-uppercase mb-2">FOTOGRAFÍA NO DISPONIBLE</h5>
+          <p class="text-white-50 small mb-0">La fotografía en alta definición de este componente estará disponible próximamente en las siguientes actualizaciones del sistema.</p>
+        </div>
+      `;
+    }
     dropzone.classList.remove('d-none');
     dropzone.classList.add('d-flex');
   }
   if (imgWrap) {
     imgWrap.classList.remove('d-none');
+  }
+
+  if (typeof window.updateEcuAdminUI === 'function') {
+    window.updateEcuAdminUI();
   }
 };
 
@@ -1975,15 +2020,16 @@ window.loadSpecificDiagramSection = async function(type) {
       }
       if (photos.length === 0) {
         const directCandidates = [
-          active.imageUrl, active.url, active.archivoUrl, active.diagramaUrl,
-          arch.imageUrl, arch.url, arch.archivoUrl, arch.diagramaUrl,
+          active.imageUrl, arch.imageUrl,
           active.fotoComponente, arch.fotoComponente, active.foto, arch.foto,
-          active.imagen, arch.imagen
+          active.imagen, arch.imagen,
+          active.url, arch.url, active.archivoUrl, arch.archivoUrl
         ];
         for (const dc of directCandidates) {
           if (dc && typeof dc === 'string' && dc.length > 5) {
             const lower = dc.toLowerCase();
-            if (!lower.includes('.pdf') && !lower.includes('%2epdf')) {
+            const isSchematic = lower.includes('.pdf') || lower.includes('%2epdf') || lower.includes('/conexionado/') || lower.includes('diagrama_');
+            if (!isSchematic) {
               photos.push(dc);
               break;
             }
@@ -2103,6 +2149,42 @@ window.loadSpecificDiagramSection = async function(type) {
         }
       }
 
+      // Auto-descubrimiento en SiteGround (archivos físicos en disco para todos los usuarios)
+      if (validPhotos.length === 0) {
+        try {
+          const brandQ = (arch.brandDocId || currentSelectedBrandId || currentSelectedBrandName || 'TOYOTA').trim();
+          const modelQ = (arch.modelDocId || currentSelectedModelDocId || currentSelectedModelId || currentSelectedModelName || 'corolla').trim();
+          const motorQ = (arch.motorDocId || currentSelectedMotorDocId || active.motor || 'motor_4e').trim();
+          const compQ = (arch.archDocId || arch.id || active.id || active.tituloArchivo || 'ecu').trim();
+
+          const apiEndpoints = [
+            `https://probaktronic.com/api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`,
+            `/api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`
+          ];
+
+          for (const ep of apiEndpoints) {
+            try {
+              const resp = await fetch(ep);
+              if (resp.ok) {
+                const json = await resp.json();
+                if (json && json.status === 'success' && Array.isArray(json.fotos) && json.fotos.length > 0) {
+                  validPhotos = json.fotos;
+                  active.imagenes = validPhotos;
+                  active.allImages = validPhotos;
+                  active.imageUrl = validPhotos[0];
+                  if (active._selectedArchDoc) {
+                    active._selectedArchDoc.imagenes = validPhotos;
+                    active._selectedArchDoc.allImages = validPhotos;
+                    active._selectedArchDoc.imageUrl = validPhotos[0];
+                  }
+                  break;
+                }
+              }
+            } catch(e) {}
+          }
+        } catch (errApi) {}
+      }
+
       if (validPhotos.length === 0) {
         if (stageLoader) stageLoader.classList.add('d-none');
         window.showConsoleNoDiagramMessage(comp);
@@ -2168,11 +2250,53 @@ window.loadSpecificDiagramSection = async function(type) {
       const localLocks = JSON.parse(localStorage.getItem('probaktronic_locked_diagrams') || '{}');
       const lockedObj = localLocks[exactLockKey] || localLocks[`${brandKey}_${modelKey}`] || localLocks[`${brandKey}_${motorKey}`] || localLocks[`${brandKey}_${archKey}`];
       if (lockedObj && (lockedObj.diagramaUrl || lockedObj.url)) {
-        lockedDiagramUrl = lockedObj.diagramaUrl || lockedObj.url;
+        const cand = lockedObj.diagramaUrl || lockedObj.url;
+        if (cand && !cand.includes('/imagen/')) {
+          lockedDiagramUrl = cand;
+        }
       }
     } catch (e) {}
 
-    let targetPdfOrImg = lockedDiagramUrl || active.diagramaUrl || active._selectedArchDoc?.diagramaUrl || active.archivoUrl || active._selectedArchDoc?.archivoUrl || active.diagramaImg || active._selectedArchDoc?.diagramaImg || active.url || active._selectedArchDoc?.url || active.pdfUrl || active._selectedArchDoc?.pdfUrl || active.downloadUrl;
+    // Exclude hardware photos (ecu_frontal, etc.) from connector view
+    const pcbPhotosList = [
+      ...(Array.isArray(active.allImages) ? active.allImages : []),
+      ...(Array.isArray(active.imagenes) ? active.imagenes : []),
+      ...(Array.isArray(active.fotos) ? active.fotos : []),
+      active.imageUrl,
+      active._selectedArchDoc?.imageUrl
+    ].filter(Boolean);
+
+    const isPcbPhoto = (url) => {
+      if (!url || typeof url !== 'string') return false;
+      if (url.includes('/imagen/')) return true;
+      return pcbPhotosList.includes(url);
+    };
+
+    let targetPdfOrImg = lockedDiagramUrl;
+    if (!targetPdfOrImg) {
+      const candidateDiagrams = [
+        active.diagramaUrl,
+        active._selectedArchDoc?.diagramaUrl,
+        active.pdfUrl,
+        active._selectedArchDoc?.pdfUrl,
+        active.diagramaImg,
+        active._selectedArchDoc?.diagramaImg,
+        active.archivoUrl,
+        active._selectedArchDoc?.archivoUrl,
+        active.url,
+        active._selectedArchDoc?.url,
+        active.downloadUrl
+      ];
+
+      for (const cd of candidateDiagrams) {
+        if (cd && typeof cd === 'string' && cd.length > 5) {
+          if (!isPcbPhoto(cd)) {
+            targetPdfOrImg = cd;
+            break;
+          }
+        }
+      }
+    }
 
     // Resolve gs:// or relative Storage path if present
     if (targetPdfOrImg) {
@@ -2309,9 +2433,16 @@ window.loadSpecificDiagramSection = async function(type) {
       }
 
       if (imgEl) {
-        imgEl.onload = () => {
+        let loadFinished = false;
+        const hideLoader = () => {
+          if (loadFinished) return;
+          loadFinished = true;
           const sl = document.getElementById('consoleDiagramStageLoader');
           if (sl) sl.classList.add('d-none');
+        };
+
+        imgEl.onload = () => {
+          hideLoader();
           window.hideConsoleNoDiagramMessage();
           imgEl.classList.remove('d-none');
           imgEl.style.display = 'block';
@@ -2324,13 +2455,16 @@ window.loadSpecificDiagramSection = async function(type) {
         };
 
         imgEl.onerror = () => {
-          if (imgEl.src && imgEl.src.includes('/archivos_almacenamiento/') && !imgEl.src.startsWith('https://probaktronic.com')) {
-            // Reintentar directamente desde el hosting de SiteGround en vivo
-            imgEl.src = imgEl.src.replace(/^https?:\/\/[^\/]+/, 'https://probaktronic.com');
+          // Si falla en una ruta relativa con 'archivos_almacenamiento/', probar ruta directa
+          if (imgEl.src && imgEl.src.includes('/archivos_almacenamiento/diagramas_PRUEBAS/')) {
+            imgEl.src = imgEl.src.replace('/archivos_almacenamiento/diagramas_PRUEBAS/', '/diagramas_PRUEBAS/');
             return;
           }
-          const sl = document.getElementById('consoleDiagramStageLoader');
-          if (sl) sl.classList.add('d-none');
+          if (imgEl.src && imgEl.src.includes('/diagramas_PRUEBAS/') && !imgEl.src.includes('/archivos_almacenamiento/')) {
+            imgEl.src = imgEl.src.replace('/diagramas_PRUEBAS/', '/archivos_almacenamiento/diagramas_PRUEBAS/');
+            return;
+          }
+          hideLoader();
           console.warn('Image failed to load URL:', targetPdfOrImg);
           imgEl.classList.add('d-none');
           imgEl.style.display = 'none';
@@ -2357,8 +2491,7 @@ window.loadSpecificDiagramSection = async function(type) {
 
         // Handle already-cached images instantly
         if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
-          const sl = document.getElementById('consoleDiagramStageLoader');
-          if (sl) sl.classList.add('d-none');
+          hideLoader();
           window.hideConsoleNoDiagramMessage();
           imgEl.classList.remove('d-none');
           imgEl.style.display = 'block';
@@ -2369,6 +2502,17 @@ window.loadSpecificDiagramSection = async function(type) {
             window.initInteractiveEcuLayer();
           }
         }
+
+        // Safety timeout so loader never hangs indefinitely
+        setTimeout(() => {
+          if (!loadFinished) {
+            hideLoader();
+            if (imgEl && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
+              imgEl.classList.remove('d-none');
+              imgEl.style.display = 'block';
+            }
+          }
+        }, 1800);
       }
     }
   }
@@ -2703,55 +2847,67 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
     if (selectedArchDoc.titulo || selectedArchDoc.nombre) {
       activeData.tituloArchivo = selectedArchDoc.titulo || selectedArchDoc.nombre;
     }
-    const fileUrl = selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.diagramaUrl || selectedArchDoc.pdfUrl || selectedArchDoc.downloadUrl || selectedArchDoc.imageUrl || selectedArchDoc.imagen;
-    if (fileUrl) {
-      activeData.url = fileUrl;
-      if (!fileUrl.toLowerCase().includes('.pdf')) {
-        activeData.imageUrl = activeData.imageUrl || fileUrl;
-        activeData.diagramaUrl = activeData.diagramaUrl || fileUrl;
-        activeData.archivoUrl = activeData.archivoUrl || fileUrl;
-        if (!activeData.allImages || activeData.allImages.length === 0) {
-          activeData.allImages = [fileUrl];
-          activeData.imagenes = [fileUrl];
-          activeData.fotos = [fileUrl];
-        }
-      }
+
+    // 1. Diagram / Schematics (Pinouts, wiring schematics)
+    if (selectedArchDoc.diagramaUrl) {
+      activeData.diagramaUrl = selectedArchDoc.diagramaUrl;
     }
     if (selectedArchDoc.pdfUrl) {
       activeData.pdfUrl = selectedArchDoc.pdfUrl;
-    } else if (fileUrl && (fileUrl.toLowerCase().includes('.pdf') || fileUrl.toLowerCase().includes('%2epdf'))) {
-      activeData.pdfUrl = fileUrl;
     }
+    if (selectedArchDoc.diagramaImg) {
+      activeData.diagramaImg = selectedArchDoc.diagramaImg;
+    }
+    if (selectedArchDoc.archivoUrl && (selectedArchDoc.archivoUrl.toLowerCase().includes('.pdf') || selectedArchDoc.archivoUrl.includes('/conexionado/') || selectedArchDoc.archivoUrl.toLowerCase().includes('diagrama'))) {
+      activeData.diagramaUrl = activeData.diagramaUrl || selectedArchDoc.archivoUrl;
+    }
+
+    // 2. Hardware / Component Photos (PCB, Frontal, Tapa, Conector, etc.)
     if (Array.isArray(selectedArchDoc.allImages) && selectedArchDoc.allImages.length > 0) {
-      activeData.allImages = selectedArchDoc.allImages;
-      activeData.imagenes = selectedArchDoc.allImages;
+      activeData.allImages = [...selectedArchDoc.allImages];
+      activeData.imagenes = [...selectedArchDoc.allImages];
       activeData.imageUrl = selectedArchDoc.allImages[0];
     } else if (Array.isArray(selectedArchDoc.imagenes) && selectedArchDoc.imagenes.length > 0) {
-      activeData.allImages = selectedArchDoc.imagenes;
-      activeData.imagenes = selectedArchDoc.imagenes;
+      activeData.allImages = [...selectedArchDoc.imagenes];
+      activeData.imagenes = [...selectedArchDoc.imagenes];
       activeData.imageUrl = selectedArchDoc.imagenes[0];
     } else if (Array.isArray(selectedArchDoc.fotos) && selectedArchDoc.fotos.length > 0) {
-      activeData.allImages = selectedArchDoc.fotos;
-      activeData.imagenes = selectedArchDoc.fotos;
+      activeData.allImages = [...selectedArchDoc.fotos];
+      activeData.imagenes = [...selectedArchDoc.fotos];
       activeData.imageUrl = selectedArchDoc.fotos[0];
     } else if (selectedArchDoc.imageUrl) {
       activeData.imageUrl = selectedArchDoc.imageUrl;
+      activeData.allImages = [selectedArchDoc.imageUrl];
+      activeData.imagenes = [selectedArchDoc.imageUrl];
     } else if (selectedArchDoc.fotoComponente) {
       activeData.imageUrl = selectedArchDoc.fotoComponente;
+      activeData.allImages = [selectedArchDoc.fotoComponente];
+      activeData.imagenes = [selectedArchDoc.fotoComponente];
+    } else if (selectedArchDoc.url && (selectedArchDoc.url.includes('/imagen/') || !selectedArchDoc.url.toLowerCase().includes('.pdf'))) {
+      activeData.imageUrl = selectedArchDoc.url;
+      activeData.allImages = [selectedArchDoc.url];
+      activeData.imagenes = [selectedArchDoc.url];
     }
+
+    // 3. Fallback for Diagram if missing
+    if (!activeData.diagramaUrl && !activeData.pdfUrl) {
+      const fileUrl = selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.downloadUrl;
+      if (fileUrl && (fileUrl.toLowerCase().includes('.pdf') || fileUrl.includes('/conexionado/') || fileUrl.toLowerCase().includes('diagrama'))) {
+        activeData.diagramaUrl = fileUrl;
+        if (fileUrl.toLowerCase().includes('.pdf')) {
+          activeData.pdfUrl = fileUrl;
+        }
+      }
+    }
+
     activeData._selectedArchDoc = selectedArchDoc;
   }
 
   activeData._componentMeta = compMeta;
   window._currentActiveDiagramData = activeData;
 
-  // Si existe imagen o diagrama, cargar directamente la sección activa:
-  const hasContent = activeData.url || activeData.imageUrl || activeData.diagramaUrl || activeData.pdfUrl || (Array.isArray(activeData.allImages) && activeData.allImages.length > 0) || (selectedArchDoc && (selectedArchDoc.url || selectedArchDoc.imageUrl || selectedArchDoc.diagramaUrl || selectedArchDoc.pdfUrl));
-  if (hasContent) {
-    window.loadSpecificDiagramSection('pcb');
-  } else {
-    window.showConsoleSplashView();
-  }
+  // Mostrar siempre la pantalla de selección / Hub (Imagen vs Conexionado):
+  window.showConsoleSplashView();
 };
 
 
@@ -3096,7 +3252,30 @@ window.saveAdminMechanicalIconChoice = async function() {
   // 2. Aplicar inmediatamente al DOM actual
   applyCustomIconToKey(currentEditingCardKey, selectedMechanicalIconChoice);
 
-  // 3. Guardado directo en el documento del diagrama en Firestore
+  // 3. Guardado en el Servidor / Hosting (SiteGround PHP API)
+  try {
+    const archDocId = currentEditingCardArchContext?.archDocId || '';
+    const payloadApi = {
+      cardKey: currentEditingCardKey,
+      icono: selectedMechanicalIconChoice,
+      archDocId: archDocId,
+      brandDocId: currentEditingCardArchContext?.brandDocId || '',
+      modelDocId: currentEditingCardArchContext?.modelDocId || '',
+      anioDocId: currentEditingCardArchContext?.anioDocId || '',
+      motorDocId: currentEditingCardArchContext?.motorDocId || ''
+    };
+    fetch('api/diagramas.php?action=guardar_icono', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payloadApi)
+    }).then(res => res.json()).then(data => {
+      console.log('Icono guardado en el servidor hosting:', data);
+    }).catch(err => {
+      console.warn('Notice guardando icono en servidor hosting:', err);
+    });
+  } catch (errApi) {}
+
+  // 4. Guardado directo en el documento del diagrama en Firestore
   try {
     ensureFirebaseInitialized();
     if (typeof firebase !== 'undefined' && firebase.firestore) {
@@ -3117,7 +3296,7 @@ window.saveAdminMechanicalIconChoice = async function() {
         }
       }
 
-      // 4. Guardado en app_config > iconos_tarjetas (Global fallback)
+      // 5. Guardado en app_config > iconos_tarjetas (Global fallback)
       const safeKey = currentEditingCardKey.replace(/[^a-zA-Z0-9_-]/g, '_');
       const cleanKey = currentEditingCardKey.trim();
       const payload = {
@@ -3135,7 +3314,7 @@ window.saveAdminMechanicalIconChoice = async function() {
   }
 
   if (typeof window.showGlobalToast === 'function') {
-    window.showGlobalToast(`¡Ícono sincronizado en Firestore para "${currentEditingCardKey}"!`);
+    window.showGlobalToast(`¡Ícono guardado en el hosting y Firestore para "${currentEditingCardKey}"!`);
   }
 
   const modalEl = document.getElementById('adminMechanicalIconPickerModal');
@@ -5083,6 +5262,28 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
       }
     }
 
+    // Fetch from MySQL SiteGround
+    if (currentEcuHotspots.length === 0) {
+      try {
+        const getEndpoints = [
+          `https://probaktronic.com/api/diagramas.php?action=get_hotspots&id_key=${encodeURIComponent(primaryKey)}`,
+          `/api/diagramas.php?action=get_hotspots&id_key=${encodeURIComponent(primaryKey)}`
+        ];
+        for (const ep of getEndpoints) {
+          try {
+            const resp = await fetch(ep);
+            if (resp.ok) {
+              const resData = await resp.json();
+              if (resData && resData.status === 'success' && Array.isArray(resData.datos) && resData.datos.length > 0) {
+                currentEcuHotspots = resData.datos;
+                break;
+              }
+            }
+          } catch(e) {}
+        }
+      } catch(e) {}
+    }
+
     // 4. Default fallback ONLY for initial Hilux ECU on Photo 1 if never modified
     if (isEcuComponent && isPrimaryPhoto && !isExplicitlySaved && currentEcuHotspots.length === 0) {
       currentEcuHotspots = getDefaultHiluxHotspots(imgW, imgH);
@@ -5206,12 +5407,33 @@ async function saveEcuHotspotsToStorage() {
         }, { merge: true }).catch(() => null);
 
       console.log('Componentes ECU sincronizados exitosamente en Firestore.');
-      if (typeof window.showGlobalToast === 'function') {
-        window.showGlobalToast('¡Componentes de la ECU guardados en la nube de Firebase!');
-      }
     }
   } catch (err) {
     console.warn('Firestore hotspots save warning:', err);
+  }
+
+  // Layer D: Guardar permanentemente en MySQL de SiteGround
+  try {
+    const endpoints = [
+      'https://probaktronic.com/api/diagramas.php?action=save_hotspots',
+      '/api/diagramas.php?action=save_hotspots'
+    ];
+    for (const ep of endpoints) {
+      try {
+        await fetch(ep, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id_key: primaryKey,
+            datos: currentEcuHotspots
+          })
+        });
+      } catch (e) {}
+    }
+  } catch (e) {}
+
+  if (typeof window.showGlobalToast === 'function') {
+    window.showGlobalToast('🔒 ¡Áreas y trazos guardados permanentemente en el servidor!');
   }
 }
 
@@ -6701,8 +6923,34 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
     const brandDocId = (archDoc.brandDocId || (typeof currentSelectedBrandId !== 'undefined' && currentSelectedBrandId) || (typeof currentSelectedBrandName !== 'undefined' && currentSelectedBrandName) || 'toyota').toLowerCase().trim();
     const modelDocId = (archDoc.modelDocId || (typeof currentSelectedModelDocId !== 'undefined' && currentSelectedModelDocId) || (typeof currentSelectedModelId !== 'undefined' && currentSelectedModelId) || (typeof currentSelectedModelName !== 'undefined' && currentSelectedModelName) || 'corolla').toLowerCase().trim();
     const anioDocId = (archDoc.anioDocId || (typeof currentSelectedAnioDocId !== 'undefined' && currentSelectedAnioDocId) || document.getElementById('selectedVehicleSpecText')?.textContent?.match(/\d{4}\s*-\s*\d{4}/)?.[0] || '1993-1997').trim();
-    const motorDocId = (archDoc.motorDocId || (typeof currentSelectedMotorDocId !== 'undefined' && currentSelectedMotorDocId) || active.motor || 'motor_4e').toLowerCase().trim();
-    const archDocId = archDoc.archDocId || archDoc.id || active.id || active.tituloArchivo || 'ecu';
+    
+    // Normalizar motor (ej: 4E-FE 1.3L -> motor_4e)
+    const rawMotor = (archDoc.motorDocId || (typeof currentSelectedMotorDocId !== 'undefined' && currentSelectedMotorDocId) || active.motor || 'motor_4e').toUpperCase().trim();
+    let motorDocId = 'motor_4e';
+    if (rawMotor.includes('4E')) {
+      motorDocId = 'motor_4e';
+    } else if (rawMotor.includes('2KD') || rawMotor.includes('2011') || rawMotor.includes('HILUX')) {
+      motorDocId = '2011-2015';
+    } else {
+      motorDocId = rawMotor.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    }
+
+    // Normalizar componente (ej: TOYOTA COROLLA 4E-FE ECU -> ecu)
+    const rawComp = (archDoc.archDocId || archDoc.id || active.id || active.tituloArchivo || 'ecu').toUpperCase().trim();
+    let archDocId = 'ecu';
+    if (rawComp.includes('PEDAL')) {
+      archDocId = 'pedal_acelerador';
+    } else if (rawComp.includes('INMOVILIZADOR') || rawComp.includes('LLAVE') || rawComp.includes('ANTENA')) {
+      archDocId = 'inmovilizador_llave';
+    } else if (rawComp.includes('EDU') && (rawComp.includes('DOS') || rawComp.includes('2'))) {
+      archDocId = 'edu_dos_conectores';
+    } else if (rawComp.includes('EDU') && (rawComp.includes('TRES') || rawComp.includes('3'))) {
+      archDocId = 'edu_tres_conectores';
+    } else if (rawComp.includes('ECU') || rawComp.includes('COMPUTADORA') || rawComp.includes('ECM') || rawComp.includes('PCM')) {
+      archDocId = 'ecu';
+    } else {
+      archDocId = rawComp.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    }
     const posChoice = document.querySelector('input[name="adminPhotoPosition"]:checked')?.value || 'end';
 
     // 1. Subir archivo a SiteGround PHP API

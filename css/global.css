@@ -552,8 +552,8 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
 
 .cards-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
   width: 100%;
   margin-bottom: 24px;
 }
@@ -561,7 +561,7 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
 .action-card {
   background-color: #FFFFFF;
   border-radius: 14px;
-  padding: 24px;
+  padding: 22px;
   border: 1px solid var(--border-color);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
   transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
@@ -579,6 +579,68 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
   transform: translateY(-5px);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
   border-color: rgba(211, 47, 47, 0.3);
+}
+
+.action-card-laboratorio {
+  border-color: #E2E8F0;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+}
+
+.action-card-laboratorio:hover {
+  border-color: #F59E0B;
+  box-shadow: 0 16px 32px rgba(245, 158, 11, 0.12);
+}
+
+.badge-icon-laboratorio {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+  color: #D97706 !important;
+}
+
+.badge-coming-soon {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #FFFFFF;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+  display: inline-flex;
+  align-items: center;
+}
+
+.title-underline-gold {
+  background-color: #F59E0B !important;
+}
+
+.card-action-btn-lab {
+  background-color: #D97706 !important;
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.3) !important;
+}
+
+.action-card-laboratorio:hover .card-action-btn-lab {
+  background-color: #B45309 !important;
+}
+
+.lab-oscilloscope-graphic {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.lab-wave-svg {
+  width: 100%;
+  height: 90px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
+  transition: transform 0.3s ease;
+}
+
+.action-card:hover .lab-wave-svg {
+  transform: scale(1.08);
 }
 
 .card-top-row {
@@ -1252,14 +1314,15 @@ a.sensor-card .sensor-desc {
 /* 1. Large Screen / Desktop (>= 1200px) */
 @media (min-width: 1200px) {
   .cards-container {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
   }
 }
 
 /* 2. Tablet Landscape / Medium Desktop (992px - 1199px) */
 @media (max-width: 1199px) and (min-width: 992px) {
   .cards-container {
-    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 18px;
   }
   

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -38,8 +38,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   
   <!-- Stylesheets -->
-  <link href="css/global.css?v=300.0" rel="stylesheet">
-  <link href="css/vehiculos.css?v=300.0" rel="stylesheet">
+  <link href="css/global.css?v=305.0" rel="stylesheet">
+  <link href="css/vehiculos.css?v=305.0" rel="stylesheet">
   
   <style>
     .select-vehicle-header {
@@ -934,9 +934,9 @@
             <i class="bi bi-car-front-fill"></i>
             <span>Vehículos</span>
           </a>
-          <a href="diagramas-3d.html" class="nav-link-item" title="Diagramas 3D">
-            <i class="bi bi-box-seam-fill"></i>
-            <span>Diagramas 3D</span>
+          <a href="manuales-probadores.html" class="nav-link-item" title="Manuales Probadores">
+            <i class="bi bi-journal-bookmark-fill"></i>
+            <span class="two-lines">Manuales<br>Probadores</span>
           </a>
           <a href="galeria-medios.html" class="nav-link-item" title="Galería & Medios">
             <i class="bi bi-grid-fill"></i>
@@ -1493,24 +1493,24 @@
                     <span class="small font-rajdhani fw-bold">Imprimir</span>
                   </button>
 
-                  <!-- Botones de Mapeo Interactivo (Dibujar y Marcar Áreas) -->
-                  <button class="btn btn-outline-warning btn-sm border d-inline-flex align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminToggleEcuEditor" onclick="toggleAdminEcuEditorMode()" title="Dibujar y mapear componentes en la ECU">
+                  <!-- Botones de Mapeo Interactivo (Dibujar y Marcar Áreas - Exclusivo Administrador) -->
+                  <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminToggleEcuEditor" onclick="toggleAdminEcuEditorMode()" title="Dibujar y mapear componentes en la ECU">
                     <i class="bi bi-bounding-box"></i>
                     <span id="adminEcuEditorBtnText">DIBUJAR ESPACIOS</span>
                   </button>
-                  <button class="btn btn-outline-success btn-sm border d-inline-flex align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminLockEcuHotspots" onclick="lockAndSaveEcuHotspots()" title="Asegurar permanentemente las áreas marcadas">
+                  <button class="btn btn-outline-success btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminLockEcuHotspots" onclick="lockAndSaveEcuHotspots()" title="Asegurar permanentemente las áreas marcadas">
                     <i class="bi bi-shield-lock-fill"></i>
                     <span>ASEGURAR ÁREAS</span>
                   </button>
-                  <button class="btn btn-outline-warning btn-sm border d-inline-flex align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminReorderGallery" onclick="openAdminGalleryReorderModal()" title="Ordenar fotos de la galería">
+                  <button class="btn btn-outline-warning btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminReorderGallery" onclick="openAdminGalleryReorderModal()" title="Ordenar fotos de la galería">
                     <i class="bi bi-arrow-down-up"></i>
                     <span>ORDENAR FOTOS</span>
                   </button>
-                  <button class="btn btn-danger btn-sm border d-inline-flex align-items-center gap-1 font-rajdhani fw-bold shadow-sm" id="btnAdminAddPhotoToComponent" onclick="openAdminAddPhotoDirectModal()" title="Subir nueva foto a esta ECU">
+                  <button class="btn btn-danger btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold shadow-sm" id="btnAdminAddPhotoToComponent" onclick="openAdminAddPhotoDirectModal()" title="Subir nueva foto a esta ECU">
                     <i class="bi bi-cloud-arrow-up-fill"></i>
                     <span>+ AGREGAR FOTO</span>
                   </button>
-                  <button class="btn btn-outline-info btn-sm border d-inline-flex align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminExportEcuJson" onclick="openAdminExportEcuJsonModal()" title="Exportar componentes en JSON para código permanente">
+                  <button class="btn btn-outline-info btn-sm border d-none align-items-center gap-1 font-rajdhani fw-bold" id="btnAdminExportEcuJson" onclick="openAdminExportEcuJsonModal()" title="Exportar componentes en JSON para código permanente">
                     <i class="bi bi-filetype-json"></i>
                     <span>EXPORTAR JSON</span>
                   </button>
@@ -2479,6 +2479,201 @@
     </div>
   </div>
 
+<div class="modal fade" id="adminAddBrandModal" tabindex="-1" aria-labelledby="adminAddBrandModalLabel" aria-hidden="true" style="z-index: 1075;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+        <div class="modal-header bg-dark text-white border-0 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-danger text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-tag-fill fs-5"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0" id="adminAddBrandModalLabel">AGREGAR NUEVA MARCA</h5>
+              <div class="text-white opacity-75" style="font-size: 0.75rem;">Crea una nueva marca con detección automática de Logo SVG</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form id="formAdminAddBrand" onsubmit="handleAdminSubmitNewBrand(event)">
+          <div class="modal-body p-4">
+            <!-- Nombre de la Marca -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1">NOMBRE DE LA MARCA</label>
+              <input type="text" id="adminNewBrandNameInput" class="form-control form-control-lg fw-bold font-rajdhani text-uppercase" placeholder="Ej: NISSAN, MITSUBISHI, ISUZU, FORD" oninput="handleAdminBrandNameLiveSearch(this.value)" required>
+            </div>
+
+            <!-- Segmento / Motorización -->
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">COMBUSTIBLE</label>
+                <select id="adminNewBrandFuelSelect" class="form-select font-rajdhani fw-bold">
+                  <option value="diesel" selected>DIÉSEL</option>
+                  <option value="gasolina">GASOLINA</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">CATEGORÍA</label>
+                <select id="adminNewBrandCategorySelect" class="form-select font-rajdhani fw-bold">
+                  <option value="pickup" selected>PICKUP / CAMIONETAS</option>
+                  <option value="furgon">FURGÓN / VAN</option>
+                  <option value="camiones">CAMIONES / PESADO</option>
+                  <option value="maquinaria">MAQUINARIA</option>
+                  <option value="sedan">SEDÁN / HATCHBACK</option>
+                  <option value="suv">SUV / CROSSOVER</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Logo Detection Box & Custom Upload -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
+                <span>LOGO DE LA MARCA</span>
+                <span class="badge bg-success small font-rajdhani" id="adminNewBrandLogoStatusBadge">Detección automática activa</span>
+              </label>
+              <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 border">
+                <div class="border rounded-2 p-2 bg-white d-flex align-items-center justify-content-center shadow-sm" style="width: 80px; height: 60px; flex-shrink: 0;">
+                  <img id="adminNewBrandLogoPreview" src="imagenes svg/ico_logo_toyota.svg" alt="Logo" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                </div>
+                <div class="d-flex flex-column flex-grow-1">
+                  <span class="small text-muted" id="adminNewBrandLogoSourceText">Logo oficial sugerido</span>
+                  <label class="btn btn-sm btn-outline-secondary rounded-pill mt-1 cursor-pointer align-self-start">
+                    <i class="bi bi-folder-plus me-1"></i> Elegir Logo Personalizado (SVG/PNG)
+                    <input type="file" id="adminNewBrandLogoFileInput" class="d-none" accept="image/*,.svg" onchange="handleAdminNewBrandLogoFileChange(this)">
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div id="adminNewBrandStatusMsg" class="small text-center fw-bold mb-2"></div>
+          </div>
+
+          <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnAdminSubmitNewBrand">
+              <i class="bi bi-check2-circle me-1"></i> Registrar Marca
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Agregar Nuevo Modelo -->
+  <div class="modal fade" id="adminAddModelModal" tabindex="-1" aria-labelledby="adminAddModelModalLabel" aria-hidden="true" style="z-index: 1075;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+        <div class="modal-header bg-dark text-white border-0 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-danger text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-car-front-fill fs-5"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0" id="adminAddModelModalLabel">AGREGAR NUEVO MODELO</h5>
+              <div class="text-white opacity-75" style="font-size: 0.75rem;">Registra una nueva versión de vehículo para esta marca</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form id="formAdminAddModel" onsubmit="handleAdminSubmitNewModel(event)">
+          <div class="modal-body p-4">
+            <!-- Marca Info -->
+            <div class="p-2 px-3 mb-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
+              <span class="small text-muted font-rajdhani fw-bold">MARCA SELECCIONADA:</span>
+              <span class="fw-bold text-danger font-rajdhani fs-6" id="adminNewModelParentBrandText">TOYOTA</span>
+            </div>
+
+            <!-- Nombre del Modelo -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1">NOMBRE DEL MODELO</label>
+              <input type="text" id="adminNewModelNameInput" class="form-control form-control-lg fw-bold font-rajdhani text-uppercase" placeholder="Ej: FORTUNER, HILUX REVO, FRONTIER" oninput="handleAdminModelNameLiveSearch(this.value)" required>
+            </div>
+
+            <!-- Años y Motor -->
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">RANGO DE AÑOS</label>
+                <input type="text" id="adminNewModelYearsInput" class="form-control font-rajdhani fw-bold" placeholder="Ej: 2016 - 2021" oninput="handleAdminModelNameLiveSearch(document.getElementById('adminNewModelNameInput').value)">
+              </div>
+              <div class="col-6">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">CÓDIGO DE MOTOR / PARTE</label>
+                <input type="text" id="adminNewModelMotorInput" class="form-control font-rajdhani fw-bold" placeholder="Ej: 1GD-FTV 2.8L (o Estándar)">
+              </div>
+            </div>
+
+            <!-- Combustible -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1">SISTEMA DE COMBUSTIBLE</label>
+              <select id="adminNewModelFuelSelect" class="form-select font-rajdhani fw-bold">
+                <option value="diesel" selected>DIÉSEL (Common Rail / EDC)</option>
+                <option value="gasolina">GASOLINA (MPFI / GDI / Otto)</option>
+              </select>
+            </div>
+
+            <!-- Foto del Vehículo -->
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
+                <span>FOTO DEL VEHÍCULO</span>
+                <span class="badge bg-success small font-rajdhani" id="adminNewModelPhotoStatusBadge">Detección automática activa</span>
+              </label>
+              <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 border">
+                <div class="border rounded-2 p-1 bg-white d-flex align-items-center justify-content-center shadow-sm" style="width: 85px; height: 65px; flex-shrink: 0;">
+                  <img id="adminNewModelPhotoPreview" src="imagenes autos/ic_car_toyota_hilux.JPG" alt="Car" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                </div>
+                <div class="d-flex flex-column flex-grow-1">
+                  <span class="small text-muted" id="adminNewModelPhotoSourceText">Foto sugerida de la biblioteca</span>
+                  <label class="btn btn-sm btn-outline-secondary rounded-pill mt-1 cursor-pointer align-self-start">
+                    <i class="bi bi-camera-fill me-1"></i> Subir Foto Propia
+                    <input type="file" id="adminNewModelCarFileInput" class="d-none" accept="image/*,.svg" onchange="handleAdminNewModelCarFileChange(this)">
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div id="adminNewModelStatusMsg" class="small text-center fw-bold mb-2"></div>
+          </div>
+
+          <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnAdminSubmitNewModel">
+              <i class="bi bi-check2-circle me-1"></i> Registrar Modelo
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Exportar JSON de Componentes ECU para GitHub / Código Permanente -->
+  <div class="modal fade" id="modalAdminExportEcuJson" tabindex="-1" aria-hidden="true" style="z-index: 1075;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content text-white" style="background: #0E131F; border: 1px solid #00F0FF; border-radius: 16px; box-shadow: 0 0 45px rgba(0, 240, 255, 0.35);">
+        <div class="modal-header border-secondary py-3 px-4" style="background: linear-gradient(90deg, rgba(0, 240, 255, 0.1) 0%, rgba(17, 24, 39, 0.8) 100%);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-filetype-json text-info fs-4"></i>
+            <h5 class="modal-title font-rajdhani fw-bold text-white mb-0">EXPORTAR COMPONENTES ECU (JSON)</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="alert alert-dark border border-info border-opacity-25 small text-light mb-3">
+            <i class="bi bi-info-circle-fill text-info me-2"></i>
+            <strong>¿Para qué sirve?</strong> Al subir tu proyecto a tu hosting o GitHub, con este botón puedes respaldar y copiar el JSON generado para que el dibujo se muestre idéntico en cualquier dispositivo.
+          </div>
+          <label class="form-label small text-info fw-bold mb-1">Estructura JSON (Coordenadas y Datos 1:1):</label>
+          <textarea id="adminExportEcuJsonArea" class="form-control bg-black text-info font-monospace small" rows="12" readonly style="font-size: 0.78rem; border-color: rgba(0, 240, 255, 0.3);"></textarea>
+        </div>
+        <div class="modal-footer border-secondary py-2 px-4 d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+          <button type="button" class="btn btn-info rounded-pill px-4 fw-bold shadow-sm" onclick="copyAdminExportEcuJson()">
+            <i class="bi bi-clipboard-check me-1"></i> Copiar al Portapapeles
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- PDF.js Engine for Pure Image Rendering without Browser PDF Chrome -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
@@ -2486,10 +2681,10 @@
 
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/global.js?v=300.0"></script>
-  <script src="js/auth.js?v=300.0"></script>
-  <script src="js/vehiculos-data.js?v=300.0"></script>
-  <script src="js/vehiculos-diagramas.js?v=300.0"></script>
+  <script src="js/global.js?v=330.0"></script>
+  <script src="js/auth.js?v=330.0"></script>
+  <script src="js/admin-analytics.js?v=330.0"></script>
+  <script src="js/vehiculos-data.js?v=330.0"></script>
+  <script src="js/vehiculos-diagramas.js?v=330.0"></script>
 </body>
 </html>
-

@@ -1,8 +1,9 @@
 /**
- * Lógica interactiva para la pantalla de Recuperación de Tableros
+ * Lógica interactiva para el Dashboard y Recuperación de Tableros (Probaktronic)
+ * Soporta modo Usuario Premium (solo lectura y descargas) y Administrador (gestión y eliminación)
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const BRAND_LOGOS = {
     'CHANGAN': 'imagenes svg/ico_logo_changan.svg',
     'CHEVROLET': 'imagenes svg/ico_logo_chevrolet.png',
@@ -21,19 +22,27 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentSearch = '';
   let currentChipGroup = 'ALL';
 
+  // Modifications state (server synced)
+  let hiddenItemIds = new Set(JSON.parse(localStorage.getItem('probak_hidden_recovery_items') || '[]'));
+  let hiddenBrandNames = new Set(JSON.parse(localStorage.getItem('probak_hidden_recovery_brands') || '[]'));
+
   // Elements
-  $statTotalFiles = document.getElementById('statTotalFiles');
-  $statTotalBrands = document.getElementById('statTotalBrands');
-  $statTotalModels = document.getElementById('statTotalModels');
-  $brandsContainer = document.getElementById('brandsContainer');
-  $chipFilterContainer = document.getElementById('chipFilterContainer');
-  $searchInput = document.getElementById('searchInput');
-  $btnResetFilters = document.getElementById('btnResetFilters');
-  $filesGridContainer = document.getElementById('filesGridContainer');
-  $resultsCountBadge = document.getElementById('resultsCountBadge');
+  const $statTotalFiles = document.getElementById('statTotalFiles');
+  const $statTotalBrands = document.getElementById('statTotalBrands');
+  const $statTotalModels = document.getElementById('statTotalModels');
+  const $brandsContainer = document.getElementById('brandsContainer');
+  const $chipFilterContainer = document.getElementById('chipFilterContainer');
+  const $searchInput = document.getElementById('searchInput');
+  const $btnResetFilters = document.getElementById('btnResetFilters');
+  const $filesGridContainer = document.getElementById('filesGridContainer');
+  const $resultsCountBadge = document.getElementById('resultsCountBadge');
 
   // Detail Modal elements
-  const infoModal = new bootstrap.Modal(document.getElementById('fileInfoModal'));
+  let infoModal = null;
+  const modalEl = document.getElementById('fileInfoModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    infoModal = new bootstrap.Modal(modalEl);
+  }
   const modalModelTitle = document.getElementById('modalModelTitle');
   const modalBrandName = document.getElementById('modalBrandName');
   const modalChipType = document.getElementById('modalChipType');
@@ -42,55 +51,151 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalFileName = document.getElementById('modalFileName');
   const modalDownloadBtn = document.getElementById('modalDownloadBtn');
 
-  // Init
+  // Sync modifications from Server
+  await fetchServerModifications();
+
+  // Init UI
   initStats();
   renderBrandsGrid();
   renderChipPills();
   renderFilesGrid();
+  injectAdminToolbar();
 
   // Search input event
-  $searchInput.addEventListener('input', (e) => {
-    currentSearch = e.target.value.trim().toLowerCase();
-    renderFilesGrid();
-  });
+  if ($searchInput) {
+    $searchInput.addEventListener('input', (e) => {
+      currentSearch = e.target.value.trim().toLowerCase();
+      renderFilesGrid();
+    });
+  }
 
   // Reset button event
-  $btnResetFilters.addEventListener('click', () => {
-    currentBrand = 'ALL';
-    currentSearch = '';
-    currentChipGroup = 'ALL';
-    $searchInput.value = '';
-    renderBrandsGrid();
-    renderChipPills();
-    renderFilesGrid();
-  });
+  if ($btnResetFilters) {
+    $btnResetFilters.addEventListener('click', () => {
+      currentBrand = 'ALL';
+      currentSearch = '';
+      currentChipGroup = 'ALL';
+      if ($searchInput) $searchInput.value = '';
+      renderBrandsGrid();
+      renderChipPills();
+      renderFilesGrid();
+    });
+  }
+
+  function isAdminUser() {
+    if (typeof window.isProbaktronicAdmin === 'function') {
+      return window.isProbaktronicAdmin();
+    }
+    const raw = localStorage.getItem('probaktronic_cached_user');
+    if (raw) {
+      try {
+        const u = JSON.parse(raw);
+        return (u.email === 'prueba@probak.com' || u.email === 'jhanzeta@gmail.com' || u.rol === 'admin' || u.isAdmin === true);
+      } catch (e) {}
+    }
+    return false;
+  }
+
+  async function fetchServerModifications() {
+    try {
+      const res = await fetch('api/recuperacion.php?action=modificaciones&t=' + Date.now());
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.data) {
+          if (Array.isArray(json.data.hidden_items)) {
+            json.data.hidden_items.forEach(id => hiddenItemIds.add(id));
+            localStorage.setItem('probak_hidden_recovery_items', JSON.stringify(Array.from(hiddenItemIds)));
+          }
+          if (Array.isArray(json.data.hidden_brands)) {
+            json.data.hidden_brands.forEach(b => hiddenBrandNames.add(b.toUpperCase()));
+            localStorage.setItem('probak_hidden_recovery_brands', JSON.stringify(Array.from(hiddenBrandNames)));
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  function getActiveData() {
+    if (!Array.isArray(RECUPERACION_DATA)) return [];
+    return RECUPERACION_DATA.filter(item => {
+      if (hiddenItemIds.has(item.id)) return false;
+      if (hiddenBrandNames.has(item.brand.toUpperCase())) return false;
+      return true;
+    });
+  }
 
   function initStats() {
-    const totalFiles = RECUPERACION_DATA.length;
-    const brandsSet = new Set(RECUPERACION_DATA.map(d => d.brand));
-    const modelsSet = new Set(RECUPERACION_DATA.map(d => `${d.brand}-${d.model}`));
+    const active = getActiveData();
+    const totalFiles = active.length;
+    const brandsSet = new Set(active.map(d => d.brand));
+    const modelsSet = new Set(active.map(d => `${d.brand}-${d.model}`));
 
     if ($statTotalFiles) $statTotalFiles.textContent = totalFiles;
     if ($statTotalBrands) $statTotalBrands.textContent = brandsSet.size;
     if ($statTotalModels) $statTotalModels.textContent = modelsSet.size;
   }
 
+  function injectAdminToolbar() {
+    if (!isAdminUser()) return;
+    const section = document.getElementById('recoveryFilesSection');
+    if (!section || document.getElementById('adminRecoveryToolbar')) return;
+
+    const toolbar = document.createElement('div');
+    toolbar.id = 'adminRecoveryToolbar';
+    toolbar.className = 'admin-recovery-toolbar';
+    toolbar.innerHTML = `
+      <div class="d-flex align-items-center gap-2 small fw-bold text-dark">
+        <i class="bi bi-shield-fill-check text-warning fs-5"></i>
+        <span>Panel de Control Administrador: Puedes eliminar archivos individuales o tarjetas de marcas que no deseas mostrar.</span>
+      </div>
+      <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" id="btnRestoreAllModifications">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> Restaurar Ocultos
+      </button>
+    `;
+
+    section.insertBefore(toolbar, section.firstChild);
+
+    document.getElementById('btnRestoreAllModifications')?.addEventListener('click', async () => {
+      if (confirm('¿Deseas restaurar todos los archivos y marcas de tableros que fueron eliminados u ocultados?')) {
+        hiddenItemIds.clear();
+        hiddenBrandNames.clear();
+        localStorage.removeItem('probak_hidden_recovery_items');
+        localStorage.removeItem('probak_hidden_recovery_brands');
+
+        try {
+          await fetch('api/recuperacion.php?action=restaurar_todo', { method: 'POST' });
+        } catch(e) {}
+
+        if (typeof window.showGlobalToast === 'function') {
+          window.showGlobalToast('Todos los respaldos y marcas han sido restaurados.');
+        }
+        initStats();
+        renderBrandsGrid();
+        renderFilesGrid();
+      }
+    });
+  }
+
   function renderBrandsGrid() {
     if (!$brandsContainer) return;
 
-    // Count per brand
+    const active = getActiveData();
     const brandCounts = {};
-    RECUPERACION_DATA.forEach(item => {
+    active.forEach(item => {
       brandCounts[item.brand] = (brandCounts[item.brand] || 0) + 1;
     });
 
-    const sortedBrands = Object.keys(BRAND_LOGOS).sort();
+    const sortedBrands = Object.keys(BRAND_LOGOS)
+      .filter(brand => !hiddenBrandNames.has(brand.toUpperCase()))
+      .sort();
+
+    const isAdmin = isAdminUser();
 
     let html = `
       <div class="brand-card-button ${currentBrand === 'ALL' ? 'active' : ''}" data-brand="ALL">
         <i class="bi bi-grid-3x3-gap-fill text-danger fs-3"></i>
         <span class="brand-card-name">TODAS</span>
-        <span class="brand-card-count">${RECUPERACION_DATA.length}</span>
+        <span class="brand-card-count">${active.length}</span>
       </div>
     `;
 
@@ -101,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       html += `
         <div class="brand-card-button ${isActive}" data-brand="${brand}">
+          ${isAdmin ? `<button type="button" class="btn-delete-brand-card" data-delete-brand="${brand}" title="Eliminar tarjeta de marca ${brand}"><i class="bi bi-x-lg"></i></button>` : ''}
           <img src="${logoUrl}" alt="${brand}" class="brand-card-logo" onerror="this.src='logo_probaktronic_solo.png'">
           <span class="brand-card-name">${brand}</span>
           <span class="brand-card-count">${count}</span>
@@ -110,20 +216,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $brandsContainer.innerHTML = html;
 
-    // Add event listeners
+    // Brand click events
     $brandsContainer.querySelectorAll('.brand-card-button').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-delete-brand-card')) return;
         currentBrand = btn.dataset.brand;
         renderBrandsGrid();
         renderFilesGrid();
       });
     });
+
+    // Admin Delete Brand Card Event
+    if (isAdmin) {
+      $brandsContainer.querySelectorAll('.btn-delete-brand-card').forEach(delBtn => {
+        delBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const targetBrand = delBtn.dataset.deleteBrand;
+          if (!targetBrand) return;
+
+          if (confirm(`¿Estás seguro de que deseas ELIMINAR la tarjeta de marca "${targetBrand}" y todos sus respaldos asociados del Dashboard?`)) {
+            hiddenBrandNames.add(targetBrand.toUpperCase());
+            localStorage.setItem('probak_hidden_recovery_brands', JSON.stringify(Array.from(hiddenBrandNames)));
+
+            // Sincronizar eliminación en el servidor
+            try {
+              await fetch('api/recuperacion.php?action=eliminar_marca', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ brand: targetBrand })
+              });
+            } catch (err) {}
+
+            if (currentBrand === targetBrand) {
+              currentBrand = 'ALL';
+            }
+
+            if (typeof window.showGlobalToast === 'function') {
+              window.showGlobalToast(`Tarjeta de marca "${targetBrand}" eliminada correctamente.`);
+            }
+
+            initStats();
+            renderBrandsGrid();
+            renderFilesGrid();
+          }
+        });
+      });
+    }
   }
 
   function renderChipPills() {
     if (!$chipFilterContainer) return;
 
-    // Group chips into families
     const chipFamilies = ['ALL', '24C (EEPROM)', '93C (EEPROM)', '95/25 (EEPROM)', '9S12 (Motorola/NXP)', 'MB91F (Fujitsu)', 'S6J (Cypress/Spansion)', 'R7F (Renesas)'];
 
     let html = '<span class="chip-pill-title"><i class="bi bi-cpu"></i> Memoria / Chip:</span>';
@@ -160,7 +303,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderFilesGrid() {
     if (!$filesGridContainer) return;
 
-    const filtered = RECUPERACION_DATA.filter(item => {
+    const active = getActiveData();
+    const isAdmin = isAdminUser();
+
+    const filtered = active.filter(item => {
       // Brand filter
       if (currentBrand !== 'ALL' && item.brand !== currentBrand) return false;
 
@@ -202,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const emptyReset = document.getElementById('emptyResetBtn');
       if (emptyReset) {
         emptyReset.addEventListener('click', () => {
-          $btnResetFilters.click();
+          if ($btnResetFilters) $btnResetFilters.click();
         });
       }
       return;
@@ -214,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isBin = item.ext === 'bin';
 
       html += `
-        <div class="file-card-item">
+        <div class="file-card-item" id="card_item_${item.id}">
           <div>
             <div class="file-card-top">
               <div class="file-brand-badge">
@@ -246,6 +392,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <button type="button" class="btn-info-file" data-id="${item.id}" title="Ver Detalles del Chip">
               <i class="bi bi-info-circle"></i>
             </button>
+            ${isAdmin ? `
+              <button type="button" class="btn-delete-file-card" data-delete-id="${item.id}" data-delete-name="${escapeHtml(item.model)}" title="Eliminar este archivo de respaldo">
+                <i class="bi bi-trash3-fill"></i>
+              </button>
+            ` : ''}
           </div>
         </div>
       `;
@@ -263,6 +414,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+
+    // Attach Admin Delete File Event
+    if (isAdmin) {
+      $filesGridContainer.querySelectorAll('.btn-delete-file-card').forEach(delBtn => {
+        delBtn.addEventListener('click', async () => {
+          const itemId = delBtn.dataset.deleteId;
+          const itemName = delBtn.dataset.deleteName || 'este archivo';
+
+          if (confirm(`¿Estás seguro de que deseas ELIMINAR el archivo de respaldo para "${itemName}"?`)) {
+            hiddenItemIds.add(itemId);
+            localStorage.setItem('probak_hidden_recovery_items', JSON.stringify(Array.from(hiddenItemIds)));
+
+            // Sincronizar eliminación en el servidor
+            try {
+              await fetch('api/recuperacion.php?action=eliminar_archivo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: itemId })
+              });
+            } catch (err) {}
+
+            if (typeof window.showGlobalToast === 'function') {
+              window.showGlobalToast(`Archivo "${itemName}" eliminado con éxito.`);
+            }
+
+            initStats();
+            renderBrandsGrid();
+            renderFilesGrid();
+          }
+        });
+      });
+    }
   }
 
   function showFileDetails(item) {
@@ -276,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
       modalDownloadBtn.href = encodeURI(item.filePath);
       modalDownloadBtn.setAttribute('download', item.fileName);
     }
-    infoModal.show();
+    if (infoModal) infoModal.show();
   }
 
   function escapeHtml(str) {

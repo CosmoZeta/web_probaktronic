@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -186,8 +186,8 @@
 
   <!-- Bootstrap & Auth JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/global.js?v=300.0"></script>
-  <script src="js/auth.js?v=300.0"></script>
+  <script src="js/global.js?v=306.0"></script>
+  <script src="js/auth.js?v=306.0"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -247,6 +247,10 @@
         try {
           const authResult = await window.loginUser(email, password);
 
+          if (!authResult) {
+            throw new Error('No se pudo completar el inicio de sesión.');
+          }
+
           // Si requiere verificación en dos pasos (Google Authenticator)
           if (authResult && authResult.requires2FA) {
             pending2FAUser = authResult.tempUser;
@@ -261,8 +265,8 @@
             showGlobalToast('¡Inicio de sesión exitoso!');
           }
           setTimeout(() => {
-            window.location.href = 'index.html';
-          }, 500);
+            window.location.replace('index.html');
+          }, 400);
 
         } catch (err) {
           console.error('Error al iniciar sesión:', err);

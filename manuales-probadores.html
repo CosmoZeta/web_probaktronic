@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Probaktronic - Manuales de Probadores Automotrices</title>
+  
+  <script>
+    if (sessionStorage.getItem('sidebar_locked') === 'true') {
+      document.documentElement.classList.add('sidebar-minimized-init');
+    }
+  </script>
+
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  
+  <!-- Master & Custom Stylesheets -->
+  <link href="css/global.css?v=309.0" rel="stylesheet">
+  <link href="css/manuales.css?v=309.0" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-container">
+    <svg class="bg-circuit-watermark" viewBox="0 0 800 600" fill="none">
+      <path d="M 300 0 L 450 150 L 700 150 L 800 250" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 4"/>
+    </svg>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="d-flex flex-column w-100">
+        <div class="sidebar-brand-container">
+          <a href="index.html" class="sidebar-brand" title="Probaktronic">
+            <img src="logo_probaktronic_costado.png" alt="Probaktronic" class="sidebar-logo-costado">
+            <img src="logo_probaktronic_solo.png" alt="Probaktronic" class="sidebar-logo-solo">
+          </a>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="index.html" class="nav-link-item" title="Página Principal">
+            <i class="bi bi-house-door-fill"></i>
+            <span>Página Principal</span>
+          </a>
+          <a href="vehiculos.html" class="nav-link-item" title="Vehículos">
+            <i class="bi bi-car-front-fill"></i>
+            <span>Vehículos</span>
+          </a>
+          <a href="manuales-probadores.html" class="nav-link-item active" title="Manuales Probadores">
+            <i class="bi bi-journal-bookmark-fill"></i>
+            <span class="two-lines">Manuales<br>Probadores</span>
+          </a>
+          <a href="galeria-medios.html" class="nav-link-item" title="Galería & Medios">
+            <i class="bi bi-grid-fill"></i>
+            <span>Galería & Medios</span>
+          </a>
+          <a href="sensores-actuadores.html" class="nav-link-item" title="Sensores y Actuadores">
+            <i class="bi bi-cpu-fill"></i>
+            <span class="two-lines">Sensores y<br>Actuadores</span>
+          </a>
+          <a href="bobinas.html" class="nav-link-item" title="Bobinas">
+            <i class="bi bi-lightning-charge-fill"></i>
+            <span>Bobinas</span>
+          </a>
+          <a href="catalogo.html" class="nav-link-item" title="Catálogo">
+            <i class="bi bi-journal-text"></i>
+            <span>Catálogo</span>
+          </a>
+          <a href="dashboard.html" class="nav-link-item" title="Dashboard">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+
+          <div class="sidebar-divider"></div>
+
+          <a href="configuracion.html" class="nav-link-item" title="Configuración"><i class="bi bi-gear-fill"></i><span>Configuración</span></a>
+          <a href="#" class="nav-link-item" title="Actualizaciones" onclick="showGlobalToast('Buscando actualizaciones...')"><i class="bi bi-arrow-repeat"></i><span>Actualizaciones</span></a>
+          <a href="#" class="nav-link-item" title="Herramientas" onclick="showGlobalToast('Herramientas avanzadas...')"><i class="bi bi-tools"></i><span>Herramientas</span></a>
+          <a href="#" class="nav-link-item" title="Soporte" onclick="showGlobalToast('Contactando a Soporte Técnico...')"><i class="bi bi-headset"></i><span>Soporte</span></a>
+        </nav>
+      </div>
+
+      <!-- Minimize Button -->
+      <div class="sidebar-footer">
+        <button class="btn-sidebar-minimize" title="Minimizar menú">
+          <i class="bi bi-chevron-double-left"></i>
+          <span>Minimizar</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile Drawer Backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Header Bar -->
+      <header class="top-header-bar">
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn-mobile-menu-toggle" id="btnMobileMenuToggle" aria-label="Abrir menú" title="Abrir menú">
+            <i class="bi bi-list"></i>
+            <span class="menu-pill-text">MENÚ</span>
+          </button>
+          <div>
+            <div class="header-greeting">CENTRO DE DOCUMENTACIÓN TÉCNICA</div>
+            <h1 class="page-title">MANUALES DE PROBADORES</h1>
+            <div class="page-subtitle">Guías completas en PDF para probadores de ECUs, bobinas, maquinaria pesada y actuadores</div>
+          </div>
+        </div>
+
+        <div class="user-profile-section">
+          <div class="user-profile-card">
+            <div class="user-avatar" style="background-color: #94A3B8;">
+              <i class="bi bi-person-fill"></i>
+            </div>
+            <div class="user-info">
+              <span class="user-name">Cargando...</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Admin Toolbar (Only visible for Admin) -->
+      <div class="admin-manuales-toolbar mb-3">
+        <div class="p-3 bg-white rounded-3 border d-flex align-items-center justify-content-between shadow-sm">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge badge-gold-admin"><i class="bi bi-shield-fill-check me-1"></i>PANEL ADMINISTRADOR</span>
+            <span class="small text-muted">Gestione o agregue nuevos manuales PDF a la plataforma.</span>
+          </div>
+          <button class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm" onclick="openAdminAddManualModal()">
+            <i class="bi bi-plus-circle-fill me-1"></i> Agregar Nuevo Manual PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Section Title Indicator -->
+      <div class="section-header-title d-flex align-items-center justify-content-between mb-4">
+        <span>Catálogo de Manuales de Probadores</span>
+        <span class="text-muted small fw-normal d-none d-sm-inline">
+          <i class="bi bi-file-earmark-pdf text-danger me-1"></i>Documentación oficial para lectura y descarga
+        </span>
+      </div>
+
+      <!-- Manuals Cards Grid -->
+      <div class="manuals-grid" id="manualsGridContainer">
+        <!-- Dynamic Cards rendered via js/manuales.js -->
+        <div class="col-12 text-center py-5 text-muted">
+          <div class="spinner-border text-danger mb-2" role="status"></div>
+          <p class="small">Cargando biblioteca de manuales...</p>
+        </div>
+      </div>
+
+      <!-- Bottom Dark Status Bar -->
+      <footer class="dark-status-bar">
+        <div class="status-item">
+          <div class="status-led-green"></div>
+          <div class="status-info-block">
+            <span class="status-label">ESTADO DEL SISTEMA</span>
+            <span class="status-value text-success">EN LÍNEA</span>
+          </div>
+        </div>
+
+        <div class="status-divider"></div>
+
+        <div class="status-item">
+          <i class="bi bi-person-badge-fill status-icon"></i>
+          <div class="status-info-block">
+            <span class="status-label">TIPO DE USUARIO</span>
+            <span class="status-value text-muted">Invitado (Sin Sesión)</span>
+          </div>
+        </div>
+
+        <div class="status-divider"></div>
+
+        <div class="status-item">
+          <i class="bi bi-layers-fill status-icon"></i>
+          <div class="status-info-block">
+            <span class="status-label">NÚMERO DE VERSIÓN</span>
+            <span class="status-value">1.0</span>
+          </div>
+        </div>
+
+        <div class="status-divider"></div>
+
+        <div class="status-item">
+          <i class="bi bi-calendar-event-fill status-icon"></i>
+          <div class="status-info-block">
+            <span class="status-label">FECHA Y HORA</span>
+            <span class="status-value" id="firmwareDateValue">21 ago 2026, 23:28</span>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Modal Visor Interactivo de PDF -->
+  <div class="modal fade modal-pdf-viewer" id="modalPdfViewer" tabindex="-1" aria-labelledby="pdfModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header bg-dark text-white border-0 py-3 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0 text-white" id="pdfModalTitle">Visualizador de Manual Técnico</h5>
+              <span class="small text-white-50">Probaktronic Documentación Oficial</span>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <a href="#" id="pdfModalNewTabBtn" target="_blank" class="btn btn-outline-light btn-sm rounded-pill px-3" title="Abrir en pestaña nueva">
+              <i class="bi bi-box-arrow-up-right me-1"></i> Pantalla Completa
+            </a>
+            <a href="#" id="pdfModalDownloadBtn" download class="btn btn-danger btn-sm rounded-pill px-3 fw-bold">
+              <i class="bi bi-download me-1"></i> Descargar PDF
+            </a>
+            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+        </div>
+        <div class="modal-body">
+          <iframe id="pdfViewerIframe" class="pdf-iframe-container" src="about:blank" title="Visor PDF"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Zoom / Lightbox para Imagen del Probador -->
+  <div class="modal fade modal-image-zoom" id="modalImageZoom" tabindex="-1" aria-labelledby="zoomModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header bg-dark text-white border-0 py-3 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-cpu-fill text-danger fs-4"></i>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0 text-white" id="zoomModalTitle">Fotografía del Probador</h5>
+              <span class="small text-white-50">Vista ampliada del equipo Probaktronic</span>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-0 position-relative">
+          <div class="zoom-image-wrapper">
+            <div class="zoom-wheel-hint">
+              <i class="bi bi-mouse"></i> Usa la ruedita del mouse para hacer Zoom & Arrastra para mover
+            </div>
+            <img id="zoomPreviewImg" src="" alt="Equipo Probador" class="zoom-preview-img">
+            
+            <div class="zoom-floating-controls">
+              <button type="button" class="zoom-btn-tool" onclick="adjustZoom(-0.25)" title="Reducir Zoom">
+                <i class="bi bi-dash-circle"></i>
+              </button>
+              <span class="zoom-level-text" id="zoomLevelText">100%</span>
+              <button type="button" class="zoom-btn-tool" onclick="adjustZoom(0.25)" title="Aumentar Zoom">
+                <i class="bi bi-plus-circle"></i>
+              </button>
+              <button type="button" class="zoom-btn-tool" onclick="resetZoom()" title="Restablecer Tamaño">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Agregar Nuevo Manual -->
+  <div class="modal fade" id="modalAdminAddManual" tabindex="-1" aria-labelledby="adminAddManualLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+        <div class="modal-header bg-dark text-white border-0 py-3 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-danger text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-journal-plus fs-5"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0" id="adminAddManualLabel">AGREGAR MANUAL DE PROBADOR (ADMIN)</h5>
+              <div class="text-white opacity-75 small">Sube un nuevo manual PDF y configúralo para que aparezca en la plataforma</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <form id="formAdminAddManual" onsubmit="handleAdminSubmitNewManual(event)">
+          <div class="modal-body p-4">
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-8">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">TÍTULO DEL MANUAL / EQUIPO</label>
+                <input type="text" id="newManualTitle" class="form-control fw-bold font-rajdhani" placeholder="Ej: Manual Probador de ECUs Universales V4.2" required>
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">CÓDIGO / MODELO</label>
+                <input type="text" id="newManualCode" class="form-control font-monospace" placeholder="Ej: PRB-ECU-01" required>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">CATEGORÍA</label>
+                <select id="newManualCategory" class="form-select font-rajdhani fw-bold">
+                  <option value="ecu_gasolina" selected>Probadores de ECU (Gasolina / Diésel)</option>
+                  <option value="diesel_commonrail">Probadores Diésel & Common Rail</option>
+                  <option value="bobinas">Probadores de Bobinas</option>
+                  <option value="maquinaria_pesada">Maquinaria Pesada & Camiones</option>
+                  <option value="sensores_actuadores">Probadores de Sensores & Actuadores</option>
+                  <option value="simuladores">Generadores & Simuladores</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">VERSIÓN</label>
+                <input type="text" id="newManualVersion" class="form-control font-rajdhani" placeholder="Ej: 4.2" value="1.0">
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">NÚMERO DE PÁGINAS</label>
+                <input type="number" id="newManualPages" class="form-control font-rajdhani" placeholder="Ej: 32" value="20">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1">DESCRIPCIÓN TÉCNICA DEL MANUAL</label>
+              <textarea id="newManualDesc" class="form-control small" rows="3" placeholder="Detalle qué incluye el manual (diagramas de conexión, pruebas de sensores, procedimientos de simulación, etc.)..."></textarea>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">ARCHIVO PDF DEL MANUAL</label>
+                <input type="file" id="newManualPdfFile" class="form-control mb-1" accept=".pdf">
+                <input type="text" id="newManualPdfPath" class="form-control form-control-sm text-muted font-monospace" placeholder="O ingrese ruta relativa del PDF...">
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label font-rajdhani fw-bold text-dark mb-1">FOTO DE PORTADA / EQUIPO</label>
+                <input type="file" id="newManualCoverFile" class="form-control mb-1" accept="image/*,.svg">
+                <input type="text" id="newManualCoverPath" class="form-control form-control-sm text-muted font-monospace" placeholder="O ingrese ruta relativa de la foto...">
+              </div>
+            </div>
+
+            <input type="hidden" id="newManualSize" value="2.0 MB">
+          </div>
+
+          <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
+              <i class="bi bi-cloud-upload-fill me-1"></i> Guardar y Publicar Manual
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/global.js?v=330.0"></script>
+  <script src="js/auth.js?v=330.0"></script>
+  <script src="js/manuales.js?v=330.0"></script>
+  <script src="js/admin-analytics.js?v=330.0"></script>
+</body>
+</html>

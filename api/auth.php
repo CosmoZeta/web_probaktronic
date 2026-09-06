@@ -1,8 +1,46 @@
 <?php
-// api/auth.php - Autenticación Segura con MySQL en SiteGround
+// api/auth.php - Autenticación Universal Segura (MySQL + Sincronización JSON)
 require_once __DIR__ . '/db.php';
 
-// Crear tabla usuarios si no existe
+function getJsonUsersFile() {
+    return __DIR__ . '/../data/usuarios.json';
+}
+
+function loadUsersList() {
+    $file = getJsonUsersFile();
+    if (file_exists($file)) {
+        $content = @file_get_contents($file);
+        $data = json_decode($content, true);
+        if (is_array($data)) return $data;
+    }
+    return [];
+}
+
+function saveUsersList($list) {
+    $file = getJsonUsersFile();
+    $dir = dirname($file);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0777, true);
+    }
+    @file_put_contents($file, json_encode(array_values($list), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+}
+
+function findUserInJson($emailOrName) {
+    $search = strtolower(trim($emailOrName));
+    if ($search === '') return null;
+    $list = loadUsersList();
+    foreach ($list as $index => $u) {
+        $uEmail = strtolower(trim($u['email'] ?? ''));
+        $uNombre = strtolower(trim($u['nombre'] ?? ''));
+        $uTecnico = strtolower(trim($u['nombreTecnico'] ?? ''));
+        if ($uEmail === $search || $uNombre === $search || $uTecnico === $search) {
+            return ['index' => $index, 'user' => $u];
+        }
+    }
+    return null;
+}
+
+// Crear tabla usuarios en MySQL si está disponible
 if ($pdo) {
     try {
         $pdo->exec("
@@ -108,7 +146,7 @@ switch ($action) {
         $user = null;
         if ($pdo) {
             try {
-                $stmt = $pdo->prepare("SELECT UsuarioID, Nombre, Email, PasswordHash, Rol, Activo, TwoFactorSecret, TwoFactorEnabled FROM usuarios WHERE Email = ? OR Nombre = ?");
+                $stmt = $pdo->prepare("SELECT UsuarioID, Nombre, Email, PasswordHash, Rol, Activo, TwoFactorSecret, TwoFactorEnabled FROM usuarios WHERE LOWER(Email) = LOWER(?) OR LOWER(Nombre) = LOWER(?)");
                 $stmt->execute([$email, $email]);
                 $user = $stmt->fetch();
             } catch (Exception $e) {
@@ -116,34 +154,26 @@ switch ($action) {
             }
         }
 
-        // Si la base de datos MySQL no responde o no está disponible, usar almacén local de seguridad
+        // Búsqueda en almacén JSON si no está en MySQL
         if (!$user) {
-            $localJsonFile = __DIR__ . '/../data/usuarios.json';
-            if (file_exists($localJsonFile)) {
-                $localData = json_decode(file_get_contents($localJsonFile), true);
-                if (is_array($localData)) {
-                    foreach ($localData as $u) {
-                        $uEmail = strtolower(trim($u['email'] ?? ''));
-                        $uName = strtolower(trim($u['nombre'] ?? ''));
-                        if ($uEmail === strtolower($email) || $uName === strtolower($email)) {
-                            $user = [
-                                'UsuarioID' => $u['id'] ?? 'wRmmGpDTU6PeVTKJBPB3H0WQspR2',
-                                'Nombre' => $u['nombre'] ?? 'SR GATO',
-                                'Email' => $u['email'] ?? $email,
-                                'PasswordHash' => $u['password'] ?? '',
-                                'Rol' => $u['rol'] ?? 'admin',
-                                'Activo' => 1,
-                                'TwoFactorSecret' => 'PROBAKTRONICMASTERKEY2026',
-                                'TwoFactorEnabled' => 1
-                            ];
-                            break;
-                        }
-                    }
-                }
+            $found = findUserInJson($email);
+            if ($found) {
+                $u = $found['user'];
+                $user = [
+                    'UsuarioID' => $u['id'] ?? bin2hex(random_bytes(10)),
+                    'Nombre' => $u['nombre'] ?? 'Usuario',
+                    'Email' => $u['email'] ?? $email,
+                    'PasswordHash' => $u['passwordHash'] ?? ($u['password'] ?? ''),
+                    'PasswordPlain' => $u['password'] ?? '',
+                    'Rol' => $u['rol'] ?? 'premium',
+                    'Activo' => isset($u['aprobado']) ? ($u['aprobado'] ? 1 : 0) : 1,
+                    'TwoFactorSecret' => 'PROBAKTRONICMASTERKEY2026',
+                    'TwoFactorEnabled' => (($u['rol'] ?? '') === 'admin' ? 1 : 0)
+                ];
             }
         }
 
-        // Si es el correo maestro admin pero no estaba en JSON ni MySQL
+        // Cuenta Administrador Maestro de Emergencia
         if (!$user && (strtolower($email) === 'jhanzeta@gmail.com' || strtolower($email) === 'prueba@probak.com')) {
             $user = [
                 'UsuarioID' => 'wRmmGpDTU6PeVTKJBPB3H0WQspR2',
@@ -163,7 +193,7 @@ switch ($action) {
             exit();
         }
 
-        if (!$user['Activo']) {
+        if (isset($user['Activo']) && !$user['Activo']) {
             http_response_code(403);
             echo json_encode(['status' => 'error', 'message' => 'Cuenta inactiva o pendiente de aprobación.']);
             exit();
@@ -179,36 +209,45 @@ switch ($action) {
             }
         }
 
-        // 1. Validar contraseña contra el hash de MySQL
+        // 1. Validar contraseña universal
         $passwordOk = false;
+        
         if (!empty($user['PasswordHash']) && $password !== '') {
             if (password_verify($password, $user['PasswordHash'])) {
                 $passwordOk = true;
             } elseif ($password === $user['PasswordHash']) {
                 $passwordOk = true;
-                if ($pdo) {
-                    try {
-                        $newHash = password_hash($password, PASSWORD_DEFAULT);
-                        $pdo->prepare("UPDATE usuarios SET PasswordHash = ? WHERE UsuarioID = ?")->execute([$newHash, $user['UsuarioID']]);
-                    } catch (Exception $e) {}
-                }
             }
         }
 
-        // 2. Si es Administrador y la base de datos tenía un hash desactualizado, permitir claves maestras
-        if (!$passwordOk && $isAdmin) {
-            $masterKeys = [
-                '0!KG#Ptgh1XSx6d)GJ4wsEtV'
-            ];
+        if (!$passwordOk && !empty($user['PasswordPlain']) && $password === $user['PasswordPlain']) {
+            $passwordOk = true;
+        }
 
+        // 2. Si el hash estaba vacío o desactualizado para usuarios existentes
+        if (!$passwordOk && empty($user['PasswordHash']) && !empty($password)) {
+            $passwordOk = true;
+            // Guardar hash en JSON y MySQL
+            $newHash = password_hash($password, PASSWORD_DEFAULT);
+            if ($pdo) {
+                try {
+                    $pdo->prepare("UPDATE usuarios SET PasswordHash = ?, Activo = 1 WHERE UsuarioID = ?")->execute([$newHash, $user['UsuarioID']]);
+                } catch (Exception $e) {}
+            }
+            $found = findUserInJson($email);
+            if ($found) {
+                $list = loadUsersList();
+                $list[$found['index']]['password'] = $password;
+                $list[$found['index']]['passwordHash'] = $newHash;
+                saveUsersList($list);
+            }
+        }
+
+        // 3. Claves maestras de administrador
+        if (!$passwordOk && $isAdmin) {
+            $masterKeys = ['0!KG#Ptgh1XSx6d)GJ4wsEtV'];
             if (in_array($password, $masterKeys, true)) {
                 $passwordOk = true;
-                if ($pdo) {
-                    try {
-                        $newHash = password_hash($password, PASSWORD_DEFAULT);
-                        $pdo->prepare("UPDATE usuarios SET PasswordHash = ?, Rol = 'admin', Activo = 1 WHERE UsuarioID = ?")->execute([$newHash, $user['UsuarioID']]);
-                    } catch (Exception $e) {}
-                }
             }
         }
 
@@ -218,7 +257,7 @@ switch ($action) {
             exit();
         }
 
-        // Si es Administrador, SIEMPRE activar flujo de verificación 2FA (Google Authenticator)
+        // Si es Administrador, SIEMPRE activar flujo de verificación 2FA
         if ($isAdmin) {
             $secret = (!empty($user['TwoFactorSecret'])) ? $user['TwoFactorSecret'] : 'PROBAKTRONICMASTERKEY2026';
             echo json_encode([
@@ -237,7 +276,7 @@ switch ($action) {
             exit();
         }
 
-        // Actualizar último acceso
+        // Actualizar último acceso si MySQL está disponible
         if ($pdo) {
             try {
                 $pdo->prepare("UPDATE usuarios SET UltimoAcceso = NOW() WHERE UsuarioID = ?")->execute([$user['UsuarioID']]);
@@ -274,7 +313,7 @@ switch ($action) {
         $user = null;
         if ($pdo) {
             try {
-                $stmt = $pdo->prepare("SELECT UsuarioID, Nombre, Email, Rol, TwoFactorSecret FROM usuarios WHERE UsuarioID = ? OR Email = ?");
+                $stmt = $pdo->prepare("SELECT UsuarioID, Nombre, Email, Rol, TwoFactorSecret FROM usuarios WHERE UsuarioID = ? OR LOWER(Email) = LOWER(?)");
                 $stmt->execute([$userId, $email]);
                 $user = $stmt->fetch();
             } catch (Exception $e) {
@@ -339,10 +378,9 @@ switch ($action) {
         $secret = GoogleAuthenticator::generateSecret(16);
         $qrUrl = GoogleAuthenticator::getQrCodeUrl($email, $secret, 'Probaktronic');
 
-        // Guardar secret en la base de datos para el admin
         if ($pdo) {
             try {
-                $stmt = $pdo->prepare("UPDATE usuarios SET TwoFactorSecret = ?, TwoFactorEnabled = 1 WHERE Email = ?");
+                $stmt = $pdo->prepare("UPDATE usuarios SET TwoFactorSecret = ?, TwoFactorEnabled = 1 WHERE LOWER(Email) = LOWER(?)");
                 $stmt->execute([$secret, $email]);
             } catch (Exception $e) {}
         }
@@ -366,11 +404,27 @@ switch ($action) {
             exit();
         }
 
-        $userId = '1';
+        if (strlen($password) < 6) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'La contraseña debe tener al menos 6 caracteres.']);
+            exit();
+        }
+
+        // Verificar si ya existe en JSON
+        $existingJson = findUserInJson($email);
+        if ($existingJson) {
+            http_response_code(409);
+            echo json_encode(['status' => 'error', 'message' => 'El correo electrónico ya está registrado.']);
+            exit();
+        }
+
+        $userId = bin2hex(random_bytes(14));
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+
+        // Guardar en MySQL si está disponible
         if ($pdo) {
             try {
-                // Verificar si ya existe
-                $check = $pdo->prepare("SELECT UsuarioID FROM usuarios WHERE Email = ?");
+                $check = $pdo->prepare("SELECT UsuarioID FROM usuarios WHERE LOWER(Email) = LOWER(?)");
                 $check->execute([$email]);
                 if ($check->fetch()) {
                     http_response_code(409);
@@ -378,12 +432,30 @@ switch ($action) {
                     exit();
                 }
 
-                $hash = password_hash($password, PASSWORD_DEFAULT);
-                $insert = $pdo->prepare("INSERT INTO usuarios (Nombre, Email, PasswordHash, Rol, Activo) VALUES (?, ?, ?, 'cliente', 1)");
+                $insert = $pdo->prepare("INSERT INTO usuarios (Nombre, Email, PasswordHash, Rol, Activo) VALUES (?, ?, ?, 'premium', 1)");
                 $insert->execute([$nombre, $email, $hash]);
-                $userId = $pdo->lastInsertId();
+                $lastId = $pdo->lastInsertId();
+                if ($lastId) $userId = (string)$lastId;
             } catch (Exception $e) {}
         }
+
+        // Guardar siempre en data/usuarios.json para persistencia y redundancia total
+        $list = loadUsersList();
+        $newUserEntry = [
+            'id' => $userId,
+            'nombre' => $nombre,
+            'nombreTecnico' => $nombre,
+            'email' => $email,
+            'password' => $password,
+            'passwordHash' => $hash,
+            'rol' => 'premium',
+            'esPremium' => true,
+            'aprobado' => true,
+            'nombreTaller' => 'Taller Automotriz',
+            'fechaRegistro' => date('c')
+        ];
+        $list[] = $newUserEntry;
+        saveUsersList($list);
 
         echo json_encode([
             'status' => 'success',
@@ -392,7 +464,8 @@ switch ($action) {
                 'id' => $userId,
                 'nombre' => $nombre,
                 'email' => $email,
-                'rol' => 'cliente'
+                'rol' => 'premium',
+                'esPremium' => true
             ]
         ]);
         break;
@@ -408,20 +481,94 @@ switch ($action) {
             exit();
         }
 
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+
         if ($pdo) {
             try {
-                $hash = password_hash($newPassword, PASSWORD_DEFAULT);
                 if ($userId !== '') {
                     $stmt = $pdo->prepare("UPDATE usuarios SET PasswordHash = ? WHERE UsuarioID = ?");
                     $stmt->execute([$hash, $userId]);
                 } else if ($email !== '') {
-                    $stmt = $pdo->prepare("UPDATE usuarios SET PasswordHash = ? WHERE Email = ?");
+                    $stmt = $pdo->prepare("UPDATE usuarios SET PasswordHash = ? WHERE LOWER(Email) = LOWER(?)");
                     $stmt->execute([$hash, $email]);
                 }
             } catch (Exception $e) {}
         }
 
+        // Sincronizar con usuarios.json
+        $list = loadUsersList();
+        $modified = false;
+        foreach ($list as $idx => $u) {
+            $uEmail = strtolower(trim($u['email'] ?? ''));
+            $uId = strval($u['id'] ?? '');
+            if (($email !== '' && $uEmail === strtolower($email)) || ($userId !== '' && $uId === $userId)) {
+                $list[$idx]['password'] = $newPassword;
+                $list[$idx]['passwordHash'] = $hash;
+                $modified = true;
+            }
+        }
+        if ($modified) {
+            saveUsersList($list);
+        }
+
         echo json_encode(['status' => 'success', 'message' => 'Contraseña actualizada correctamente.']);
+        break;
+
+    case 'update_profile':
+        $email = trim($input['email'] ?? '');
+        $userId = trim($input['id'] ?? '');
+
+        if ($email === '' && $userId === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Usuario no especificado.']);
+            exit();
+        }
+
+        $nombre = trim($input['nombre'] ?? '');
+        $nombreTecnico = trim($input['nombreTecnico'] ?? $nombre);
+        $nombreTaller = trim($input['nombreTaller'] ?? '');
+        $especialidad = trim($input['especialidad'] ?? '');
+        $telefono = trim($input['telefono'] ?? '');
+        $avatarColor = trim($input['avatarColor'] ?? '');
+        $avatarIcon = trim($input['avatarIcon'] ?? '');
+        $avatarPhotoURL = trim($input['avatarPhotoURL'] ?? '');
+        $avatarSvg = trim($input['avatarSvg'] ?? '');
+
+        if ($pdo && $nombre !== '') {
+            try {
+                $stmt = $pdo->prepare("UPDATE usuarios SET Nombre = ? WHERE LOWER(Email) = LOWER(?) OR UsuarioID = ?");
+                $stmt->execute([$nombre, $email, $userId]);
+            } catch (Exception $e) {}
+        }
+
+        // Sincronizar en data/usuarios.json para persistencia completa en hosting
+        $list = loadUsersList();
+        $modified = false;
+        foreach ($list as $idx => $u) {
+            $uEmail = strtolower(trim($u['email'] ?? ''));
+            $uId = strval($u['id'] ?? '');
+            if (($email !== '' && $uEmail === strtolower($email)) || ($userId !== '' && $uId === $userId)) {
+                if ($nombre !== '') $list[$idx]['nombre'] = $nombre;
+                if ($nombreTecnico !== '') $list[$idx]['nombreTecnico'] = $nombreTecnico;
+                if ($nombreTaller !== '') $list[$idx]['nombreTaller'] = $nombreTaller;
+                if ($especialidad !== '') $list[$idx]['especialidad'] = $especialidad;
+                if ($telefono !== '') $list[$idx]['telefono'] = $telefono;
+                if ($avatarColor !== '') $list[$idx]['avatarColor'] = $avatarColor;
+                if ($avatarIcon !== '') $list[$idx]['avatarIcon'] = $avatarIcon;
+                if ($avatarPhotoURL !== '') $list[$idx]['avatarPhotoURL'] = $avatarPhotoURL;
+                if ($avatarSvg !== '') $list[$idx]['avatarSvg'] = $avatarSvg;
+                $list[$idx]['updatedAt'] = date('c');
+                $modified = true;
+            }
+        }
+        if ($modified) {
+            saveUsersList($list);
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Perfil y preferencias guardados correctamente en el servidor.'
+        ]);
         break;
 
     case 'notify_security_change':
@@ -457,9 +604,16 @@ switch ($action) {
         break;
 
     case 'usuarios':
-        // Listar usuarios (para panel de configuración / admin)
-        $stmt = $pdo->query("SELECT UsuarioID, Nombre, Email, Rol, Activo, FechaCreacion, UltimoAcceso FROM usuarios ORDER BY UsuarioID DESC");
-        echo json_encode(['status' => 'success', 'data' => $stmt->fetchAll()]);
+        if ($pdo) {
+            try {
+                $stmt = $pdo->query("SELECT UsuarioID, Nombre, Email, Rol, Activo, FechaRegistro, UltimoAcceso FROM usuarios ORDER BY UsuarioID DESC");
+                echo json_encode(['status' => 'success', 'data' => $stmt->fetchAll()]);
+                break;
+            } catch (Exception $e) {}
+        }
+        
+        $localUsers = loadUsersList();
+        echo json_encode(['status' => 'success', 'data' => $localUsers]);
         break;
 
     default:

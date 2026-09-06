@@ -1,0 +1,443 @@
+/* css/manuales.css - Probaktronic Manuales de Probadores UI (Diseño Puro, Limpio & Espacioso) */
+
+/* Manuals Grid Layout (Tarjetas destacadas y amplias) */
+.manuals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 26px;
+  margin-bottom: 35px;
+}
+
+.manual-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+  box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.manual-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* Contenedor de Imagen 100% Integrado al Fondo Blanco (Sin marcos ni sombras) */
+.manual-image-showcase {
+  width: 100%;
+  height: 240px;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: zoom-in;
+  padding: 16px 20px 8px 20px;
+  border: none;
+}
+
+.manual-showcase-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Hover Zoom Hint Overlay */
+.zoom-hint-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 14px;
+  background: rgba(15, 23, 42, 0.8);
+  color: #FFFFFF;
+  backdrop-filter: blur(4px);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.manual-image-showcase:hover .zoom-hint-badge {
+  opacity: 1;
+}
+
+/* Categoría en Forma de Cinta/Pill Integrada en el Cuerpo */
+.manual-category-badge-pill {
+  background: rgba(211, 47, 47, 0.08);
+  color: #D32F2F;
+  border: 1px solid rgba(211, 47, 47, 0.2);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* Contenido de la Tarjeta */
+.manual-card-body {
+  padding: 16px 22px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.manual-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #0F172A;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.manual-code-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  background: #F1F5F9;
+  color: #475569;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.manual-desc {
+  font-size: 0.88rem;
+  color: #64748B;
+  line-height: 1.5;
+  margin-bottom: 18px;
+  flex-grow: 1;
+}
+
+.manual-meta-pills {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.8rem;
+  color: #64748B;
+  padding-top: 14px;
+  border-top: 1px dashed #E2E8F0;
+  margin-bottom: 18px;
+}
+
+.manual-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.manual-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-view-pdf {
+  flex-grow: 1;
+  background: #0F172A;
+  color: #FFFFFF;
+  border: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 10px 16px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-view-pdf:hover {
+  background: #D32F2F;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.25);
+}
+
+.btn-download-pdf {
+  background: #F8FAFC;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-download-pdf:hover {
+  background: #E2E8F0;
+  color: #0F172A;
+}
+
+/* Admin Controls & Reordering */
+.admin-card-top-bar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.is-admin .admin-card-top-bar {
+  display: flex;
+}
+
+.admin-card-top-bar > * {
+  pointer-events: auto;
+}
+
+.admin-order-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(6px);
+  padding: 3px 6px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.admin-drag-handle {
+  color: #CBD5E1;
+  font-size: 1rem;
+  cursor: grab;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+
+.admin-drag-handle:hover {
+  color: #FFFFFF;
+}
+
+.btn-move-manual {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  padding: 0;
+}
+
+.btn-move-manual:hover:not(:disabled) {
+  background: #D32F2F;
+  color: #FFFFFF;
+  transform: scale(1.1);
+}
+
+.btn-move-manual:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-delete-manual-admin {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.9);
+  color: #FFFFFF;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.btn-delete-manual-admin:hover {
+  background: #DC2626;
+  transform: scale(1.15);
+}
+
+/* Drag & Drop Visual States */
+.manual-card.is-admin-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.manual-card.is-dragging {
+  opacity: 0.45;
+  border: 2px dashed #D32F2F !important;
+  transform: scale(0.97);
+}
+
+.manual-card.drag-over {
+  border: 2px solid #D32F2F !important;
+  box-shadow: 0 0 0 4px rgba(211, 47, 47, 0.25) !important;
+  transform: scale(1.02);
+}
+
+.admin-manuales-toolbar {
+  display: none;
+  margin-bottom: 22px;
+}
+
+.is-admin .admin-manuales-toolbar {
+  display: block;
+}
+
+/* --- IMAGE LIGHTBOX ZOOM MODAL --- */
+.modal-image-zoom .modal-dialog {
+  max-width: 920px;
+}
+
+.modal-image-zoom .modal-content {
+  background: #0F172A;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.zoom-image-wrapper {
+  background: #020617;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+  max-height: 75vh;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  cursor: default;
+}
+
+.zoom-preview-img {
+  max-width: 95%;
+  max-height: 70vh;
+  object-fit: contain;
+  transition: transform 0.12s ease-out;
+  filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.zoom-wheel-hint {
+  position: absolute;
+  top: 14px;
+  left: 20px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  color: #94A3B8;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zoom-floating-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 6px 16px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 20;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.zoom-btn-tool {
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  font-size: 1.15rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zoom-btn-tool:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #D32F2F;
+}
+
+.zoom-level-text {
+  color: #E2E8F0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-width: 52px;
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+/* PDF Modal Styling */
+.modal-pdf-viewer .modal-dialog {
+  max-width: 92vw;
+  height: 92vh;
+  margin: 4vh auto;
+}
+
+.modal-pdf-viewer .modal-content {
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-pdf-viewer .modal-body {
+  padding: 0;
+  flex-grow: 1;
+  background: #334155;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-iframe-container {
+  width: 100%;
+  height: 100%;
+  flex-grow: 1;
+  border: none;
+}

@@ -82,6 +82,81 @@ $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) $input = $_POST;
 
 switch ($action) {
+    case 'guardar_icono':
+        $cardKey = trim($input['cardKey'] ?? $input['key'] ?? $input['titulo'] ?? '');
+        $icono = trim($input['icono'] ?? $input['icon'] ?? '');
+        $archDocId = trim($input['archDocId'] ?? $input['id'] ?? '');
+
+        if ($cardKey === '' || $icono === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Se requiere la clave de tarjeta e icono.']);
+            exit();
+        }
+
+        $iconsPath = dirname(__DIR__) . '/data/iconos_tarjetas.json';
+        $icons = [];
+        if (file_exists($iconsPath)) {
+            $raw = @file_get_contents($iconsPath);
+            if ($raw) $icons = json_decode($raw, true) ?: [];
+        }
+        $icons[$cardKey] = $icono;
+        $icons[strtoupper($cardKey)] = $icono;
+        $safeKey = preg_replace('/[^a-zA-Z0-9_-]/', '_', $cardKey);
+        $icons[$safeKey] = $icono;
+        if ($archDocId !== '') {
+            $icons[$archDocId] = $icono;
+            $icons[strtoupper($archDocId)] = $icono;
+        }
+
+        if (!is_dir(dirname($iconsPath))) {
+            @mkdir(dirname($iconsPath), 0777, true);
+        }
+        @file_put_contents($iconsPath, json_encode($icons, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        // Actualizar también en vehiculos_diagramas.json si existe
+        $jsonPath = dirname(__DIR__) . '/data/vehiculos_diagramas.json';
+        if (file_exists($jsonPath)) {
+            $rawJson = @file_get_contents($jsonPath);
+            if ($rawJson) {
+                $tree = json_decode($rawJson, true);
+                if (is_array($tree)) {
+                    $modified = false;
+                    foreach ($tree as $bKey => &$bVal) {
+                        foreach (($bVal['models'] ?? []) as $mKey => &$mVal) {
+                            foreach (($mVal['anios'] ?? []) as $aKey => &$aVal) {
+                                foreach (($aVal['motores'] ?? []) as $motKey => &$motVal) {
+                                    foreach (($motVal['archivos'] ?? []) as &$arc) {
+                                        $arcTitle = strtoupper($arc['titulo'] ?? $arc['nombre'] ?? $arc['_id'] ?? '');
+                                        $arcId = $arc['_id'] ?? '';
+                                        if ($arcTitle === strtoupper($cardKey) || $arcId === $cardKey || ($archDocId !== '' && $arcId === $archDocId)) {
+                                            $arc['icono'] = $icono;
+                                            $modified = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if ($modified) {
+                        @file_put_contents($jsonPath, json_encode($tree, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                    }
+                }
+            }
+        }
+
+        echo json_encode(['status' => 'success', 'message' => 'Ícono guardado exitosamente en el servidor.', 'data' => ['cardKey' => $cardKey, 'icono' => $icono]]);
+        break;
+
+    case 'obtener_iconos':
+        $iconsPath = dirname(__DIR__) . '/data/iconos_tarjetas.json';
+        $icons = [];
+        if (file_exists($iconsPath)) {
+            $raw = @file_get_contents($iconsPath);
+            if ($raw) $icons = json_decode($raw, true) ?: [];
+        }
+        echo json_encode(['status' => 'success', 'data' => $icons]);
+        break;
+
     case 'marcas':
         // Listar marcas de vehículos
         if ($pdo) {
@@ -318,8 +393,33 @@ switch ($action) {
         // Limpieza y sanitización de nombres de carpetas
         $marcaClean = strtoupper(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $marcaRaw)));
         $modeloClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $modeloRaw)));
-        $motorClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $motorRaw)));
-        $componenteClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $componenteRaw)));
+        
+        // Normalización inteligente de Motor
+        $motorUpper = strtoupper($motorRaw);
+        if (strpos($motorUpper, '4E') !== false) {
+            $motorClean = 'motor_4e';
+        } elseif (strpos($motorUpper, '2KD') !== false || strpos($motorUpper, '2011') !== false || strpos($motorUpper, 'HILUX') !== false) {
+            $motorClean = '2011-2015';
+        } else {
+            $motorClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $motorRaw)));
+        }
+
+        // Normalización inteligente de Componente
+        $compUpper = strtoupper($componenteRaw);
+        if (strpos($compUpper, 'PEDAL') !== false) {
+            $componenteClean = 'pedal_acelerador';
+        } elseif (strpos($compUpper, 'INMOVILIZADOR') !== false || strpos($compUpper, 'LLAVE') !== false || strpos($compUpper, 'ANTENA') !== false) {
+            $componenteClean = 'inmovilizador_llave';
+        } elseif (strpos($compUpper, 'EDU') !== false && (strpos($compUpper, 'DOS') !== false || strpos($compUpper, '2') !== false)) {
+            $componenteClean = 'edu_dos_conectores';
+        } elseif (strpos($compUpper, 'EDU') !== false && (strpos($compUpper, 'TRES') !== false || strpos($compUpper, '3') !== false)) {
+            $componenteClean = 'edu_tres_conectores';
+        } elseif (strpos($compUpper, 'ECU') !== false || strpos($compUpper, 'COMPUTADORA') !== false || strpos($compUpper, 'ECM') !== false || strpos($compUpper, 'PCM') !== false) {
+            $componenteClean = 'ecu';
+        } else {
+            $componenteClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $componenteRaw)));
+        }
+
         $tipoClean = ($tipoCarpeta === 'conexionado') ? 'conexionado' : 'imagen';
 
         if (empty($marcaClean)) $marcaClean = 'TOYOTA';
@@ -359,6 +459,57 @@ switch ($action) {
             http_response_code(500);
             echo json_encode(['status' => 'error', 'message' => 'No se pudo mover el archivo al directorio del servidor.']);
         }
+        break;
+
+    case 'listar_fotos':
+    case 'get_fotos':
+        $marcaRaw = trim($_GET['marca'] ?? 'TOYOTA');
+        $modeloRaw = trim($_GET['modelo'] ?? 'corolla');
+        $motorRaw = trim($_GET['motor'] ?? 'motor_4e');
+        $componenteRaw = trim($_GET['componente'] ?? 'ecu');
+
+        $marcaClean = strtoupper(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $marcaRaw)));
+        $modeloClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $modeloRaw)));
+        
+        $motorUpper = strtoupper($motorRaw);
+        if (strpos($motorUpper, '4E') !== false) {
+            $motorClean = 'motor_4e';
+        } elseif (strpos($motorUpper, '2KD') !== false || strpos($motorUpper, '2011') !== false || strpos($motorUpper, 'HILUX') !== false) {
+            $motorClean = '2011-2015';
+        } else {
+            $motorClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $motorRaw)));
+        }
+
+        $compUpper = strtoupper($componenteRaw);
+        if (strpos($compUpper, 'PEDAL') !== false) {
+            $componenteClean = 'pedal_acelerador';
+        } elseif (strpos($compUpper, 'INMOVILIZADOR') !== false || strpos($compUpper, 'LLAVE') !== false || strpos($compUpper, 'ANTENA') !== false) {
+            $componenteClean = 'inmovilizador_llave';
+        } elseif (strpos($compUpper, 'EDU') !== false && (strpos($compUpper, 'DOS') !== false || strpos($compUpper, '2') !== false)) {
+            $componenteClean = 'edu_dos_conectores';
+        } elseif (strpos($compUpper, 'EDU') !== false && (strpos($compUpper, 'TRES') !== false || strpos($compUpper, '3') !== false)) {
+            $componenteClean = 'edu_tres_conectores';
+        } elseif (strpos($compUpper, 'ECU') !== false || strpos($compUpper, 'COMPUTADORA') !== false || strpos($compUpper, 'ECM') !== false || strpos($compUpper, 'PCM') !== false) {
+            $componenteClean = 'ecu';
+        } else {
+            $componenteClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $componenteRaw)));
+        }
+
+        $baseDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorClean . '/' . $componenteClean . '/imagen';
+        $fotos = [];
+
+        if (is_dir($baseDir)) {
+            $files = scandir($baseDir);
+            foreach ($files as $file) {
+                if ($file === '.' || $file === '..') continue;
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'svg'])) {
+                    $fotos[] = 'archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorClean . '/' . $componenteClean . '/imagen/' . $file;
+                }
+            }
+        }
+
+        echo json_encode(['status' => 'success', 'fotos' => $fotos, 'total' => count($fotos)]);
         break;
 
     case 'save_hotspots':
