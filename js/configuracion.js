@@ -164,74 +164,70 @@ window.fetchFirestoreUsersList = async function() {
   if (!tbody) return;
 
   try {
-    let usersList = [];
+    let usersList = null;
     
-    // 1. Revisar si hay cambios guardados en localStorage
-    const localDb = localStorage.getItem('probaktronic_users_local_db');
-    if (localDb) {
-      usersList = JSON.parse(localDb);
-    } else {
-      // 2. Cargar desde data/usuarios.json
-      const res = await fetch('data/usuarios.json');
-      if (res.ok) {
-        usersList = await res.json();
+    // 1. Cargar directamente en tiempo real desde la API Backend (MySQL)
+    if (typeof window.fetchAuthApi === 'function') {
+      try {
+        const resApi = await window.fetchAuthApi('list_users', {}, 'GET');
+        if (resApi && resApi.ok && resApi.data) {
+          const rawList = resApi.data.users || resApi.data.data;
+          if (Array.isArray(rawList)) {
+            usersList = rawList;
+          }
+        }
+      } catch (apiErr) {
+        console.warn('API list_users error:', apiErr);
       }
     }
 
-    if (!Array.isArray(usersList) || usersList.length === 0) {
-      usersList = [
-        {
-          id: 'admin_1',
-          nombre: 'SEÑOR GATO',
-          nombreTecnico: 'SEÑOR GATO',
-          nombreTaller: 'Probaktronic Central',
-          email: 'prueba@probak.com',
-          rol: 'admin',
-          isAdmin: true,
-          esPremium: true,
-          aprobado: true
-        },
-        {
-          id: 'admin_2',
-          nombre: 'SR GATO',
-          nombreTecnico: 'SR GATO',
-          nombreTaller: 'Taller Automotriz',
-          email: 'jhanzeta@gmail.com',
-          rol: 'admin',
-          isAdmin: true,
-          esPremium: true,
-          aprobado: true
-        },
-        {
-          id: 'user_3',
-          nombre: 'jhan zeta',
-          nombreTecnico: 'jhan zeta',
-          nombreTaller: 'Taller Automotriz',
-          email: 'jhanzeta3@gmail.com',
-          rol: 'premium',
-          esPremium: true,
-          aprobado: true
-        },
-        {
-          id: 'user_4',
-          nombre: 'jose rucoba',
-          nombreTecnico: 'jose rucoba',
-          nombreTaller: 'Taller Automotriz',
-          email: 'plataformaprobaktronic@gmail.com',
-          rol: 'premium',
-          esPremium: true,
-          aprobado: true
+    // 2. Solo si la API NO respondió en absoluto (offline o error crítico de red)
+    if (!Array.isArray(usersList)) {
+      try {
+        const res = await fetch('data/usuarios.json?v=' + Date.now());
+        if (res.ok) {
+          usersList = await res.json();
         }
-      ];
+      } catch (e) {}
+
+      if (!Array.isArray(usersList) || usersList.length === 0) {
+        const localDb = localStorage.getItem('probaktronic_users_local_db');
+        if (localDb) {
+          try { usersList = JSON.parse(localDb); } catch(e) {}
+        }
+      }
     }
 
-    // Ordenar: Administradores primero, luego Premium
+    if (!Array.isArray(usersList)) {
+      usersList = [];
+    }
+
+    // Normalizar datos de cada usuario
+    usersList = usersList.map(u => {
+      const uEmail = (u.email || '').toLowerCase().trim();
+      const isAdmin = (u.rol === 'admin' || uEmail === 'prueba@probak.com' || uEmail === 'jhanzeta@gmail.com' || u.isAdmin === true);
+      const isPremium = isAdmin || (u.rol === 'premium' || u.esPremium === true || u.esPremium === 'true');
+      return {
+        ...u,
+        id: u.id || ('usr_' + Math.random().toString(36).substr(2, 9)),
+        email: u.email || '',
+        nombre: u.nombre || u.nombreTecnico || 'Técnico',
+        nombreTecnico: u.nombreTecnico || u.nombre || 'Técnico',
+        nombreTaller: u.nombreTaller || 'Taller Automotriz',
+        rol: isAdmin ? 'admin' : (isPremium ? 'premium' : 'free'),
+        isAdmin: isAdmin,
+        esPremium: isPremium,
+        aprobado: (u.aprobado !== false && u.activo !== 0 && u.activo !== false)
+      };
+    });
+
+    // Ordenar: Administradores primero, luego Premium, luego Free
     usersList.sort((a, b) => {
-      const aAdmin = (a.email === 'prueba@probak.com' || a.email === 'jhanzeta@gmail.com' || a.rol === 'admin');
-      const bAdmin = (b.email === 'prueba@probak.com' || b.email === 'jhanzeta@gmail.com' || b.rol === 'admin');
-      if (aAdmin && !bAdmin) return -1;
-      if (!aAdmin && bAdmin) return 1;
-      return (b.esPremium ? 1 : 0) - (a.esPremium ? 1 : 0);
+      if (a.isAdmin && !b.isAdmin) return -1;
+      if (!a.isAdmin && b.isAdmin) return 1;
+      if (a.esPremium && !b.esPremium) return -1;
+      if (!a.esPremium && b.esPremium) return 1;
+      return (a.nombre || '').localeCompare(b.nombre || '');
     });
 
     window.allLoadedFirestoreUsers = usersList;
@@ -368,12 +364,22 @@ window.toggleUserPremiumAccess = async function(userId, currentIsPremium) {
   if (!confirm(`¿Estás seguro de ${actionText} a este usuario?`)) return;
 
   const users = window.allLoadedFirestoreUsers || [];
-  const target = users.find(u => u.id === userId);
+  const target = users.find(u => u.id === userId || (u.email && users.find(x => x.id === userId)?.email === u.email));
   if (target) {
     target.esPremium = newStatus;
     if (newStatus && target.rol !== 'admin') target.rol = 'premium';
     else if (!newStatus && target.rol !== 'admin') target.rol = 'free';
     localStorage.setItem('probaktronic_users_local_db', JSON.stringify(users));
+    renderUsersTable(users);
+
+    // Sincronizar en tiempo real con MySQL y JSON en el servidor
+    if (typeof window.fetchAuthApi === 'function' && target.email) {
+      try {
+        await window.fetchAuthApi('update_user_role', { email: target.email, rol: target.rol });
+      } catch (err) {
+        console.warn('Error al sincronizar rol en servidor:', err);
+      }
+    }
   }
 
   if (typeof window.showGlobalToast === 'function') {
@@ -387,10 +393,26 @@ window.toggleUserPremiumAccess = async function(userId, currentIsPremium) {
 window.deleteFirestoreUser = async function(userId, userEmail) {
   if (!confirm(`⚠️ ¿Deseas eliminar permanentemente al usuario ${userEmail} de la base de datos?`)) return;
 
+  const normEmail = (userEmail || '').toLowerCase().trim();
   let users = window.allLoadedFirestoreUsers || [];
-  users = users.filter(u => u.id !== userId);
+  users = users.filter(u => u.id !== userId && (u.email || '').toLowerCase().trim() !== normEmail);
   window.allLoadedFirestoreUsers = users;
   localStorage.setItem('probaktronic_users_local_db', JSON.stringify(users));
+  renderUsersTable(users);
+  
+  const countBadge = document.getElementById('usersCountBadge');
+  if (countBadge) {
+    countBadge.textContent = `${users.length} Usuarios (Base de Datos)`;
+  }
+
+  // Sincronizar eliminación en tiempo real con MySQL y JSON en el servidor
+  if (typeof window.fetchAuthApi === 'function' && normEmail) {
+    try {
+      await window.fetchAuthApi('delete_user', { email: normEmail });
+    } catch (err) {
+      console.warn('Error al eliminar usuario en servidor:', err);
+    }
+  }
 
   if (typeof window.showGlobalToast === 'function') {
     window.showGlobalToast(`🗑️ Usuario ${userEmail} eliminado.`);
@@ -454,6 +476,20 @@ window.handleCreateUserSubmit = async function(e) {
     const users = window.allLoadedFirestoreUsers || [];
     users.push(newUser);
     localStorage.setItem('probaktronic_users_local_db', JSON.stringify(users));
+
+    // Sincronizar en Backend MySQL y JSON
+    if (typeof window.fetchAuthApi === 'function') {
+      try {
+        await window.fetchAuthApi('register', {
+          nombre: name,
+          email: email,
+          password: password,
+          rol: role
+        });
+      } catch (apiErr) {
+        console.warn('Aviso sincronización API:', apiErr);
+      }
+    }
 
     if (noticeEl) {
       noticeEl.className = 'small text-center fw-bold mt-2 text-success';
@@ -570,6 +606,14 @@ window.handleEditUserSubmit = async function(e) {
       }
       
       localStorage.setItem('probaktronic_users_local_db', JSON.stringify(users));
+
+      // Sincronizar cambios de perfil y rol en MySQL y JSON
+      if (typeof window.fetchAuthApi === 'function' && target.email) {
+        try {
+          window.fetchAuthApi('update_user_role', { email: target.email, rol: target.rol }).catch(() => {});
+          window.fetchAuthApi('update_profile', { email: target.email, nombre: target.nombre, nombreTaller: target.nombreTaller }).catch(() => {});
+        } catch(e) {}
+      }
 
       // Si el usuario editado es el mismo actualmente conectado, refrescar sesión local
       if (window.probaktronicCurrentUser && window.probaktronicCurrentUser.email === target.email) {

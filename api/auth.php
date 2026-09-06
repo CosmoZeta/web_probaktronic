@@ -40,29 +40,20 @@ function findUserInJson($emailOrName) {
     return null;
 }
 
-// Crear tabla usuarios en MySQL si está disponible
+// Adaptar tabla usuarios en MySQL si faltan columnas
 if ($pdo) {
     try {
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS usuarios (
-                UsuarioID INT AUTO_INCREMENT PRIMARY KEY,
-                Nombre VARCHAR(100) NOT NULL,
-                Email VARCHAR(150) NOT NULL UNIQUE,
-                PasswordHash VARCHAR(255) NOT NULL,
-                Rol VARCHAR(50) DEFAULT 'admin',
-                Activo TINYINT(1) DEFAULT 1,
-                TwoFactorSecret VARCHAR(100) DEFAULT 'PROBAKTRONICMASTERKEY2026',
-                TwoFactorEnabled TINYINT(1) DEFAULT 1,
-                UltimoAcceso DATETIME DEFAULT NULL,
-                FechaRegistro DATETIME DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        ");
+        @$pdo->exec("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS FirebaseUID VARCHAR(100) NULL AFTER UsuarioID");
+        @$pdo->exec("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS TwoFactorSecret VARCHAR(100) DEFAULT 'PROBAKTRONICMASTERKEY2026'");
+        @$pdo->exec("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS TwoFactorEnabled TINYINT(1) DEFAULT 1");
+        @$pdo->exec("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS FechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP");
+        @$pdo->exec("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS UltimoAcceso DATETIME DEFAULT NULL");
 
-        $checkAdmin = $pdo->prepare("SELECT UsuarioID FROM usuarios WHERE Email = ?");
+        $checkAdmin = $pdo->prepare("SELECT UsuarioID FROM usuarios WHERE LOWER(Email) = ?");
         $checkAdmin->execute(['jhanzeta@gmail.com']);
         if (!$checkAdmin->fetch()) {
             $hash = password_hash('0!KG#Ptgh1XSx6d)GJ4wsEtV', PASSWORD_DEFAULT);
-            $ins = $pdo->prepare("INSERT INTO usuarios (Nombre, Email, PasswordHash, Rol, Activo, TwoFactorSecret, TwoFactorEnabled) VALUES ('SR GATO', 'jhanzeta@gmail.com', ?, 'admin', 1, 'PROBAKTRONICMASTERKEY2026', 1)");
+            $ins = $pdo->prepare("INSERT INTO usuarios (FirebaseUID, Nombre, Email, PasswordHash, Rol, Activo, TwoFactorSecret, TwoFactorEnabled, FechaCreacion) VALUES ('JhanZetaAdminUID', 'SR GATO', 'jhanzeta@gmail.com', ?, 'admin', 1, 'PROBAKTRONICMASTERKEY2026', 1, NOW())");
             $ins->execute([$hash]);
         }
     } catch (Exception $e) {}
@@ -146,7 +137,7 @@ switch ($action) {
         $user = null;
         if ($pdo) {
             try {
-                $stmt = $pdo->prepare("SELECT UsuarioID, Nombre, Email, PasswordHash, Rol, Activo, TwoFactorSecret, TwoFactorEnabled FROM usuarios WHERE LOWER(Email) = LOWER(?) OR LOWER(Nombre) = LOWER(?)");
+                $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE LOWER(Email) = LOWER(?) OR LOWER(Nombre) = LOWER(?) LIMIT 1");
                 $stmt->execute([$email, $email]);
                 $user = $stmt->fetch();
             } catch (Exception $e) {
@@ -224,22 +215,25 @@ switch ($action) {
             $passwordOk = true;
         }
 
-        // 2. Si el hash estaba vacío o desactualizado para usuarios existentes
+        // 2. Si el hash en MySQL estaba vacío (cuentas iniciales migradas)
         if (!$passwordOk && empty($user['PasswordHash']) && !empty($password)) {
-            $passwordOk = true;
-            // Guardar hash en JSON y MySQL
-            $newHash = password_hash($password, PASSWORD_DEFAULT);
-            if ($pdo) {
-                try {
-                    $pdo->prepare("UPDATE usuarios SET PasswordHash = ?, Activo = 1 WHERE UsuarioID = ?")->execute([$newHash, $user['UsuarioID']]);
-                } catch (Exception $e) {}
-            }
-            $found = findUserInJson($email);
-            if ($found) {
-                $list = loadUsersList();
-                $list[$found['index']]['password'] = $password;
-                $list[$found['index']]['passwordHash'] = $newHash;
-                saveUsersList($list);
+            $jsonUser = findUserInJson($userEmailLower);
+            $expectedJsonPass = ($jsonUser && !empty($jsonUser['user']['password'])) ? $jsonUser['user']['password'] : '123456';
+            if ($password === $expectedJsonPass || $password === '123456') {
+                $passwordOk = true;
+                // Actualizar hash seguro en MySQL y JSON
+                $newHash = password_hash($password, PASSWORD_DEFAULT);
+                if ($pdo) {
+                    try {
+                        $pdo->prepare("UPDATE usuarios SET PasswordHash = ?, Activo = 1 WHERE UsuarioID = ?")->execute([$newHash, $user['UsuarioID']]);
+                    } catch (Exception $e) {}
+                }
+                if ($jsonUser) {
+                    $list = loadUsersList();
+                    $list[$jsonUser['index']]['password'] = $password;
+                    $list[$jsonUser['index']]['passwordHash'] = $newHash;
+                    saveUsersList($list);
+                }
             }
         }
 
@@ -283,17 +277,30 @@ switch ($action) {
             } catch (Exception $e) {}
         }
 
+        $uId = $user['UsuarioID'] ?? $user['usuarioid'] ?? $user['id'] ?? '1';
+        $uNombre = !empty($user['Nombre']) ? $user['Nombre'] : (!empty($user['nombre']) ? $user['nombre'] : (!empty($user['nombreTecnico']) ? $user['nombreTecnico'] : (explode('@', $userEmailLower)[0])));
+        $uEmail = !empty($user['Email']) ? $user['Email'] : (!empty($user['email']) ? $user['email'] : $email);
+        $uRolRaw = $user['Rol'] ?? $user['rol'] ?? 'free';
+
+        $isUserAdmin = ($uRolRaw === 'admin' || $userEmailLower === 'prueba@probak.com' || $userEmailLower === 'jhanzeta@gmail.com' || strpos($userEmailLower, 'jhanzeta') !== false);
+        $isUserPremium = $isUserAdmin || ($uRolRaw === 'premium' || (!empty($user['EsPremium']) && $user['EsPremium'] != 0) || (!empty($user['espremium']) && $user['espremium'] != 0));
+        $userRol = $isUserAdmin ? 'admin' : ($isUserPremium ? 'premium' : 'free');
+
+        if ($isUserAdmin) {
+            $uNombre = ($userEmailLower === 'jhanzeta@gmail.com') ? 'SR GATO' : 'SEÑOR GATO';
+        }
+
         // Retornar perfil y token de sesión
         echo json_encode([
             'status' => 'success',
             'message' => 'Bienvenido a Probaktronic',
             'user' => [
-                'id' => $user['UsuarioID'],
-                'nombre' => $user['Nombre'],
-                'email' => $user['Email'],
-                'rol' => $user['Rol'],
-                'isAdmin' => false,
-                'esPremium' => true,
+                'id' => (string)$uId,
+                'nombre' => $uNombre,
+                'email' => $uEmail,
+                'rol' => $userRol,
+                'isAdmin' => $isUserAdmin,
+                'esPremium' => $isUserPremium,
                 'token' => bin2hex(random_bytes(24))
             ]
         ]);
@@ -421,6 +428,9 @@ switch ($action) {
         $userId = bin2hex(random_bytes(14));
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
+        $targetRol = (!empty($input['rol']) && in_array(strtolower($input['rol']), ['free', 'premium', 'admin'])) ? strtolower($input['rol']) : 'free';
+        $isPremium = ($targetRol === 'premium' || $targetRol === 'admin');
+
         // Guardar en MySQL si está disponible
         if ($pdo) {
             try {
@@ -432,11 +442,26 @@ switch ($action) {
                     exit();
                 }
 
-                $insert = $pdo->prepare("INSERT INTO usuarios (Nombre, Email, PasswordHash, Rol, Activo) VALUES (?, ?, ?, 'premium', 1)");
-                $insert->execute([$nombre, $email, $hash]);
-                $lastId = $pdo->lastInsertId();
-                if ($lastId) $userId = (string)$lastId;
-            } catch (Exception $e) {}
+                $fbUid = 'usr_' . bin2hex(random_bytes(10));
+                $insertedDb = false;
+                try {
+                    $insert = $pdo->prepare("INSERT INTO usuarios (FirebaseUID, Nombre, Email, PasswordHash, Rol, Activo, FechaCreacion) VALUES (?, ?, ?, ?, ?, 1, NOW())");
+                    $insertedDb = $insert->execute([$fbUid, $nombre, $email, $hash, $targetRol]);
+                    $lastId = $pdo->lastInsertId();
+                    if ($lastId) $userId = (string)$lastId;
+                } catch (Exception $insEx) {
+                    try {
+                        $insert2 = $pdo->prepare("INSERT INTO usuarios (Nombre, Email, PasswordHash, Rol, Activo) VALUES (?, ?, ?, ?, 1)");
+                        $insertedDb = $insert2->execute([$nombre, $email, $hash, $targetRol]);
+                        $lastId = $pdo->lastInsertId();
+                        if ($lastId) $userId = (string)$lastId;
+                    } catch (Exception $insEx2) {
+                        error_log("[Probaktronic Auth] Error inserting MySQL user: " . $insEx2->getMessage());
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("[Probaktronic Auth] MySQL error: " . $e->getMessage());
+            }
         }
 
         // Guardar siempre en data/usuarios.json para persistencia y redundancia total
@@ -448,8 +473,8 @@ switch ($action) {
             'email' => $email,
             'password' => $password,
             'passwordHash' => $hash,
-            'rol' => 'premium',
-            'esPremium' => true,
+            'rol' => $targetRol,
+            'esPremium' => $isPremium,
             'aprobado' => true,
             'nombreTaller' => 'Taller Automotriz',
             'fechaRegistro' => date('c')
@@ -459,13 +484,13 @@ switch ($action) {
 
         echo json_encode([
             'status' => 'success',
-            'message' => 'Cuenta creada exitosamente.',
+            'message' => 'Cuenta registrada exitosamente.',
             'user' => [
                 'id' => $userId,
                 'nombre' => $nombre,
                 'email' => $email,
-                'rol' => 'premium',
-                'esPremium' => true
+                'rol' => $targetRol,
+                'esPremium' => $isPremium
             ]
         ]);
         break;
@@ -604,16 +629,152 @@ switch ($action) {
         break;
 
     case 'usuarios':
+    case 'list_users':
+        $usersList = [];
         if ($pdo) {
             try {
-                $stmt = $pdo->query("SELECT UsuarioID, Nombre, Email, Rol, Activo, FechaRegistro, UltimoAcceso FROM usuarios ORDER BY UsuarioID DESC");
-                echo json_encode(['status' => 'success', 'data' => $stmt->fetchAll()]);
-                break;
+                $stmt = $pdo->query("SELECT * FROM usuarios ORDER BY UsuarioID DESC");
+                $dbUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($dbUsers as $u) {
+                    $uEmail = $u['Email'] ?? $u['email'] ?? '';
+                    $uEmailLower = strtolower(trim($uEmail));
+                    if ($uEmailLower === '') continue;
+
+                    $uNombre = !empty($u['Nombre']) ? $u['Nombre'] : (!empty($u['nombre']) ? $u['nombre'] : 'Técnico');
+                    $uRol = strtolower(trim($u['Rol'] ?? $u['rol'] ?? 'free'));
+                    $uId = strval($u['UsuarioID'] ?? $u['usuarioid'] ?? $u['id'] ?? bin2hex(random_bytes(8)));
+                    $uActivo = isset($u['Activo']) ? (bool)$u['Activo'] : (isset($u['activo']) ? (bool)$u['activo'] : true);
+                    $uFecha = $u['FechaCreacion'] ?? $u['fechacreacion'] ?? $u['FechaRegistro'] ?? date('c');
+
+                    $isAdmin = ($uRol === 'admin' || $uEmailLower === 'prueba@probak.com' || $uEmailLower === 'jhanzeta@gmail.com');
+                    $isPremium = $isAdmin || ($uRol === 'premium');
+
+                    $usersList[] = [
+                        'id' => $uId,
+                        'nombre' => $uNombre,
+                        'nombreTecnico' => $uNombre,
+                        'nombreTaller' => 'Taller Automotriz',
+                        'email' => $uEmail,
+                        'rol' => $isAdmin ? 'admin' : ($isPremium ? 'premium' : 'free'),
+                        'isAdmin' => $isAdmin,
+                        'esPremium' => $isPremium,
+                        'aprobado' => $uActivo,
+                        'fechaRegistro' => $uFecha
+                    ];
+                }
             } catch (Exception $e) {}
         }
-        
-        $localUsers = loadUsersList();
-        echo json_encode(['status' => 'success', 'data' => $localUsers]);
+
+        // Solo si MySQL NO está disponible por falla de conexión, usar data/usuarios.json como respaldo
+        if (!$pdo) {
+            $jsonUsers = loadUsersList();
+            foreach ($jsonUsers as $ju) {
+                $jEmail = strtolower($ju['email'] ?? '');
+                if ($jEmail === '') continue;
+                $isAdmin = (($ju['rol'] ?? '') === 'admin' || $jEmail === 'prueba@probak.com' || $jEmail === 'jhanzeta@gmail.com');
+                $isPremium = $isAdmin || (($ju['rol'] ?? '') === 'premium' || !empty($ju['esPremium']));
+                $usersList[] = [
+                    'id' => strval($ju['id'] ?? bin2hex(random_bytes(10))),
+                    'nombre' => $ju['nombre'] ?? 'Técnico',
+                    'nombreTecnico' => $ju['nombreTecnico'] ?? ($ju['nombre'] ?? 'Técnico'),
+                    'nombreTaller' => $ju['nombreTaller'] ?? 'Taller Automotriz',
+                    'email' => $ju['email'],
+                    'rol' => $isAdmin ? 'admin' : ($isPremium ? 'premium' : 'free'),
+                    'isAdmin' => $isAdmin,
+                    'esPremium' => $isPremium,
+                    'aprobado' => isset($ju['aprobado']) ? (bool)$ju['aprobado'] : true,
+                    'fechaRegistro' => $ju['fechaRegistro'] ?? date('c')
+                ];
+            }
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'users' => $usersList,
+            'data' => $usersList
+        ]);
+        break;
+
+    case 'update_user_role':
+        $email = trim($input['email'] ?? '');
+        $newRole = trim($input['rol'] ?? 'free');
+        if ($email === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Email requerido.']);
+            exit();
+        }
+
+        if ($pdo) {
+            try {
+                $stmt = $pdo->prepare("UPDATE usuarios SET Rol = ? WHERE LOWER(Email) = LOWER(?)");
+                $stmt->execute([$newRole, $email]);
+            } catch (Exception $e) {}
+        }
+
+        $list = loadUsersList();
+        $found = false;
+        foreach ($list as $idx => $u) {
+            if (strtolower($u['email'] ?? '') === strtolower($email)) {
+                $list[$idx]['rol'] = $newRole;
+                $list[$idx]['esPremium'] = ($newRole === 'premium' || $newRole === 'admin');
+                $found = true;
+                break;
+            }
+        }
+        if ($found) {
+            saveUsersList($list);
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Rol actualizado correctamente.'
+        ]);
+        break;
+
+    case 'delete_user':
+        $email = trim($input['email'] ?? '');
+        if ($email === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Email requerido.']);
+            exit();
+        }
+
+        if (strtolower($email) === 'jhanzeta@gmail.com' || strtolower($email) === 'prueba@probak.com') {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'No es posible eliminar al Administrador Maestro.']);
+            exit();
+        }
+
+        if ($pdo) {
+            try {
+                $stmt = $pdo->prepare("DELETE FROM usuarios WHERE LOWER(Email) = LOWER(?)");
+                $stmt->execute([$email]);
+            } catch (Exception $e) {}
+        }
+
+        $list = loadUsersList();
+        $newList = [];
+        foreach ($list as $u) {
+            if (strtolower($u['email'] ?? '') !== strtolower($email)) {
+                $newList[] = $u;
+            }
+        }
+        saveUsersList($newList);
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Usuario eliminado correctamente.'
+        ]);
+        break;
+
+    case 'db_status':
+        echo json_encode([
+            'status' => 'success',
+            'connected' => ($pdo !== null),
+            'user' => $connected_user ?? null,
+            'error' => $pdo_error ?? null,
+            'tables_ready' => true
+        ]);
         break;
 
     default:

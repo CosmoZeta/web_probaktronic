@@ -28,7 +28,7 @@ try {
   const _rawCached = localStorage.getItem('probaktronic_cached_user');
   if (_rawCached) {
     const _cachedUser = JSON.parse(_rawCached);
-    if (_cachedUser && (_cachedUser.email === 'prueba@probak.com' || _cachedUser.rol === 'admin' || _cachedUser.isAdmin === true)) {
+    if (_cachedUser && (_cachedUser.email === 'prueba@probak.com' || _cachedUser.email === 'jhanzeta@gmail.com' || _cachedUser.rol === 'admin' || _cachedUser.isAdmin === true)) {
       document.documentElement.classList.add('is-admin');
     }
   }
@@ -37,7 +37,7 @@ try {
 // Dynamic Sidebar & Slide Theme updater for Administrator
 window.updateAdminSidebarTheme = function(userData) {
   const user = userData || window.probaktronicCurrentUser;
-  const isAdmin = user && (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true);
+  const isAdmin = user && (user.email === 'prueba@probak.com' || user.email === 'jhanzeta@gmail.com' || user.rol === 'admin' || user.isAdmin === true);
   if (isAdmin) {
     document.documentElement.classList.add('is-admin');
     if (document.body) document.body.classList.add('is-admin');
@@ -70,39 +70,46 @@ function initCachedUserProfile() {
 
       const isAdmin = (cachedData.email === 'prueba@probak.com' || cachedData.email === 'jhanzeta@gmail.com' || cachedData.rol === 'admin' || cachedData.isAdmin === true);
       const isPremium = isAdmin || (cachedData.esPremium === true || cachedData.esPremium === 'true' || cachedData.tipo === 'premium' || cachedData.rol === 'premium');
-      if (isPremium) {
-        document.documentElement.classList.remove('auth-verifying-access');
-      } else {
-        window.enforceProtectedRoutesAccess(cachedData);
+      
+      const greetingEl = document.querySelector('.header-greeting');
+      if (greetingEl) {
+        if (isAdmin) {
+          greetingEl.textContent = 'BIENVENIDO AL SISTEMA, ADMINISTRADOR';
+        } else if (isPremium) {
+          greetingEl.textContent = 'BIENVENIDO AL SISTEMA, USUARIO PREMIUM';
+        } else {
+          greetingEl.textContent = 'BIENVENIDO AL SISTEMA, TÉCNICO (FREE)';
+        }
       }
     } else {
-      // Usuario sin sesión activa (Invitado)
-      window.probaktronicCurrentUser = null;
       renderLoggedOutHeaderUI();
       updateStatusFooterUI(null);
       updateAdminSidebarTheme(null);
-      if (typeof window.checkAdminButtonVisibility === 'function') {
-        window.checkAdminButtonVisibility();
-      }
-      window.enforceProtectedRoutesAccess(null);
     }
-  } catch (e) {
-    console.warn('Error al leer usuario local:', e);
-    window.probaktronicCurrentUser = null;
+  } catch (err) {
+    console.error('Error loading cached user:', err);
     renderLoggedOutHeaderUI();
     updateStatusFooterUI(null);
-    window.enforceProtectedRoutesAccess(null);
+    updateAdminSidebarTheme(null);
   }
 }
 
-// Function to guard protected pages (Vehiculos, Dashboard, Recuperación de Tableros) from unauthorized access
+// Function to guard protected pages from unauthorized access (Vehículos y contenido exclusivo)
 window.enforceProtectedRoutesAccess = function(userData) {
   const currentPath = (window.location.pathname.split('/').pop() || '').toLowerCase();
-  const protectedPages = ['vehiculos.html', 'dashboard.html', 'recuperacion-tableros.html'];
+  const protectedPages = [
+    'vehiculos.html',
+    'dashboard.html',
+    'recuperacion-tableros.html',
+    'ecu-interactiva-demo.html',
+    'diagramas-3d.html'
+  ];
   if (protectedPages.includes(currentPath)) {
     const user = userData || window.probaktronicCurrentUser;
     let isAllowed = false;
+    let isLoggedIn = false;
     if (user) {
+      isLoggedIn = true;
       const isAdmin = (user.email === 'prueba@probak.com' || user.email === 'jhanzeta@gmail.com' || user.rol === 'admin' || user.isAdmin === true);
       isAllowed = isAdmin || (user.esPremium === true || user.esPremium === 'true' || user.tipo === 'premium' || user.rol === 'premium');
     }
@@ -111,7 +118,13 @@ window.enforceProtectedRoutesAccess = function(userData) {
       document.documentElement.classList.remove('auth-verifying-access');
     } else {
       document.documentElement.classList.add('auth-verifying-access');
-      window.location.replace('login.html');
+      if (isLoggedIn) {
+        // Usuario con cuenta Free activa -> Enviar a la pantalla de Suscríbete a Premium
+        window.location.replace('suscripcion-premium.html?bloqueado=1');
+      } else {
+        // Invitado sin sesión -> Enviar a Login
+        window.location.replace('login.html');
+      }
     }
   }
 };
@@ -194,8 +207,12 @@ window.handleVehiculosNavigation = function(event) {
     event.stopPropagation();
   }
 
-  // Redirigir a la pantalla de inicio de sesión
-  window.location.href = 'login.html';
+  const user = window.probaktronicCurrentUser;
+  if (user) {
+    window.location.href = 'suscripcion-premium.html?bloqueado=1';
+  } else {
+    window.location.href = 'login.html';
+  }
   return false;
 };
 
@@ -218,8 +235,8 @@ function renderLoggedInHeaderUI(userData) {
     window.updateEcuAdminUI();
   }
 
-  let roleText = 'Técnico';
-  let greetingText = 'BIENVENIDO AL SISTEMA, TÉCNICO';
+  let roleText = '<span class="text-secondary fw-semibold">Técnico Free</span>';
+  let greetingText = 'BIENVENIDO AL SISTEMA, TÉCNICO (FREE)';
   let typeBadge = '<span class="badge bg-secondary ms-1" style="font-size:0.65rem;">FREE</span>';
 
   if (isAdmin) {
@@ -307,6 +324,14 @@ function renderLoggedInHeaderUI(userData) {
             <span>Personalizar Avatar</span>
           </a>
         </li>
+        ${(!isAdmin && !isPremium) ? `
+        <li>
+          <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-warning fw-bold bg-warning bg-opacity-10 rounded-2 my-1" href="suscripcion-premium.html">
+            <i class="bi bi-gem fs-5"></i>
+            <span>Suscríbete a Premium</span>
+          </a>
+        </li>
+        ` : ''}
         <li>
           <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-dark" href="configuracion.html">
             <i class="bi bi-gear-fill fs-5 text-secondary"></i>
@@ -356,11 +381,8 @@ function renderLoggedOutHeaderUI() {
 
   profileSection.innerHTML = `
     <div class="d-flex align-items-center gap-2">
-      <a href="login.html" class="btn btn-outline-danger btn-sm px-3 fw-semibold">
+      <a href="login.html" class="btn btn-danger btn-sm px-3 fw-semibold shadow-sm">
         <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
-      </a>
-      <a href="registro.html" class="btn btn-danger btn-sm px-3 fw-semibold">
-        <i class="bi bi-person-plus-fill me-1"></i> Registrarse
       </a>
     </div>
   `;
@@ -377,7 +399,7 @@ function updateStatusFooterUI(userData) {
   const userLed = document.querySelector('.dark-status-bar .status-led-green, .dark-status-bar .status-led-gold, .dark-status-bar .status-led-gray');
   if (userTypeStatus) {
     if (userData) {
-      const isAdmin = (userData.email === 'prueba@probak.com' || userData.rol === 'admin' || userData.isAdmin === true);
+      const isAdmin = (userData.email === 'prueba@probak.com' || userData.email === 'jhanzeta@gmail.com' || userData.rol === 'admin' || userData.isAdmin === true);
       const isPremium = !!userData.esPremium;
       if (isAdmin) {
         userTypeStatus.textContent = 'Administrador (Premium)';
@@ -404,13 +426,14 @@ function updateStatusFooterUI(userData) {
 window.fetchAuthApi = async function(action, payload, method = 'POST') {
   const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.protocol === 'file:';
   
+  const cacheBuster = `_t=${Date.now()}`;
   const endpoints = [];
   if (!isLocal) {
-    endpoints.push(`api/auth.php?action=${action}`);
-    endpoints.push(`/api/auth.php?action=${action}`);
+    endpoints.push(`api/auth.php?action=${action}&${cacheBuster}`);
+    endpoints.push(`/api/auth.php?action=${action}&${cacheBuster}`);
   } else {
-    endpoints.push(`api/auth.php?action=${action}`);
-    endpoints.push(`https://probaktronic.com/api/auth.php?action=${action}`);
+    endpoints.push(`api/auth.php?action=${action}&${cacheBuster}`);
+    endpoints.push(`https://probaktronic.com/api/auth.php?action=${action}&${cacheBuster}`);
   }
 
   let lastError = null;
@@ -418,7 +441,12 @@ window.fetchAuthApi = async function(action, payload, method = 'POST') {
     try {
       const options = {
         method: method,
-        headers: { 'Content-Type': 'application/json' }
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
       };
       if (payload && method !== 'GET') {
         options.body = JSON.stringify(payload);
@@ -449,7 +477,7 @@ window.fetchAuthApi = async function(action, payload, method = 'POST') {
 
 // Global Auth Action Functions
 
-// 1. Iniciar Sesión (Login) con detección inteligente de entorno (Local vs Hosting)
+// 1. Iniciar Sesión (Login) con detección de entorno y validación estricta
 window.loginUser = async function(identifier, password) {
   let emailOrUser = identifier ? identifier.trim().toLowerCase() : '';
   let pass = password ? password.trim() : '';
@@ -476,23 +504,35 @@ window.loginUser = async function(identifier, password) {
       return uEmail === emailOrUser || uName === emailOrUser || uTech === emailOrUser;
     }) : null;
 
-    const expectedPass = (foundUser && foundUser.password) ? foundUser.password : '123456';
-    const isMasterAdminPass = (pass === '0!KG#Ptgh1XSx6d)GJ4wsEtV');
-    const isAdmin = (emailOrUser.includes('admin') || emailOrUser === 'prueba@probak.com' || emailOrUser === 'jhanzeta@gmail.com' || (foundUser && foundUser.rol === 'admin'));
+    const isAdmin = (emailOrUser === 'prueba@probak.com' || emailOrUser === 'jhanzeta@gmail.com' || (foundUser && foundUser.rol === 'admin'));
 
-    if (!isAdmin && pass !== expectedPass && pass !== '123456') {
+    if (!foundUser && !isAdmin) {
+      throw new Error('El usuario o correo electrónico no está registrado.');
+    }
+
+    const expectedPass = (foundUser && foundUser.password) ? foundUser.password : (isAdmin ? '123456' : '');
+    const isMasterAdminPass = (pass === '0!KG#Ptgh1XSx6d)GJ4wsEtV');
+
+    if (!isAdmin && pass !== expectedPass) {
+      throw new Error('La contraseña ingresada es incorrecta.');
+    }
+    if (isAdmin && pass !== expectedPass && !isMasterAdminPass) {
       throw new Error('La contraseña ingresada es incorrecta.');
     }
 
+    const isUserAdmin = isAdmin;
+    const isUserPremium = isUserAdmin || (foundUser && (foundUser.esPremium === true || foundUser.esPremium === 'true' || foundUser.rol === 'premium'));
+    const userRole = isUserAdmin ? 'admin' : (isUserPremium ? 'premium' : 'free');
+
     const localUser = {
-      id: foundUser ? foundUser.id : '1',
-      nombre: (foundUser && foundUser.nombre) ? foundUser.nombre : (isAdmin ? 'Administrador' : 'jose rucoba'),
+      id: foundUser ? foundUser.id : (isAdmin ? 'admin_local' : 'usr_local'),
+      nombre: (foundUser && (foundUser.nombre || foundUser.nombreTecnico)) ? (foundUser.nombre || foundUser.nombreTecnico) : (isAdmin ? 'Administrador' : emailOrUser.split('@')[0]),
       email: foundUser ? foundUser.email : emailOrUser,
-      rol: isAdmin ? 'admin' : (foundUser && foundUser.rol ? foundUser.rol : 'premium'),
-      isAdmin: isAdmin,
-      esPremium: isAdmin ? true : (foundUser ? (foundUser.esPremium === true || foundUser.esPremium === 'true' || foundUser.rol === 'premium') : false),
+      rol: userRole,
+      isAdmin: isUserAdmin,
+      esPremium: isUserPremium,
       aprobado: true,
-      avatarColor: (foundUser && foundUser.avatarColor) ? foundUser.avatarColor : (isAdmin ? '#D97706' : '#D32F2F'),
+      avatarColor: (foundUser && foundUser.avatarColor) ? foundUser.avatarColor : (isAdmin ? '#D97706' : (isUserPremium ? '#D32F2F' : '#64748B')),
       avatarIcon: (foundUser && foundUser.avatarIcon) ? foundUser.avatarIcon : (isAdmin ? 'bi-shield-fill-check' : 'bi-person-fill'),
       token: 'probak-auth-token-ready'
     };
@@ -513,109 +553,56 @@ window.loginUser = async function(identifier, password) {
     return localUser;
   }
 
-  // MODO 2: En Hosting / Servidor Web con PHP y MySQL
-  try {
-    const response = await window.fetchAuthApi('login', { email: emailOrUser, password: pass });
-    const data = response.data || {};
+  // MODO 2: En Hosting / Servidor Web con PHP y MySQL (SiteGround)
+  const response = await window.fetchAuthApi('login', { email: emailOrUser, password: pass });
+  const data = response.data || {};
 
-    if (response.ok) {
-      if (data.status === '2fa_required' && data.temp_user) {
-        return {
-          requires2FA: true,
-          tempUser: data.temp_user
-        };
-      }
+  if (!response.ok || data.status !== 'success') {
+    if (data.status === '2fa_required' && data.temp_user) {
+      return {
+        requires2FA: true,
+        tempUser: data.temp_user
+      };
+    }
+    throw new Error(data.message || 'Usuario o contraseña incorrectos.');
+  }
 
-      if (data.status === 'success' && data.user) {
-        const isAdmin = data.user.rol === 'admin' || data.user.email === 'prueba@probak.com' || data.user.email === 'jhanzeta@gmail.com' || emailOrUser === 'jhanzeta@gmail.com' || emailOrUser === 'prueba@probak.com';
-        
-        if (isAdmin) {
-          return {
-            requires2FA: true,
-            tempUser: {
-              id: data.user.id,
-              nombre: data.user.nombre,
-              email: data.user.email,
-              rol: 'admin',
-              token: data.user.token
-            }
-          };
-        }
-
-        const userData = {
+  if (data.status === 'success' && data.user) {
+    const isAdmin = data.user.rol === 'admin' || data.user.email === 'prueba@probak.com' || data.user.email === 'jhanzeta@gmail.com' || emailOrUser === 'jhanzeta@gmail.com' || emailOrUser === 'prueba@probak.com';
+    
+    if (isAdmin) {
+      return {
+        requires2FA: true,
+        tempUser: {
           id: data.user.id,
           nombre: data.user.nombre,
           email: data.user.email,
-          rol: data.user.rol || (isAdmin ? 'admin' : 'free'),
-          isAdmin: false,
-          esPremium: (data.user.esPremium === true || data.user.esPremium === 'true' || data.user.rol === 'premium'),
-          aprobado: true,
+          rol: 'admin',
           token: data.user.token
-        };
-
-        localStorage.setItem('probaktronic_cached_user', JSON.stringify(userData));
-        window.probaktronicCurrentUser = userData;
-        renderLoggedInHeaderUI(userData);
-        updateStatusFooterUI(userData);
-        updateAdminSidebarTheme(userData);
-        return userData;
-      }
-    }
-
-    throw new Error(data.message || 'La contraseña ingresada es incorrecta.');
-  } catch (apiErr) {
-    console.warn('[Probaktronic Auth] Respaldo activado:', apiErr.message);
-    
-    let usersList = [];
-    try {
-      const res = await fetch('data/usuarios.json?v=' + Date.now());
-      if (res.ok) {
-        usersList = await res.json();
-      }
-    } catch (e) {}
-
-    const foundUser = Array.isArray(usersList) ? usersList.find(u => {
-      const uEmail = (u.email || '').toLowerCase().trim();
-      const uName = (u.nombre || '').toLowerCase().trim();
-      const uTech = (u.nombreTecnico || '').toLowerCase().trim();
-      return uEmail === emailOrUser || uName === emailOrUser || uTech === emailOrUser;
-    }) : null;
-
-    const expectedPass = (foundUser && foundUser.password) ? foundUser.password : '123456';
-    const isAdmin = (emailOrUser.includes('admin') || emailOrUser === 'prueba@probak.com' || emailOrUser === 'jhanzeta@gmail.com' || (foundUser && foundUser.rol === 'admin'));
-
-    if (!isAdmin && pass !== expectedPass && pass !== '123456') {
-      throw new Error('La contraseña ingresada es incorrecta.');
-    }
-
-    const localUser = {
-      id: foundUser ? foundUser.id : '1',
-      nombre: (foundUser && foundUser.nombre) ? foundUser.nombre : (isAdmin ? 'Administrador' : 'jose rucoba'),
-      email: foundUser ? foundUser.email : emailOrUser,
-      rol: isAdmin ? 'admin' : (foundUser && foundUser.rol ? foundUser.rol : 'premium'),
-      isAdmin: isAdmin,
-      esPremium: isAdmin ? true : (foundUser ? (foundUser.esPremium === true || foundUser.esPremium === 'true' || foundUser.rol === 'premium') : false),
-      aprobado: true,
-      avatarColor: (foundUser && foundUser.avatarColor) ? foundUser.avatarColor : (isAdmin ? '#D97706' : '#D32F2F'),
-      avatarIcon: (foundUser && foundUser.avatarIcon) ? foundUser.avatarIcon : (isAdmin ? 'bi-shield-fill-check' : 'bi-person-fill'),
-      token: 'probak-auth-token-ready'
-    };
-
-    if (isAdmin) {
-      return {
-        requires2FA: true,
-        tempUser: localUser
+        }
       };
     }
 
-    localStorage.setItem('probaktronic_cached_user', JSON.stringify(localUser));
-    window.probaktronicCurrentUser = localUser;
-    renderLoggedInHeaderUI(localUser);
-    updateStatusFooterUI(localUser);
-    updateAdminSidebarTheme(localUser);
+    const userData = {
+      id: data.user.id,
+      nombre: data.user.nombre || data.user.nombreTecnico || (data.user.email ? data.user.email.split('@')[0] : 'Técnico'),
+      email: data.user.email,
+      rol: data.user.rol || 'free',
+      isAdmin: false,
+      esPremium: (data.user.esPremium === true || data.user.esPremium === 'true' || data.user.rol === 'premium'),
+      aprobado: true,
+      token: data.user.token
+    };
 
-    return localUser;
+    localStorage.setItem('probaktronic_cached_user', JSON.stringify(userData));
+    window.probaktronicCurrentUser = userData;
+    renderLoggedInHeaderUI(userData);
+    updateStatusFooterUI(userData);
+    updateAdminSidebarTheme(userData);
+    return userData;
   }
+
+  throw new Error('No se pudo validar la sesión.');
 };
 
 // Helper: Decodificador Base32 RFC 4648
@@ -762,9 +749,9 @@ window.registerUser = async function(nombre, email, password) {
       nombreTecnico: nombre,
       email: email,
       password: password,
-      rol: 'premium',
+      rol: 'free',
       isAdmin: false,
-      esPremium: true,
+      esPremium: false,
       aprobado: true
     };
     localStorage.setItem('probaktronic_cached_user', JSON.stringify(userData));
@@ -784,9 +771,9 @@ window.registerUser = async function(nombre, email, password) {
       id: data.user.id,
       nombre: data.user.nombre,
       email: data.user.email,
-      rol: data.user.rol || 'premium',
+      rol: data.user.rol || 'free',
       isAdmin: false,
-      esPremium: true,
+      esPremium: false,
       aprobado: true
     };
 
@@ -800,16 +787,23 @@ window.registerUser = async function(nombre, email, password) {
 
 // 3. Cerrar Sesión
 window.logoutUser = async function(e) {
-  if (e) e.preventDefault();
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
   localStorage.removeItem('probaktronic_cached_user');
+  localStorage.removeItem('probaktronic_users_local');
+  sessionStorage.removeItem('probaktronic_cached_user');
   window.probaktronicCurrentUser = null;
   renderLoggedOutHeaderUI();
-  if (typeof showAuthToast === 'function') {
-    showAuthToast('Sesión cerrada correctamente.', 'info');
+  updateStatusFooterUI(null);
+  updateAdminSidebarTheme(null);
+  if (typeof showGlobalToast === 'function') {
+    showGlobalToast('Sesión cerrada correctamente.');
   }
   setTimeout(() => {
-    window.location.href = 'index.html';
-  }, 300);
+    window.location.replace('index.html');
+  }, 200);
 };
 
 // --- AVATAR CUSTOMIZER MODAL SYSTEM ---
@@ -1346,7 +1340,7 @@ window.openUserProfileAndWorkshopModal = function(e) {
   injectUserProfileAndWorkshopModal();
 
   const user = window.probaktronicCurrentUser || {};
-  const isAdmin = (user.email === 'prueba@probak.com' || user.rol === 'admin' || user.isAdmin === true);
+  const isAdmin = (user.email === 'prueba@probak.com' || user.email === 'jhanzeta@gmail.com' || user.rol === 'admin' || user.isAdmin === true);
   const isPremium = !!user.esPremium;
 
   const emailEl = document.getElementById('profileDisplayEmail');

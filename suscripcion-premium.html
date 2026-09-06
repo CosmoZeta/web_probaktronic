@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Probaktronic - Suscríbete a Premium</title>
+  
+  <script>
+    if (sessionStorage.getItem('sidebar_locked') === 'true') {
+      document.documentElement.classList.add('sidebar-minimized-init');
+    }
+  </script>
+
+  <!-- Google Fonts: Inter & Rajdhani -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 & Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  
+  <!-- Global CSS -->
+  <link href="css/global.css?v=335.0" rel="stylesheet">
+
+  <style>
+    /* Custom Styling for Premium Subscription Page */
+    .premium-hero-card {
+      background: linear-gradient(135deg, #0B1120 0%, #1E293B 50%, #0F172A 100%);
+      border: 1px solid rgba(245, 158, 11, 0.35) !important;
+      border-radius: 24px;
+      padding: 36px 40px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      margin-bottom: 35px;
+    }
+    .premium-hero-card::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      right: -10%;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(211, 47, 47, 0) 70%);
+      pointer-events: none;
+    }
+    .premium-hero-card h2 {
+      font-size: 2.1rem;
+      line-height: 1.25;
+      letter-spacing: 0.5px;
+    }
+
+    .plan-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 22px;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      padding: 32px 26px 26px 26px;
+      height: 100%;
+    }
+    .plan-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.14) !important;
+    }
+
+    .plan-card.plan-featured {
+      border: 2px solid #D97706;
+      background: linear-gradient(180deg, #FFFDF8 0%, #FFFFFF 100%);
+      box-shadow: 0 15px 35px -8px rgba(217, 119, 6, 0.22) !important;
+    }
+    .plan-card.plan-featured:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 25px 45px -10px rgba(217, 119, 6, 0.35) !important;
+    }
+
+    .plan-card.plan-vip {
+      border: 2px solid #DC2626;
+      background: linear-gradient(180deg, #FFF8F8 0%, #FFFFFF 100%);
+      box-shadow: 0 15px 35px -8px rgba(220, 38, 38, 0.2) !important;
+    }
+    .plan-card.plan-vip:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 25px 45px -10px rgba(220, 38, 38, 0.32) !important;
+    }
+
+    .plan-ribbon-tag {
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding: 6px 18px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      border-bottom-left-radius: 14px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    .ribbon-gold {
+      background: linear-gradient(135deg, #F59E0B, #D97706);
+      color: #000;
+    }
+    .ribbon-red {
+      background: linear-gradient(135deg, #EF4444, #B91C1C);
+      color: #FFF;
+    }
+
+    .plan-title-badge {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+      padding: 5px 14px;
+      border-radius: 50px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    .btn-whatsapp-plan {
+      background: #25D366;
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 1.05rem;
+      border-radius: 50px;
+      padding: 13px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      border: none;
+      box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+    }
+    .btn-whatsapp-plan:hover {
+      background: #20BA5A;
+      color: #FFFFFF;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(37, 211, 102, 0.45);
+    }
+
+    .feature-check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 0.9rem;
+      color: #334155;
+      margin-bottom: 13px;
+      line-height: 1.45;
+    }
+    .feature-check-item i {
+      color: #10B981;
+      font-size: 1.15rem;
+      margin-top: -2px;
+      flex-shrink: 0;
+    }
+    .feature-check-item.feature-highlight i {
+      color: #D97706;
+    }
+
+    .contact-whatsapp-box {
+      background: linear-gradient(135deg, #064E3B 0%, #022C22 100%);
+      border: 1px solid #10B981;
+      border-radius: 22px;
+      padding: 32px 36px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Watermark Background -->
+    <svg class="bg-circuit-watermark" viewBox="0 0 800 600" fill="none">
+      <path d="M 400 0 L 500 100 L 750 100 L 800 150" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 4"/>
+    </svg>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="d-flex flex-column w-100">
+        <div class="sidebar-brand-container">
+          <a href="index.html" class="sidebar-brand" title="Probaktronic">
+            <img src="logo_probaktronic_costado.png" alt="Probaktronic" class="sidebar-logo-costado">
+            <img src="logo_probaktronic_solo.png" alt="Probaktronic" class="sidebar-logo-solo">
+          </a>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="index.html" class="nav-link-item" title="Página Principal">
+            <i class="bi bi-house-door-fill"></i>
+            <span>Página Principal</span>
+          </a>
+          <a href="vehiculos.html" class="nav-link-item" title="Vehículos">
+            <i class="bi bi-car-front-fill"></i>
+            <span>Vehículos</span>
+          </a>
+          <a href="manuales-probadores.html" class="nav-link-item" title="Manuales Probadores">
+            <i class="bi bi-journal-bookmark-fill"></i>
+            <span class="two-lines">Manuales<br>Probadores</span>
+          </a>
+          <a href="galeria-medios.html" class="nav-link-item" title="Galería & Medios">
+            <i class="bi bi-grid-fill"></i>
+            <span>Galería & Medios</span>
+          </a>
+          <a href="sensores-actuadores.html" class="nav-link-item" title="Sensores y Actuadores">
+            <i class="bi bi-cpu-fill"></i>
+            <span class="two-lines">Sensores y<br>Actuadores</span>
+          </a>
+          <a href="catalogo.html" class="nav-link-item" title="Catálogo">
+            <i class="bi bi-journal-text"></i>
+            <span>Catálogo</span>
+          </a>
+          <a href="dashboard.html" class="nav-link-item" title="Dashboard">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+
+          <div class="sidebar-divider"></div>
+
+          <a href="configuracion.html" class="nav-link-item" title="Configuración">
+            <i class="bi bi-gear-fill"></i>
+            <span>Configuración</span>
+          </a>
+          <a href="suscripcion-premium.html" class="nav-link-item active" title="Suscríbete a Premium">
+            <i class="bi bi-gem text-warning"></i>
+            <span class="two-lines">Suscríbete a<br>Premium</span>
+          </a>
+          <a href="#" class="nav-link-item" title="Herramientas" onclick="showGlobalToast('Herramientas avanzadas...')">
+            <i class="bi bi-tools"></i>
+            <span>Herramientas</span>
+          </a>
+          <a href="#" class="nav-link-item" title="Soporte" onclick="window.open('https://wa.me/51910697674?text=Hola%20Probaktronic,%20necesito%20soporte%20t%C3%A9cnico', '_blank')">
+            <i class="bi bi-headset"></i>
+            <span>Soporte</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="btn-sidebar-minimize" title="Minimizar menú">
+          <i class="bi bi-chevron-double-left"></i>
+          <span>Minimizar</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile Backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Header Bar -->
+      <header class="top-header-bar">
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn-mobile-menu-toggle" id="btnMobileMenuToggle" aria-label="Abrir menú" title="Abrir menú">
+            <i class="bi bi-list"></i>
+            <span class="menu-pill-text">MENÚ</span>
+          </button>
+          <div>
+            <div class="header-greeting">MEMBRESÍAS & PLANES PROFESIONALES</div>
+            <h1 class="page-title">SUSCRÍBETE A PREMIUM</h1>
+            <div class="page-subtitle">Acceso total a diagramas automotrices, manuales de probadores y soporte técnico</div>
+          </div>
+        </div>
+
+        <div class="user-profile-section">
+          <div class="user-profile-card">
+            <div class="user-avatar" style="background-color: #94A3B8;">
+              <i class="bi bi-person-fill"></i>
+            </div>
+            <div class="user-info">
+              <span class="user-name">Cargando...</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Hero Header Banner (Sin solapamientos ni cortes) -->
+      <section class="card border-0 premium-hero-card text-white">
+        <div class="row align-items-center g-4 position-relative" style="z-index: 2;">
+          <div class="col-lg-8">
+            <div class="d-inline-flex align-items-center gap-2 mb-3">
+              <span class="badge bg-warning text-dark font-rajdhani fw-bold px-3 py-1" style="font-size: 0.8rem; letter-spacing: 0.6px; border-radius: 50px;">
+                <i class="bi bi-stars me-1"></i>POTENCIA TU TALLER AUTOMOTRIZ
+              </span>
+            </div>
+            <h2 class="fw-bold font-rajdhani text-white mb-2">
+              DESBLOQUEA TODO EL PODER DE PROBAKTRONIC
+            </h2>
+            <p class="text-white-50 fs-6 mb-0" style="max-width: 680px; line-height: 1.6;">
+              Obtén acceso inmediato a la mayor base de datos de diagramas de conexión de ECUs, manuales de probadores, pinouts interactivos y soporte técnico directo con nuestros ingenieros especializados.
+            </p>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <div class="d-inline-flex flex-column align-items-lg-end gap-2">
+              <span class="text-white-50 small font-rajdhani fw-semibold">Atención y activación directa:</span>
+              <a href="https://wa.me/51910697674?text=Hola%20Probaktronic,%20deseo%20m%C3%A1s%20informaci%C3%B3n%20sobre%20las%20suscripciones%20Premium" target="_blank" class="btn btn-outline-light rounded-pill px-4 py-2 font-rajdhani fw-bold d-inline-flex align-items-center gap-2 shadow-sm">
+                <i class="bi bi-whatsapp text-success fs-5"></i> +51 910 697 674
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 Premium Pricing Cards (Alineación perfecta y simétrica) -->
+      <section class="row g-4 mb-5">
+        
+        <!-- CARD 1: Plan Mensual (1 Mes) -->
+        <div class="col-12 col-md-4">
+          <div class="plan-card shadow-sm">
+            <div>
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="plan-title-badge bg-secondary bg-opacity-10 text-dark fw-bold">
+                  PLAN MENSUAL
+                </span>
+                <i class="bi bi-shield-check text-muted fs-4"></i>
+              </div>
+
+              <h3 class="fw-bold font-rajdhani text-dark mb-1 fs-2">1 MES</h3>
+              <p class="text-muted small mb-4" style="min-height: 38px;">Ideal para técnicos independientes y diagnóstico puntual de fallas.</p>
+
+              <div class="p-3 bg-light rounded-4 mb-4 text-center border border-secondary border-opacity-10">
+                <span class="font-rajdhani fw-bold text-dark fs-5">CONSULTAR TARIFA</span>
+                <div class="text-muted small" style="font-size: 0.76rem;">Activación inmediata por WhatsApp</div>
+              </div>
+
+              <div class="mb-4">
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>Acceso a diagramas de motor, inyección y ECUs</span>
+                </div>
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>Visualización de manuales técnicos en PDF</span>
+                </div>
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>Catálogo de componentes y probadores</span>
+                </div>
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>Soporte técnico directo vía WhatsApp</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <a href="https://wa.me/51910697674?text=Hola%20Probaktronic,%20deseo%20adquirir%20la%20suscripci%C3%B3n%20PREMIUM%20de%201%20MES" target="_blank" class="btn-whatsapp-plan font-rajdhani">
+                <i class="bi bi-whatsapp fs-5"></i> Solicitar Plan 1 Mes
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: Plan Semestral (6 Meses) - RECOMENDADO -->
+        <div class="col-12 col-md-4">
+          <div class="plan-card plan-featured shadow">
+            <span class="plan-ribbon-tag ribbon-gold">
+              <i class="bi bi-star-fill me-1"></i> MÁS POPULAR
+            </span>
+
+            <div>
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="plan-title-badge bg-warning bg-opacity-25 text-dark">
+                  PLAN SEMESTRAL
+                </span>
+              </div>
+
+              <h3 class="fw-bold font-rajdhani text-dark mb-1 fs-2 d-flex align-items-center gap-2">
+                6 MESES
+                <span class="badge bg-danger text-white font-rajdhani fw-bold" style="font-size: 0.68rem;">RECOMENDADO</span>
+              </h3>
+              <p class="text-muted small mb-4" style="min-height: 38px;">La mejor relación costo-beneficio para talleres y especialistas.</p>
+
+              <div class="p-3 bg-warning bg-opacity-10 rounded-4 mb-4 text-center border border-warning border-opacity-25">
+                <span class="font-rajdhani fw-bold text-dark fs-5">CONSULTAR TARIFA</span>
+                <div class="text-dark-50 small" style="font-size: 0.76rem;">Precio promocional para 6 meses</div>
+              </div>
+
+              <div class="mb-4">
+                <div class="feature-check-item feature-highlight">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span class="fw-bold text-dark">Todo lo incluido en el Plan Mensual</span>
+                </div>
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>Acceso prioritario a nuevos diagramas semanales</span>
+                </div>
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>Descargas ilimitadas de manuales y archivos</span>
+                </div>
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>Asesoría técnica en reparación de ECUs</span>
+                </div>
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>Actualizaciones automáticas sin costo extra</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <a href="https://wa.me/51910697674?text=Hola%20Probaktronic,%20deseo%20adquirir%20la%20suscripci%C3%B3n%20PREMIUM%20de%206%20MESES" target="_blank" class="btn-whatsapp-plan font-rajdhani" style="background: #10B981;">
+                <i class="bi bi-whatsapp fs-5"></i> Solicitar Plan 6 Meses
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 3: Plan Anual (1 Año) -->
+        <div class="col-12 col-md-4">
+          <div class="plan-card plan-vip shadow-sm">
+            <span class="plan-ribbon-tag ribbon-red">
+              <i class="bi bi-crown-fill me-1"></i> ACCESO VIP
+            </span>
+
+            <div>
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="plan-title-badge bg-danger bg-opacity-15 text-danger">
+                  PLAN ANUAL
+                </span>
+              </div>
+
+              <h3 class="fw-bold font-rajdhani text-dark mb-1 fs-2">1 AÑO (12 MESES)</h3>
+              <p class="text-muted small mb-4" style="min-height: 38px;">Cobertura total, máximo ahorro y atención VIP durante todo el año.</p>
+
+              <div class="p-3 bg-danger bg-opacity-10 rounded-4 mb-4 text-center border border-danger border-opacity-25">
+                <span class="font-rajdhani fw-bold text-danger fs-5">MÁXIMO AHORRO</span>
+                <div class="text-muted small" style="font-size: 0.76rem;">Tarifa especial para técnicos profesionales</div>
+              </div>
+
+              <div class="mb-4">
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill text-danger"></i>
+                  <span class="fw-bold text-dark">Acceso TOTAL Ilimitado por 1 Año Completo</span>
+                </div>
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill text-danger"></i>
+                  <span>Acceso VIP anticipado a módulos de Laboratorio</span>
+                </div>
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill text-danger"></i>
+                  <span>Base de datos completa de diagramas y tableros</span>
+                </div>
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill text-danger"></i>
+                  <span>Soporte técnico VIP 1 a 1 prioritario por WhatsApp</span>
+                </div>
+                <div class="feature-check-item">
+                  <i class="bi bi-check-circle-fill text-danger"></i>
+                  <span>Certificado y respaldo directo Probaktronic</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <a href="https://wa.me/51910697674?text=Hola%20Probaktronic,%20deseo%20adquirir%20la%20suscripci%C3%B3n%20PREMIUM%20de%201%20A%C3%91O" target="_blank" class="btn-whatsapp-plan font-rajdhani" style="background: #DC2626;">
+                <i class="bi bi-whatsapp fs-5"></i> Solicitar Plan 1 Año
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- WhatsApp Direct Contact Banner -->
+      <section class="card border-0 contact-whatsapp-box text-white shadow">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-8">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background: rgba(37, 211, 102, 0.2); width: 60px; height: 60px; flex-shrink: 0;">
+                <i class="bi bi-whatsapp text-white fs-2"></i>
+              </div>
+              <div>
+                <h4 class="fw-bold font-rajdhani text-white mb-1 fs-5">¿Tienes dudas o necesitas un plan personalizado para tu taller?</h4>
+                <p class="text-white-50 mb-0 small">Escríbenos directamente y un asesor técnico te responderá de inmediato.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <a href="https://wa.me/51910697674?text=Hola%20Probaktronic,%20tengo%20consultas%20sobre%20las%20suscripciones%20Premium" target="_blank" class="btn btn-light rounded-pill px-4 py-3 font-rajdhani fw-bold text-dark shadow-sm d-inline-flex align-items-center gap-2">
+              <i class="bi bi-chat-dots-fill text-success fs-5"></i> Chatear al +51 910 697 674
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Dark Status Bar -->
+      <footer class="dark-status-bar">
+        <div class="status-item">
+          <span class="status-led-green"></span>
+          <div class="status-info-block">
+            <span class="status-label">TIPO DE USUARIO</span>
+            <span class="status-value text-success">Verificando...</span>
+          </div>
+        </div>
+        <div class="status-divider"></div>
+        <div class="status-item">
+          <i class="bi bi-layers-fill status-icon"></i>
+          <div class="status-info-block">
+            <span class="status-label">NÚMERO DE VERSIÓN</span>
+            <span class="status-value">1.00001</span>
+          </div>
+        </div>
+        <div class="status-divider"></div>
+        <div class="status-item">
+          <i class="bi bi-calendar-event-fill status-icon"></i>
+          <div class="status-info-block">
+            <span class="status-label">FECHA Y HORA</span>
+            <span class="status-value" id="firmwareDateValue">21 ago 2026, 23:28</span>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- JavaScript Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/global.js?v=372.0"></script>
+  <script src="js/auth.js?v=372.0"></script>
+  <script src="js/admin-analytics.js?v=372.0"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('bloqueado') === '1' || urlParams.get('motivo') === 'requiere_premium') {
+        const hero = document.querySelector('.premium-hero-card');
+        if (hero) {
+          const alertDiv = document.createElement('div');
+          alertDiv.className = 'alert alert-warning d-flex align-items-center gap-3 p-3 rounded-4 mb-4 shadow-sm border border-warning';
+          alertDiv.innerHTML = `
+            <i class="bi bi-shield-lock-fill fs-2 text-warning"></i>
+            <div>
+              <div class="fw-bold text-dark font-rajdhani fs-6">ACCESO EXCLUSIVO PARA USUARIOS PREMIUM</div>
+              <div class="small text-dark">Tu cuenta actual es <strong>FREE</strong>. Para acceder a los diagramas de conexión, manuales de probadores y herramientas de diagnóstico, por favor activa uno de los planes a continuación.</div>
+            </div>
+          `;
+          hero.parentNode.insertBefore(alertDiv, hero);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

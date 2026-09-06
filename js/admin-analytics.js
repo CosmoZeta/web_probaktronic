@@ -3,6 +3,63 @@
 (function() {
   'use strict';
 
+  // Helper: Detección precisa de plataforma en el navegador del cliente
+  function detectClientPlatform() {
+    const ua = navigator.userAgent || '';
+    let os = 'Windows 11 / 10';
+    let device = '💻 PC / Laptop';
+    let icon = 'bi-windows';
+    let browser = 'Chrome';
+
+    if (/Android/i.test(ua)) {
+      os = 'Android';
+      const m = ua.match(/Android\s([0-9\.]+)/i);
+      if (m) os = 'Android ' + m[1];
+      const isTablet = /Tablet|iPad/i.test(ua) || (window.innerWidth >= 768 && window.innerWidth <= 1024);
+      device = isTablet ? '📱 Tablet (Android)' : '📱 Celular (Android)';
+      icon = isTablet ? 'bi-tablet' : 'bi-phone';
+    } else if (/iPhone/i.test(ua)) {
+      os = 'iOS (iPhone)';
+      device = '📱 Celular (iPhone)';
+      icon = 'bi-apple';
+    } else if (/iPad/i.test(ua)) {
+      os = 'iPadOS (iPad)';
+      device = '📱 Tablet (iPad)';
+      icon = 'bi-tablet';
+    } else if (/Macintosh|Mac OS X/i.test(ua)) {
+      os = 'macOS (Apple)';
+      device = '💻 MacBook / Mac';
+      icon = 'bi-apple';
+    } else if (/Windows NT 10\.0/i.test(ua)) {
+      os = 'Windows 11 / 10';
+      device = '💻 PC / Laptop (Windows)';
+      icon = 'bi-windows';
+    } else if (/Windows/i.test(ua)) {
+      os = 'Windows';
+      device = '💻 PC / Laptop (Windows)';
+      icon = 'bi-windows';
+    } else if (/Linux/i.test(ua)) {
+      os = 'Linux';
+      device = '💻 PC (Linux)';
+      icon = 'bi-terminal-fill';
+    }
+
+    if (/Edg\//i.test(ua)) browser = 'Microsoft Edge';
+    else if (/SamsungBrowser/i.test(ua)) browser = 'Samsung Internet';
+    else if (/Brave/i.test(ua)) browser = 'Brave';
+    else if (/OPR|Opera/i.test(ua)) browser = 'Opera';
+    else if (/Chrome/i.test(ua)) browser = 'Google Chrome';
+    else if (/Firefox/i.test(ua)) browser = 'Mozilla Firefox';
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Apple Safari';
+
+    return {
+      client_os: os,
+      client_device: device,
+      client_browser: browser,
+      client_icon: icon
+    };
+  }
+
   // 1. Verificación Robusta de Rol Administrador
   window.isProbaktronicAdmin = function() {
     try {
@@ -60,13 +117,16 @@
         }
       }
 
+      const clientInfo = detectClientPlatform();
+
       const payload = {
         pagina: window.location.pathname.split('/').pop() || 'index.html',
         titulo: document.title || 'Probaktronic',
         url_completa: window.location.href,
         referrer: document.referrer || '',
         screen_width: window.innerWidth,
-        user: userData
+        user: userData,
+        device_info: clientInfo
       };
 
       fetch('api/visitas.php?action=ping', {
@@ -77,14 +137,16 @@
         if (data && data.status === 'success') {
           window._probakOnlineCount = data.online_now;
           window._probakTotalIps = data.total_ips;
-          window.updateAdminFloatingBadge(data.online_now, data.total_ips);
+          window._probakIpsHoy = data.ips_hoy;
+          window._probakVisitasHoy = data.visitas_hoy;
+          window.updateAdminFloatingBadge(data.online_now, data.total_ips, data.ips_hoy, data.visitas_hoy);
         }
       }).catch(() => {});
     } catch(e) {}
   };
 
   // 3. Floating Admin Pill (Solo visible para Administradores)
-  window.updateAdminFloatingBadge = function(onlineCount, totalIps) {
+  window.updateAdminFloatingBadge = function(onlineCount, totalIps, ipsHoy, visitasHoy) {
     if (!window.isProbaktronicAdmin()) {
       const existing = document.getElementById('adminLiveAnalyticsPill');
       if (existing) existing.remove();
@@ -92,7 +154,8 @@
     }
 
     const online = onlineCount || window._probakOnlineCount || 1;
-    const ips = totalIps || window._probakTotalIps || 1;
+    const ipsToday = ipsHoy || window._probakIpsHoy || totalIps || window._probakTotalIps || 1;
+    const totalHitsToday = visitasHoy || window._probakVisitasHoy || 1;
 
     let pill = document.getElementById('adminLiveAnalyticsPill');
     if (!pill) {
@@ -108,7 +171,7 @@
       <div class="d-flex align-items-center gap-2 px-3 py-2">
         <span class="live-pulse-dot"></span>
         <span class="fw-bold font-rajdhani text-white" style="font-size: 0.85rem;">
-          <span class="text-success">${online} ONLINE</span> | <i class="bi bi-globe text-info ms-1"></i> ${ips} IPs
+          <span class="text-success">${online} ONLINE</span> | <i class="bi bi-globe text-info ms-1"></i> ${ipsToday} IPs HOY | <i class="bi bi-eye text-danger ms-1"></i> ${totalHitsToday} VISTAS
         </span>
         <i class="bi bi-chevron-right text-white-50" style="font-size: 0.75rem;"></i>
       </div>
@@ -134,7 +197,7 @@
 
     await refreshAdminAnalyticsData();
 
-    // Iniciar sondeo en vivo cada 10 segundos mientras el modal esté abierto
+    // Iniciar sondeo en vivo cada 8 segundos mientras el modal esté abierto
     clearInterval(analyticsPollInterval);
     analyticsPollInterval = setInterval(() => {
       const modalEl = document.getElementById('adminAnalyticsModal');
@@ -143,7 +206,7 @@
       } else {
         clearInterval(analyticsPollInterval);
       }
-    }, 10000);
+    }, 8000);
   };
 
   window.refreshAdminAnalyticsData = async function(isSilent = false) {
@@ -151,12 +214,17 @@
     if (loader && !isSilent) loader.classList.remove('d-none');
 
     try {
-      const resp = await fetch('api/visitas.php?action=stats');
+      const resp = await fetch('api/visitas.php?action=stats&_t=' + Date.now());
       if (!resp.ok) throw new Error('Error de conexión a la API');
       const data = await resp.json();
 
       if (data && data.status === 'success') {
+        window._probakOnlineCount = data.online_now;
+        window._probakTotalIps = data.total_ips_unicas;
+        window._probakIpsHoy = data.ips_hoy;
+        window._probakVisitasHoy = data.visitas_hoy;
         renderAnalyticsData(data);
+        window.updateAdminFloatingBadge(data.online_now, data.total_ips_unicas, data.ips_hoy, data.visitas_hoy);
       }
     } catch (err) {
       console.warn('Notice cargando analíticas:', err);
@@ -168,16 +236,18 @@
   function renderAnalyticsData(d) {
     // Contadores Principales
     const elOnline = document.getElementById('statAdminOnlineNow');
-    const elIps = document.getElementById('statAdminTotalIps');
+    const elIpsToday = document.getElementById('statAdminTodayIps');
+    const elIpsTotal = document.getElementById('statAdminTotalIps');
     const elUsers = document.getElementById('statAdminTotalUsers');
-    const elHits = document.getElementById('statAdminTotalHits');
-    const elToday = document.getElementById('statAdminTodayHits');
+    const elHitsToday = document.getElementById('statAdminTodayHits');
+    const elHitsTotal = document.getElementById('statAdminTotalHits');
 
     if (elOnline) elOnline.textContent = d.online_now || 0;
-    if (elIps) elIps.textContent = d.total_ips_unicas || 0;
+    if (elIpsToday) elIpsToday.textContent = d.ips_hoy || 0;
+    if (elIpsTotal) elIpsTotal.textContent = d.total_ips_unicas || 0;
     if (elUsers) elUsers.textContent = d.total_usuarios_registrados || 0;
-    if (elHits) elHits.textContent = d.total_visitas || 0;
-    if (elToday) elToday.textContent = d.visitas_hoy || 0;
+    if (elHitsToday) elHitsToday.textContent = d.visitas_hoy || 0;
+    if (elHitsTotal) elHitsTotal.textContent = d.total_visitas || 0;
 
     // Tabla de Visitantes por IP
     const tbodyIps = document.getElementById('tableVisitorIpsBody');
@@ -193,9 +263,17 @@
 
           const userBadge = item.usuario_email
             ? `<div class="fw-bold text-warning font-rajdhani" style="font-size: 0.88rem;"><i class="bi bi-person-check-fill text-warning me-1"></i>${item.usuario_nombre || item.usuario_email}</div><div class="text-muted small text-truncate" style="max-width: 160px;">${item.usuario_email}</div>`
-            : `<span class="text-muted small"><i class="bi bi-person text-secondary me-1"></i>Visitante Anónimo</span>`;
+            : `<span class="badge bg-dark border border-secondary border-opacity-50 text-white-50 small"><i class="bi bi-person-x me-1"></i>Visitante Anónimo</span>`;
 
-          const deviceIcon = item.dispositivo === 'Móvil' ? 'bi-phone' : (item.dispositivo === 'Tablet' ? 'bi-tablet' : 'bi-laptop');
+          const osName = item.so || 'Windows';
+          const devName = item.dispositivo || 'Computadora';
+          const browserName = item.navegador || 'Chrome';
+          const osIcon = item.icon || (osName.includes('Android') ? 'bi-android2' : (osName.includes('iOS') || osName.includes('mac') ? 'bi-apple' : 'bi-windows'));
+          
+          let osBadgeClass = 'bg-primary text-info';
+          if (osName.includes('Android')) osBadgeClass = 'bg-success text-success';
+          else if (osName.includes('iOS') || osName.includes('mac')) osBadgeClass = 'bg-dark text-white border-light';
+          else if (osName.includes('Linux')) osBadgeClass = 'bg-warning text-warning';
 
           return `
             <tr style="border-color: rgba(255,255,255,0.06);">
@@ -204,25 +282,44 @@
                 <div class="fw-bold text-white font-monospace d-flex align-items-center gap-1">
                   <i class="bi bi-hdd-network text-info"></i> ${item.ip}
                 </div>
-                <div class="text-white-50 small" style="font-size: 0.75rem;">${item.pais || 'PE'}</div>
+                <div class="text-white-50 small" style="font-size: 0.75rem;">Ubicación: ${item.pais || 'PE'}</div>
+              </td>
+              <td>
+                <div class="d-flex flex-column gap-1">
+                  <div>
+                    <span class="badge ${osBadgeClass} bg-opacity-25 border border-opacity-25 font-rajdhani fw-bold" style="font-size: 0.82rem;">
+                      <i class="bi ${osIcon} me-1"></i> ${osName}
+                    </span>
+                  </div>
+                  <div class="text-white-50 small d-flex align-items-center gap-1" style="font-size: 0.76rem;">
+                    <span>${devName}</span> • <span class="text-info">${browserName}</span>
+                  </div>
+                </div>
               </td>
               <td>${userBadge}</td>
               <td>
-                <span class="badge bg-dark border border-secondary border-opacity-50 text-light small d-inline-flex align-items-center gap-1">
-                  <i class="bi ${deviceIcon}"></i> ${item.dispositivo} - ${item.navegador || 'Web'}
-                </span>
-              </td>
-              <td>
-                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 small font-monospace">
+                <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25 font-monospace" style="font-size: 0.8rem;">
                   /${item.ultima_pagina || 'index.html'}
                 </span>
               </td>
               <td class="text-center">
-                <span class="badge bg-dark text-white border border-secondary font-rajdhani fw-bold fs-7">
-                  ${item.total_visitas || 1}
-                </span>
+                <div class="d-flex flex-column align-items-center gap-1">
+                  <span class="badge bg-danger text-white font-rajdhani fw-bold" style="font-size: 0.8rem;">
+                    ${item.visitas_hoy || 1} Hoy
+                  </span>
+                  <span class="text-white-50 font-monospace" style="font-size: 0.7rem;">
+                    ${item.total_visitas || 1} Total
+                  </span>
+                </div>
               </td>
-              <td>${statusBadge}</td>
+              <td>
+                <div class="d-flex flex-column gap-1">
+                  <div>${statusBadge}</div>
+                  <div class="text-white-50 font-monospace" style="font-size: 0.7rem;">
+                    ${(item.ultima_visita || '').split(' ')[1] || ''}
+                  </div>
+                </div>
+              </td>
             </tr>
           `;
         }).join('');
@@ -255,7 +352,7 @@
               <td>${rolBadge}</td>
               <td>
                 <div class="font-monospace text-light small"><i class="bi bi-geo-alt-fill text-danger me-1"></i>${u.ultima_ip || '-'}</div>
-                <div class="text-muted small">Pág: /${u.ultima_pagina || 'index.html'}</div>
+                <div class="text-white-50 small">${u.ultimo_so || 'Windows'} • /${u.ultima_pagina || 'index.html'}</div>
               </td>
               <td class="text-center">
                 <span class="badge bg-dark text-white border border-secondary font-rajdhani fw-bold fs-7">
@@ -299,7 +396,7 @@
                     CONTROL DE VISITAS & USUARIOS EN TIEMPO REAL
                     <span class="badge bg-danger text-white font-rajdhani fw-bold" style="font-size: 0.7rem;">ADMINISTRADOR</span>
                   </h5>
-                  <div class="text-white-50 small" style="font-size: 0.78rem;">Registro por direcciones IP, visitantes en vivo y cuentas autenticadas</div>
+                  <div class="text-white-50 small" style="font-size: 0.78rem;">Registro por direcciones IP, sistemas operativos (Windows, Android, iOS), páginas vistas y dispositivos</div>
                 </div>
               </div>
               <div class="d-flex align-items-center gap-2">
@@ -326,18 +423,29 @@
                       <span class="live-pulse-dot"></span>
                     </div>
                     <h2 class="fw-bold text-success my-1 font-rajdhani" id="statAdminOnlineNow">0</h2>
-                    <span class="text-white-50" style="font-size: 0.72rem;">Activos últimos 5 min</span>
+                    <span class="text-white-50" style="font-size: 0.72rem;">Activos en últimos 5 min</span>
                   </div>
                 </div>
 
                 <div class="col-6 col-md-3">
                   <div class="card border-0 rounded-4 p-3 h-100" style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.25) !important;">
                     <div class="d-flex align-items-center justify-content-between mb-1">
-                      <span class="text-info small fw-bold font-rajdhani">VISITANTES ÚNICOS</span>
+                      <span class="text-info small fw-bold font-rajdhani">IPs DIFERENTES HOY</span>
                       <i class="bi bi-globe text-info"></i>
                     </div>
-                    <h2 class="fw-bold text-info my-1 font-rajdhani" id="statAdminTotalIps">0</h2>
-                    <span class="text-white-50" style="font-size: 0.72rem;">Direcciones IP distintas</span>
+                    <h2 class="fw-bold text-info my-1 font-rajdhani" id="statAdminTodayIps">0</h2>
+                    <span class="text-white-50" style="font-size: 0.72rem;">Histórico: <span id="statAdminTotalIps" class="text-white fw-bold">0</span> IPs totales</span>
+                  </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                  <div class="card border-0 rounded-4 p-3 h-100" style="background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.25) !important;">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                      <span class="text-danger small fw-bold font-rajdhani">PÁGINAS VISTAS HOY</span>
+                      <i class="bi bi-eye-fill text-danger"></i>
+                    </div>
+                    <h2 class="fw-bold text-danger my-1 font-rajdhani" id="statAdminTodayHits">0</h2>
+                    <span class="text-white-50" style="font-size: 0.72rem;">Histórico: <span id="statAdminTotalHits" class="text-white fw-bold">0</span> vistas totales</span>
                   </div>
                 </div>
 
@@ -348,18 +456,7 @@
                       <i class="bi bi-person-badge-fill text-warning"></i>
                     </div>
                     <h2 class="fw-bold text-warning my-1 font-rajdhani" id="statAdminTotalUsers">0</h2>
-                    <span class="text-white-50" style="font-size: 0.72rem;">Usuarios con sesión</span>
-                  </div>
-                </div>
-
-                <div class="col-6 col-md-3">
-                  <div class="card border-0 rounded-4 p-3 h-100" style="background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.25) !important;">
-                    <div class="d-flex align-items-center justify-content-between mb-1">
-                      <span class="text-danger small fw-bold font-rajdhani">TOTAL PÁGINAS VISTAS</span>
-                      <i class="bi bi-eye-fill text-danger"></i>
-                    </div>
-                    <h2 class="fw-bold text-danger my-1 font-rajdhani" id="statAdminTotalHits">0</h2>
-                    <span class="text-white-50" style="font-size: 0.72rem;">Hoy: <span id="statAdminTodayHits" class="text-white fw-bold">0</span> visitas</span>
+                    <span class="text-white-50" style="font-size: 0.72rem;">Usuarios con sesión activa</span>
                   </div>
                 </div>
               </div>
@@ -368,7 +465,7 @@
               <ul class="nav nav-pills mb-3 border-bottom border-secondary border-opacity-25 pb-2 gap-2" id="analyticsTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                   <button class="nav-link active rounded-pill font-rajdhani fw-bold px-4 py-2" id="tab-ips-btn" data-bs-toggle="pill" data-bs-target="#tab-ips-content" type="button" role="tab">
-                    <i class="bi bi-hdd-network-fill me-1"></i> Visitantes por IP en Vivo
+                    <i class="bi bi-hdd-network-fill me-1"></i> Registro de Dispositivos e IPs en Vivo
                   </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -386,12 +483,12 @@
                       <thead>
                         <tr class="text-white-50 font-rajdhani" style="background: #161B26; font-size: 0.78rem; letter-spacing: 0.5px;">
                           <th class="text-center" style="width: 40px;">#</th>
-                          <th>DIRECCIÓN IP / UBICACIÓN</th>
-                          <th>USUARIO / CUENTA</th>
-                          <th>DISPOSITIVO & NAVEGADOR</th>
+                          <th>DIRECCIÓN IP / PAÍS</th>
+                          <th>SISTEMA & DISPOSITIVO</th>
+                          <th>CUENTA ASOCIADA</th>
                           <th>PÁGINA ACTUAL</th>
-                          <th class="text-center">VISITAS</th>
-                          <th>ESTADO / ACTIVIDAD</th>
+                          <th class="text-center">VISITAS HOY / TOTAL</th>
+                          <th>ESTADO & HORA</th>
                         </tr>
                       </thead>
                       <tbody id="tableVisitorIpsBody">
@@ -410,7 +507,7 @@
                           <th class="text-center" style="width: 40px;">#</th>
                           <th>NOMBRE & CORREO</th>
                           <th>ROL / PLAN</th>
-                          <th>ÚLTIMA IP & RUTA</th>
+                          <th>ÚLTIMA IP & DISPOSITIVO</th>
                           <th class="text-center">TOTAL INGRESOS</th>
                           <th>ESTADO ACTUAL</th>
                         </tr>
@@ -429,7 +526,7 @@
             <div class="modal-footer border-0 py-3 px-4" style="background: #11151F; border-top: 1px solid rgba(255,255,255,0.08) !important;">
               <div class="d-flex align-items-center justify-content-between w-100">
                 <span class="text-white-50 small font-monospace" style="font-size: 0.75rem;">
-                  <i class="bi bi-shield-check text-success me-1"></i>Acceso seguro restringido por credenciales de administrador
+                  <i class="bi bi-shield-check text-success me-1"></i>Acceso seguro exclusivo para Administrador de Probaktronic
                 </span>
                 <button type="button" class="btn btn-secondary rounded-pill px-4 font-rajdhani fw-bold" data-bs-dismiss="modal">
                   Cerrar Panel

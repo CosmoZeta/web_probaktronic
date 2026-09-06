@@ -1,7 +1,19 @@
 // Global JavaScript for Probaktronic Dashboard Platform - Master Controller
 
+// Master Version Control
+window.PROBAKTRONIC_VERSION = '1.00001';
+
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Probaktronic Dashboard System Loaded.');
+  console.log(`Probaktronic Dashboard System Loaded - Version: ${window.PROBAKTRONIC_VERSION}`);
+
+  // Sincronizar número de versión en toda la interfaz
+  document.querySelectorAll('.status-item').forEach(item => {
+    const label = item.querySelector('.status-label');
+    const val = item.querySelector('.status-value');
+    if (label && label.textContent.includes('VERSIÓN') && val) {
+      val.textContent = window.PROBAKTRONIC_VERSION;
+    }
+  });
 
   const sidebar = document.querySelector('.sidebar');
   const btnMinimize = document.querySelector('.btn-sidebar-minimize');
