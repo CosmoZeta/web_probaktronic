@@ -263,6 +263,38 @@
         console.warn('Error cargando árbol local de diagramas:', e);
       }
 
+      // 3.5. Buscar diagramas guardados en MySQL SiteGround
+      try {
+        const srvRes = await fetch(`api/diagramas.php?action=arbol_completo&marca=${encodeURIComponent(cleanBrand)}&modelo=${encodeURIComponent(cleanDoc)}`).catch(() => null);
+        if (srvRes && srvRes.ok) {
+          const srvData = await srvRes.json();
+          if (srvData && srvData.status === 'success' && Array.isArray(srvData.data)) {
+            srvData.data.forEach(row => {
+              if (row.UrlArchivo && row.Titulo) {
+                const isPdf = row.UrlArchivo.toLowerCase().includes('.pdf');
+                rawList.push({
+                  id: row.Titulo,
+                  titulo: row.Titulo,
+                  nombre: row.Titulo,
+                  url: row.UrlArchivo,
+                  imageUrl: isPdf ? '' : row.UrlArchivo,
+                  archivoUrl: row.UrlArchivo,
+                  diagramaUrl: row.UrlArchivo,
+                  allImages: isPdf ? [] : [row.UrlArchivo],
+                  imagenes: isPdf ? [] : [row.UrlArchivo],
+                  brandDocId: cleanBrand,
+                  modelDocId: cleanDoc,
+                  motorDocId: row.NombreMotor || cleanMotor,
+                  anioDocId: row.Anio || ''
+                });
+              }
+            });
+          }
+        }
+      } catch (sqlErr) {
+        console.warn('MySQL diagrams lookup notice:', sqlErr);
+      }
+
       // 4. Buscar en Firestore si está conectado para este modelo específico
       if (typeof firebase !== 'undefined' && firebase.firestore) {
         try {

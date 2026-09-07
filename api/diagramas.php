@@ -73,6 +73,15 @@ if ($pdo) {
     }
 }
 
+if (!function_exists('cleanSlug')) {
+    function cleanSlug($str, $toUpper = false) {
+        $cleaned = preg_replace('/[^a-zA-Z0-9]+/', '_', trim((string)$str));
+        $cleaned = trim($cleaned, '_');
+        if ($cleaned === '') $cleaned = 'general';
+        return $toUpper ? strtoupper($cleaned) : strtolower($cleaned);
+    }
+}
+
 $action = isset($_GET['action']) ? $_GET['action'] : 'marcas';
 $marca = isset($_GET['marca']) ? trim($_GET['marca']) : '';
 $modelo = isset($_GET['modelo']) ? trim($_GET['modelo']) : '';
@@ -219,21 +228,32 @@ switch ($action) {
             exit();
         }
 
+        $marcaUpper = cleanSlug($nombreMarca, true);
         $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $nombreMarca));
+
+        // Crear carpetas físicas de almacenamiento para la nueva marca en SiteGround
+        $dirPruebas = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaUpper;
+        $dirDiagramas = dirname(__DIR__) . '/archivos_almacenamiento/diagramas/' . $marcaUpper;
+        if (!is_dir($dirPruebas)) {
+            @mkdir($dirPruebas, 0755, true);
+        }
+        if (!is_dir($dirDiagramas)) {
+            @mkdir($dirDiagramas, 0755, true);
+        }
 
         if ($pdo) {
             try {
                 $stmt = $pdo->prepare("INSERT INTO marcas (Slug, Nombre, LogoUrl, Combustible, Categoria, Activo) 
                                        VALUES (?, ?, ?, ?, ?, 1) 
-                                       ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre), LogoUrl = VALUES(LogoUrl), Combustible = VALUES(Combustible), Categoria = VALUES(Categoria)");
-                $stmt->execute([$slug, strtoupper($nombreMarca), $logoUrl, $combustible, $categoria]);
-                echo json_encode(['status' => 'success', 'message' => 'Marca guardada correctamente en MySQL.', 'marca' => $nombreMarca, 'slug' => $slug]);
+                                       ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre), LogoUrl = VALUES(LogoUrl), Combustible = VALUES(Combustible), Categoria = VALUES(Categoria), Activo = 1");
+                $stmt->execute([$slug, $marcaUpper, $logoUrl, $combustible, $categoria]);
+                echo json_encode(['status' => 'success', 'message' => 'Marca y carpetas creadas correctamente en el servidor y MySQL.', 'marca' => $marcaUpper, 'slug' => $slug, 'dir_creado' => $dirPruebas]);
             } catch (Exception $e) {
                 http_response_code(500);
                 echo json_encode(['status' => 'error', 'message' => 'Error al guardar la marca: ' . $e->getMessage()]);
             }
         } else {
-            echo json_encode(['status' => 'success', 'message' => 'Marca registrada localmente.', 'marca' => $nombreMarca, 'slug' => $slug]);
+            echo json_encode(['status' => 'success', 'message' => 'Marca y carpetas creadas localmente.', 'marca' => $marcaUpper, 'slug' => $slug]);
         }
         break;
 
@@ -244,6 +264,7 @@ switch ($action) {
         $motor = trim($input['motor'] ?? 'Estándar');
         $combustible = trim($input['combustible'] ?? 'diesel');
         $imagenUrl = trim($input['imagen'] ?? $input['imagenUrl'] ?? '');
+        $slugParam = trim($input['slug'] ?? '');
 
         if ($nombreModelo === '') {
             http_response_code(400);
@@ -251,8 +272,20 @@ switch ($action) {
             exit();
         }
 
+        $marcaUpper = cleanSlug($nombreMarca, true);
+        $modeloClean = !empty($slugParam) ? cleanSlug($slugParam, false) : cleanSlug($nombreModelo . ($anios ? '_' . $anios : ''), false);
+        $motorClean = cleanSlug($motor, false);
         $marcaSlug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $nombreMarca));
-        $modeloSlug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $nombreModelo));
+        $modeloSlug = $modeloClean;
+
+        // Crear carpeta física para el modelo con subcarpetas 'imagen' y 'conexionado' bajo el componente 'ecu'
+        $dirEcu = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaUpper . '/' . $modeloClean . '/' . $motorClean . '/ecu';
+        if (!is_dir($dirEcu . '/imagen')) {
+            @mkdir($dirEcu . '/imagen', 0755, true);
+        }
+        if (!is_dir($dirEcu . '/conexionado')) {
+            @mkdir($dirEcu . '/conexionado', 0755, true);
+        }
 
         if ($pdo) {
             try {
@@ -280,7 +313,7 @@ switch ($action) {
                     $modeloId = $pdo->lastInsertId();
                 } else {
                     $modeloId = $modeloRow['ModeloID'];
-                    $updateModelo = $pdo->prepare("UPDATE modelos SET Anios = ?, Motor = ?, Combustible = ?, ImagenUrl = ? WHERE ModeloID = ?");
+                    $updateModelo = $pdo->prepare("UPDATE modelos SET Anios = ?, Motor = ?, Combustible = ?, ImagenUrl = ?, Activo = 1 WHERE ModeloID = ?");
                     $updateModelo->execute([$anios, $motor, $combustible, $imagenUrl, $modeloId]);
                 }
 
@@ -345,6 +378,10 @@ switch ($action) {
         $urlArchivo = trim($input['url_archivo'] ?? $input['url'] ?? '');
         $tipo = trim($input['tipo'] ?? 'pinout');
         $descripcion = trim($input['descripcion'] ?? '');
+        $marcaRaw = trim($input['marca'] ?? '');
+        $modeloRaw = trim($input['modelo'] ?? '');
+        $anioRaw = trim($input['anios'] ?? $input['anio'] ?? '');
+        $motorRaw = trim($input['motor'] ?? '');
 
         if ($urlArchivo === '') {
             http_response_code(400);
@@ -354,10 +391,57 @@ switch ($action) {
 
         if ($pdo) {
             try {
+                // Si motor_id no viene especificado, intentar resolverlo desde la jerarquía
+                if ($motorId <= 0 && $marcaRaw !== '' && $modeloRaw !== '') {
+                    $marcaClean = cleanSlug($marcaRaw, true);
+                    $modeloClean = cleanSlug($modeloRaw, false);
+                    $marcaSlug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $marcaRaw));
+                    
+                    // 1. Marca
+                    $stmtM = $pdo->prepare("SELECT MarcaID FROM marcas WHERE Slug = ? OR Nombre = ?");
+                    $stmtM->execute([$marcaSlug, $marcaClean]);
+                    $mRow = $stmtM->fetch();
+                    $mId = $mRow ? $mRow['MarcaID'] : null;
+
+                    if ($mId) {
+                        // 2. Modelo
+                        $stmtMo = $pdo->prepare("SELECT ModeloID FROM modelos WHERE MarcaID = ? AND (Slug = ? OR Nombre LIKE ?)");
+                        $stmtMo->execute([$mId, $modeloClean, '%' . $modeloRaw . '%']);
+                        $moRow = $stmtMo->fetch();
+                        $moId = $moRow ? $moRow['ModeloID'] : null;
+
+                        if ($moId) {
+                            // 3. Año
+                            $stmtA = $pdo->prepare("SELECT AnioID FROM vehiculo_anios WHERE ModeloID = ?");
+                            $stmtA->execute([$moId]);
+                            $aRow = $stmtA->fetch();
+                            $aId = $aRow ? $aRow['AnioID'] : null;
+
+                            if (!$aId) {
+                                $stmtInsA = $pdo->prepare("INSERT INTO vehiculo_anios (ModeloID, Anio) VALUES (?, ?)");
+                                $stmtInsA->execute([$moId, $anioRaw ?: 'Estándar']);
+                                $aId = $pdo->lastInsertId();
+                            }
+
+                            // 4. Motor
+                            $stmtMot = $pdo->prepare("SELECT MotorID FROM vehiculo_motores WHERE AnioID = ?");
+                            $stmtMot->execute([$aId]);
+                            $motRow = $stmtMot->fetch();
+                            $motorId = $motRow ? intval($motRow['MotorID']) : 0;
+
+                            if ($motorId <= 0) {
+                                $stmtInsMot = $pdo->prepare("INSERT INTO vehiculo_motores (AnioID, NombreMotor, TipoCombustible) VALUES (?, ?, ?)");
+                                $stmtInsMot->execute([$aId, $motorRaw ?: 'Estándar', trim($input['combustible'] ?? 'diesel')]);
+                                $motorId = intval($pdo->lastInsertId());
+                            }
+                        }
+                    }
+                }
+
                 $stmt = $pdo->prepare("INSERT INTO diagramas_archivos (MotorID, Titulo, UrlArchivo, Tipo, Descripcion) 
                                        VALUES (?, ?, ?, ?, ?)");
                 $stmt->execute([$motorId, $titulo, $urlArchivo, $tipo, $descripcion]);
-                echo json_encode(['status' => 'success', 'message' => 'Diagrama guardado en MySQL.', 'archivo_id' => $pdo->lastInsertId()]);
+                echo json_encode(['status' => 'success', 'message' => 'Diagrama guardado en MySQL.', 'archivo_id' => $pdo->lastInsertId(), 'motor_id' => $motorId]);
             } catch (Exception $e) {
                 http_response_code(500);
                 echo json_encode(['status' => 'error', 'message' => 'Error al guardar diagrama: ' . $e->getMessage()]);
@@ -390,19 +474,12 @@ switch ($action) {
         $tipoCarpeta = trim($_POST['tipo_carpeta'] ?? 'imagen');
         $posicion = trim($_POST['posicion'] ?? 'end');
 
-        // Limpieza y sanitización de nombres de carpetas
-        $marcaClean = strtoupper(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $marcaRaw)));
-        $modeloClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $modeloRaw)));
+        // Limpieza y sanitización uniforme de nombres de carpetas
+        $marcaClean = cleanSlug($marcaRaw, true);
+        $modeloClean = cleanSlug($modeloRaw, false);
         
-        // Normalización inteligente de Motor
-        $motorUpper = strtoupper($motorRaw);
-        if (strpos($motorUpper, '4E') !== false) {
-            $motorClean = 'motor_4e';
-        } elseif (strpos($motorUpper, '2KD') !== false || strpos($motorUpper, '2011') !== false || strpos($motorUpper, 'HILUX') !== false) {
-            $motorClean = '2011-2015';
-        } else {
-            $motorClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $motorRaw)));
-        }
+        // Normalización uniforme de Motor
+        $motorClean = cleanSlug($motorRaw, false);
 
         // Normalización inteligente de Componente
         $compUpper = strtoupper($componenteRaw);
@@ -417,20 +494,22 @@ switch ($action) {
         } elseif (strpos($compUpper, 'ECU') !== false || strpos($compUpper, 'COMPUTADORA') !== false || strpos($compUpper, 'ECM') !== false || strpos($compUpper, 'PCM') !== false) {
             $componenteClean = 'ecu';
         } else {
-            $componenteClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $componenteRaw)));
+            $componenteClean = cleanSlug($componenteRaw, false);
         }
+        $componenteClean = preg_replace('/_(imagen|conexionado)$/i', '', $componenteClean);
 
         $tipoClean = ($tipoCarpeta === 'conexionado') ? 'conexionado' : 'imagen';
 
-        if (empty($marcaClean)) $marcaClean = 'TOYOTA';
-        if (empty($modeloClean)) $modeloClean = 'general';
-        if (empty($componenteClean)) $componenteClean = 'ecu';
-
         // Directorio físico en el servidor de SiteGround
-        $baseStorageDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorClean . '/' . $componenteClean . '/' . $tipoClean;
+        $baseComponentDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorClean . '/' . $componenteClean;
+        $baseStorageDir = $baseComponentDir . '/' . $tipoClean;
 
-        if (!is_dir($baseStorageDir)) {
-            @mkdir($baseStorageDir, 0755, true);
+        // Asegurar que ambas subcarpetas (imagen y conexionado) existan automáticamente
+        if (!is_dir($baseComponentDir . '/imagen')) {
+            @mkdir($baseComponentDir . '/imagen', 0755, true);
+        }
+        if (!is_dir($baseComponentDir . '/conexionado')) {
+            @mkdir($baseComponentDir . '/conexionado', 0755, true);
         }
 
         // Extensión original y nombre limpio profesional
@@ -468,17 +547,9 @@ switch ($action) {
         $motorRaw = trim($_GET['motor'] ?? 'motor_4e');
         $componenteRaw = trim($_GET['componente'] ?? 'ecu');
 
-        $marcaClean = strtoupper(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $marcaRaw)));
-        $modeloClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $modeloRaw)));
-        
-        $motorUpper = strtoupper($motorRaw);
-        if (strpos($motorUpper, '4E') !== false) {
-            $motorClean = 'motor_4e';
-        } elseif (strpos($motorUpper, '2KD') !== false || strpos($motorUpper, '2011') !== false || strpos($motorUpper, 'HILUX') !== false) {
-            $motorClean = '2011-2015';
-        } else {
-            $motorClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $motorRaw)));
-        }
+        $marcaClean = cleanSlug($marcaRaw, true);
+        $modeloClean = cleanSlug($modeloRaw, false);
+        $motorClean = cleanSlug($motorRaw, false);
 
         $compUpper = strtoupper($componenteRaw);
         if (strpos($compUpper, 'PEDAL') !== false) {
@@ -492,7 +563,7 @@ switch ($action) {
         } elseif (strpos($compUpper, 'ECU') !== false || strpos($compUpper, 'COMPUTADORA') !== false || strpos($compUpper, 'ECM') !== false || strpos($compUpper, 'PCM') !== false) {
             $componenteClean = 'ecu';
         } else {
-            $componenteClean = strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', str_replace(' ', '_', $componenteRaw)));
+            $componenteClean = cleanSlug($componenteRaw, false);
         }
 
         $baseDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorClean . '/' . $componenteClean . '/imagen';
