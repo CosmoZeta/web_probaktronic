@@ -1,0 +1,86 @@
+================================================================================
+PROBAKTRONIC - RESUMEN DE SESIÓN Y REGISTRO DE CAMBIOS TÉCNICOS
+Fecha: 06 de Septiembre de 2026
+Objetivo: Módulo de Vehículos, Diagramas Técnicos, Multi-Tarjetas y Sincronización
+================================================================================
+
+1. DIAGNÓSTICO Y PROBLEMAS ABORDADOS
+--------------------------------------------------------------------------------
+a) Tarjetas Fantasma / Persistencia Indeseada:
+   - Al eliminar una marca o modelo en la nube/hosting (o desde la interfaz de admin), 
+     reaparecían diagramas anteriores al crear nuevamente la marca o modelo (como Nissan Tiida).
+   - Causa: 'probak_custom_diagrams_store' en localStorage no se depuraba al eliminar marcas/modelos.
+
+b) Duplicidad de Carpetas de Modelos en el Hosting:
+   - Se creaban dos carpetas distintas (ej. 'tiida_tiida_latio' y 'tiidatiidalatio_2004_2012') 
+     debido a discrepancias en la generación del slug entre save_modelo y subir_foto.
+
+c) Reemplazo de Tarjetas al Subir Diagramas Nuevos:
+   - Al publicar un diagrama nuevo (ej. INMOVILIZADOR), en lugar de crearse una nueva tarjeta,
+     reemplazaba a la tarjeta de ECU por falta de tarjeta base fija en el render.
+   - Además, el título de la tarjeta mostraba todo el texto largo del vehículo en lugar de un nombre limpio.
+
+d) Normalización Forzada de Motores en el Backend:
+   - Las fotos y carpetas se guardaban bajo '2011-2015' o 'motor_4e' debido a normalizaciones
+     estáticas heredadas en api/diagramas.php.
+
+
+2. SOLUCIONES Y MEJORAS IMPLEMENTADAS
+--------------------------------------------------------------------------------
+a) Sistema de Multi-Tarjetas Dinámicas e Independientes:
+   - La tarjeta 'CONEXIONADO ECU' se mantiene siempre fija como tarjeta base del vehículo.
+   - Cada nuevo diagrama publicado (INMOVILIZADOR, PEDAL ACELERADOR, EDU 2 CONECTORES, etc.)
+     se renderiza como una nueva tarjeta independiente a su costado, más el botón '+ SUBIR DIAGRAMA'.
+   - Las etiquetas de las tarjetas ahora muestran nombres limpios y profesionales (ej. 'INMOVILIZADOR', 'CONEXIONADO ECU').
+
+b) Adaptabilidad de los 2 Botones del Visor:
+   - Al abrir cualquier tarjeta (por ejemplo INMOVILIZADOR), los dos botones principales del visor se adaptan automáticamente:
+     * Botón 1: "IMAGEN DE LA ANTENA / INMOVILIZADOR"
+     * Botón 2: "CONEXIONADO DE LA ANTENA / INMOVILIZADOR"
+   - Si se abre CONEXIONADO ECU:
+     * Botón 1: "IMAGEN DE LA ECU"
+     * Botón 2: "CONEXIONADO DE LA ECU"
+
+c) Jerarquía Unificada en Base de Datos MySQL y Hosting (SiteGround):
+   - api/diagramas.php ('save_diagrama'): Si no se envía motor_id, ahora auto-resuelve e inserta 
+     la jerarquía completa: Marcas -> Modelos -> vehiculo_anios -> vehiculo_motores -> diagramas_archivos.
+   - api/diagramas.php ('arbol_completo'): Consulta la jerarquía completa y alimenta a js/vehiculos-data.js.
+   - Creación automática de subcarpetas estandarizadas:
+     archivos_almacenamiento/diagramas_PRUEBAS/{MARCA}/{MODELO}/{MOTOR}/{COMPONENTE}/imagen/
+     archivos_almacenamiento/diagramas_PRUEBAS/{MARCA}/{MODELO}/{MOTOR}/{COMPONENTE}/conexionado/
+   - Eliminación de overrides fijos de motor en 'subir_foto' y 'listar_fotos' para respetar cualquier motor real (ej. HR15).
+
+d) Depuración y Sincronización Limpia de Caché:
+   - Se limpian registros huérfanos de localStorage al crear o eliminar marcas y modelos.
+   - Limpieza del modal de subida de diagramas para evitar strings corruptos como "TIIDA ()".
+
+
+3. ARCHIVOS MODIFICADOS
+--------------------------------------------------------------------------------
+1. api/diagramas.php
+   - Unificación de 'cleanSlug' para marcas, modelos, motores y componentes.
+   - Jerarquía relacional completa en 'save_modelo' y 'save_diagrama'.
+   - Soporte para nombres dinámicos de motor en 'subir_foto' y 'listar_fotos'.
+   - Aseguramiento de creación de carpetas 'imagen' y 'conexionado'.
+
+2. js/vehiculos-diagramas.js
+   - Lógica de tarjetas en 'openModelEcuInfo' asegurando tarjeta ECU fija + tarjetas dinámicas independientes.
+   - Etiquetas de tarjeta limpias (displayCardLabel).
+   - Refresco correcto tras publicar diagrama usando 'window.currentSelectedModelDocId'.
+   - Limpieza de modelo en 'openAdminAddDiagramModal' eliminando residuos de texto.
+   - Textos de encabezado y botones del visor dinámicos según el componente activo.
+
+3. js/vehiculos-data.js
+   - Integración de consulta MySQL 'arbol_completo' en 'fetchModelDiagrams'.
+   - Normalización y emparejamiento estricto de diagramas locales y remotos.
+
+4. Paquete de Distribución:
+   - PROBAKTRONIC_SOLO_CODIGO.zip generado exitosamente (7.81 MB) excluyendo .htaccess.
+
+
+4. ESTADO ACTUAL Y LISTO PARA CONTINUAR
+--------------------------------------------------------------------------------
+- Estructura probada con Nissan (Tiida / Tiida Latio 2004-2012, Motor HR15).
+- Funcionalidad de agregar marcas, modelos, subir diagramas adicionales y navegación lista.
+- Código empaquetado y listo para desplegar o continuar en la siguiente fase.
+================================================================================
