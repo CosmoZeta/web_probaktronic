@@ -481,6 +481,82 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       return res.end(JSON.stringify({ status: 'success', data: allHs[key] || [] }));
     }
 
+    case 'delete_marca': {
+      const nombreMarca = String(input.marca || input.nombre || query.marca || query.nombre || '').trim();
+      const bSlug = cleanSlug(nombreMarca, false);
+      const marcaUpper = cleanSlug(nombreMarca, true);
+
+      if (tree[bSlug]) {
+        delete tree[bSlug];
+        saveVehiculosData(tree);
+      }
+
+      // Eliminar carpeta física de la marca en disco duro
+      const dirMarca = path.join(DIAGRAMAS_DIR, marcaUpper);
+      if (fs.existsSync(dirMarca)) {
+        try {
+          fs.rmSync(dirMarca, { recursive: true, force: true });
+        } catch (e) {
+          console.error('Error al eliminar carpeta de marca:', e.message);
+        }
+      }
+      return res.end(JSON.stringify({ status: 'success', message: 'Marca y carpetas eliminadas físicamente del disco local.' }));
+    }
+
+    case 'delete_modelo': {
+      const nombreMarca = String(input.marca || query.marca || '').trim();
+      const nombreModelo = String(input.modelo || query.modelo || '').trim();
+      const bSlug = cleanSlug(nombreMarca, false);
+      const marcaUpper = cleanSlug(nombreMarca, true);
+      const mSlug = cleanSlug(nombreModelo, false);
+
+      if (tree[bSlug] && tree[bSlug].models) {
+        const foundKey = Object.keys(tree[bSlug].models).find(k => k === mSlug || (tree[bSlug].models[k].modelData && String(tree[bSlug].models[k].modelData.nombre).toLowerCase() === nombreModelo.toLowerCase()));
+        if (foundKey) {
+          delete tree[bSlug].models[foundKey];
+          saveVehiculosData(tree);
+        }
+      }
+
+      // Eliminar carpetas físicas del modelo en disco duro
+      const modelDirs = [
+        path.join(DIAGRAMAS_DIR, marcaUpper, mSlug),
+        path.join(DIAGRAMAS_DIR, marcaUpper, cleanSlug(nombreModelo, false))
+      ];
+      modelDirs.forEach(dir => {
+        if (fs.existsSync(dir)) {
+          try {
+            fs.rmSync(dir, { recursive: true, force: true });
+          } catch (e) {}
+        }
+      });
+
+      return res.end(JSON.stringify({ status: 'success', message: 'Modelo y carpetas eliminadas físicamente del disco local.' }));
+    }
+
+    case 'delete_diagrama': {
+      const marcaRaw = String(input.marca || query.marca || '').trim();
+      const modeloRaw = String(input.modelo || query.modelo || '').trim();
+      const titulo = String(input.titulo || query.titulo || '').trim();
+      const bSlug = cleanSlug(marcaRaw, false);
+      const mSlug = cleanSlug(modeloRaw, false);
+
+      if (tree[bSlug] && tree[bSlug].models && tree[bSlug].models[mSlug]) {
+        const mObj = tree[bSlug].models[mSlug];
+        Object.keys(mObj.anios || {}).forEach(aKey => {
+          Object.keys(mObj.anios[aKey].motores || {}).forEach(motKey => {
+            const archivos = mObj.anios[aKey].motores[motKey].archivos || [];
+            mObj.anios[aKey].motores[motKey].archivos = archivos.filter(arc => {
+              const arcTitle = arc.titulo || arc.nombre || arc._id || '';
+              return arcTitle.toUpperCase() !== titulo.toUpperCase() && arc._id !== titulo;
+            });
+          });
+        });
+        saveVehiculosData(tree);
+      }
+      return res.end(JSON.stringify({ status: 'success', message: 'Diagrama eliminado localmente.' }));
+    }
+
     default:
       return res.end(JSON.stringify({ status: 'success', message: `Acción ${action} ejecutada en local.`, data: [] }));
   }

@@ -2211,11 +2211,9 @@ window.loadSpecificDiagramSection = async function(type) {
           const motorQ = (arch.motorDocId || currentSelectedMotorDocId || active.motor || 'motor_4e').trim();
           const compQ = (arch.archDocId || arch.id || active.id || active.tituloArchivo || 'ecu').trim();
 
-          const apiEndpoints = [
-            `api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`,
-            `/api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`,
-            `https://probaktronic.com/api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`
-          ];
+          const apiEndpoints = (typeof window.getApiEndpoints === 'function')
+            ? window.getApiEndpoints('listar_fotos', `marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`)
+            : [`api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`];
 
           for (const ep of apiEndpoints) {
             try {
@@ -7057,11 +7055,9 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
     if (progressBar) progressBar.style.width = '55%';
 
     let fileDownloadUrl = '';
-    const endpoints = [
-      'api/diagramas.php?action=subir_foto',
-      '/api/diagramas.php?action=subir_foto',
-      'https://probaktronic.com/api/diagramas.php?action=subir_foto'
-    ];
+    const endpoints = (typeof window.getApiEndpoints === 'function') 
+      ? window.getApiEndpoints('subir_foto')
+      : ['http://127.0.0.1:3000/api/diagramas.php?action=subir_foto', 'api/diagramas.php?action=subir_foto', '/api/diagramas.php?action=subir_foto'];
 
     for (const endpoint of endpoints) {
       try {
@@ -7507,12 +7503,22 @@ window.uploadFileToHost = async function(file, category = 'diagramas', subcarpet
   });
 };
 
+window.getApiEndpoints = function(action, queryStr = '') {
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost');
+  const q = queryStr ? `&${queryStr}` : '';
+  const endpoints = [];
+  if (isLocal) {
+    endpoints.push(`http://127.0.0.1:3000/api/diagramas.php?action=${action}${q}`);
+    endpoints.push(`http://localhost:3000/api/diagramas.php?action=${action}${q}`);
+  }
+  endpoints.push(`api/diagramas.php?action=${action}${q}`);
+  endpoints.push(`/api/diagramas.php?action=${action}${q}`);
+  endpoints.push(`https://probaktronic.com/api/diagramas.php?action=${action}${q}`);
+  return endpoints;
+};
+
 window.callDiagramasApi = async function(action, payload, method = 'POST') {
-  const endpoints = [
-    `api/diagramas.php?action=${action}`,
-    `/api/diagramas.php?action=${action}`,
-    `https://probaktronic.com/api/diagramas.php?action=${action}`
-  ];
+  const endpoints = window.getApiEndpoints(action);
   for (const endpoint of endpoints) {
     try {
       const options = {

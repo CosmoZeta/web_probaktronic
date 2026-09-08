@@ -258,11 +258,24 @@
         console.warn('Error cargando árbol local de diagramas:', e);
       }
 
-      // 3.5. Buscar diagramas guardados en MySQL SiteGround
+      // 3.5. Buscar diagramas guardados en backend local o MySQL
       try {
-        const srvRes = await fetch(`api/diagramas.php?action=arbol_completo&marca=${encodeURIComponent(cleanBrand)}&modelo=${encodeURIComponent(cleanDoc)}`).catch(() => null);
-        if (srvRes && srvRes.ok) {
-          const srvData = await srvRes.json();
+        const epList = (typeof window !== 'undefined' && typeof window.getApiEndpoints === 'function')
+          ? window.getApiEndpoints('arbol_completo', `marca=${encodeURIComponent(cleanBrand)}&modelo=${encodeURIComponent(cleanDoc)}`)
+          : [
+              `http://127.0.0.1:3000/api/diagramas.php?action=arbol_completo&marca=${encodeURIComponent(cleanBrand)}&modelo=${encodeURIComponent(cleanDoc)}`,
+              `api/diagramas.php?action=arbol_completo&marca=${encodeURIComponent(cleanBrand)}&modelo=${encodeURIComponent(cleanDoc)}`
+            ];
+        let srvData = null;
+        for (const ep of epList) {
+          try {
+            const srvRes = await fetch(ep);
+            if (srvRes && srvRes.ok) {
+              srvData = await srvRes.json();
+              if (srvData && srvData.status === 'success') break;
+            }
+          } catch (e) {}
+        }
           if (srvData && srvData.status === 'success' && Array.isArray(srvData.data)) {
             srvData.data.forEach(row => {
               if (row.UrlArchivo && row.Titulo) {
