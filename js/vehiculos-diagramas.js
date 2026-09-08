@@ -3763,11 +3763,29 @@ window.handleAdminSubmitNewDiagram = async function(e) {
     const modelDocId = rawModel.toLowerCase().trim();
     const cleanFileName = adminSelectedDiagramFile.name;
 
-    // 1. Subir archivo a SiteGround (archivos_almacenamiento/diagramas/[MARCA]/[MODELO]/[AÑO])
+    const rawUpper = rawTitle.toUpperCase();
+    let compSlug = 'ecu';
+    if (rawUpper.includes('INMOVILIZADOR') || rawUpper.includes('LLAVE') || rawUpper.includes('ANTENA')) {
+      compSlug = 'inmovilizador_llave';
+    } else if (rawUpper.includes('PEDAL')) {
+      compSlug = 'pedal_acelerador';
+    } else if (rawUpper.includes('EDU') && (rawUpper.includes('DOS') || rawUpper.includes('2'))) {
+      compSlug = 'edu_dos_conectores';
+    } else if (rawUpper.includes('EDU') && (rawUpper.includes('TRES') || rawUpper.includes('3'))) {
+      compSlug = 'edu_tres_conectores';
+    } else if (rawUpper.includes('OBD')) {
+      compSlug = 'puerto_obd';
+    } else if (rawUpper.includes('CUERPO')) {
+      compSlug = 'cuerpo_aceleracion';
+    }
+
+    // 1. Subir archivo a diagramas_PRUEBAS/[MARCA]/[MODELO]/[MOTOR]/[COMPONENTE]/conexionado
     if (progressBar) progressBar.style.width = '40%';
     try {
-      const subpath = `${rawBrand}/${rawModel}/${rawYear}`.replace(/[^a-zA-Z0-9_\-\/]/g, '_');
-      const uploadedPath = await window.uploadFileToHost(adminSelectedDiagramFile, 'diagramas', subpath);
+      const cleanModelSlug = rawModel.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      const cleanMotorSlug = rawMotor.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      const subpath = `${brandUpper}/${cleanModelSlug}/${cleanMotorSlug}/${compSlug}/conexionado`;
+      const uploadedPath = await window.uploadFileToHost(adminSelectedDiagramFile, 'diagramas_PRUEBAS', subpath);
       if (uploadedPath && typeof uploadedPath === 'string' && uploadedPath !== cleanFileName) {
         fileDownloadUrl = uploadedPath;
       }
@@ -3783,9 +3801,9 @@ window.handleAdminSubmitNewDiagram = async function(e) {
     }
 
     if (progressBar) progressBar.style.width = '70%';
-    if (statusMsg) statusMsg.textContent = 'Guardando datos en MySQL...';
+    if (statusMsg) statusMsg.textContent = 'Guardando datos en el sistema...';
 
-    // 2. Guardar en Base de Datos MySQL SiteGround
+    // 2. Guardar en Base de Datos / JSON Local
     await window.callDiagramasApi('save_diagrama', {
       marca: brandUpper,
       modelo: rawModel,
@@ -3793,7 +3811,7 @@ window.handleAdminSubmitNewDiagram = async function(e) {
       motor: rawMotor,
       titulo: rawTitle,
       url_archivo: fileDownloadUrl,
-      tipo: 'pinout',
+      tipo: compSlug,
       combustible: fuelType,
       categoria: category
     });
