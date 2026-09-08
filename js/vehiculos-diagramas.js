@@ -3888,19 +3888,15 @@ window.handleAdminSubmitNewDiagram = async function(e) {
       if (statusMsg) statusMsg.textContent = '';
       if (btnSubmit) btnSubmit.disabled = false;
 
-      // Si la vista de conexiones del vehículo está activa, refrescar inmediatamente con los datos exactos del vehículo seleccionado
-      const ecuView = document.getElementById('ecuInfoViewContainer');
-      if (ecuView && !ecuView.classList.contains('d-none')) {
-        const curDocId = window.currentSelectedModelDocId || modelDocId || rawModel;
-        const curModel = (document.getElementById('selectedVehicleModelText')?.textContent || rawModel).trim();
-        const curMotor = (document.getElementById('selectedVehicleSpecText')?.textContent || rawMotor).trim();
-        if (typeof window.openModelEcuInfo === 'function') {
-          window.openModelEcuInfo(curDocId, curModel, curMotor);
-        }
-      } else {
-        // Reload brands/models view
-        const brandGrid = document.getElementById('vehiculosBrandGrid');
-        if (brandGrid) loadFirestoreDiagramasBrands(brandGrid);
+      // Mantener al usuario en la vista del vehículo o modelo actual sin regresar al inicio
+      const curDocId = window.currentSelectedModelDocId || modelDocId || rawModel;
+      const curModel = (document.getElementById('selectedVehicleModelText')?.textContent || rawModel).trim();
+      const curMotor = (document.getElementById('selectedVehicleSpecText')?.textContent || rawMotor).trim();
+
+      if (typeof window.openModelEcuInfo === 'function') {
+        window.openModelEcuInfo(curDocId, curModel, curMotor);
+      } else if (typeof window.openBrandDiagramModels === 'function') {
+        window.openBrandDiagramModels(brandDocId, rawBrand, null, 'diagramas');
       }
     }, 1200);
 
@@ -7463,7 +7459,18 @@ window.handleAdminNewBrandLogoFileChange = function(input) {
 // Helper universal de subida de archivos y API de Diagramas MySQL en SiteGround
 window.uploadFileToHost = async function(file, category = 'diagramas', subcarpeta = '') {
   if (!file) return null;
-  const endpoints = ['api/upload.php', '/api/upload.php', 'https://probaktronic.com/api/upload.php'];
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost');
+  const endpoints = [];
+  if (isLocal) {
+    endpoints.push('http://127.0.0.1:3000/api/upload.php');
+    endpoints.push('http://localhost:3000/api/upload.php');
+    endpoints.push('http://127.0.0.1:3000/api/upload');
+    endpoints.push('http://localhost:3000/api/upload');
+  }
+  endpoints.push('api/upload.php');
+  endpoints.push('/api/upload.php');
+  endpoints.push('https://probaktronic.com/api/upload.php');
+
   for (const endpoint of endpoints) {
     try {
       const formData = new FormData();
@@ -7476,7 +7483,7 @@ window.uploadFileToHost = async function(file, category = 'diagramas', subcarpet
       if (!res.ok) continue;
       const data = await res.json();
       if (data && data.status === 'success') {
-        return data.ruta_local || data.url_completa;
+        return data.ruta_local || data.url || data.url_completa;
       }
     } catch (e) {}
   }

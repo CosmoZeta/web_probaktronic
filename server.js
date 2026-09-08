@@ -395,36 +395,83 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       const motorRaw = String(input.motor || 'Motor Estándar').trim();
       const titulo = String(input.titulo || 'Diagrama').trim();
       const tipo = String(input.tipo || 'ecu').trim();
-      const urlArchivo = String(input.url_archivo || input.url || '').trim();
+      let urlArchivo = String(input.url_archivo || input.url || '').trim();
       const descripcion = String(input.descripcion || '').trim();
 
+      const marcaClean = cleanSlug(marcaRaw, true);
       const bSlug = cleanSlug(marcaRaw, false);
-      const mSlug = cleanSlug(modeloRaw, false);
-      const compSlug = normalizeComponente(tipo);
+      const modeloClean = cleanSlug(modeloRaw, false);
+      const mSlug = modeloClean;
+      const motorClean = cleanSlug(motorRaw, false);
+      const compSlug = normalizeComponente(tipo || titulo);
 
-      // Asegurar en el árbol JSON
-      if (tree[bSlug] && tree[bSlug].models && tree[bSlug].models[mSlug]) {
-        const mObj = tree[bSlug].models[mSlug];
-        if (!mObj.anios[anioRaw]) mObj.anios[anioRaw] = { anioData: { _id: anioRaw }, motores: {} };
-        if (!mObj.anios[anioRaw].motores[motorRaw]) mObj.anios[anioRaw].motores[motorRaw] = { motorData: { _id: motorRaw }, archivos: [] };
+      // Crear carpetas físicas estrictamente para el componente que se está subiendo
+      const compDir = path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, compSlug);
+      const conxDir = path.join(compDir, 'conexionado');
+      const imgDir = path.join(compDir, 'imagen');
+      fs.mkdirSync(conxDir, { recursive: true });
+      fs.mkdirSync(imgDir, { recursive: true });
 
-        const archivos = mObj.anios[anioRaw].motores[motorRaw].archivos;
-        archivos.push({
-          _id: titulo,
-          titulo,
-          tipo: compSlug,
-          pdfUrl: urlArchivo,
-          diagramaUrl: urlArchivo,
-          url: urlArchivo,
-          imageUrl: urlArchivo,
-          descripcion,
-          imagenes: [urlArchivo],
-          allImages: [urlArchivo]
-        });
-        saveVehiculosData(tree);
+      // Si se envió un archivo en base64 (data:...), guardarlo físicamente como archivo real en conexionado
+      if (urlArchivo.startsWith('data:')) {
+        try {
+          const matches = urlArchivo.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+          if (matches && matches.length === 3) {
+            const mime = matches[1];
+            const base64Data = matches[2];
+            let ext = '.jpg';
+            if (mime.includes('pdf')) ext = '.pdf';
+            else if (mime.includes('png')) ext = '.png';
+            else if (mime.includes('webp')) ext = '.webp';
+            else if (mime.includes('svg')) ext = '.svg';
+
+            const cleanFileName = `diagrama_${modeloClean}_${compSlug}${ext}`;
+            const diskPath = path.join(conxDir, cleanFileName);
+            fs.writeFileSync(diskPath, Buffer.from(base64Data, 'base64'));
+            urlArchivo = `archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorClean}/${compSlug}/conexionado/${cleanFileName}`;
+          }
+        } catch (e) {
+          console.error('Error al guardar archivo base64 en disco:', e.message);
+        }
       }
 
-      return res.end(JSON.stringify({ status: 'success', message: 'Diagrama guardado localmente.' }));
+      // Asegurar en el árbol JSON
+      if (!tree[bSlug]) {
+        tree[bSlug] = { brandData: { nombre: marcaClean, logo: '', combustible: 'gasolina', categoria: 'vehiculos' }, models: {} };
+      }
+      if (!tree[bSlug].models[mSlug]) {
+        tree[bSlug].models[mSlug] = {
+          modelData: { _id: mSlug, nombre: modeloRaw, anios: anioRaw, motor: motorRaw, combustible: 'gasolina', imagen: '', categoria: 'vehiculos' },
+          anios: {}
+        };
+      }
+
+      const mObj = tree[bSlug].models[mSlug];
+      if (!mObj.anios[anioRaw]) mObj.anios[anioRaw] = { anioData: { _id: anioRaw }, motores: {} };
+      if (!mObj.anios[anioRaw].motores[motorRaw]) mObj.anios[anioRaw].motores[motorRaw] = { motorData: { _id: motorRaw }, archivos: [] };
+
+      const archivos = mObj.anios[anioRaw].motores[motorRaw].archivos;
+      const isPdf = urlArchivo.toLowerCase().includes('.pdf');
+      archivos.push({
+        _id: titulo,
+        titulo,
+        tipo: compSlug,
+        pdfUrl: urlArchivo,
+        diagramaUrl: urlArchivo,
+        url: urlArchivo,
+        imageUrl: isPdf ? '' : urlArchivo,
+        descripcion,
+        imagenes: isPdf ? [] : [urlArchivo],
+        allImages: isPdf ? [] : [urlArchivo]
+      });
+      saveVehiculosData(tree);
+
+      return res.end(JSON.stringify({
+        status: 'success',
+        message: 'Diagrama y carpetas guardadas físicamente en disco local.',
+        url: urlArchivo,
+        ruta_local: urlArchivo
+      }));
     }
 
     case 'guardar_icono': {
@@ -566,6 +613,67 @@ const server = http.createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Access-Control-Allow-Origin', '*');
     return res.end(JSON.stringify({ status: 'online', mode: 'localhost', time: new Date().toISOString() }));
+  }
+
+  // Interceptar subidas de archivos (/api/upload.php y /api/upload)
+  if (pathname.startsWith('/api/upload.php') || pathname === '/api/upload') {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(200);
+      return res.end();
+    }
+
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => {
+      const bodyBuffer = Buffer.concat(chunks);
+      const contentType = req.headers['content-type'] || '';
+      let input = {};
+      let files = {};
+
+      if (contentType.includes('multipart/form-data')) {
+        const boundaryMatch = contentType.match(/boundary=(?:["']?)([^"';]+)(?:["']?)/i);
+        if (boundaryMatch) {
+          const parsed = parseMultipart(bodyBuffer, boundaryMatch[1]);
+          input = parsed.fields;
+          files = parsed.files;
+        }
+      }
+
+      const file = files.archivo || files.file || files.imagen;
+      if (!file) {
+        res.writeHead(400);
+        return res.end(JSON.stringify({ status: 'error', message: 'No se recibió ningún archivo.' }));
+      }
+
+      const categoria = String(input.categoria || 'diagramas').replace(/[^a-zA-Z0-9_-]/g, '') || 'diagramas';
+      const subcarpeta = String(input.subcarpeta || '').replace(/[^a-zA-Z0-9_\-\/]/g, '_');
+      const targetFolder = path.join(STORAGE_DIR, categoria, subcarpeta);
+      fs.mkdirSync(targetFolder, { recursive: true });
+
+      const ext = path.extname(file.filename || 'diagrama.pdf').toLowerCase() || '.pdf';
+      const originalName = path.basename(file.filename || 'archivo', ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+      const finalFileName = `${originalName}_${Date.now()}${ext}`;
+      const diskPath = path.join(targetFolder, finalFileName);
+
+      fs.writeFileSync(diskPath, file.data);
+
+      const relPath = `archivos_almacenamiento/${categoria}${subcarpeta ? '/' + subcarpeta : ''}/${finalFileName}`;
+
+      return res.end(JSON.stringify({
+        status: 'success',
+        message: 'Archivo subido correctamente en disco local.',
+        ruta_local: relPath,
+        url: relPath,
+        url_completa: relPath,
+        nombre_archivo: finalFileName
+      }));
+    });
+    return;
   }
 
   // Interceptar APIs de PHP

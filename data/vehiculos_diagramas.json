@@ -214,7 +214,40 @@
                                     "imagenUrl": "imagenes autos/ic_car_toyota_hilux.JPG",
                                     "titulo": "HR15"
                                 },
-                                "archivos": []
+                                "archivos": [
+                                    {
+                                        "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 ECU",
+                                        "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 ECU",
+                                        "tipo": "pinout",
+                                        "pdfUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841706_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841706_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg",
+                                        "url": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841706_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841706_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841706_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841706_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg"
+                                        ]
+                                    },
+                                    {
+                                        "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 HR15 ECU",
+                                        "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 HR15 ECU",
+                                        "tipo": "pinout",
+                                        "pdfUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841745_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841745_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg",
+                                        "url": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841745_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841745_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841745_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/1788841745_WhatsApp_Image_2026-09-03_at_4_33_32_PM.jpeg"
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     }
