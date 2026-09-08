@@ -2212,8 +2212,9 @@ window.loadSpecificDiagramSection = async function(type) {
           const compQ = (arch.archDocId || arch.id || active.id || active.tituloArchivo || 'ecu').trim();
 
           const apiEndpoints = [
-            `https://probaktronic.com/api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`,
-            `/api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`
+            `api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`,
+            `/api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`,
+            `https://probaktronic.com/api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`
           ];
 
           for (const ep of apiEndpoints) {
@@ -5348,8 +5349,9 @@ async function loadEcuHotspotsFromStorage(imgW, imgH) {
     if (currentEcuHotspots.length === 0) {
       try {
         const getEndpoints = [
-          `https://probaktronic.com/api/diagramas.php?action=get_hotspots&id_key=${encodeURIComponent(primaryKey)}`,
-          `/api/diagramas.php?action=get_hotspots&id_key=${encodeURIComponent(primaryKey)}`
+          `api/diagramas.php?action=get_hotspots&id_key=${encodeURIComponent(primaryKey)}`,
+          `/api/diagramas.php?action=get_hotspots&id_key=${encodeURIComponent(primaryKey)}`,
+          `https://probaktronic.com/api/diagramas.php?action=get_hotspots&id_key=${encodeURIComponent(primaryKey)}`
         ];
         for (const ep of getEndpoints) {
           try {
@@ -5494,11 +5496,12 @@ async function saveEcuHotspotsToStorage() {
     console.warn('Firestore hotspots save warning:', err);
   }
 
-  // Layer D: Guardar permanentemente en MySQL de SiteGround
+  // Layer D: Guardar permanentemente en servidor local / MySQL
   try {
     const endpoints = [
-      'https://probaktronic.com/api/diagramas.php?action=save_hotspots',
-      '/api/diagramas.php?action=save_hotspots'
+      'api/diagramas.php?action=save_hotspots',
+      '/api/diagramas.php?action=save_hotspots',
+      'https://probaktronic.com/api/diagramas.php?action=save_hotspots'
     ];
     for (const ep of endpoints) {
       try {
@@ -5510,6 +5513,7 @@ async function saveEcuHotspotsToStorage() {
             datos: currentEcuHotspots
           })
         });
+        break;
       } catch (e) {}
     }
   } catch (e) {}
@@ -7054,9 +7058,9 @@ window.handleAdminSubmitDirectPhoto = async function(e) {
 
     let fileDownloadUrl = '';
     const endpoints = [
-      'https://probaktronic.com/api/diagramas.php?action=subir_foto',
+      'api/diagramas.php?action=subir_foto',
       '/api/diagramas.php?action=subir_foto',
-      'api/diagramas.php?action=subir_foto'
+      'https://probaktronic.com/api/diagramas.php?action=subir_foto'
     ];
 
     for (const endpoint of endpoints) {

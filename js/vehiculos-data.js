@@ -40,12 +40,7 @@
         rawUrl = `archivos_almacenamiento/${rawUrl}`;
       }
 
-      // Si estamos en entorno local (127.0.0.1 / localhost) y el archivo está en archivos_almacenamiento/, cargarlo desde el hosting
-      const isLocalDev = (typeof window !== 'undefined' && (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'));
-      if (isLocalDev && rawUrl.startsWith('archivos_almacenamiento/')) {
-        return `https://probaktronic.com/${rawUrl}`;
-      }
-
+      // En entorno local o producción, las rutas relativas se cargan directamente
       return rawUrl;
     },
 
