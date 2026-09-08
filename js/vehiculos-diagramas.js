@@ -1185,28 +1185,13 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
 
     connectionListContainer.innerHTML = '';
 
-    // Asegurar que siempre exista la tarjeta estándar 'CONEXIONADO ECU'
-    const hasEcuCard = archivosList.some(a => {
-      const t = (a.titulo || a.nombre || a.id || '').toUpperCase();
-      return (t.includes('ECU') || t.includes('PINOUT') || t.includes('COMPUTADORA')) && !t.includes('INMOVILIZADOR') && !t.includes('PEDAL') && !t.includes('EDU') && !t.includes('OBD');
-    });
-
-    if (!hasEcuCard) {
-      archivosList.unshift({
-        id: 'CONEXIONADO ECU',
-        titulo: 'CONEXIONADO ECU',
-        nombre: 'CONEXIONADO ECU',
-        brandDocId: brandId,
-        modelDocId: docId,
-        motorDocId: motorCode,
-        url: '',
-        imageUrl: ''
-      });
-    }
-
     if (btnNext) {
-      btnNext.disabled = false;
-      btnNext.classList.remove('opacity-50');
+      btnNext.disabled = (archivosList.length === 0);
+      if (archivosList.length === 0) {
+        btnNext.classList.add('opacity-50');
+      } else {
+        btnNext.classList.remove('opacity-50');
+      }
     }
 
     let selectedArchDoc = archivosList[0];

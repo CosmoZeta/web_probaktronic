@@ -182,5 +182,44 @@
                 }
             }
         }
+    },
+    "nissan": {
+        "brandData": {
+            "nombre": "NISSAN",
+            "logo": "imagenes svg/ico_logo_nissan.svg",
+            "combustible": "gasolina",
+            "categoria": "sedan"
+        },
+        "models": {
+            "tiida_tiida_latio": {
+                "modelData": {
+                    "_id": "tiida_tiida_latio",
+                    "nombre": "TIIDA / TIIDA LATIO",
+                    "anios": "2004 -2012",
+                    "motor": "HR15",
+                    "combustible": "gasolina",
+                    "imagen": "imagenes autos/ic_car_toyota_hilux.JPG",
+                    "categoria": "vehiculos"
+                },
+                "anios": {
+                    "2004 -2012": {
+                        "anioData": {
+                            "_id": "2004 -2012"
+                        },
+                        "motores": {
+                            "HR15": {
+                                "motorData": {
+                                    "_id": "HR15",
+                                    "combustible": "gasolina",
+                                    "imagenUrl": "imagenes autos/ic_car_toyota_hilux.JPG",
+                                    "titulo": "HR15"
+                                },
+                                "archivos": []
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
