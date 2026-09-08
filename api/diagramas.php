@@ -278,15 +278,6 @@ switch ($action) {
         $marcaSlug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $nombreMarca));
         $modeloSlug = $modeloClean;
 
-        // Crear carpeta física para el modelo con subcarpetas 'imagen' y 'conexionado' bajo el componente 'ecu'
-        $dirEcu = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaUpper . '/' . $modeloClean . '/' . $motorClean . '/ecu';
-        if (!is_dir($dirEcu . '/imagen')) {
-            @mkdir($dirEcu . '/imagen', 0755, true);
-        }
-        if (!is_dir($dirEcu . '/conexionado')) {
-            @mkdir($dirEcu . '/conexionado', 0755, true);
-        }
-
         if ($pdo) {
             try {
                 // 1. Asegurar marca

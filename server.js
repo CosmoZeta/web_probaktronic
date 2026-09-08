@@ -293,12 +293,6 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       const mSlug = cleanSlug(nombreModelo, false);
       const motorClean = cleanSlug(motor, false);
 
-      // Crear carpetas físicas para ECU
-      const ecuImgDir = path.join(DIAGRAMAS_DIR, marcaUpper, mSlug, motorClean, 'ecu', 'imagen');
-      const ecuConDir = path.join(DIAGRAMAS_DIR, marcaUpper, mSlug, motorClean, 'ecu', 'conexionado');
-      fs.mkdirSync(ecuImgDir, { recursive: true });
-      fs.mkdirSync(ecuConDir, { recursive: true });
-
       if (!tree[bSlug]) {
         tree[bSlug] = { brandData: { nombre: marcaUpper, logo: '', combustible, categoria: 'vehiculos' }, models: {} };
       }
