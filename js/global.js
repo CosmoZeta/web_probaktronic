@@ -1,7 +1,7 @@
 // Global JavaScript for Probaktronic Dashboard Platform - Master Controller
 
 // Master Version Control
-window.PROBAKTRONIC_VERSION = '1.00001';
+window.PROBAKTRONIC_VERSION = '1.00002';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log(`Probaktronic Dashboard System Loaded - Version: ${window.PROBAKTRONIC_VERSION}`);

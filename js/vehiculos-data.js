@@ -58,21 +58,20 @@
 
       if (photos.length === 0) {
         const candidates = [
-          docData.imageUrl, docData.url, docData.archivoUrl, 
-          docData.diagramaUrl, docData.fotoComponente, docData.foto, 
-          docData.imagen, docData.diagramaImg, docData.downloadUrl
+          docData.imageUrl, docData.fotoComponente, docData.foto, 
+          docData.imagen, docData.downloadUrl, docData.url
         ];
         for (const single of candidates) {
           if (single && typeof single === 'string') {
             const lower = single.toLowerCase();
-            if (!lower.includes('.pdf') && !lower.includes('%2epdf')) {
+            if (!lower.includes('.pdf') && !lower.includes('%2epdf') && !lower.includes('/conexionado/') && !lower.includes('diagrama_')) {
               photos.push(single);
               break;
             }
           }
         }
       }
-      return photos.filter(Boolean);
+      return photos.filter(p => typeof p === 'string' && p.trim() && !p.toLowerCase().includes('/conexionado/') && !p.toLowerCase().includes('diagrama_'));
     },
 
     // Helper to extract year ranges or single years from strings
@@ -189,11 +188,9 @@
       const cleanMotor = (motorCode || '').toLowerCase().trim();
 
       try {
-        if (!window._cachedVehiculosDiagramasTree) {
-          const res = await fetch('data/vehiculos_diagramas.json');
-          if (res.ok) {
-            window._cachedVehiculosDiagramasTree = await res.json();
-          }
+        const res = await fetch(`data/vehiculos_diagramas.json?_t=${Date.now()}`);
+        if (res.ok) {
+          window._cachedVehiculosDiagramasTree = await res.json();
         }
 
         const tree = window._cachedVehiculosDiagramasTree || {};
@@ -276,14 +273,18 @@
             }
           } catch (e) {}
         }
-          if (srvData && srvData.status === 'success' && Array.isArray(srvData.data)) {
-            srvData.data.forEach(row => {
-              if (row.UrlArchivo && row.Titulo) {
-                const isPdf = row.UrlArchivo.toLowerCase().includes('.pdf');
+        if (srvData && srvData.status === 'success' && Array.isArray(srvData.data)) {
+          srvData.data.forEach(row => {
+            if (row.UrlArchivo && row.Titulo) {
+              const isPdf = row.UrlArchivo.toLowerCase().includes('.pdf');
+              const rowTitle = (row.Titulo || '').toUpperCase().trim();
+              const alreadyExists = rawList.some(it => (it.titulo || it.nombre || it.id || '').toUpperCase().trim() === rowTitle);
+              if (!alreadyExists) {
                 rawList.push({
                   id: row.Titulo,
                   titulo: row.Titulo,
                   nombre: row.Titulo,
+                  tipo: row.Tipo || '',
                   url: row.UrlArchivo,
                   imageUrl: isPdf ? '' : row.UrlArchivo,
                   archivoUrl: row.UrlArchivo,
@@ -296,8 +297,8 @@
                   anioDocId: row.Anio || ''
                 });
               }
-            });
-          }
+            }
+          });
         }
       } catch (sqlErr) {
         console.warn('MySQL diagrams lookup notice:', sqlErr);
@@ -325,58 +326,7 @@
         }
       }
 
-      // 5. Buscar diagramas en LocalStorage creados localmente para este modelo
-      try {
-        const customStores = [];
-        
-        // Almacén unificado
-        const globalStore = JSON.parse(localStorage.getItem('probak_custom_diagrams_store') || '[]');
-        if (Array.isArray(globalStore)) customStores.push(...globalStore);
 
-        // Claves por marca/modelo
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.startsWith('probak_custom_diagrams') && k !== 'probak_custom_diagrams_store') {
-            try {
-              const list = JSON.parse(localStorage.getItem(k) || '[]');
-              if (Array.isArray(list)) customStores.push(...list);
-            } catch (e) {}
-          }
-        }
-
-        // Filtrar y normalizar diagramas para este vehículo estricto
-        customStores.forEach(item => {
-          if (!item) return;
-          const itemBrand = (item.brandDocId || item.marca || '').toLowerCase().trim();
-          const bMatch = !itemBrand || itemBrand === cleanBrand || cleanBrand.includes(itemBrand) || itemBrand.includes(cleanBrand);
-          if (bMatch) {
-            const itemModel = (item.modelDocId || item.modelo || item.model || '').toLowerCase().trim();
-            const itemYears = (item.anio || item.anios || item.year || '').trim();
-            const itemMotor = (item.motor || item.motorDocId || '').trim();
-
-            const isMatch = this.isModelMatching(
-              cleanDoc, 
-              cleanModel, 
-              cleanMotor, 
-              itemModel, 
-              { nombre: `${itemModel} ${itemYears}`.trim(), motor: itemMotor }, 
-              itemYears ? { [itemYears]: true } : null, 
-              cleanBrand
-            );
-
-            if (isMatch) {
-              rawList.push({
-                id: item.id || item.titulo,
-                brandDocId: cleanBrand,
-                modelDocId: cleanDoc,
-                ...item
-              });
-            }
-          }
-        });
-      } catch (locErr) {
-        console.warn('LocalStorage diagrams scan notice:', locErr);
-      }
 
       // 6. Strict Isolation Filter: Eliminar cualquier tarjeta que pertenezca a otra generación/motor
       const targetYears = this.extractYears(`${cleanDoc} ${cleanModel}`);
@@ -405,28 +355,57 @@
         return true;
       });
 
-      // Smart Merge: Preserve allImages, photos and hotspots across duplicate document variants
+      // Smart Merge: Preserve allImages, photos and hotspots across duplicate document variants by component
       const mergedCardsMap = new Map();
       rawList.forEach(a => {
-        const cardTitleKey = (a.titulo || a.nombre || a.id || '').toUpperCase().trim();
-        if (!mergedCardsMap.has(cardTitleKey)) {
-          mergedCardsMap.set(cardTitleKey, a);
+        const rawTitle = (a.titulo || a.nombre || a.id || '').toUpperCase().trim();
+        let compTypeKey = (a.tipo || '').toLowerCase().trim();
+        if (!compTypeKey || compTypeKey === 'diagrama' || compTypeKey === 'general' || compTypeKey === 'pinout') {
+          if (rawTitle.includes('INMOVILIZADOR') || rawTitle.includes('LLAVE') || rawTitle.includes('ANTENA')) {
+            compTypeKey = 'inmovilizador_llave';
+          } else if (rawTitle.includes('PEDAL')) {
+            compTypeKey = 'pedal_acelerador';
+          } else if (rawTitle.includes('EDU') && (rawTitle.includes('DOS') || rawTitle.includes('2'))) {
+            compTypeKey = 'edu_dos_conectores';
+          } else if (rawTitle.includes('EDU') && (rawTitle.includes('TRES') || rawTitle.includes('3'))) {
+            compTypeKey = 'edu_tres_conectores';
+          } else if (rawTitle.includes('OBD')) {
+            compTypeKey = 'puerto_obd';
+          } else if (rawTitle.includes('BOOT')) {
+            compTypeKey = 'modo_boot';
+          } else if (rawTitle.includes('BENCH')) {
+            compTypeKey = 'modo_banco';
+          } else if (rawTitle.includes('CUERPO')) {
+            compTypeKey = 'cuerpo_aceleracion';
+          } else if (rawTitle.includes('ECU') || rawTitle.includes('PINOUT') || rawTitle.includes('COMPUTADORA')) {
+            compTypeKey = 'ecu';
+          } else {
+            compTypeKey = rawTitle;
+          }
+        }
+
+        if (!mergedCardsMap.has(compTypeKey)) {
+          mergedCardsMap.set(compTypeKey, a);
         } else {
-          const existing = mergedCardsMap.get(cardTitleKey);
+          const existing = mergedCardsMap.get(compTypeKey);
           const existingPhotos = VehiculosData.extractPhotos(existing);
           const newPhotos = VehiculosData.extractPhotos(a);
 
-          const bestPhotos = (newPhotos.length >= existingPhotos.length && newPhotos.length > 0) ? newPhotos : existingPhotos;
-          const bestHotspots = (Array.isArray(a.componentes_ecu) && a.componentes_ecu.length > 0) ? a.componentes_ecu : (existing.componentes_ecu || []);
-          const bestImageUrl = a.imageUrl || existing.imageUrl || (bestPhotos.length > 0 ? bestPhotos[0] : '');
+          const combinedPhotos = [...new Set([...existingPhotos, ...newPhotos, existing.imageUrl, a.imageUrl].filter(Boolean))];
+          const bestPdf = a.pdfUrl || a.diagramaUrl || existing.pdfUrl || existing.diagramaUrl || (!a.imageUrl && a.url ? a.url : '') || (!existing.imageUrl && existing.url ? existing.url : '');
+          const bestImageUrl = a.imageUrl || existing.imageUrl || (combinedPhotos.length > 0 ? combinedPhotos[0] : '');
 
-          mergedCardsMap.set(cardTitleKey, {
+          mergedCardsMap.set(compTypeKey, {
             ...existing,
             ...a,
-            allImages: bestPhotos,
-            imagenes: bestPhotos,
+            tipo: compTypeKey,
+            pdfUrl: bestPdf,
+            diagramaUrl: bestPdf,
             imageUrl: bestImageUrl,
-            componentes_ecu: bestHotspots
+            allImages: combinedPhotos,
+            imagenes: combinedPhotos,
+            fotos: combinedPhotos,
+            componentes_ecu: (Array.isArray(a.componentes_ecu) && a.componentes_ecu.length > 0) ? a.componentes_ecu : (existing.componentes_ecu || [])
           });
         }
       });

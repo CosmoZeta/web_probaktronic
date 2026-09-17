@@ -668,12 +668,14 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
 
 .card-main-title {
   font-family: 'Oswald', 'Inter', sans-serif;
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: #1C232B;
   text-transform: uppercase;
   margin-bottom: 6px;
   letter-spacing: 0.5px;
+  position: relative;
+  z-index: 3;
 }
 
 .title-underline {
@@ -682,6 +684,8 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
   background-color: var(--brand-red);
   border-radius: 2px;
   margin-bottom: 12px;
+  position: relative;
+  z-index: 3;
 }
 
 .card-description {
@@ -689,8 +693,10 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
   color: var(--text-muted);
   line-height: 1.45;
   margin-bottom: 16px;
-  font-weight: 400;
-  max-width: 170px;
+  font-weight: 500;
+  max-width: 58%;
+  position: relative;
+  z-index: 3;
 }
 
 .card-illustration-container {
@@ -728,17 +734,25 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
 /* Complete Image Illustration on Action Card */
 .card-vehicle-half-illustration {
   position: absolute;
-  right: 12px;
-  top: 14px;
+  right: 8px;
   bottom: 14px;
-  width: 50%;
-  height: calc(100% - 28px);
+  top: auto;
+  width: 44%;
+  height: 52%;
+  max-height: 135px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: flex-end;
   pointer-events: none;
   overflow: hidden;
   z-index: 1;
+}
+
+.action-card-vehicle .card-vehicle-half-illustration {
+  height: 60%;
+  max-height: 160px;
+  bottom: 10px;
+  right: 6px;
 }
 
 .vehicle-half-img {
@@ -747,7 +761,7 @@ html.sidebar-minimized-init .sidebar .btn-sidebar-minimize span {
   width: auto;
   height: auto;
   object-fit: contain;
-  object-position: right center;
+  object-position: right bottom;
   mix-blend-mode: multiply;
   transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
 }

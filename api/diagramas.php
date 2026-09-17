@@ -82,6 +82,27 @@ if (!function_exists('cleanSlug')) {
     }
 }
 
+if (!function_exists('normalizeComponente')) {
+    function normalizeComponente($compRaw) {
+        $upper = strtoupper(trim((string)$compRaw));
+        if (strpos($upper, 'PEDAL') !== false) return 'pedal_acelerador';
+        if (strpos($upper, 'INMOVILIZADOR') !== false || strpos($upper, 'LLAVE') !== false || strpos($upper, 'ANTENA') !== false) return 'inmovilizador_llave';
+        if (strpos($upper, 'EDU') !== false && (strpos($upper, 'DOS') !== false || strpos($upper, '2') !== false)) return 'edu_dos_conectores';
+        if (strpos($upper, 'EDU') !== false && (strpos($upper, 'TRES') !== false || strpos($upper, '3') !== false)) return 'edu_tres_conectores';
+        if (strpos($upper, 'CUERPO') !== false || strpos($upper, 'ACEL') !== false || strpos($upper, 'OBTURADOR') !== false || strpos($upper, 'MARIPOSA') !== false) return 'cuerpo_aceleracion';
+        if (strpos($upper, 'DISTRIBUIDOR') !== false) return 'distribuidor';
+        if (strpos($upper, 'OXIGENO') !== false || strpos($upper, 'OXÍGENO') !== false || strpos($upper, 'O2') !== false || strpos($upper, 'LAMBDA') !== false) return 'sensor_oxigeno';
+        if (strpos($upper, 'TABLERO') !== false || strpos($upper, 'CLUSTER') !== false || strpos($upper, 'CUADRO') !== false || strpos($upper, 'INSTRUMENT') !== false) return 'tablero_instrumentos';
+        if (strpos($upper, 'FUSIBLERA') !== false || strpos($upper, 'BCM') !== false || strpos($upper, 'FUSIBLE') !== false || strpos($upper, 'SAM') !== false) return 'fusiblera_bcm';
+        if (strpos($upper, 'OBD') !== false || strpos($upper, 'DLC') !== false) return 'puerto_obd';
+        if (strpos($upper, 'BOOT') !== false) return 'modo_boot';
+        if (strpos($upper, 'BENCH') !== false || strpos($upper, 'BANCO') !== false) return 'modo_banco';
+        if (strpos($upper, 'ECU') !== false || strpos($upper, 'COMPUTADORA') !== false || strpos($upper, 'ECM') !== false || strpos($upper, 'PCM') !== false || $upper === 'PINOUT') return 'ecu';
+        $slug = cleanSlug($compRaw, false);
+        return preg_replace('/_(imagen|conexionado)$/i', '', $slug);
+    }
+}
+
 $action = isset($_GET['action']) ? $_GET['action'] : 'marcas';
 $marca = isset($_GET['marca']) ? trim($_GET['marca']) : '';
 $modelo = isset($_GET['modelo']) ? trim($_GET['modelo']) : '';
@@ -178,11 +199,11 @@ switch ($action) {
 
     case 'modelos':
         // Listar modelos por marca
-        if ($pdo) {
             $stmt = $pdo->prepare("SELECT m.ModeloID, m.Slug, m.Nombre, m.ImagenUrl,
+                                          COALESCE(b.Categoria, 'sedan_hatchback') AS Categoria,
                                           COALESCE(a.Anio, '') AS Anios,
-                                          COALESCE(mot.NombreMotor, '') AS Motor,
-                                          COALESCE(mot.TipoCombustible, 'diesel') AS Combustible
+                                          COALESCE(mot.NombreMotor, 'Estándar') AS Motor,
+                                          COALESCE(mot.TipoCombustible, m.Combustible, b.Combustible, 'gasolina') AS Combustible
                                    FROM modelos m 
                                    INNER JOIN marcas b ON m.MarcaID = b.MarcaID 
                                    LEFT JOIN vehiculo_anios a ON a.ModeloID = m.ModeloID 
@@ -468,31 +489,42 @@ switch ($action) {
         // Limpieza y sanitización uniforme de nombres de carpetas
         $marcaClean = cleanSlug($marcaRaw, true);
         $modeloClean = cleanSlug($modeloRaw, false);
-        
-        // Normalización uniforme de Motor
         $motorClean = cleanSlug($motorRaw, false);
-
-        // Normalización inteligente de Componente
-        $compUpper = strtoupper($componenteRaw);
-        if (strpos($compUpper, 'PEDAL') !== false) {
-            $componenteClean = 'pedal_acelerador';
-        } elseif (strpos($compUpper, 'INMOVILIZADOR') !== false || strpos($compUpper, 'LLAVE') !== false || strpos($compUpper, 'ANTENA') !== false) {
-            $componenteClean = 'inmovilizador_llave';
-        } elseif (strpos($compUpper, 'EDU') !== false && (strpos($compUpper, 'DOS') !== false || strpos($compUpper, '2') !== false)) {
-            $componenteClean = 'edu_dos_conectores';
-        } elseif (strpos($compUpper, 'EDU') !== false && (strpos($compUpper, 'TRES') !== false || strpos($compUpper, '3') !== false)) {
-            $componenteClean = 'edu_tres_conectores';
-        } elseif (strpos($compUpper, 'ECU') !== false || strpos($compUpper, 'COMPUTADORA') !== false || strpos($compUpper, 'ECM') !== false || strpos($compUpper, 'PCM') !== false) {
-            $componenteClean = 'ecu';
-        } else {
-            $componenteClean = cleanSlug($componenteRaw, false);
-        }
-        $componenteClean = preg_replace('/_(imagen|conexionado)$/i', '', $componenteClean);
-
+        $componenteClean = normalizeComponente($componenteRaw);
         $tipoClean = ($tipoCarpeta === 'conexionado') ? 'conexionado' : 'imagen';
 
+        // Búsqueda elástica de la carpeta de motor existente en disco
+        $modelBaseDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean;
+        $motorFolder = $motorClean;
+        if (is_dir($modelBaseDir)) {
+            $subdirs = array_filter(scandir($modelBaseDir), function($d) use ($modelBaseDir) {
+                return $d !== '.' && $d !== '..' && is_dir($modelBaseDir . '/' . $d);
+            });
+            $exactMatch = null;
+            foreach ($subdirs as $sd) {
+                if (strtolower($sd) === strtolower($motorClean) || stripos($sd, $motorClean) !== false || stripos($motorClean, $sd) !== false) {
+                    $exactMatch = $sd;
+                    break;
+                }
+            }
+            if ($exactMatch) {
+                $motorFolder = $exactMatch;
+            } else {
+                // Verificar si el componente ya existe dentro de alguna carpeta de motor
+                foreach ($subdirs as $sd) {
+                    if (is_dir($modelBaseDir . '/' . $sd . '/' . $componenteClean)) {
+                        $motorFolder = $sd;
+                        break;
+                    }
+                }
+                if ($motorFolder === $motorClean && count($subdirs) === 1) {
+                    $motorFolder = reset($subdirs);
+                }
+            }
+        }
+
         // Directorio físico en el servidor de SiteGround
-        $baseComponentDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorClean . '/' . $componenteClean;
+        $baseComponentDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorFolder . '/' . $componenteClean;
         $baseStorageDir = $baseComponentDir . '/' . $tipoClean;
 
         // Asegurar que ambas subcarpetas (imagen y conexionado) existan automáticamente
@@ -510,13 +542,13 @@ switch ($action) {
         }
 
         // Conteo de archivos para el consecutivo
-        $existingFiles = glob($baseStorageDir . '/*.*');
+        $existingFiles = glob($baseStorageDir . '/*.*') ?: [];
         $num = count($existingFiles) + 1;
         $cleanFileName = $modeloClean . '_' . $componenteClean . '_' . $num . '.' . $ext;
         $targetPath = $baseStorageDir . '/' . $cleanFileName;
 
         if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-            $relativeUrl = 'archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorClean . '/' . $componenteClean . '/' . $tipoClean . '/' . $cleanFileName;
+            $relativeUrl = 'archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorFolder . '/' . $componenteClean . '/' . $tipoClean . '/' . $cleanFileName;
 
             echo json_encode([
                 'status' => 'success',
@@ -541,37 +573,89 @@ switch ($action) {
         $marcaClean = cleanSlug($marcaRaw, true);
         $modeloClean = cleanSlug($modeloRaw, false);
         $motorClean = cleanSlug($motorRaw, false);
+        $componenteClean = normalizeComponente($componenteRaw);
 
-        $compUpper = strtoupper($componenteRaw);
-        if (strpos($compUpper, 'PEDAL') !== false) {
-            $componenteClean = 'pedal_acelerador';
-        } elseif (strpos($compUpper, 'INMOVILIZADOR') !== false || strpos($compUpper, 'LLAVE') !== false || strpos($compUpper, 'ANTENA') !== false) {
-            $componenteClean = 'inmovilizador_llave';
-        } elseif (strpos($compUpper, 'EDU') !== false && (strpos($compUpper, 'DOS') !== false || strpos($compUpper, '2') !== false)) {
-            $componenteClean = 'edu_dos_conectores';
-        } elseif (strpos($compUpper, 'EDU') !== false && (strpos($compUpper, 'TRES') !== false || strpos($compUpper, '3') !== false)) {
-            $componenteClean = 'edu_tres_conectores';
-        } elseif (strpos($compUpper, 'ECU') !== false || strpos($compUpper, 'COMPUTADORA') !== false || strpos($compUpper, 'ECM') !== false || strpos($compUpper, 'PCM') !== false) {
-            $componenteClean = 'ecu';
-        } else {
-            $componenteClean = cleanSlug($componenteRaw, false);
+        $modelBaseDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean;
+        $motorFolder = $motorClean;
+        $baseDir = $modelBaseDir . '/' . $motorFolder . '/' . $componenteClean . '/imagen';
+
+        if (!is_dir($baseDir) && is_dir($modelBaseDir)) {
+            $subdirs = array_filter(scandir($modelBaseDir), function($d) use ($modelBaseDir) {
+                return $d !== '.' && $d !== '..' && is_dir($modelBaseDir . '/' . $d);
+            });
+            foreach ($subdirs as $sd) {
+                if (is_dir($modelBaseDir . '/' . $sd . '/' . $componenteClean . '/imagen')) {
+                    $motorFolder = $sd;
+                    $baseDir = $modelBaseDir . '/' . $motorFolder . '/' . $componenteClean . '/imagen';
+                    break;
+                }
+            }
+            if (!is_dir($baseDir) && count($subdirs) === 1) {
+                $motorFolder = reset($subdirs);
+                $baseDir = $modelBaseDir . '/' . $motorFolder . '/' . $componenteClean . '/imagen';
+            }
         }
 
-        $baseDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorClean . '/' . $componenteClean . '/imagen';
         $fotos = [];
-
         if (is_dir($baseDir)) {
             $files = scandir($baseDir);
             foreach ($files as $file) {
                 if ($file === '.' || $file === '..') continue;
                 $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
                 if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'svg'])) {
-                    $fotos[] = 'archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorClean . '/' . $componenteClean . '/imagen/' . $file;
+                    $fotos[] = 'archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorFolder . '/' . $componenteClean . '/imagen/' . $file;
                 }
             }
         }
 
-        echo json_encode(['status' => 'success', 'fotos' => $fotos, 'total' => count($fotos)]);
+        echo json_encode(['status' => 'success', 'fotos' => $fotos, 'data' => $fotos, 'total' => count($fotos)]);
+        break;
+
+    case 'listar_conexionados':
+        $marcaRaw = trim($_GET['marca'] ?? 'TOYOTA');
+        $modeloRaw = trim($_GET['modelo'] ?? 'modelo');
+        $motorRaw = trim($_GET['motor'] ?? 'motor');
+        $componenteRaw = trim($_GET['componente'] ?? 'ecu');
+
+        $marcaClean = cleanSlug($marcaRaw, true);
+        $modeloClean = cleanSlug($modeloRaw, false);
+        $motorClean = cleanSlug($motorRaw, false);
+        $componenteClean = normalizeComponente($componenteRaw);
+
+        $modelBaseDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean;
+        $motorFolder = $motorClean;
+        $baseDir = $modelBaseDir . '/' . $motorFolder . '/' . $componenteClean . '/conexionado';
+
+        if (!is_dir($baseDir) && is_dir($modelBaseDir)) {
+            $subdirs = array_filter(scandir($modelBaseDir), function($d) use ($modelBaseDir) {
+                return $d !== '.' && $d !== '..' && is_dir($modelBaseDir . '/' . $d);
+            });
+            foreach ($subdirs as $sd) {
+                if (is_dir($modelBaseDir . '/' . $sd . '/' . $componenteClean . '/conexionado')) {
+                    $motorFolder = $sd;
+                    $baseDir = $modelBaseDir . '/' . $motorFolder . '/' . $componenteClean . '/conexionado';
+                    break;
+                }
+            }
+            if (!is_dir($baseDir) && count($subdirs) === 1) {
+                $motorFolder = reset($subdirs);
+                $baseDir = $modelBaseDir . '/' . $motorFolder . '/' . $componenteClean . '/conexionado';
+            }
+        }
+
+        $diagramas = [];
+        if (is_dir($baseDir)) {
+            $files = scandir($baseDir);
+            foreach ($files as $file) {
+                if ($file === '.' || $file === '..') continue;
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                if (in_array($ext, ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'svg'])) {
+                    $diagramas[] = 'archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorFolder . '/' . $componenteClean . '/conexionado/' . $file;
+                }
+            }
+        }
+
+        echo json_encode(['status' => 'success', 'diagramas' => $diagramas, 'data' => $diagramas, 'total' => count($diagramas)]);
         break;
 
     case 'save_hotspots':

@@ -159,7 +159,7 @@
           <h2 class="card-main-title">VEHÍCULOS</h2>
           <div class="title-underline"></div>
           <p class="card-description">
-            Gestione sus vehículos y acceda a las funciones de diagnóstico y programación.
+            Diagramas automotrices y complementos.
           </p>
 
           <div class="card-vehicle-half-illustration">
@@ -187,7 +187,7 @@
           <h2 class="card-main-title">MANUALES PROBADORES</h2>
           <div class="title-underline"></div>
           <p class="card-description">
-            Manuales técnicos y guías de uso en PDF para probadores de ECUs, bobinas, maquinaria pesada y simuladores.
+            Manuales de los equipos que se venden en el taller, manual de bobinas, etcétera.
           </p>
 
           <div class="card-vehicle-half-illustration">
@@ -199,11 +199,11 @@
           </div>
         </a>
 
-        <!-- Card 3: Catálogo -->
+        <!-- Card 3: Tienda -->
         <a href="catalogo.html" class="action-card action-card-catalog">
           <div class="card-top-row">
             <div class="card-badge-icon">
-              <i class="bi bi-journal-text"></i>
+              <i class="bi bi-shop"></i>
             </div>
             <svg class="card-dots-pattern" width="40" height="30" viewBox="0 0 40 30" fill="#94A3B8">
               <circle cx="5" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="25" cy="5" r="2"/><circle cx="35" cy="5" r="2"/>
@@ -212,14 +212,14 @@
             </svg>
           </div>
 
-          <h2 class="card-main-title">CATÁLOGO</h2>
+          <h2 class="card-main-title">TIENDA</h2>
           <div class="title-underline"></div>
           <p class="card-description">
-            Biblioteca técnica y repuestos sincronizados con Base de Datos MySQL.
+            Gran variedad de componentes electrónicos que se venden.
           </p>
 
           <div class="card-vehicle-half-illustration">
-            <img src="fondo_tarjeta_catalogo.jpg" alt="Catálogo" class="vehicle-half-img">
+            <img src="fondo_tarjeta_catalogo.jpg" alt="Tienda" class="vehicle-half-img">
           </div>
 
           <div class="card-action-btn">
@@ -289,11 +289,11 @@
 
         <div class="quick-actions-divider"></div>
 
-        <div class="quick-action-item" onclick="showGlobalToast('Iniciando respaldo de seguridad...')">
+        <div class="quick-action-item" onclick="showTerminosModal()" role="button" style="cursor: pointer;">
           <div class="quick-action-icon">
-            <i class="bi bi-cloud-download-fill"></i>
+            <i class="bi bi-file-earmark-text-fill"></i>
           </div>
-          <span class="quick-action-label">Respaldar datos</span>
+          <span class="quick-action-label">Términos y condiciones</span>
         </div>
 
         <div class="quick-actions-divider"></div>
@@ -322,7 +322,7 @@
           <i class="bi bi-layers-fill status-icon"></i>
           <div class="status-info-block">
             <span class="status-label">NÚMERO DE VERSIÓN</span>
-            <span class="status-value">1.00001</span>
+            <span class="status-value">1.00002</span>
           </div>
         </div>
 
@@ -397,6 +397,109 @@
     </div>
   </div>
 
+  <!-- Modal Términos y Condiciones -->
+  <div class="modal fade" id="modalTerminosCondiciones" tabindex="-1" aria-labelledby="modalTerminosTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden; background: linear-gradient(160deg, #242B35 0%, #181D24 100%); color: #F1F5F9; border: 1px solid #3E4756 !important;">
+        <!-- Header -->
+        <div class="modal-header border-0 py-3 px-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, rgba(211,47,47,0.22) 0%, #202732 100%); border-bottom: 1px solid rgba(255,255,255,0.1) !important;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="background: rgba(211, 47, 47, 0.25); color: #EF4444; width: 44px; height: 44px; border: 1px solid rgba(239, 68, 68, 0.4);">
+              <i class="bi bi-shield-check fs-3"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-rajdhani fw-bold mb-0 text-white" id="modalTerminosTitle" style="letter-spacing: 0.5px; font-size: 1.15rem;">TÉRMINOS Y CONDICIONES DE USO</h5>
+              <span class="text-white-50 small font-monospace" style="font-size: 0.75rem;">Plataforma Probaktronic • Versión 1.00002</span>
+            </div>
+          </div>
+          
+          <div class="d-flex align-items-center gap-3">
+            <img src="logo_probaktronic_costado.png" alt="Probaktronic" style="max-height: 28px; width: auto; object-fit: contain;" class="d-none d-sm-inline-block">
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body p-4 text-start" style="font-size: 0.88rem; line-height: 1.65; color: #CBD5E1; background: #1B2129;">
+          
+          <!-- Banner Resumen -->
+          <div class="p-3 rounded-3 mb-3 d-flex align-items-start gap-3" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35);">
+            <i class="bi bi-exclamation-triangle-fill text-warning fs-4 mt-1"></i>
+            <div>
+              <strong class="text-warning font-rajdhani fs-6 d-block mb-1">AVISO IMPORTANTE PARA TÉCNICOS Y USUARIOS PREMIUM</strong>
+              <p class="mb-0 text-white-50 small">
+                El acceso a los diagramas, manuales, archivos descargados y herramientas de banco de pruebas implica la aceptación total de los presentes términos. La plataforma es una herramienta de asistencia y referencia técnica.
+              </p>
+            </div>
+          </div>
+
+          <!-- Sección 1 -->
+          <div class="mb-4 p-3 rounded-3" style="background: #232A34; border: 1px solid #333C4A;">
+            <h6 class="fw-bold text-white font-rajdhani d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-danger rounded-pill">1</span> USO DE INFORMACIÓN, DIAGRAMAS Y ARCHIVOS DESCARGADOS
+            </h6>
+            <p class="text-secondary small mb-2">
+              Toda la información técnica contenida en la plataforma (diagramas de conexión de ECUs, pinouts, memorias EEPROM, esquemas de bobinas, manuales de probadores y guías de reparación) debe ser utilizada con la debida precaución y por personal debidamente capacitado en electrónica y mecánica automotriz.
+            </p>
+            <ul class="text-white-50 small ps-3 mb-0">
+              <li>El usuario es el único responsable de verificar visualmente y con multímetro/osciloscopio las continuidades, masas, alimentaciones (+12V/+5V) antes de energizar cualquier módulo o simulador.</li>
+              <li>Los archivos descargados (memorias, firmwares, paquetes RAR/BIN) se proporcionan como respaldo y referencia técnica.</li>
+            </ul>
+          </div>
+
+          <!-- Sección 2: Deslinde de Responsabilidad -->
+          <div class="mb-4 p-3 rounded-3" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.35); border-left: 4px solid #DC2626;">
+            <h6 class="fw-bold text-danger font-rajdhani d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-danger rounded-pill">2</span> DESCARGO DE RESPONSABILIDAD TÉCNICA (DISCLAIMER)
+            </h6>
+            <p class="text-white small mb-0">
+              <strong>Probaktronic no se hace responsable</strong>, bajo ninguna circunstancia, por daños directos, indirectos, incidentales, cortocircuitos, quemaduras de componentes, desprogramación de memorias o averías causadas a computadoras automotrices (ECU/ECM/BCM/Inmovilizadores), tableros, herramientas de banco o vehículos durante o después de la aplicación de la información o el uso de las herramientas de esta plataforma. El uso indebido o negligente es responsabilidad exclusiva del operador.
+            </p>
+          </div>
+
+          <!-- Sección 3: Privacidad y Datos Sensibles -->
+          <div class="mb-4 p-3 rounded-3" style="background: #232A34; border: 1px solid #333C4A;">
+            <h6 class="fw-bold text-white font-rajdhani d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-success rounded-pill">3</span> PRIVACIDAD, SEGURIDAD Y DATOS NO SENSIBLES
+            </h6>
+            <p class="text-secondary small mb-2">
+              Para su tranquilidad y máxima seguridad:
+            </p>
+            <ul class="text-white-50 small ps-3 mb-0">
+              <li><strong>Sin datos bancarios o vulnerables:</strong> La plataforma Probaktronic NO almacena números de tarjetas de crédito, claves bancarias ni información financiera sensible en sus servidores.</li>
+              <li><strong>Cuentas y Accesos:</strong> Los datos de usuario (nombre de usuario, correo y rol técnico) se gestionan bajo estrictos parámetros de seguridad y confidencialidad.</li>
+              <li><strong>Protección de Privacidad:</strong> La información de su taller o cuenta nunca será transferida, comercializada ni expuesta a terceros.</li>
+            </ul>
+          </div>
+
+          <!-- Sección 4: Propiedad Intelectual y Cuentas Premium -->
+          <div class="mb-2 p-3 rounded-3" style="background: #232A34; border: 1px solid #333C4A;">
+            <h6 class="fw-bold text-white font-rajdhani d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-warning text-dark rounded-pill">4</span> PROPIEDAD INTELECTUAL Y MEMBRESÍAS PREMIUM
+            </h6>
+            <p class="text-secondary small mb-0">
+              Los esquemas, compilaciones técnicas, logotipos y software interactivo son propiedad exclusiva de Probaktronic. La suscripción Premium otorga una licencia personal e intransferible de consulta y diagnóstico. Queda estrictamente prohibida la reventa, distribución masiva no autorizada o publicación abierta del material descargado.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer border-0 p-3 px-4 d-flex justify-content-between align-items-center" style="background: #202732; border-top: 1px solid rgba(255,255,255,0.08) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <img src="logo_probaktronic_solo.png" alt="Logo Probaktronic" style="height: 24px; width: auto; object-fit: contain;">
+            <span class="text-white-50 small font-rajdhani fw-bold" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+              PROBAKTRONIC OFICIAL
+            </span>
+          </div>
+          <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold font-rajdhani text-white shadow-sm d-flex align-items-center gap-2" data-bs-dismiss="modal" style="background: #D32F2F; border-color: #D32F2F;">
+            <i class="bi bi-check2-circle fs-6"></i> HE LEÍDO Y ACEPTO LOS TÉRMINOS
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/global.js?v=372.0"></script>
@@ -410,6 +513,16 @@
         modal.show();
       } else if (typeof showGlobalToast === 'function') {
         showGlobalToast('Módulo de Laboratorio: Próximamente integración en tiempo real.', 'info');
+      }
+    }
+
+    function showTerminosModal() {
+      const modalEl = document.getElementById('modalTerminosCondiciones');
+      if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      } else if (typeof showGlobalToast === 'function') {
+        showGlobalToast('Cargando términos y condiciones de Probaktronic...', 'info');
       }
     }
   </script>

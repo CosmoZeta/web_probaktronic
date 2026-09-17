@@ -51,7 +51,15 @@ function normalizeComponente(compRaw) {
   if (upper.includes('INMOVILIZADOR') || upper.includes('LLAVE') || upper.includes('ANTENA')) return 'inmovilizador_llave';
   if (upper.includes('EDU') && (upper.includes('DOS') || upper.includes('2'))) return 'edu_dos_conectores';
   if (upper.includes('EDU') && (upper.includes('TRES') || upper.includes('3'))) return 'edu_tres_conectores';
-  if (upper.includes('ECU') || upper.includes('COMPUTADORA') || upper.includes('ECM') || upper.includes('PCM')) return 'ecu';
+  if (upper.includes('CUERPO')) return 'cuerpo_aceleracion';
+  if (upper.includes('DISTRIBUIDOR')) return 'distribuidor';
+  if (upper.includes('OXIGENO') || upper.includes('O2')) return 'sensor_oxigeno';
+  if (upper.includes('TABLERO') || upper.includes('CLUSTER') || upper.includes('CUADRO')) return 'tablero_instrumentos';
+  if (upper.includes('FUSIBLERA') || upper.includes('BCM') || upper.includes('FUSIBLE')) return 'fusiblera_bcm';
+  if (upper.includes('OBD')) return 'puerto_obd';
+  if (upper.includes('BOOT')) return 'modo_boot';
+  if (upper.includes('BENCH')) return 'modo_banco';
+  if (upper.includes('ECU') || upper.includes('COMPUTADORA') || upper.includes('ECM') || upper.includes('PCM') || upper === 'PINOUT') return 'ecu';
   return cleanSlug(compRaw, false).replace(/_(imagen|conexionado)$/i, '');
 }
 
@@ -171,21 +179,27 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
     }
 
     case 'modelos': {
-      const marcaQuery = String(query.marca || '').toLowerCase();
-      const bKey = Object.keys(tree).find(k => k.toLowerCase() === marcaQuery || (tree[k].brandData && tree[k].brandData.nombre.toLowerCase() === marcaQuery));
+      const marcaQuery = cleanSlug(String(query.marca || ''), false);
+      const bKey = Object.keys(tree).find(k => {
+        const kClean = cleanSlug(k, false);
+        const bName = tree[k].brandData ? cleanSlug(tree[k].brandData.nombre, false) : '';
+        return kClean === marcaQuery || bName === marcaQuery || kClean.includes(marcaQuery) || marcaQuery.includes(kClean);
+      });
       const modelos = [];
       if (bKey && tree[bKey].models) {
         Object.keys(tree[bKey].models).forEach((mSlug, mIdx) => {
           const m = tree[bKey].models[mSlug];
           const mData = m.modelData || {};
+          const bData = tree[bKey].brandData || {};
           modelos.push({
             ModeloID: mIdx + 1,
             Slug: mSlug,
             Nombre: mData.nombre || mSlug,
             ImagenUrl: mData.imagen || '',
             Anios: mData.anios || '',
-            Motor: mData.motor || '',
-            Combustible: mData.combustible || 'diesel',
+            Motor: mData.motor || 'Estándar',
+            Combustible: mData.combustible || bData.combustible || 'gasolina',
+            Categoria: mData.categoria || bData.categoria || 'sedan_hatchback',
             Activo: 1
           });
         });
@@ -194,13 +208,22 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
     }
 
     case 'arbol_completo': {
-      const marcaQ = String(query.marca || '').toLowerCase();
-      const modeloQ = String(query.modelo || '').toLowerCase();
-      const bKey = Object.keys(tree).find(k => k.toLowerCase() === marcaQ || (tree[k].brandData && tree[k].brandData.nombre.toLowerCase() === marcaQ));
+      const marcaQ = cleanSlug(String(query.marca || ''), false);
+      const modeloQ = cleanSlug(String(query.modelo || ''), false);
+      const bKey = Object.keys(tree).find(k => {
+        const kClean = cleanSlug(k, false);
+        const bName = tree[k].brandData ? cleanSlug(tree[k].brandData.nombre, false) : '';
+        return kClean === marcaQ || bName === marcaQ || kClean.includes(marcaQ) || marcaQ.includes(kClean);
+      });
       const rows = [];
 
       if (bKey && tree[bKey].models) {
-        const mKey = Object.keys(tree[bKey].models).find(k => k.toLowerCase() === modeloQ || (tree[bKey].models[k].modelData && tree[bKey].models[k].modelData.nombre.toLowerCase() === modeloQ));
+        const mKey = Object.keys(tree[bKey].models).find(k => {
+          const kClean = cleanSlug(k, false);
+          const mData = tree[bKey].models[k].modelData || {};
+          const mName = cleanSlug(mData.nombre || '', false);
+          return kClean === modeloQ || mName === modeloQ || kClean.includes(modeloQ) || modeloQ.includes(kClean) || mName.includes(modeloQ) || modeloQ.includes(mName);
+        });
         if (mKey) {
           const modelObj = tree[bKey].models[mKey];
           const anios = modelObj.anios || {};
@@ -232,6 +255,56 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
         }
       }
       return res.end(JSON.stringify({ status: 'success', data: rows }));
+    }
+
+    case 'guardar_icono': {
+      const cardKey = String(input.cardKey || input.key || input.titulo || '').trim();
+      const icono = String(input.icono || input.icon || '').trim();
+      const safeKey = cardKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+      
+      const iconsPath = path.join(DATA_DIR, 'iconos_tarjetas.json');
+      let iconsData = {};
+      if (fs.existsSync(iconsPath)) {
+        try { iconsData = JSON.parse(fs.readFileSync(iconsPath, 'utf8')); } catch(e) {}
+      }
+      if (cardKey && icono) {
+        iconsData[cardKey] = icono;
+        iconsData[safeKey] = icono;
+        iconsData[cardKey.toUpperCase()] = icono;
+        fs.writeFileSync(iconsPath, JSON.stringify(iconsData, null, 4), 'utf8');
+      }
+
+      const tree = getVehiculosData();
+      let updatedTree = false;
+      for (const b of Object.values(tree)) {
+        for (const m of Object.values(b.models || {})) {
+          for (const a of Object.values(m.anios || {})) {
+            for (const mot of Object.values(a.motores || {})) {
+              for (const arc of mot.archivos || []) {
+                const arcKey = (arc._id || arc.id || arc.titulo || '').trim();
+                if (arcKey === cardKey || arcKey.toUpperCase() === cardKey.toUpperCase()) {
+                  arc.icono = icono;
+                  updatedTree = true;
+                }
+              }
+            }
+          }
+        }
+      }
+      if (updatedTree) {
+        saveVehiculosData(tree);
+      }
+
+      return res.end(JSON.stringify({ status: 'success', message: 'Icono guardado permanentemente en el servidor.', cardKey, icono }));
+    }
+
+    case 'obtener_iconos': {
+      const iconsPath = path.join(DATA_DIR, 'iconos_tarjetas.json');
+      let iconsData = {};
+      if (fs.existsSync(iconsPath)) {
+        try { iconsData = JSON.parse(fs.readFileSync(iconsPath, 'utf8')); } catch(e) {}
+      }
+      return res.end(JSON.stringify({ status: 'success', data: iconsData }));
     }
 
     case 'save_marca': {
@@ -339,15 +412,37 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       }
 
       const marcaClean = cleanSlug(input.marca || 'TOYOTA', true);
+      const bSlug = cleanSlug(input.marca || 'toyota', false);
       const modeloClean = cleanSlug(input.modelo || 'modelo', false);
       const motorClean = cleanSlug(input.motor || 'motor', false);
       const componenteClean = normalizeComponente(input.componente || 'ecu');
       const tipoClean = (input.tipo_carpeta === 'conexionado') ? 'conexionado' : 'imagen';
 
-      const targetDir = path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, componenteClean, tipoClean);
+      // Búsqueda elástica de la carpeta de motor existente en disco
+      const modelPath = path.join(DIAGRAMAS_DIR, marcaClean, modeloClean);
+      let motorFolder = motorClean;
+      if (fs.existsSync(modelPath)) {
+        const motorDirs = fs.readdirSync(modelPath).filter(d => {
+          try { return fs.statSync(path.join(modelPath, d)).isDirectory() && !d.startsWith('.'); } catch { return false; }
+        });
+        const exactMatch = motorDirs.find(d => d.toLowerCase() === motorClean.toLowerCase() || motorClean.toLowerCase().includes(d.toLowerCase()) || d.toLowerCase().includes(motorClean.toLowerCase()));
+        if (exactMatch) {
+          motorFolder = exactMatch;
+        } else {
+          // Verificar si el componente ya existe dentro de alguna carpeta de motor
+          const compMatch = motorDirs.find(d => fs.existsSync(path.join(modelPath, d, componenteClean)));
+          if (compMatch) {
+            motorFolder = compMatch;
+          } else if (motorDirs.length === 1) {
+            motorFolder = motorDirs[0];
+          }
+        }
+      }
+
+      const targetDir = path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorFolder, componenteClean, tipoClean);
       fs.mkdirSync(targetDir, { recursive: true });
-      fs.mkdirSync(path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, componenteClean, 'conexionado'), { recursive: true });
-      fs.mkdirSync(path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, componenteClean, 'imagen'), { recursive: true });
+      fs.mkdirSync(path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorFolder, componenteClean, 'conexionado'), { recursive: true });
+      fs.mkdirSync(path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorFolder, componenteClean, 'imagen'), { recursive: true });
 
       const existingFiles = fs.readdirSync(targetDir).filter(f => !f.startsWith('.'));
       const ext = path.extname(file.filename || 'foto.jpg').toLowerCase() || '.jpg';
@@ -357,7 +452,76 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
 
       fs.writeFileSync(finalPath, file.data);
 
-      const relativeUrl = `archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorClean}/${componenteClean}/${tipoClean}/${cleanFileName}`;
+      const relativeUrl = `archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorFolder}/${componenteClean}/${tipoClean}/${cleanFileName}`;
+
+      // Actualizar vehiculos_diagramas.json
+      try {
+        const tree = getVehiculosData();
+        const brandKey = Object.keys(tree).find(k => k.toLowerCase() === bSlug.toLowerCase() || cleanSlug(k, false) === bSlug || (tree[k].brandData && cleanSlug(tree[k].brandData.nombre, false) === bSlug)) || bSlug;
+        if (!tree[brandKey]) {
+          tree[brandKey] = { brandData: { nombre: marcaClean, logo: '', combustible: 'gasolina', categoria: 'vehiculos' }, models: {} };
+        }
+        if (!tree[brandKey].models) tree[brandKey].models = {};
+
+        const modelKey = Object.keys(tree[brandKey].models).find(k => k.toLowerCase() === modeloClean.toLowerCase() || cleanSlug(k, false) === modeloClean) || modeloClean;
+        if (!tree[brandKey].models[modelKey]) {
+          tree[brandKey].models[modelKey] = {
+            modelData: { _id: modelKey, nombre: input.modelo || modeloClean, anios: input.anio || 'Estándar', motor: input.motor || motorFolder, combustible: 'gasolina', imagen: '', categoria: 'vehiculos' },
+            anios: {}
+          };
+        }
+
+        const mObj = tree[brandKey].models[modelKey];
+        if (!mObj.anios) mObj.anios = {};
+        const anioKey = Object.keys(mObj.anios)[0] || input.anio || 'Estándar';
+        if (!mObj.anios[anioKey]) mObj.anios[anioKey] = { anioData: { _id: anioKey }, motores: {} };
+        const motores = mObj.anios[anioKey].motores || {};
+        const motKey = Object.keys(motores).find(k => cleanSlug(k, false) === motorFolder || cleanSlug(k, false) === motorClean) || Object.keys(motores)[0] || motorFolder;
+        if (!motores[motKey]) motores[motKey] = { motorData: { _id: motKey, combustible: 'gasolina', imagenUrl: '', titulo: motKey }, archivos: [] };
+
+        const archivos = motores[motKey].archivos || [];
+        motores[motKey].archivos = archivos;
+        const compTitle = (input.componente || componenteClean).toUpperCase();
+        const arcIdx = archivos.findIndex(arc => arc.tipo === componenteClean || (arc.titulo || arc.nombre || arc._id || '').toUpperCase().includes(compTitle) || compTitle.includes((arc.titulo || arc.nombre || arc._id || '').toUpperCase()));
+
+        if (arcIdx >= 0) {
+          if (tipoClean === 'conexionado') {
+            archivos[arcIdx].diagramaUrl = relativeUrl;
+            archivos[arcIdx].url = relativeUrl;
+            if (cleanFileName.toLowerCase().endsWith('.pdf')) {
+              archivos[arcIdx].pdfUrl = relativeUrl;
+            }
+          } else {
+            const photos = Array.isArray(archivos[arcIdx].imagenes) ? archivos[arcIdx].imagenes : (Array.isArray(archivos[arcIdx].allImages) ? archivos[arcIdx].allImages : []);
+            if (!photos.includes(relativeUrl)) {
+              if (input.posicion === 'first') photos.unshift(relativeUrl);
+              else photos.push(relativeUrl);
+            }
+            archivos[arcIdx].imagenes = photos;
+            archivos[arcIdx].allImages = photos;
+            archivos[arcIdx].fotos = photos;
+            if (!archivos[arcIdx].imageUrl || input.posicion === 'first') {
+              archivos[arcIdx].imageUrl = relativeUrl;
+            }
+          }
+        } else {
+          archivos.push({
+            _id: input.componente || componenteClean,
+            titulo: (input.componente || componenteClean).toUpperCase(),
+            tipo: componenteClean,
+            diagramaUrl: tipoClean === 'conexionado' ? relativeUrl : '',
+            pdfUrl: (tipoClean === 'conexionado' && cleanFileName.toLowerCase().endsWith('.pdf')) ? relativeUrl : '',
+            url: relativeUrl,
+            imageUrl: tipoClean === 'imagen' ? relativeUrl : '',
+            imagenes: tipoClean === 'imagen' ? [relativeUrl] : [],
+            allImages: tipoClean === 'imagen' ? [relativeUrl] : [],
+            fotos: tipoClean === 'imagen' ? [relativeUrl] : []
+          });
+        }
+        saveVehiculosData(tree);
+      } catch (e) {
+        console.error('Error al actualizar vehiculos_diagramas.json en subir_foto:', e.message);
+      }
 
       return res.end(JSON.stringify({
         status: 'success',
@@ -375,17 +539,69 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       const motorClean = cleanSlug(query.motor || 'motor', false);
       const componenteClean = normalizeComponente(query.componente || 'ecu');
 
-      const imgDir = path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, componenteClean, 'imagen');
-      const fotos = [];
+      const modelPath = path.join(DIAGRAMAS_DIR, marcaClean, modeloClean);
+      let imgDir = path.join(modelPath, motorClean, componenteClean, 'imagen');
+      let motorFolder = motorClean;
 
+      if (!fs.existsSync(imgDir) && fs.existsSync(modelPath)) {
+        const motorDirs = fs.readdirSync(modelPath).filter(d => {
+          try { return fs.statSync(path.join(modelPath, d)).isDirectory() && !d.startsWith('.'); } catch { return false; }
+        });
+        const found = motorDirs.find(d => fs.existsSync(path.join(modelPath, d, componenteClean, 'imagen')));
+        if (found) {
+          imgDir = path.join(modelPath, found, componenteClean, 'imagen');
+          motorFolder = found;
+        } else if (motorDirs.length === 1) {
+          imgDir = path.join(modelPath, motorDirs[0], componenteClean, 'imagen');
+          motorFolder = motorDirs[0];
+        }
+      }
+
+      const fotos = [];
       if (fs.existsSync(imgDir)) {
-        const filesOnDisk = fs.readdirSync(imgDir).filter(f => /\.(jpg|jpeg|png|webp|svg)$/i.test(f)).sort();
+        const filesOnDisk = fs.readdirSync(imgDir).filter(f => /\.(jpg|jpeg|png|webp|svg|gif)$/i.test(f) && !f.startsWith('.')).sort();
         filesOnDisk.forEach(f => {
-          fotos.push(`archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorClean}/${componenteClean}/imagen/${f}`);
+          fotos.push(`archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorFolder}/${componenteClean}/imagen/${f}`);
         });
       }
 
-      return res.end(JSON.stringify({ status: 'success', data: fotos, count: fotos.length }));
+      return res.end(JSON.stringify({ status: 'success', data: fotos, fotos: fotos, total: fotos.length, count: fotos.length }));
+    }
+
+    case 'listar_conexionados':
+    case 'get_conexionados': {
+      const marcaClean = cleanSlug(query.marca || 'TOYOTA', true);
+      const modeloClean = cleanSlug(query.modelo || 'modelo', false);
+      const motorClean = cleanSlug(query.motor || 'motor', false);
+      const componenteClean = normalizeComponente(query.componente || 'ecu');
+
+      const modelPath = path.join(DIAGRAMAS_DIR, marcaClean, modeloClean);
+      let connDir = path.join(modelPath, motorClean, componenteClean, 'conexionado');
+      let motorFolder = motorClean;
+
+      if (!fs.existsSync(connDir) && fs.existsSync(modelPath)) {
+        const motorDirs = fs.readdirSync(modelPath).filter(d => {
+          try { return fs.statSync(path.join(modelPath, d)).isDirectory() && !d.startsWith('.'); } catch { return false; }
+        });
+        const found = motorDirs.find(d => fs.existsSync(path.join(modelPath, d, componenteClean, 'conexionado')));
+        if (found) {
+          connDir = path.join(modelPath, found, componenteClean, 'conexionado');
+          motorFolder = found;
+        } else if (motorDirs.length === 1) {
+          connDir = path.join(modelPath, motorDirs[0], componenteClean, 'conexionado');
+          motorFolder = motorDirs[0];
+        }
+      }
+
+      const filesList = [];
+      if (fs.existsSync(connDir)) {
+        const filesOnDisk = fs.readdirSync(connDir).filter(f => /\.(pdf|jpg|jpeg|png|webp|svg)$/i.test(f) && !f.startsWith('.')).sort();
+        filesOnDisk.forEach(f => {
+          filesList.push(`archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorFolder}/${componenteClean}/conexionado/${f}`);
+        });
+      }
+
+      return res.end(JSON.stringify({ status: 'success', data: filesList, diagramas: filesList, total: filesList.length, count: filesList.length }));
     }
 
     case 'save_diagrama': {
@@ -397,6 +613,7 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       const tipo = String(input.tipo || 'ecu').trim();
       let urlArchivo = String(input.url_archivo || input.url || '').trim();
       const descripcion = String(input.descripcion || '').trim();
+      const tipoCarpeta = (input.tipo_carpeta === 'imagen' || input.tipo_carpeta === 'foto') ? 'imagen' : (input.tipo_carpeta === 'conexionado' ? 'conexionado' : (urlArchivo.toLowerCase().includes('.pdf') ? 'conexionado' : 'imagen'));
 
       const marcaClean = cleanSlug(marcaRaw, true);
       const bSlug = cleanSlug(marcaRaw, false);
@@ -412,23 +629,27 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       fs.mkdirSync(conxDir, { recursive: true });
       fs.mkdirSync(imgDir, { recursive: true });
 
-      // Si se envió un archivo en base64 (data:...), guardarlo físicamente como archivo real en conexionado
+      const destDir = (tipoCarpeta === 'imagen') ? imgDir : conxDir;
+
+      // Si se envió un archivo en base64 (data:...), guardarlo físicamente como archivo real en la carpeta destino seleccionada
       if (urlArchivo.startsWith('data:')) {
         try {
           const matches = urlArchivo.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
           if (matches && matches.length === 3) {
             const mime = matches[1];
             const base64Data = matches[2];
-            let ext = '.jpg';
+            let ext = (tipoCarpeta === 'imagen') ? '.jpg' : '.pdf';
             if (mime.includes('pdf')) ext = '.pdf';
             else if (mime.includes('png')) ext = '.png';
             else if (mime.includes('webp')) ext = '.webp';
             else if (mime.includes('svg')) ext = '.svg';
 
-            const cleanFileName = `diagrama_${modeloClean}_${compSlug}${ext}`;
-            const diskPath = path.join(conxDir, cleanFileName);
+            const cleanFileName = (tipoCarpeta === 'imagen')
+              ? `foto_${modeloClean}_${compSlug}_1${ext}`
+              : `diagrama_${modeloClean}_${compSlug}${ext}`;
+            const diskPath = path.join(destDir, cleanFileName);
             fs.writeFileSync(diskPath, Buffer.from(base64Data, 'base64'));
-            urlArchivo = `archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorClean}/${compSlug}/conexionado/${cleanFileName}`;
+            urlArchivo = `archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorClean}/${compSlug}/${tipoCarpeta}/${cleanFileName}`;
           }
         } catch (e) {
           console.error('Error al guardar archivo base64 en disco:', e.message);
@@ -436,41 +657,77 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       }
 
       // Asegurar en el árbol JSON
-      if (!tree[bSlug]) {
-        tree[bSlug] = { brandData: { nombre: marcaClean, logo: '', combustible: 'gasolina', categoria: 'vehiculos' }, models: {} };
+      const bKey = Object.keys(tree).find(k => k.toLowerCase() === bSlug.toLowerCase() || cleanSlug(k, false) === bSlug || (tree[k].brandData && cleanSlug(tree[k].brandData.nombre, false) === bSlug)) || bSlug;
+      if (!tree[bKey]) {
+        tree[bKey] = { brandData: { nombre: marcaClean, logo: '', combustible: 'gasolina', categoria: 'vehiculos' }, models: {} };
       }
-      if (!tree[bSlug].models[mSlug]) {
-        tree[bSlug].models[mSlug] = {
-          modelData: { _id: mSlug, nombre: modeloRaw, anios: anioRaw, motor: motorRaw, combustible: 'gasolina', imagen: '', categoria: 'vehiculos' },
+      const bObj = tree[bKey];
+      if (!bObj.models) bObj.models = {};
+
+      const mKey = Object.keys(bObj.models).find(k => k.toLowerCase() === mSlug.toLowerCase() || cleanSlug(k, false) === mSlug || (bObj.models[k].modelData && cleanSlug(bObj.models[k].modelData.nombre, false) === mSlug)) || mSlug;
+      if (!bObj.models[mKey]) {
+        bObj.models[mKey] = {
+          modelData: { _id: mKey, nombre: modeloRaw, anios: anioRaw, motor: motorRaw, combustible: 'gasolina', imagen: '', categoria: 'vehiculos' },
           anios: {}
         };
       }
 
-      const mObj = tree[bSlug].models[mSlug];
-      if (!mObj.anios[anioRaw]) mObj.anios[anioRaw] = { anioData: { _id: anioRaw }, motores: {} };
-      if (!mObj.anios[anioRaw].motores[motorRaw]) mObj.anios[anioRaw].motores[motorRaw] = { motorData: { _id: motorRaw }, archivos: [] };
+      const mObj = bObj.models[mKey];
+      if (!mObj.anios) mObj.anios = {};
 
-      const archivos = mObj.anios[anioRaw].motores[motorRaw].archivos;
-      const isPdf = urlArchivo.toLowerCase().includes('.pdf');
-      archivos.push({
+      const anioClean = anioRaw.replace(/\s+/g, '');
+      const aKey = Object.keys(mObj.anios).find(k => k.replace(/\s+/g, '') === anioClean) || Object.keys(mObj.anios)[0] || anioRaw;
+      if (!mObj.anios[aKey]) {
+        mObj.anios[aKey] = { anioData: { _id: aKey }, motores: {} };
+      }
+
+      const aObj = mObj.anios[aKey];
+      if (!aObj.motores) aObj.motores = {};
+
+      const motorCleanKey = cleanSlug(motorRaw, false);
+      const motKey = Object.keys(aObj.motores).find(k => cleanSlug(k, false) === motorCleanKey || k.toLowerCase() === motorRaw.toLowerCase()) || Object.keys(aObj.motores)[0] || motorRaw;
+      if (!aObj.motores[motKey]) {
+        aObj.motores[motKey] = { motorData: { _id: motKey, combustible: 'gasolina', imagenUrl: '', titulo: motKey }, archivos: [] };
+      }
+
+      const archivos = aObj.motores[motKey].archivos || [];
+      aObj.motores[motKey].archivos = archivos;
+      const isImg = (tipoCarpeta === 'imagen');
+
+      // Buscar si ya existe una entrada para este componente (ej. ECU, Distribuidor, Pedal) para actualizarla
+      const existingIdx = archivos.findIndex(arc => (arc.tipo === compSlug) || (arc.titulo || arc.nombre || arc._id || '').toUpperCase() === titulo.toUpperCase() || (arc.titulo || '').toUpperCase().includes(compSlug.toUpperCase()));
+      const existingArc = existingIdx >= 0 ? archivos[existingIdx] : {};
+      const existingPhotos = Array.isArray(existingArc.imagenes) ? existingArc.imagenes : (Array.isArray(existingArc.allImages) ? existingArc.allImages : []);
+      const combinedPhotos = isImg ? [...new Set([...existingPhotos, urlArchivo])].filter(p => !p.toLowerCase().includes('/conexionado/')) : existingPhotos;
+
+      const newDiagramData = {
         _id: titulo,
-        titulo,
+        titulo: existingArc.titulo || titulo,
         tipo: compSlug,
-        pdfUrl: urlArchivo,
-        diagramaUrl: urlArchivo,
-        url: urlArchivo,
-        imageUrl: isPdf ? '' : urlArchivo,
+        pdfUrl: isImg ? (existingArc.pdfUrl || '') : urlArchivo,
+        diagramaUrl: isImg ? (existingArc.diagramaUrl || '') : urlArchivo,
+        url: isImg ? (existingArc.url || urlArchivo) : urlArchivo,
+        imageUrl: isImg ? urlArchivo : (existingArc.imageUrl || (combinedPhotos[0] || '')),
         descripcion,
-        imagenes: isPdf ? [] : [urlArchivo],
-        allImages: isPdf ? [] : [urlArchivo]
-      });
+        imagenes: combinedPhotos,
+        allImages: combinedPhotos,
+        fotos: combinedPhotos
+      };
+
+      if (existingIdx >= 0) {
+        archivos[existingIdx] = { ...archivos[existingIdx], ...newDiagramData };
+      } else {
+        archivos.push(newDiagramData);
+      }
+
       saveVehiculosData(tree);
 
       return res.end(JSON.stringify({
         status: 'success',
         message: 'Diagrama y carpetas guardadas físicamente en disco local.',
         url: urlArchivo,
-        ruta_local: urlArchivo
+        ruta_local: urlArchivo,
+        tipo_carpeta: tipoCarpeta
       }));
     }
 
@@ -578,24 +835,43 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
     case 'delete_diagrama': {
       const marcaRaw = String(input.marca || query.marca || '').trim();
       const modeloRaw = String(input.modelo || query.modelo || '').trim();
-      const titulo = String(input.titulo || query.titulo || '').trim();
-      const bSlug = cleanSlug(marcaRaw, false);
-      const mSlug = cleanSlug(modeloRaw, false);
+      const motorRaw = String(input.motor || query.motor || '').trim();
+      const titulo = String(input.titulo || query.titulo || input.archivo_id || query.archivo_id || '').trim();
+      const tipo = String(input.tipo || query.tipo || '').trim();
 
-      if (tree[bSlug] && tree[bSlug].models && tree[bSlug].models[mSlug]) {
-        const mObj = tree[bSlug].models[mSlug];
-        Object.keys(mObj.anios || {}).forEach(aKey => {
-          Object.keys(mObj.anios[aKey].motores || {}).forEach(motKey => {
-            const archivos = mObj.anios[aKey].motores[motKey].archivos || [];
-            mObj.anios[aKey].motores[motKey].archivos = archivos.filter(arc => {
-              const arcTitle = arc.titulo || arc.nombre || arc._id || '';
-              return arcTitle.toUpperCase() !== titulo.toUpperCase() && arc._id !== titulo;
-            });
+      const marcaClean = cleanSlug(marcaRaw, true);
+      const bSlug = cleanSlug(marcaRaw, false);
+      const modeloClean = cleanSlug(modeloRaw, false);
+      const mSlug = modeloClean;
+      const motorClean = cleanSlug(motorRaw, false);
+      const compSlug = normalizeComponente(tipo || titulo);
+
+      // 1. Eliminar del árbol JSON
+      Object.keys(tree).forEach(bKey => {
+        if (!bSlug || bKey === bSlug || cleanSlug(bKey, false) === bSlug) {
+          const models = tree[bKey].models || {};
+          Object.keys(models).forEach(mKey => {
+            if (!mSlug || mKey === mSlug || cleanSlug(mKey, false) === mSlug) {
+              const mObj = models[mKey];
+              Object.keys(mObj.anios || {}).forEach(aKey => {
+                Object.keys(mObj.anios[aKey].motores || {}).forEach(motKey => {
+                  const archivos = mObj.anios[aKey].motores[motKey].archivos || [];
+                  mObj.anios[aKey].motores[motKey].archivos = archivos.filter(arc => {
+                    const arcTitle = String(arc.titulo || arc.nombre || arc._id || '').toUpperCase();
+                    const arcTipo = String(arc.tipo || '').toLowerCase();
+                    const matchTitle = titulo && (arcTitle === titulo.toUpperCase() || arc._id === titulo);
+                    const matchTipo = compSlug && (arcTipo === compSlug || normalizeComponente(arcTitle) === compSlug);
+                    return !(matchTitle || matchTipo);
+                  });
+                });
+              });
+            }
           });
-        });
-        saveVehiculosData(tree);
-      }
-      return res.end(JSON.stringify({ status: 'success', message: 'Diagrama eliminado localmente.' }));
+        }
+      });
+      saveVehiculosData(tree);
+
+      return res.end(JSON.stringify({ status: 'success', message: 'Tarjeta eliminada del catálogo exitosamente. Los archivos de respaldo se conservan seguros.' }));
     }
 
     default:

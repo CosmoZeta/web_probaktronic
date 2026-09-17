@@ -183,114 +183,99 @@
             }
         }
     },
-    "nissan": {
+    "ford": {
         "brandData": {
-            "nombre": "NISSAN",
-            "logo": "imagenes svg/ico_logo_nissan.svg",
+            "nombre": "FORD",
+            "logo": "imagenes svg/ico_logo_ford.svg",
             "combustible": "gasolina",
             "categoria": "sedan"
         },
         "models": {
-            "tiida_tiida_latio": {
+            "focus": {
                 "modelData": {
-                    "_id": "tiida_tiida_latio",
-                    "nombre": "TIIDA / TIIDA LATIO",
-                    "anios": "2004 -2012",
-                    "motor": "HR15",
+                    "_id": "focus",
+                    "nombre": "FOCUS",
+                    "anios": "2018-2022",
+                    "motor": "2.8",
                     "combustible": "gasolina",
-                    "imagen": "imagenes autos/ic_car_toyota_hilux.JPG",
-                    "categoria": "vehiculos"
+                    "imagen": "imagenes autos/ic_car_ford_focus.JPG",
+                    "categoria": "sedan_hatchback"
                 },
                 "anios": {
-                    "2004 -2012": {
+                    "2018-2022": {
                         "anioData": {
-                            "_id": "2004 -2012"
+                            "_id": "2018-2022"
                         },
                         "motores": {
-                            "HR15": {
+                            "2.8": {
                                 "motorData": {
-                                    "_id": "HR15",
+                                    "_id": "2.8",
                                     "combustible": "gasolina",
-                                    "imagenUrl": "imagenes autos/ic_car_toyota_hilux.JPG",
-                                    "titulo": "HR15"
+                                    "imagenUrl": "imagenes autos/ic_car_ford_focus.JPG",
+                                    "titulo": "2.8"
                                 },
                                 "archivos": [
                                     {
-                                        "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 HR15 ECU",
-                                        "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 HR15 ECU",
-                                        "tipo": "pinout",
-                                        "pdfUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842107467.jpeg",
-                                        "diagramaUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842107467.jpeg",
-                                        "url": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842107467.jpeg",
-                                        "imageUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842107467.jpeg",
-                                        "descripcion": "",
-                                        "imagenes": [
-                                            "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842107467.jpeg"
-                                        ],
-                                        "allImages": [
-                                            "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842107467.jpeg"
-                                        ]
-                                    },
-                                    {
-                                        "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 HR15 ECU",
-                                        "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 HR15 ECU",
-                                        "tipo": "pinout",
-                                        "pdfUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842139911.jpeg",
-                                        "diagramaUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842139911.jpeg",
-                                        "url": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842139911.jpeg",
-                                        "imageUrl": "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842139911.jpeg",
-                                        "descripcion": "",
-                                        "imagenes": [
-                                            "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842139911.jpeg"
-                                        ],
-                                        "allImages": [
-                                            "archivos_almacenamiento/diagramas/NISSAN/TIIDA_/_TIIDA_LATIO/2004_-2012/WhatsApp_Image_2026-09-03_at_4_33_32_PM_1788842139911.jpeg"
-                                        ]
-                                    },
-                                    {
-                                        "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 HR15 ECU",
-                                        "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 HR15 ECU",
+                                        "_id": "FORD FOCUS 2018-2022 PINOUT ECU",
+                                        "titulo": "FORD FOCUS 2018-2022 PINOUT ECU",
                                         "tipo": "ecu",
-                                        "pdfUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/conexionado/diagrama_ecu.jpg",
-                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/conexionado/diagrama_ecu.jpg",
-                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/conexionado/diagrama_ecu.jpg",
-                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/conexionado/diagrama_ecu.jpg",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/ecu/conexionado/focus_ecu_1.jpeg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/ecu/conexionado/focus_ecu_1.jpeg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/ecu/imagen/1610673364738_1789009278772.jpg",
                                         "descripcion": "",
                                         "imagenes": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/conexionado/diagrama_ecu.jpg"
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/ecu/imagen/1610673364738_1789009278772.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/ecu/imagen/focus_ecu_2.png"
                                         ],
                                         "allImages": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/conexionado/diagrama_ecu.jpg"
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/ecu/imagen/1610673364738_1789009278772.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/ecu/imagen/focus_ecu_2.png"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/ecu/imagen/1610673364738_1789009278772.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/ecu/imagen/focus_ecu_2.png"
                                         ]
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "2004 - 2012": {
-                        "anioData": {
-                            "_id": "2004 - 2012"
-                        },
-                        "motores": {
-                            "HR15": {
-                                "motorData": {
-                                    "_id": "HR15"
-                                },
-                                "archivos": [
+                                    },
                                     {
-                                        "_id": "NISSAN TIIDA 2004 - 2012 INMOVILIZADOR",
-                                        "titulo": "NISSAN TIIDA 2004 - 2012 INMOVILIZADOR",
-                                        "tipo": "inmovilizador_llave",
-                                        "pdfUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/inmovilizador_llave/conexionado/diagrama_inmo.jpg",
-                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/inmovilizador_llave/conexionado/diagrama_inmo.jpg",
-                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/inmovilizador_llave/conexionado/diagrama_inmo.jpg",
-                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/inmovilizador_llave/conexionado/diagrama_inmo.jpg",
+                                        "_id": "FORD FOCUS CUERPO DE ACELERACION",
+                                        "titulo": "FORD FOCUS CUERPO DE ACELERACION",
+                                        "tipo": "cuerpo_aceleracion",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/cuerpo_aceleracion/conexionado/focus_cuerpo_aceleracion_1.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/cuerpo_aceleracion/conexionado/focus_cuerpo_aceleracion_1.jpg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/cuerpo_aceleracion/imagen/WhatsApp_Image_2026-04-16_at_10_41_46_PM_1789010080438.jpeg",
                                         "descripcion": "",
                                         "imagenes": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/inmovilizador_llave/conexionado/diagrama_inmo.jpg"
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/cuerpo_aceleracion/imagen/WhatsApp_Image_2026-04-16_at_10_41_46_PM_1789010080438.jpeg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/cuerpo_aceleracion/imagen/focus_cuerpo_aceleracion_2.png"
                                         ],
                                         "allImages": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/inmovilizador_llave/conexionado/diagrama_inmo.jpg"
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/cuerpo_aceleracion/imagen/WhatsApp_Image_2026-04-16_at_10_41_46_PM_1789010080438.jpeg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/cuerpo_aceleracion/imagen/focus_cuerpo_aceleracion_2.png"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/cuerpo_aceleracion/imagen/WhatsApp_Image_2026-04-16_at_10_41_46_PM_1789010080438.jpeg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/cuerpo_aceleracion/imagen/focus_cuerpo_aceleracion_2.png"
+                                        ]
+                                    },
+                                    {
+                                        "_id": "FORD FOCUS TABLERO INSTRUMENTOS",
+                                        "titulo": "FORD FOCUS TABLERO INSTRUMENTOS",
+                                        "tipo": "tablero_instrumentos",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/tablero_instrumentos/conexionado/focus_tablero_instrumentos_1.png",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/tablero_instrumentos/conexionado/focus_tablero_instrumentos_1.png",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/tablero_instrumentos/imagen/1_1789010262066.jpg",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/tablero_instrumentos/imagen/1_1789010262066.jpg"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/tablero_instrumentos/imagen/1_1789010262066.jpg"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/FORD/focus/2_8/tablero_instrumentos/imagen/1_1789010262066.jpg"
                                         ]
                                     }
                                 ]
