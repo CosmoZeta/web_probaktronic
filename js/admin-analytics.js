@@ -551,7 +551,7 @@
       .admin-live-analytics-pill {
         position: fixed;
         bottom: 24px;
-        right: 24px;
+        right: 92px;
         background: rgba(15, 23, 42, 0.95);
         border: 1px solid rgba(239, 68, 68, 0.5);
         border-radius: 50px;
@@ -564,6 +564,12 @@
         transform: translateY(-3px) scale(1.03);
         border-color: #EF4444;
         box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3) !important;
+      }
+      @media (max-width: 768px) {
+        .admin-live-analytics-pill {
+          bottom: 86px;
+          right: 24px;
+        }
       }
       .live-pulse-dot {
         width: 10px;

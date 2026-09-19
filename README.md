@@ -50,7 +50,6 @@ web_probaktronic/
 ├── catalogo.html               # Catálogo dinámico de productos desde Firestore
 ├── vehiculos.html              # Mapeo y catálogo por marca de vehículos
 ├── diagramas-3d.html           # Visor interactivo de componentes 3D
-├── galeria-medios.html         # Gestor y galería técnica de archivos/medios
 ├── dashboard.html              # Panel de control extendido
 │
 ├── css/

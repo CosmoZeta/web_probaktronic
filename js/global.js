@@ -15,6 +15,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Unificar enlace a Tienda en el Menú Lateral
+  document.querySelectorAll('.sidebar-nav a[href="catalogo.html"]').forEach(link => {
+    link.setAttribute('title', 'Tienda');
+    const icon = link.querySelector('i');
+    if (icon) {
+      icon.className = 'bi bi-shop';
+    }
+    const textSpan = link.querySelector('span');
+    if (textSpan) {
+      textSpan.textContent = 'Tienda';
+    }
+  });
+
+  // Inicializar Botón Flotante de WhatsApp
+  if (!document.querySelector('.whatsapp-floating-btn')) {
+    const waBtn = document.createElement('a');
+    waBtn.className = 'whatsapp-floating-btn';
+    waBtn.href = 'https://wa.me/51910697674?text=Hola%20Probaktronic,%20necesito%20asistencia%20t%C3%A9cnica%20en%20la%20plataforma';
+    waBtn.target = '_blank';
+    waBtn.rel = 'noopener noreferrer';
+    waBtn.title = 'Soporte y Asistencia Técnica WhatsApp';
+    waBtn.setAttribute('aria-label', 'Contactar por WhatsApp');
+    waBtn.innerHTML = '<i class="bi bi-whatsapp"></i>';
+    document.body.appendChild(waBtn);
+  }
+
+  // Optimización de Carga: Lazy Loading de Imágenes
+  document.querySelectorAll('img:not([loading])').forEach(img => {
+    img.setAttribute('loading', 'lazy');
+  });
+
   const sidebar = document.querySelector('.sidebar');
   const btnMinimize = document.querySelector('.btn-sidebar-minimize');
 
@@ -385,23 +416,7 @@ function initCurrentPageFeatures() {
     });
   });
 
-  // Galeria Dropzone
-  const dropzone = document.getElementById('dropzone');
-  const fileInput = document.getElementById('fileInput');
 
-  if (dropzone && fileInput) {
-    dropzone.addEventListener('click', () => fileInput.click());
-    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag-over'); });
-    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
-    dropzone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('drag-over');
-      if (e.dataTransfer.files.length > 0) showGlobalToast(`Subiendo ${e.dataTransfer.files.length} archivo(s)...`);
-    });
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) showGlobalToast(`Subiendo ${e.target.files.length} archivo(s)...`);
-    });
-  }
 
   // Catalogo Live Search Filter
   const catalogSearchInput = document.getElementById('catalogSearchInput');
@@ -782,7 +797,7 @@ window.showLaboratorioModal = function() {
 (function() {
   if (typeof window.registrarVisitaGlobal !== 'function') {
     const s = document.createElement('script');
-    s.src = 'js/admin-analytics.js?v=306.0';
+    s.src = 'js/admin-analytics.js?v=380.0';
     s.async = true;
     document.head.appendChild(s);
   }

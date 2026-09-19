@@ -361,23 +361,25 @@
         const rawTitle = (a.titulo || a.nombre || a.id || '').toUpperCase().trim();
         let compTypeKey = (a.tipo || '').toLowerCase().trim();
         if (!compTypeKey || compTypeKey === 'diagrama' || compTypeKey === 'general' || compTypeKey === 'pinout') {
-          if (rawTitle.includes('INMOVILIZADOR') || rawTitle.includes('LLAVE') || rawTitle.includes('ANTENA')) {
+          let normTitle = rawTitle.replace(/E\s*\.?\s*D\s*\.?\s*U/gi, 'EDU');
+          normTitle = normTitle.replace(/[^A-Z0-9áéíóúÁÉÍÓÚ]+/g, ' ').replace(/\s+/g, ' ').trim();
+          if (normTitle.includes('INMOVILIZADOR') || normTitle.includes('LLAVE') || normTitle.includes('ANTENA')) {
             compTypeKey = 'inmovilizador_llave';
-          } else if (rawTitle.includes('PEDAL')) {
+          } else if (normTitle.includes('PEDAL')) {
             compTypeKey = 'pedal_acelerador';
-          } else if (rawTitle.includes('EDU') && (rawTitle.includes('DOS') || rawTitle.includes('2'))) {
+          } else if (normTitle.includes('EDU') && (normTitle.includes('DOS') || normTitle.includes('2'))) {
             compTypeKey = 'edu_dos_conectores';
-          } else if (rawTitle.includes('EDU') && (rawTitle.includes('TRES') || rawTitle.includes('3'))) {
+          } else if (normTitle.includes('EDU') && (normTitle.includes('TRES') || normTitle.includes('3'))) {
             compTypeKey = 'edu_tres_conectores';
-          } else if (rawTitle.includes('OBD')) {
+          } else if (normTitle.includes('OBD')) {
             compTypeKey = 'puerto_obd';
-          } else if (rawTitle.includes('BOOT')) {
+          } else if (normTitle.includes('BOOT')) {
             compTypeKey = 'modo_boot';
-          } else if (rawTitle.includes('BENCH')) {
+          } else if (normTitle.includes('BENCH')) {
             compTypeKey = 'modo_banco';
-          } else if (rawTitle.includes('CUERPO')) {
+          } else if (normTitle.includes('CUERPO')) {
             compTypeKey = 'cuerpo_aceleracion';
-          } else if (rawTitle.includes('ECU') || rawTitle.includes('PINOUT') || rawTitle.includes('COMPUTADORA')) {
+          } else if (normTitle.includes('ECU') || normTitle.includes('PINOUT') || normTitle.includes('COMPUTADORA')) {
             compTypeKey = 'ecu';
           } else {
             compTypeKey = rawTitle;
@@ -392,7 +394,8 @@
           const newPhotos = VehiculosData.extractPhotos(a);
 
           const combinedPhotos = [...new Set([...existingPhotos, ...newPhotos, existing.imageUrl, a.imageUrl].filter(Boolean))];
-          const bestPdf = a.pdfUrl || a.diagramaUrl || existing.pdfUrl || existing.diagramaUrl || (!a.imageUrl && a.url ? a.url : '') || (!existing.imageUrl && existing.url ? existing.url : '');
+          const isDiagUrl = (u) => u && typeof u === 'string' && (u.includes('.pdf') || u.includes('%2epdf') || u.includes('/conexionado/') || u.includes('diagrama_'));
+          const bestPdf = a.pdfUrl || a.diagramaUrl || existing.pdfUrl || existing.diagramaUrl || (isDiagUrl(a.url) ? a.url : '') || (isDiagUrl(existing.url) ? existing.url : '');
           const bestImageUrl = a.imageUrl || existing.imageUrl || (combinedPhotos.length > 0 ? combinedPhotos[0] : '');
 
           mergedCardsMap.set(compTypeKey, {

@@ -391,10 +391,144 @@ function markItemAsDeleted(type, id) {
 
 const defaultModelsMap = {
   'toyota': [
-    { id: 'hilux', modelo: 'TOYOTA HILUX 2011 - 2015', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel', categoria: 'pickup', anios: '2011 - 2015', imagen: 'diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg' },
-    { id: 'corolla', modelo: 'TOYOTA COROLLA 4E-FE', motor: '4E-FE 1.3L', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '1993 - 1997', imagen: '' }
+    { id: 'hilux', modelo: 'TOYOTA HILUX (2011 - 2015)', nombre: 'TOYOTA HILUX (2011 - 2015)', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel', categoria: 'pickup', anios: '2011 - 2015', imagen: 'archivos_almacenamiento/diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg' },
+    { id: 'corolla', modelo: 'TOYOTA COROLLA (MOTOR 4E)', nombre: 'TOYOTA COROLLA (MOTOR 4E)', motor: '4E-FE 1.3L', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '1993 - 1997', imagen: 'archivos_almacenamiento/fotos_modelos/toyota.png' }
+  ],
+  'ford': [
+    { id: 'focus', modelo: 'FORD FOCUS (2018-2022)', nombre: 'FORD FOCUS (2018-2022)', motor: '2.8', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '2018-2022', imagen: 'imagenes autos/ic_car_ford_focus.JPG' }
+  ],
+  'hyundai': [
+    { id: 'accent', modelo: 'HYUNDAI ACCENT 2020', nombre: 'HYUNDAI ACCENT 2020', motor: '1.6 Gamma', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '2020', imagen: '' }
   ]
 };
+
+function normalizeCanonicalModelKey(rawName, brandName, rawId = '') {
+  let clean = String(rawName || rawId || '').toLowerCase();
+  if (brandName) {
+    const bTokens = String(brandName).toLowerCase().split(/[^a-z0-9]/).filter(Boolean);
+    bTokens.forEach(b => {
+      const re = new RegExp('\\b' + b + '\\b', 'gi');
+      clean = clean.replace(re, ' ');
+    });
+  }
+  clean = clean.replace(/\([^)]*\)/g, ' ');
+  clean = clean.replace(/\b(motor|engine|version|edicion|gen|fase|ano|ano|year|modelo|auto|car|sedan|hatchback|pickup|camioneta|suv)\b/gi, ' ');
+  clean = clean.replace(/\b(19\d{2}|20\d{2})\s*[-–/]\s*(19\d{2}|20\d{2})\b/g, ' ');
+  clean = clean.replace(/\b(19\d{2}|20\d{2})\b/g, ' ');
+  clean = clean.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+
+  const multiWord = [
+    'land cruiser prado', 'land cruiser', 'fj cruiser', 'rav 4', 'rav4',
+    'grand vitara', 'grand nomade', 'grand i10', 'santa fe', 'tucson ix35',
+    'cr v', 'crv', 'hr v', 'hrv', 'd max', 'dmax', 'bt 50', 'bt50',
+    'l 200', 'l200', 'hilux revo', 'hilux vigo', 'hilux'
+  ];
+  for (const mw of multiWord) {
+    const mwClean = mw.replace(/[^a-z0-9]/g, ' ');
+    if (clean.startsWith(mwClean) || clean === mwClean) {
+      return mwClean.replace(/\s+/g, '_');
+    }
+  }
+
+  const tokens = clean.split(' ').filter(t => t.length >= 2);
+  return (tokens[0] || clean || rawId || 'modelo').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+window.normalizeCanonicalModelKey = normalizeCanonicalModelKey;
+
+function isModelDeleted(docId, modelName, brandName) {
+  const deletedList = getDeletedItemsList('models');
+  if (!deletedList || deletedList.length === 0) return false;
+
+  const cleanId = String(docId || '').toLowerCase().trim();
+  const cleanName = String(modelName || '').toLowerCase().trim();
+  const brand = String(brandName || '').toLowerCase().trim();
+  const canonical = normalizeCanonicalModelKey(cleanName || cleanId, brand, cleanId);
+
+  return deletedList.some(del => {
+    const d = String(del).toLowerCase().trim();
+    return d === cleanId || d === cleanName || d === canonical || d === `${brand}_${cleanId}` || d === `${brand}_${canonical}`;
+  });
+}
+window.isModelDeleted = isModelDeleted;
+
+function mergeModelEntries(entries, brandName) {
+  if (!Array.isArray(entries)) return [];
+  const mergedMap = new Map();
+
+  entries.forEach(item => {
+    if (!item) return;
+    const docId = item.docId || item.id || '';
+    const data = item.data || item;
+    const modelName = data.modelo || data.nombre || docId;
+
+    if (isModelDeleted(docId, modelName, brandName)) {
+      return;
+    }
+
+    const key = normalizeCanonicalModelKey(modelName, brandName, docId);
+    if (!key) return;
+
+    if (!mergedMap.has(key)) {
+      const initialEntry = {
+        docId: docId || key,
+        aliases: new Set([docId, modelName, key].filter(Boolean)),
+        data: {
+          modelo: modelName,
+          nombre: data.nombre || modelName,
+          anios: data.anios || data.anio || '',
+          motor: data.motor || 'Estándar',
+          combustible: data.combustible || 'gasolina',
+          categoria: data.categoria || 'sedan_hatchback',
+          imagen: data.imagen || data.fotoAuto || data.carPhoto || '',
+          fotoAuto: data.fotoAuto || data.imagen || data.carPhoto || ''
+        }
+      };
+      mergedMap.set(key, initialEntry);
+    } else {
+      const existing = mergedMap.get(key);
+      if (docId) existing.aliases.add(docId);
+      if (modelName) existing.aliases.add(modelName);
+
+      const exData = existing.data;
+      if ((!exData.anios || exData.anios === '') && (data.anios || data.anio)) {
+        exData.anios = data.anios || data.anio;
+      }
+      if ((!exData.motor || exData.motor === 'Estándar') && (data.motor && data.motor !== 'Estándar')) {
+        exData.motor = data.motor;
+      }
+      if ((!exData.imagen || exData.imagen.includes('logo_probaktronic')) && (data.imagen || data.fotoAuto)) {
+        exData.imagen = data.imagen || data.fotoAuto;
+        exData.fotoAuto = data.imagen || data.fotoAuto;
+      }
+      if (data.categoria && exData.categoria === 'sedan_hatchback' && data.categoria !== 'sedan_hatchback') {
+        exData.categoria = data.categoria;
+      }
+      if (data.combustible && data.combustible !== 'gasolina') {
+        exData.combustible = data.combustible;
+      }
+      if (data.nombre && (!exData.nombre || (data.nombre.length > exData.nombre.length && !exData.nombre.includes('(')))) {
+        exData.nombre = data.nombre;
+        exData.modelo = data.modelo || data.nombre;
+      }
+    }
+  });
+
+  const result = [];
+  if (!window.currentModelsDataStore) window.currentModelsDataStore = {};
+
+  mergedMap.forEach(({ docId, aliases, data }) => {
+    aliases.forEach(alias => {
+      window.currentModelsDataStore[alias] = data;
+    });
+    window.currentModelsDataStore[docId] = data;
+    window.currentModelsDataStore[data.modelo] = data;
+    if (data.nombre) window.currentModelsDataStore[data.nombre] = data;
+    result.push({ docId, data });
+  });
+
+  return result;
+}
+window.mergeModelEntries = mergeModelEntries;
 
 function matchesVehicleCategory(itemCat, targetCatKey) {
   if (!targetCatKey) return true;
@@ -776,21 +910,10 @@ window.loadSitegroundModelsForBrand = async function(brandDocId, brandName, mode
     localStorage.removeItem(`probak_custom_models_${(brandDocId || '').toLowerCase().trim()}`);
   } catch(e) {}
 
-  const defaultModelsMap = {
-    'toyota': [
-      { id: 'hilux', modelo: 'TOYOTA HILUX 2011 - 2015', nombre: 'TOYOTA HILUX (2011 - 2015)', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel', categoria: 'pickup', anios: '2011 - 2015', imagen: 'diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg' },
-      { id: 'corolla_4e', modelo: 'Toyota Corolla Motor 4E', nombre: 'Toyota Corolla Motor 4E', motor: '4E-FE 1.3L', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '1993 - 1997', imagen: '' }
-    ],
-    'ford': [
-      { id: 'focus', modelo: 'FORD FOCUS', nombre: 'FORD FOCUS (2018-2022)', motor: '2.8', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '2018-2022', imagen: 'imagenes autos/ic_car_ford_focus.JPG' }
-    ]
-  };
-
   const getCombinedModelEntries = (extraApiList = null, jsonTree = null) => {
     const rawList = [];
-    const seen = new Set();
 
-    // 1. Modelos del árbol vehiculos_diagramas.json (Fuente local rica y estructurada)
+    // 1. Modelos del árbol vehiculos_diagramas.json (Fuente local estructurada)
     if (jsonTree) {
       for (const [bKey, bVal] of Object.entries(jsonTree)) {
         const bClean = bKey.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -799,77 +922,54 @@ window.loadSitegroundModelsForBrand = async function(brandDocId, brandName, mode
           for (const [mKey, mVal] of Object.entries(models)) {
             const mData = mVal.modelData || {};
             const mTitle = (mData.nombre || mKey).trim();
-            const normKey = mTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (normKey && !seen.has(normKey)) {
-              seen.add(normKey);
-              rawList.push({
-                id: mData._id || mKey,
-                modelo: mTitle,
-                nombre: mTitle,
-                anios: mData.anios || '',
-                motor: mData.motor || 'Estándar',
-                combustible: mData.combustible || (bVal.brandData && bVal.brandData.combustible) || 'gasolina',
-                categoria: mData.categoria || (bVal.brandData && bVal.brandData.categoria) || 'sedan_hatchback',
-                imagen: mData.imagen || 'imagenes autos/ic_car_toyota_hilux.JPG'
-              });
-            }
+            rawList.push({
+              id: mData._id || mKey,
+              docId: mData._id || mKey,
+              modelo: mTitle,
+              nombre: mTitle,
+              anios: mData.anios || '',
+              motor: mData.motor || 'Estándar',
+              combustible: mData.combustible || (bVal.brandData && bVal.brandData.combustible) || 'gasolina',
+              categoria: mData.categoria || (bVal.brandData && bVal.brandData.categoria) || 'sedan_hatchback',
+              imagen: mData.imagen || 'imagenes autos/ic_car_toyota_hilux.JPG'
+            });
           }
         }
       }
     }
 
-    // 2. Modelos de la API (SiteGround / Local)
+    // 2. Modelos de la API (SiteGround / MySQL)
     if (Array.isArray(extraApiList) && extraApiList.length > 0) {
       extraApiList.forEach(dbm => {
         const fullTitle = (dbm.Nombre || dbm.nombre || dbm.modelo || dbm.Modelo || '').trim();
         const ident = dbm.Slug || dbm.slug || dbm.modelo || dbm.Nombre || fullTitle;
-        const normKey = (fullTitle || ident).toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (normKey && !seen.has(normKey)) {
-          seen.add(normKey);
-          rawList.push({
-            id: ident,
-            modelo: fullTitle,
-            nombre: fullTitle,
-            anios: dbm.Anios || dbm.anios || '',
-            motor: dbm.Motor || dbm.motor || 'Estándar',
-            combustible: dbm.Combustible || dbm.combustible || 'gasolina',
-            categoria: dbm.Categoria || dbm.categoria || 'sedan_hatchback',
-            imagen: dbm.ImagenUrl || dbm.imagen || dbm.Imagen || 'imagenes autos/ic_car_toyota_hilux.JPG'
-          });
-        }
+        rawList.push({
+          id: ident,
+          docId: ident,
+          modelo: fullTitle,
+          nombre: fullTitle,
+          anios: dbm.Anios || dbm.anios || '',
+          motor: dbm.Motor || dbm.motor || 'Estándar',
+          combustible: dbm.Combustible || dbm.combustible || 'gasolina',
+          categoria: dbm.Categoria || dbm.categoria || 'sedan_hatchback',
+          imagen: dbm.ImagenUrl || dbm.imagen || dbm.Imagen || 'imagenes autos/ic_car_toyota_hilux.JPG'
+        });
       });
     }
 
     // 3. Fallback a defaultModelsMap solo si no hay ninguno
     if (rawList.length === 0 && defaultModelsMap[brandKey]) {
       defaultModelsMap[brandKey].forEach(m => {
-        const normKey = (m.modelo || m.id).toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (!seen.has(normKey)) {
-          seen.add(normKey);
-          rawList.push(m);
-        }
+        rawList.push({
+          id: m.id,
+          docId: m.id,
+          ...m
+        });
       });
     }
 
-    // Convertir a formato universal modelEntries
-    return rawList.map(m => {
-      const uniqueKey = m.modelo || m.id;
-      window.currentModelsDataStore[uniqueKey] = m;
-      window.currentModelsDataStore[m.id] = m;
-      return {
-        docId: m.id,
-        data: {
-          modelo: m.modelo,
-          nombre: m.nombre || m.modelo || m.id,
-          anios: m.anios || '',
-          motor: m.motor || 'Estándar',
-          combustible: m.combustible || 'gasolina',
-          categoria: m.categoria || 'sedan_hatchback',
-          imagen: m.imagen,
-          fotoAuto: m.imagen
-        }
-      };
-    });
+    // Unificar, combinar datos y deduplicar a EXACTAMENTE UN modelo único
+    return mergeModelEntries(rawList, brandName || brandDocId);
   };
 
   // Cargar desde vehiculos_diagramas.json y/o API
@@ -976,11 +1076,14 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
   if (!modelsListGrid) return;
   modelsListGrid.innerHTML = '';
 
+  // Garantizar unificación y deduplicación estricta de una sola tarjeta por modelo
+  const unifiedEntries = mergeModelEntries(modelEntries, brandName);
+
   const fuelFilter = window.currentSelectedFuelType || currentSelectedFuelType || '';
   const categoryFilter = window.currentSelectedCategoryKey || currentSelectedCategoryKey || '';
-  let filteredEntries = modelEntries;
+  let filteredEntries = unifiedEntries;
   if (fuelFilter || categoryFilter) {
-    filteredEntries = modelEntries.filter(({ docId, data }) => {
+    filteredEntries = unifiedEntries.filter(({ docId, data }) => {
       const modelName = data.modelo || data.nombre || docId;
       const motor = data.motor || 'Estándar';
       const fuelInfo = getFuelTypeInfo(data, modelName, motor);
@@ -1088,102 +1191,20 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
 }
 
 function renderFallbackModelsForBrand(brandDocId, brandName, modelsListGrid, loader) {
-  const defaultModelsMap = {
-    'hyundai': [{ id: 'accent', modelo: 'Hyundai Accent 2020', motor: '1.6 Gamma', combustible: 'gasolina', imagen: '' }],
-    'toyota': [
-      { id: 'hilux', modelo: 'TOYOTA HILUX 2011 - 2015', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel', categoria: 'pickup', anios: '2011 - 2015', imagen: 'diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg' },
-      { id: 'corolla_4e', modelo: 'Toyota Corolla Motor 4E', motor: '4E-FE 1.3L', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '1993 - 1997', imagen: '' }
-    ]
-  };
-
-  let list = [...(defaultModelsMap[brandDocId.toLowerCase()] || [])];
-
-  // Modelos limpios y oficiales
-
+  const brandKey = (brandDocId || brandName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  let list = [...(defaultModelsMap[brandKey] || defaultModelsMap[brandDocId.toLowerCase()] || [])];
 
   if (list.length === 0) {
     list = [{ id: `${brandName} Modelo`, modelo: `${brandName} Estándar`, motor: 'Estándar', combustible: 'diesel' }];
   }
 
-  if (currentSelectedFuelType) {
-    list = list.filter(m => {
-      const fuelInfo = getFuelTypeInfo(m, m.modelo, m.motor);
-      if (currentSelectedFuelType === 'diesel') return fuelInfo.isDiesel;
-      if (currentSelectedFuelType === 'gasolina') return !fuelInfo.isDiesel;
-      return true;
+  if (loader && typeof loader.finish === 'function') {
+    loader.finish(() => {
+      renderModelEntries(list, brandName, modelsListGrid);
     });
+  } else {
+    renderModelEntries(list, brandName, modelsListGrid);
   }
-
-  loader.finish(() => {
-    modelsListGrid.innerHTML = '';
-    list.forEach(m => {
-      window.currentModelsDataStore[m.id] = m;
-      const fuelInfo = getFuelTypeInfo(m, m.modelo, m.motor);
-      const carPhotoUrl = m.imagen || getVehicleCarPhotoUrl(brandName, m.modelo, m.id);
-      const thumbHtml = carPhotoUrl ? `
-        <div class="model-car-thumb-wrap">
-          <img src="${carPhotoUrl}" alt="${m.modelo}" class="model-car-thumb-img" onerror="this.parentElement.innerHTML='<div class=\\\'model-car-thumb-placeholder\\\'><i class=\\\'bi bi-question-lg\\\'></i></div>'">
-        </div>
-      ` : `
-        <div class="model-car-thumb-wrap">
-          <div class="model-car-thumb-placeholder"><i class="bi bi-question-lg"></i></div>
-        </div>
-      `;
-
-      const isAdmin = window.checkIsAdmin();
-      const editModelBtn = isAdmin ? `
-        <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${m.id}', name: '${m.modelo}', brand: '${brandName}', motor: '${m.motor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}' })">
-          <i class="bi bi-pencil-fill" style="font-size: 11px;"></i>
-        </button>
-      ` : '';
-
-      const card = document.createElement('div');
-      card.className = 'model-item-card position-relative';
-      card.innerHTML = `
-        ${editModelBtn}
-        <div class="model-card-header">
-          ${thumbHtml}
-          <div class="model-card-info">
-            <span class="model-card-badge ${fuelInfo.cssClass}">${fuelInfo.name}</span>
-            <h4 class="model-card-title" title="${m.id}">${m.id}</h4>
-            <p class="model-card-subtitle" title="${m.modelo}">${m.modelo}</p>
-          </div>
-        </div>
-        <div class="model-card-footer">
-          <span class="model-card-motor">Motor / Parte: <strong>${m.motor}</strong></span>
-          <i class="bi bi-chevron-right"></i>
-        </div>
-      `;
-
-      card.onclick = () => openModelEcuInfo(m.id, m.modelo, m.motor);
-      modelsListGrid.appendChild(card);
-    });
-
-    // Admin Card: + AGREGAR MODELO
-    const isAdmin = window.checkIsAdmin();
-
-    if (isAdmin) {
-      const addModelCard = document.createElement('div');
-      addModelCard.className = 'model-item-card border-dashed d-flex flex-column align-items-center justify-content-center text-center p-3 cursor-pointer';
-      addModelCard.style.border = '2px dashed rgba(211, 47, 47, 0.45)';
-      addModelCard.style.backgroundColor = 'rgba(211, 47, 47, 0.03)';
-      addModelCard.style.minHeight = '140px';
-      addModelCard.innerHTML = `
-        <div class="text-danger mb-2">
-          <i class="bi bi-car-front-fill fs-1"></i>
-        </div>
-        <h4 class="model-card-title text-danger fw-bold" style="font-size: 0.95rem;">+ AGREGAR MODELO</h4>
-        <p class="model-card-subtitle text-muted small" style="font-size: 0.72rem;">Registrar nuevo modelo para ${brandName}</p>
-      `;
-      addModelCard.onclick = (e) => {
-        if (e) e.stopPropagation();
-        window.openAdminAddModelModal(brandName);
-      };
-      modelsListGrid.appendChild(addModelCard);
-    }
-
-    setupModelSearchFilter();
-  });
 }
 
 window.openModelEcuInfo = async function(docId, modelName, motorCode) {
@@ -1270,7 +1291,8 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
       const newPhotos = (Array.isArray(a.allImages) && a.allImages.length > 0) ? a.allImages : ((Array.isArray(a.imagenes) && a.imagenes.length > 0) ? a.imagenes : ((Array.isArray(a.fotos) && a.fotos.length > 0) ? a.fotos : []));
       
       const combinedPhotos = [...new Set([...existingPhotos, ...newPhotos, existing.imageUrl, a.imageUrl].filter(Boolean))];
-      const bestPdf = a.pdfUrl || a.diagramaUrl || existing.pdfUrl || existing.diagramaUrl || (!a.imageUrl && a.url ? a.url : '') || (!existing.imageUrl && existing.url ? existing.url : '');
+      const isDiagUrl = (u) => u && typeof u === 'string' && (u.includes('.pdf') || u.includes('%2epdf') || u.includes('/conexionado/') || u.includes('diagrama_'));
+      const bestPdf = a.pdfUrl || a.diagramaUrl || existing.pdfUrl || existing.diagramaUrl || (isDiagUrl(a.url) ? a.url : '') || (isDiagUrl(existing.url) ? existing.url : '');
       const bestImage = a.imageUrl || existing.imageUrl || (combinedPhotos.length > 0 ? combinedPhotos[0] : '');
 
       mergedCardsMap.set(compTypeKey, {
@@ -1526,6 +1548,7 @@ window._currentActiveDiagramData = {};
 window.deriveComponentSlug = function(rawTitle, rawBrand = '', rawModel = '', rawMotor = '') {
   if (!rawTitle) return 'ecu';
   let upper = String(rawTitle).toUpperCase().trim();
+  upper = upper.replace(/E\s*\.?\s*D\s*\.?\s*U/gi, 'EDU');
 
   // Quitar marca, modelo y motor del título si están prefijados para aislar el nombre del componente
   if (rawBrand) {
@@ -1541,6 +1564,7 @@ window.deriveComponentSlug = function(rawTitle, rawBrand = '', rawModel = '', ra
     upper = upper.replace(new RegExp('\\b' + String(rawMotor).toUpperCase().trim() + '\\b', 'g'), '');
   }
   upper = upper.replace(/[^A-Z0-9áéíóúÁÉÍÓÚ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  upper = upper.replace(/\bE\s+D\s+U\b/g, 'EDU');
 
   if (upper.includes('INMOVILIZADOR') || upper.includes('LLAVE') || upper.includes('ANTENA')) {
     return 'inmovilizador_llave';
@@ -2556,6 +2580,7 @@ window.loadSpecificDiagramSection = async function(type) {
     const isPcbPhoto = (url) => {
       if (!url || typeof url !== 'string') return false;
       if (url.includes('/imagen/')) return true;
+      if (url.includes('/conexionado/') || url.includes('diagrama_') || url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('%2epdf')) return false;
       return pcbPhotosList.includes(url);
     };
 
@@ -2568,7 +2593,11 @@ window.loadSpecificDiagramSection = async function(type) {
         arch.diagramaImg,
         active.pdfUrl,
         active.diagramaUrl,
-        active.diagramaImg
+        active.diagramaImg,
+        arch.archivoUrl,
+        active.archivoUrl,
+        arch.url,
+        active.url
       ];
 
       for (const cd of candidateDiagrams) {
@@ -2581,7 +2610,7 @@ window.loadSpecificDiagramSection = async function(type) {
       }
     }
 
-    // Auto-descubrimiento en SiteGround / Local (archivos en carpeta conexionado/ en disco)
+    // Auto-descubrimiento en SiteGround / Local (archivos en carpeta conexionado/ en disco o árbol JSON)
     if (!targetPdfOrImg) {
       try {
         const arch = active._selectedArchDoc || {};
@@ -2593,29 +2622,83 @@ window.loadSpecificDiagramSection = async function(type) {
           ? window.deriveComponentSlug(compRaw, brandQ, modelQ, motorQ)
           : compRaw;
 
-        const apiEndpoints = (typeof window.getApiEndpoints === 'function')
-          ? window.getApiEndpoints('listar_conexionados', `marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`)
-          : [`api/diagramas.php?action=listar_conexionados&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`];
-
-        for (const ep of apiEndpoints) {
+        // 1. Consultar árbol cargado en memoria o data/vehiculos_diagramas.json
+        if (!window._cachedVehiculosDiagramasTree) {
           try {
-            const controller = new AbortController();
-            const tId = setTimeout(() => controller.abort(), 2500);
-            const resp = await fetch(ep, { signal: controller.signal });
-            clearTimeout(tId);
-            if (resp.ok) {
-              const json = await resp.json();
-              const foundFiles = json.diagramas || json.data || [];
-              if (json && json.status === 'success' && Array.isArray(foundFiles) && foundFiles.length > 0) {
-                targetPdfOrImg = foundFiles[0];
-                active.diagramaUrl = targetPdfOrImg;
-                if (active._selectedArchDoc) {
-                  active._selectedArchDoc.diagramaUrl = targetPdfOrImg;
-                }
-                break;
-              }
-            }
+            const resTree = await fetch(`data/vehiculos_diagramas.json?_t=${Date.now()}`);
+            if (resTree.ok) window._cachedVehiculosDiagramasTree = await resTree.json();
           } catch(e) {}
+        }
+        const tree = window._cachedVehiculosDiagramasTree || {};
+        const bKey = Object.keys(tree).find(k => k.toLowerCase() === brandQ.toLowerCase() || brandQ.toLowerCase().includes(k.toLowerCase()));
+        if (bKey && tree[bKey].models) {
+          const mKey = Object.keys(tree[bKey].models).find(k => k.toLowerCase() === modelQ.toLowerCase() || modelQ.toLowerCase().includes(k.toLowerCase()) || (tree[bKey].models[k].modelData && tree[bKey].models[k].modelData.nombre && tree[bKey].models[k].modelData.nombre.toLowerCase().includes(modelQ.toLowerCase())));
+          if (mKey) {
+            const anios = tree[bKey].models[mKey].anios || {};
+            for (const [aK, aV] of Object.entries(anios)) {
+              const motores = aV.motores || {};
+              for (const [motK, motV] of Object.entries(motores)) {
+                if (Array.isArray(motV.archivos)) {
+                  const matchArch = motV.archivos.find(a => {
+                    const aSlug = (typeof window.deriveComponentSlug === 'function') ? window.deriveComponentSlug(a.titulo || a._id || a.tipo, brandQ, modelQ, motorQ) : (a.tipo || '');
+                    return aSlug === compQ || (a.tipo && a.tipo.toLowerCase() === compQ);
+                  });
+                  if (matchArch && (matchArch.diagramaUrl || matchArch.pdfUrl)) {
+                    targetPdfOrImg = matchArch.diagramaUrl || matchArch.pdfUrl;
+                    active.diagramaUrl = targetPdfOrImg;
+                    if (active._selectedArchDoc) active._selectedArchDoc.diagramaUrl = targetPdfOrImg;
+                    break;
+                  }
+                }
+              }
+              if (targetPdfOrImg) break;
+            }
+          }
+        }
+
+        // 1.5. Mapeo directo para Toyota Hilux 2KD y componentes estándar
+        if (!targetPdfOrImg) {
+          const directHiluxMap = {
+            'ecu': 'archivos_almacenamiento/diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/conexionado/diagrama_ecu_2kd_ftv.jpg',
+            'edu_dos_conectores': 'archivos_almacenamiento/diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_dos_conectores/conexionado/diagrama_edu_dos_conectores.jpg',
+            'edu_tres_conectores': 'archivos_almacenamiento/diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/edu_tres_conectores/conexionado/diagrama_edu_tres_conectores.jpg',
+            'inmovilizador_llave': 'archivos_almacenamiento/diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/inmovilizador_llave/conexionado/diagrama_inmovilizador_llave.jpg',
+            'pedal_acelerador': 'archivos_almacenamiento/diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/pedal_acelerador/conexionado/diagrama_pedal_acelerador.jpg'
+          };
+          const isToyotaHilux = (brandQ.toLowerCase().includes('toyota') || brandKey.includes('toyota')) && (modelQ.toLowerCase().includes('hilux') || modelKey.includes('hilux') || modelQ.includes('2011'));
+          if (isToyotaHilux && directHiluxMap[compQ]) {
+            targetPdfOrImg = directHiluxMap[compQ];
+            active.diagramaUrl = targetPdfOrImg;
+            if (active._selectedArchDoc) active._selectedArchDoc.diagramaUrl = targetPdfOrImg;
+          }
+        }
+
+        // 2. Si aún no se encontró, consultar API de backend
+        if (!targetPdfOrImg) {
+          const apiEndpoints = (typeof window.getApiEndpoints === 'function')
+            ? window.getApiEndpoints('listar_conexionados', `marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`)
+            : [`api/diagramas.php?action=listar_conexionados&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`];
+
+          for (const ep of apiEndpoints) {
+            try {
+              const controller = new AbortController();
+              const tId = setTimeout(() => controller.abort(), 2500);
+              const resp = await fetch(ep, { signal: controller.signal });
+              clearTimeout(tId);
+              if (resp.ok) {
+                const json = await resp.json();
+                const foundFiles = json.diagramas || json.data || [];
+                if (json && json.status === 'success' && Array.isArray(foundFiles) && foundFiles.length > 0) {
+                  targetPdfOrImg = foundFiles[0];
+                  active.diagramaUrl = targetPdfOrImg;
+                  if (active._selectedArchDoc) {
+                    active._selectedArchDoc.diagramaUrl = targetPdfOrImg;
+                  }
+                  break;
+                }
+              }
+            } catch(e) {}
+          }
         }
       } catch(errApiConn) {}
     }
@@ -2714,19 +2797,45 @@ window.loadSpecificDiagramSection = async function(type) {
       }
 
       if (imgEl) {
-        let loadFinished = false;
         const hideLoader = () => {
-          if (loadFinished) return;
-          loadFinished = true;
           const sl = document.getElementById('consoleDiagramStageLoader');
           if (sl) sl.classList.add('d-none');
         };
+
+        window.hideConsoleNoDiagramMessage();
+        if (stageEl) {
+          stageEl.classList.remove('d-none');
+          stageEl.style.display = 'flex';
+          stageEl.style.width = '100%';
+          stageEl.style.height = 'auto';
+          stageEl.style.maxWidth = '100%';
+          stageEl.style.maxHeight = 'none';
+          if (window.isFitWidthActive) stageEl.classList.add('fit-width');
+        }
+        const wrapEl = document.getElementById('consoleImgViewerWrap');
+        if (wrapEl) wrapEl.classList.remove('d-none');
+
+        const candidateFallbacks = [
+          targetPdfOrImg,
+          targetPdfOrImg.startsWith('archivos_almacenamiento/') ? targetPdfOrImg.replace(/^archivos_almacenamiento\//, '') : `archivos_almacenamiento/${targetPdfOrImg}`,
+          targetPdfOrImg.includes('diagramas_PRUEBAS') ? targetPdfOrImg.replace('diagramas_PRUEBAS', 'diagramas') : targetPdfOrImg.replace('diagramas', 'diagramas_PRUEBAS'),
+          active._selectedArchDoc?.diagramaUrl,
+          active._selectedArchDoc?.pdfUrl,
+          active.diagramaUrl,
+          active.pdfUrl
+        ].filter((u, i, arr) => u && typeof u === 'string' && u.length > 5 && !isPcbPhoto(u) && arr.indexOf(u) === i);
+
+        let fallbackIdx = 0;
 
         imgEl.onload = () => {
           hideLoader();
           window.hideConsoleNoDiagramMessage();
           imgEl.classList.remove('d-none');
           imgEl.style.display = 'block';
+          if (stageEl) {
+            stageEl.classList.remove('d-none');
+            stageEl.style.display = 'flex';
+          }
           const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
           window.applyConsoleWatermark(isVert);
           window.resetConsoleDiagramZoom();
@@ -2736,41 +2845,29 @@ window.loadSpecificDiagramSection = async function(type) {
         };
 
         imgEl.onerror = () => {
-          if (!imgEl.dataset.triedFallback) {
-            imgEl.dataset.triedFallback = 'true';
-            if (imgEl.src && imgEl.src.includes('/archivos_almacenamiento/diagramas_PRUEBAS/')) {
-              imgEl.src = imgEl.src.replace('/archivos_almacenamiento/diagramas_PRUEBAS/', '/diagramas_PRUEBAS/');
-              return;
-            } else if (imgEl.src && imgEl.src.includes('/diagramas_PRUEBAS/') && !imgEl.src.includes('/archivos_almacenamiento/')) {
-              imgEl.src = imgEl.src.replace('/diagramas_PRUEBAS/', '/archivos_almacenamiento/diagramas_PRUEBAS/');
-              return;
-            }
+          fallbackIdx++;
+          if (fallbackIdx < candidateFallbacks.length) {
+            const nextUrl = candidateFallbacks[fallbackIdx];
+            console.warn('Diagram load fallback attempt:', nextUrl);
+            imgEl.src = nextUrl;
+            return;
           }
-          delete imgEl.dataset.triedFallback;
           hideLoader();
-          console.warn('Image failed to load URL:', targetPdfOrImg);
+          console.warn('Image failed to load all candidate URLs for diagram:', candidateFallbacks);
           imgEl.classList.add('d-none');
           imgEl.style.display = 'none';
           imgEl.removeAttribute('src');
           window.showConsoleNoDiagramMessage(comp, 'No se pudo cargar la imagen del diagrama.');
         };
 
-        imgEl.classList.add('d-none');
-        imgEl.style.display = 'none';
-        imgEl.src = targetPdfOrImg;
+        imgEl.classList.remove('d-none');
+        imgEl.style.display = 'block';
+        imgEl.src = candidateFallbacks[0] || targetPdfOrImg;
         imgEl.style.width = '100%';
         imgEl.style.height = 'auto';
         imgEl.style.maxWidth = '100%';
         imgEl.style.maxHeight = window.isFitWidthActive ? 'none' : '82vh';
         imgEl.style.objectFit = 'contain';
-
-        if (stageEl) {
-          stageEl.style.width = '100%';
-          stageEl.style.height = 'auto';
-          stageEl.style.maxWidth = '100%';
-          stageEl.style.maxHeight = 'none';
-          if (window.isFitWidthActive) stageEl.classList.add('fit-width');
-        }
 
         // Handle already-cached images instantly
         if (imgEl.complete && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
@@ -2778,6 +2875,10 @@ window.loadSpecificDiagramSection = async function(type) {
           window.hideConsoleNoDiagramMessage();
           imgEl.classList.remove('d-none');
           imgEl.style.display = 'block';
+          if (stageEl) {
+            stageEl.classList.remove('d-none');
+            stageEl.style.display = 'flex';
+          }
           const isVert = (imgEl.naturalHeight || imgEl.height) > (imgEl.naturalWidth || imgEl.width);
           window.applyConsoleWatermark(isVert);
           window.resetConsoleDiagramZoom();
@@ -2785,22 +2886,6 @@ window.loadSpecificDiagramSection = async function(type) {
             window.initInteractiveEcuLayer();
           }
         }
-
-        // Safety timeout so loader never hangs indefinitely
-        setTimeout(() => {
-          if (!loadFinished) {
-            hideLoader();
-            if (imgEl && (imgEl.naturalWidth > 0 || imgEl.width > 0)) {
-              imgEl.classList.remove('d-none');
-              imgEl.style.display = 'block';
-            } else {
-              imgEl.classList.add('d-none');
-              imgEl.style.display = 'none';
-              imgEl.removeAttribute('src');
-              window.showConsoleNoDiagramMessage(comp);
-            }
-          }
-        }, 1800);
       }
     }
   }
@@ -3206,7 +3291,7 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
       activeData.imageUrl = selectedArchDoc.fotoComponente;
       activeData.allImages = [selectedArchDoc.fotoComponente];
       activeData.imagenes = [selectedArchDoc.fotoComponente];
-    } else if (selectedArchDoc.url && (selectedArchDoc.url.includes('/imagen/') || !selectedArchDoc.url.toLowerCase().includes('.pdf'))) {
+    } else if (selectedArchDoc.url && (selectedArchDoc.url.includes('/imagen/') || (!selectedArchDoc.url.toLowerCase().includes('.pdf') && !selectedArchDoc.url.includes('/conexionado/') && !selectedArchDoc.url.includes('diagrama_')))) {
       activeData.imageUrl = selectedArchDoc.url;
       activeData.allImages = [selectedArchDoc.url];
       activeData.imagenes = [selectedArchDoc.url];
@@ -3214,7 +3299,7 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
 
     // 3. Fallback for Diagram if missing
     if (!activeData.diagramaUrl && !activeData.pdfUrl) {
-      const fileUrl = selectedArchDoc.url || selectedArchDoc.archivoUrl || selectedArchDoc.downloadUrl;
+      const fileUrl = selectedArchDoc.diagramaUrl || selectedArchDoc.pdfUrl || selectedArchDoc.archivoUrl || selectedArchDoc.url || selectedArchDoc.downloadUrl;
       if (fileUrl && (fileUrl.toLowerCase().includes('.pdf') || fileUrl.includes('/conexionado/') || fileUrl.toLowerCase().includes('diagrama'))) {
         activeData.diagramaUrl = fileUrl;
         if (fileUrl.toLowerCase().includes('.pdf')) {
@@ -4571,10 +4656,15 @@ window.handleAdminDeleteModel = async function(e, brandName, modelDocId, modelNa
   const displayName = brandName || currentSelectedBrandName || 'Toyota';
   const cleanModel = (modelDocId || '').toLowerCase().trim();
   const modelTitle = (modelName || modelDocId || '').trim();
+  const canonicalKey = normalizeCanonicalModelKey(modelTitle, cleanBrand, cleanModel);
 
   // 1. Marcar como eliminado en persistent storage
   markItemAsDeleted('models', cleanModel);
   markItemAsDeleted('models', modelTitle.toLowerCase());
+  if (canonicalKey) {
+    markItemAsDeleted('models', canonicalKey);
+    markItemAsDeleted('models', `${cleanBrand}_${canonicalKey}`);
+  }
   markItemAsDeleted('models', `${cleanBrand}_${cleanModel}`);
 
   // 2. Eliminar del almacenamiento local de modelos
