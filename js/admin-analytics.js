@@ -551,7 +551,8 @@
       .admin-live-analytics-pill {
         position: fixed;
         bottom: 24px;
-        right: 92px;
+        left: calc(var(--sidebar-width, 220px) + 24px);
+        right: auto;
         background: rgba(15, 23, 42, 0.95);
         border: 1px solid rgba(239, 68, 68, 0.5);
         border-radius: 50px;
@@ -565,10 +566,14 @@
         border-color: #EF4444;
         box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3) !important;
       }
+      body.sidebar-minimized .admin-live-analytics-pill {
+        left: calc(var(--sidebar-collapsed-width, 64px) + 24px);
+      }
       @media (max-width: 768px) {
         .admin-live-analytics-pill {
           bottom: 86px;
-          right: 24px;
+          left: 16px;
+          right: auto;
         }
       }
       .live-pulse-dot {

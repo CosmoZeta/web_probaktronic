@@ -354,6 +354,7 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       const anios = String(input.anios || input.anio || '').trim();
       const motor = String(input.motor || '').trim() || 'Motor Estándar';
       const combustible = String(input.combustible || 'diesel').trim();
+      const categoria = String(input.categoria || 'pickup').trim();
       const imagenUrl = String(input.imagenUrl || input.imagen || '').trim();
 
       if (!nombreMarca || !nombreModelo) {
@@ -366,8 +367,14 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       const mSlug = cleanSlug(nombreModelo, false);
       const motorClean = cleanSlug(motor, false);
 
+      // Crear carpetas físicas de almacenamiento para el modelo
+      const dirModelPruebas = path.join(DIAGRAMAS_DIR, marcaUpper, mSlug, motorClean, 'ecu', 'imagen');
+      const dirModelConexion = path.join(DIAGRAMAS_DIR, marcaUpper, mSlug, motorClean, 'ecu', 'conexionado');
+      fs.mkdirSync(dirModelPruebas, { recursive: true });
+      fs.mkdirSync(dirModelConexion, { recursive: true });
+
       if (!tree[bSlug]) {
-        tree[bSlug] = { brandData: { nombre: marcaUpper, logo: '', combustible, categoria: 'vehiculos' }, models: {} };
+        tree[bSlug] = { brandData: { nombre: marcaUpper, logo: '', combustible, categoria }, models: {} };
       }
       if (!tree[bSlug].models[mSlug]) {
         tree[bSlug].models[mSlug] = {
@@ -378,7 +385,7 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
             motor,
             combustible,
             imagen: imagenUrl,
-            categoria: 'vehiculos'
+            categoria
           },
           anios: {}
         };
@@ -398,7 +405,7 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       saveVehiculosData(tree);
       return res.end(JSON.stringify({
         status: 'success',
-        message: 'Modelo guardado localmente.',
+        message: 'Modelo guardado localmente y carpetas creadas.',
         data: { modelo: nombreModelo.toUpperCase(), imagen: imagenUrl }
       }));
     }

@@ -1343,9 +1343,6 @@
               <h3 class="font-rajdhani fw-bold mb-0 text-uppercase" id="selectedBrandTitle">Modelos Disponibles</h3>
             </div>
             <div class="d-flex align-items-center gap-2">
-              <button class="btn btn-outline-danger btn-sm rounded-pill fw-bold shadow-sm font-rajdhani" id="btnAdminTopAddModel" onclick="openAdminAddModelModal(window.currentSelectedBrandName || 'Toyota')" title="Agregar nuevo modelo a esta marca">
-                <i class="bi bi-car-front-fill me-1"></i> + AGREGAR MODELO
-              </button>
               <button class="btn btn-outline-secondary btn-sm" onclick="showBrandsView()"><i class="bi bi-arrow-left me-1"></i> Cambiar Marca</button>
             </div>
           </div>
@@ -2354,21 +2351,19 @@
             <div class="row g-2 mb-3">
               <div class="col-6">
                 <label class="form-label font-rajdhani fw-bold text-dark mb-1">COMBUSTIBLE</label>
-                <select id="adminNewBrandFuelSelect" class="form-select font-rajdhani fw-bold">
-                  <option value="diesel" selected>DIÉSEL</option>
-                  <option value="gasolina">GASOLINA</option>
-                </select>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="bi bi-fuel-pump-fill text-danger"></i></span>
+                  <input type="text" id="adminNewBrandFuelDisplay" class="form-control bg-light fw-bold font-rajdhani text-uppercase text-danger border-start-0" value="DIÉSEL" readonly>
+                  <input type="hidden" id="adminNewBrandFuelSelect" value="diesel">
+                </div>
               </div>
               <div class="col-6">
                 <label class="form-label font-rajdhani fw-bold text-dark mb-1">CATEGORÍA</label>
-                <select id="adminNewBrandCategorySelect" class="form-select font-rajdhani fw-bold">
-                  <option value="pickup" selected>PICKUP / CAMIONETAS</option>
-                  <option value="furgon">FURGÓN / VAN</option>
-                  <option value="camiones">CAMIONES / PESADO</option>
-                  <option value="maquinaria">MAQUINARIA</option>
-                  <option value="sedan">SEDÁN / HATCHBACK</option>
-                  <option value="suv">SUV / CROSSOVER</option>
-                </select>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="bi bi-truck text-dark"></i></span>
+                  <input type="text" id="adminNewBrandCategoryDisplay" class="form-control bg-light fw-bold font-rajdhani text-uppercase text-dark border-start-0" value="PICKUP / CAMIONETAS" readonly>
+                  <input type="hidden" id="adminNewBrandCategorySelect" value="pickup">
+                </div>
               </div>
             </div>
 
@@ -2452,10 +2447,11 @@
             <!-- Combustible -->
             <div class="mb-3">
               <label class="form-label font-rajdhani fw-bold text-dark mb-1">SISTEMA DE COMBUSTIBLE</label>
-              <select id="adminNewModelFuelSelect" class="form-select font-rajdhani fw-bold">
-                <option value="diesel" selected>DIÉSEL (Common Rail / EDC)</option>
-                <option value="gasolina">GASOLINA (MPFI / GDI / Otto)</option>
-              </select>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-fuel-pump-fill text-danger"></i></span>
+                <input type="text" id="adminNewModelFuelDisplay" class="form-control bg-light fw-bold font-rajdhani text-uppercase text-danger border-start-0" value="DIÉSEL (Common Rail / EDC)" readonly>
+                <input type="hidden" id="adminNewModelFuelSelect" value="diesel">
+              </div>
             </div>
 
             <!-- Foto del Vehículo -->

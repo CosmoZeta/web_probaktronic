@@ -532,12 +532,12 @@ window.mergeModelEntries = mergeModelEntries;
 
 function matchesVehicleCategory(itemCat, targetCatKey) {
   if (!targetCatKey) return true;
-  if (!itemCat) return false;
+  if (!itemCat || itemCat === 'vehiculos' || itemCat === 'general') return true;
 
   const iCat = String(itemCat).toLowerCase().trim().replace(/[^a-z0-9]/g, '');
   const tCat = String(targetCatKey).toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
-  if (!iCat) return false;
+  if (!iCat) return true;
   if (iCat === tCat) return true;
 
   const isSedan = (s) => s.includes('sedan') || s.includes('hatchback') || s.includes('auto');
@@ -903,13 +903,6 @@ window.openBrandDiagramModels = function(brandDocId, brandName, logoSrc, collect
 window.loadSitegroundModelsForBrand = async function(brandDocId, brandName, modelsListGrid, loader) {
   const brandKey = (brandDocId || brandName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-  // Limpiar llaves locales heredadas
-  try {
-    localStorage.removeItem(`probak_custom_models_${brandKey}`);
-    localStorage.removeItem(`probak_custom_models_${(brandName || '').toLowerCase().trim()}`);
-    localStorage.removeItem(`probak_custom_models_${(brandDocId || '').toLowerCase().trim()}`);
-  } catch(e) {}
-
   const getCombinedModelEntries = (extraApiList = null, jsonTree = null) => {
     const rawList = [];
 
@@ -957,7 +950,29 @@ window.loadSitegroundModelsForBrand = async function(brandDocId, brandName, mode
       });
     }
 
-    // 3. Fallback a defaultModelsMap solo si no hay ninguno
+    // 3. Modelos guardados en LocalStorage (Nuevos registros en vivo)
+    try {
+      const customKey = `probak_custom_models_${brandKey}`;
+      const stored = JSON.parse(localStorage.getItem(customKey) || localStorage.getItem(`probak_custom_models_${(brandName || '').toLowerCase().trim()}`) || '[]');
+      if (Array.isArray(stored)) {
+        stored.forEach(sm => {
+          const mTitle = (sm.nombre || sm.modelo || sm.slug || '').trim();
+          rawList.push({
+            id: sm.slug || sm.id || mTitle,
+            docId: sm.slug || sm.id || mTitle,
+            modelo: mTitle,
+            nombre: mTitle,
+            anios: sm.anios || '',
+            motor: sm.motor || 'Estándar',
+            combustible: sm.combustible || (window.currentSelectedFuelType || 'diesel'),
+            categoria: sm.categoria || (window.currentSelectedCategoryKey || 'pickup'),
+            imagen: sm.imagen || 'imagenes autos/ic_car_toyota_hilux.JPG'
+          });
+        });
+      }
+    } catch(e) {}
+
+    // 4. Fallback a defaultModelsMap solo si no hay ninguno
     if (rawList.length === 0 && defaultModelsMap[brandKey]) {
       defaultModelsMap[brandKey].forEach(m => {
         rawList.push({
@@ -3355,81 +3370,111 @@ window.showFuelSelectorView = function(e) {
 
 window.getCategoryStats = function(fuelType, catKey) {
   let modelCount = 0;
-  let brandCount = 0;
-  const seenBrands = new Set();
-  const seenModels = new Set();
+  const activeBrands = new Set();
+  const seenModelKeys = new Set();
 
-  // 1. Check defaultModelsMap
-  for (const [bId, mList] of Object.entries(defaultModelsMap)) {
-    mList.forEach(m => {
-      if (matchesFuelType(m.combustible, fuelType) && matchesVehicleCategory(m.categoria, catKey)) {
-        const mKey = `${bId}_${m.id || m.modelo}`;
-        if (!seenModels.has(mKey)) {
-          seenModels.add(mKey);
-          modelCount++;
-        }
-        seenBrands.add(bId);
-      }
-    });
-  }
+  const allActiveBrands = (typeof getMergedBrandsList === 'function') ? getMergedBrandsList() : [];
 
-  // 2. Check cached tree (vehiculos_diagramas.json)
-  const tree = window._cachedVehiculosDiagramasTree || {};
-  for (const [bk, bv] of Object.entries(tree)) {
-    const cleanBk = bk.toLowerCase().trim();
-    const models = bv.models || {};
-    let brandHasModel = false;
-    for (const [mk, mv] of Object.entries(models)) {
-      const mData = mv.modelData || {};
-      const mFuel = mData.combustible || (bv.brandData && bv.brandData.combustible);
-      const mCat = mData.categoria || (bv.brandData && bv.brandData.categoria);
-      if (matchesFuelType(mFuel, fuelType) && matchesVehicleCategory(mCat, catKey)) {
-        const mKey = `${cleanBk}_${mk}`;
-        if (!seenModels.has(mKey)) {
-          seenModels.add(mKey);
-          modelCount++;
+  allActiveBrands.forEach(brandObj => {
+    const bId = (brandObj.id || brandObj.slug || brandObj.nombre || '').toLowerCase().trim();
+    const bName = (brandObj.name || brandObj.nombre || bId).trim();
+    const bFuel = (brandObj.combustible || (brandObj.data && brandObj.data.Combustible) || '').toLowerCase().trim();
+    const bCat = (brandObj.categoria || (brandObj.data && brandObj.data.Categoria) || '').toLowerCase().trim();
+
+    let brandModels = [];
+
+    // 1. Modelos del árbol vehiculos_diagramas.json
+    const tree = window._cachedVehiculosDiagramasTree || {};
+    for (const [bk, bv] of Object.entries(tree)) {
+      const cleanBk = bk.toLowerCase().trim();
+      if (cleanBk === bId || cleanBk.includes(bId) || bId.includes(cleanBk)) {
+        const models = bv.models || {};
+        for (const [mk, mv] of Object.entries(models)) {
+          const mData = mv.modelData || {};
+          brandModels.push({
+            id: mData._id || mk,
+            docId: mData._id || mk,
+            modelo: mData.nombre || mk,
+            nombre: mData.nombre || mk,
+            motor: mData.motor || 'Estándar',
+            combustible: mData.combustible || bv.brandData?.combustible || bFuel,
+            categoria: mData.categoria || bv.brandData?.categoria || bCat
+          });
         }
-        seenBrands.add(cleanBk);
-        brandHasModel = true;
       }
     }
-    if (!brandHasModel && bv.brandData) {
-      if (matchesFuelType(bv.brandData.combustible, fuelType) && matchesVehicleCategory(bv.brandData.categoria, catKey)) {
-        seenBrands.add(cleanBk);
-      }
-    }
-  }
 
-  // 3. Check custom models in LocalStorage
-  try {
-    const customBrands = JSON.parse(localStorage.getItem('probak_custom_brands') || '[]');
-    customBrands.forEach(cb => {
-      const cbId = (cb.id || cb.slug || cb.nombre || '').toLowerCase().trim();
-      if (cbId && matchesFuelType(cb.combustible, fuelType) && matchesVehicleCategory(cb.categoria, catKey)) {
-        seenBrands.add(cbId);
-      }
-      try {
-        const cModels = JSON.parse(localStorage.getItem(`probak_custom_models_${cbId}`) || '[]');
-        cModels.forEach(cm => {
-          if (matchesFuelType(cm.combustible, fuelType) && matchesVehicleCategory(cm.categoria, catKey)) {
-            const mKey = `${cbId}_${cm.id || cm.modelo}`;
-            if (!seenModels.has(mKey)) {
-              seenModels.add(mKey);
-              modelCount++;
-            }
-            seenBrands.add(cbId);
-          }
+    // 2. Modelos de defaultModelsMap para esta marca activa
+    if (defaultModelsMap[bId]) {
+      defaultModelsMap[bId].forEach(dm => {
+        brandModels.push({
+          id: dm.id || dm.modelo,
+          docId: dm.id || dm.modelo,
+          modelo: dm.modelo || dm.nombre || dm.id,
+          nombre: dm.nombre || dm.modelo || dm.id,
+          motor: dm.motor || 'Estándar',
+          combustible: dm.combustible || bFuel,
+          categoria: dm.categoria || bCat
         });
-      } catch(e) {}
+      });
+    }
+
+    // 3. Modelos en LocalStorage (probak_custom_models_)
+    try {
+      const stored = JSON.parse(localStorage.getItem(`probak_custom_models_${bId}`) || '[]');
+      if (Array.isArray(stored)) {
+        stored.forEach(sm => {
+          brandModels.push({
+            id: sm.slug || sm.id || sm.modelo,
+            docId: sm.slug || sm.id || sm.modelo,
+            modelo: sm.modelo || sm.nombre || sm.id,
+            nombre: sm.nombre || sm.modelo || sm.id,
+            motor: sm.motor || 'Estándar',
+            combustible: sm.combustible || bFuel,
+            categoria: sm.categoria || bCat
+          });
+        });
+      }
+    } catch(e) {}
+
+    // Deduplicar modelos para esta marca
+    const uniqueForBrand = mergeModelEntries(brandModels, bName);
+
+    let brandMatchesCurrentFilter = false;
+    uniqueForBrand.forEach(({ docId, data }) => {
+      const mName = data.modelo || data.nombre || docId;
+      const mMotor = data.motor || 'Estándar';
+      const fuelInfo = getFuelTypeInfo(data, mName, mMotor);
+      const mFuel = fuelInfo.isDiesel ? 'diesel' : 'gasolina';
+      const mCat = data.categoria || bCat;
+
+      const fuelMatches = matchesFuelType(mFuel, fuelType);
+      const catMatches = matchesVehicleCategory(mCat, catKey);
+      const isDeleted = isModelDeleted(docId, mName, bName);
+
+      if (fuelMatches && catMatches && !isDeleted) {
+        const canonicalKey = `${bId}_${normalizeCanonicalModelKey(mName, bName, docId)}`;
+        if (!seenModelKeys.has(canonicalKey)) {
+          seenModelKeys.add(canonicalKey);
+          modelCount++;
+        }
+        brandMatchesCurrentFilter = true;
+      }
     });
-  } catch(e) {}
 
-  // Filter deleted brands
-  const deletedBrands = getDeletedItemsList('brands');
-  const activeBrands = Array.from(seenBrands).filter(b => !deletedBrands.includes(b));
-  brandCount = activeBrands.length;
+    // Si la marca no tiene modelos aún pero coincide con la categoría/combustible
+    if (!brandMatchesCurrentFilter) {
+      if (matchesFuelType(bFuel, fuelType) && matchesVehicleCategory(bCat, catKey)) {
+        brandMatchesCurrentFilter = true;
+      }
+    }
 
-  return { modelCount, brandCount };
+    if (brandMatchesCurrentFilter) {
+      activeBrands.add(bId);
+    }
+  });
+
+  return { modelCount, brandCount: activeBrands.size };
 };
 
 window.updateCategoryCardsCounts = function() {
@@ -4733,6 +4778,9 @@ window.handleAdminDeleteModel = async function(e, brandName, modelDocId, modelNa
   // Refrescar cuadrícula de modelos
   if (typeof window.loadSitegroundModelsForBrand === 'function' && modelGrid) {
     await window.loadSitegroundModelsForBrand(cleanBrand, displayName, modelGrid, null);
+  }
+  if (typeof window.updateCategoryCardsCounts === 'function') {
+    window.updateCategoryCardsCounts();
   }
 };
 
@@ -7917,19 +7965,43 @@ window.openAdminAddBrandModal = function() {
   if (form) form.reset();
   adminNewBrandCustomLogoData = null;
 
-  const currentFuel = window.currentSelectedFuelType || currentSelectedFuelType || 'gasolina';
-  const currentCat = window.currentSelectedCategoryKey || currentSelectedCategoryKey || 'sedan';
+  const currentFuel = window.currentSelectedFuelType || (typeof currentSelectedFuelType !== 'undefined' ? currentSelectedFuelType : 'diesel') || 'diesel';
+  const currentCat = window.currentSelectedCategoryKey || (typeof currentSelectedCategoryKey !== 'undefined' ? currentSelectedCategoryKey : 'pickup') || 'pickup';
 
+  const fuelDisplay = document.getElementById('adminNewBrandFuelDisplay');
   if (fuelSelect) fuelSelect.value = currentFuel;
-  if (catSelect) {
-    if (currentCat.includes('sedan') || currentCat.includes('hatchback')) {
-      catSelect.value = 'sedan';
-    } else if (currentCat.includes('pickup') || currentCat.includes('camioneta')) {
-      catSelect.value = 'pickup';
-    } else {
-      catSelect.value = currentCat;
-    }
+  if (fuelDisplay) {
+    fuelDisplay.value = currentFuel === 'diesel' ? 'DIÉSEL' : 'GASOLINA';
+    fuelDisplay.className = `form-control bg-light fw-bold font-rajdhani text-uppercase ${currentFuel === 'diesel' ? 'text-success' : 'text-danger'} border-start-0`;
   }
+
+  const catDisplay = document.getElementById('adminNewBrandCategoryDisplay');
+  let resolvedCatKey = 'pickup';
+  let resolvedCatName = 'PICKUP / CAMIONETAS';
+  const cleanCatKey = currentCat.toLowerCase().replace(/[^a-z]/g, '');
+
+  if (cleanCatKey.includes('sedan') || cleanCatKey.includes('hatchback')) {
+    resolvedCatKey = 'sedan';
+    resolvedCatName = 'SEDÁN / HATCHBACK';
+  } else if (cleanCatKey.includes('pickup') || cleanCatKey.includes('camioneta')) {
+    resolvedCatKey = 'pickup';
+    resolvedCatName = 'PICKUP / CAMIONETAS';
+  } else if (cleanCatKey.includes('furgon') || cleanCatKey.includes('van')) {
+    resolvedCatKey = 'furgon';
+    resolvedCatName = 'FURGÓN / VAN';
+  } else if (cleanCatKey.includes('camion') || cleanCatKey.includes('pesado')) {
+    resolvedCatKey = 'camiones';
+    resolvedCatName = 'CAMIONES / PESADO';
+  } else if (cleanCatKey.includes('maquinari')) {
+    resolvedCatKey = 'maquinaria';
+    resolvedCatName = 'MAQUINARIA PESADA';
+  } else if (cleanCatKey.includes('suv') || cleanCatKey.includes('crossover')) {
+    resolvedCatKey = 'suv';
+    resolvedCatName = 'SUV / CROSSOVER';
+  }
+
+  if (catSelect) catSelect.value = resolvedCatKey;
+  if (catDisplay) catDisplay.value = resolvedCatName;
 
   if (preview) preview.src = 'logo_probaktronic_solo.png';
   if (statusBadge) { statusBadge.className = 'badge bg-secondary small font-rajdhani'; statusBadge.textContent = 'Escribe un nombre para detectar logo'; }
@@ -8173,7 +8245,13 @@ window.openAdminAddModelModal = function(brandName) {
   const targetBrand = brandName || currentSelectedBrandName || 'TOYOTA';
   if (brandText) brandText.textContent = targetBrand.toUpperCase();
 
-  if (fuelSelect && currentSelectedFuelType) fuelSelect.value = currentSelectedFuelType;
+  const currentFuel = window.currentSelectedFuelType || (typeof currentSelectedFuelType !== 'undefined' ? currentSelectedFuelType : 'diesel') || 'diesel';
+  const fuelModelDisplay = document.getElementById('adminNewModelFuelDisplay');
+  if (fuelSelect) fuelSelect.value = currentFuel;
+  if (fuelModelDisplay) {
+    fuelModelDisplay.value = currentFuel === 'diesel' ? 'DIÉSEL (Common Rail / EDC)' : 'GASOLINA (MPFI / GDI / Otto)';
+    fuelModelDisplay.className = `form-control bg-light fw-bold font-rajdhani text-uppercase ${currentFuel === 'diesel' ? 'text-success' : 'text-danger'} border-start-0`;
+  }
 
   // Set default photo
   const detectedPhoto = getVehicleCarPhotoUrl(targetBrand, '', '') || 'imagenes autos/ic_car_toyota_hilux.JPG';
@@ -8229,7 +8307,8 @@ window.handleAdminSubmitNewModel = async function(e) {
   const modelName = (document.getElementById('adminNewModelNameInput')?.value || '').trim();
   const years = (document.getElementById('adminNewModelYearsInput')?.value || '').trim();
   const motor = (document.getElementById('adminNewModelMotorInput')?.value || 'Estándar').trim();
-  const fuel = document.getElementById('adminNewModelFuelSelect')?.value || 'diesel';
+  const fuel = document.getElementById('adminNewModelFuelSelect')?.value || (window.currentSelectedFuelType || 'diesel');
+  const category = window.currentSelectedCategoryKey || (typeof currentSelectedCategoryKey !== 'undefined' ? currentSelectedCategoryKey : 'pickup') || 'pickup';
 
   if (!modelName) {
     alert('Ingresa el nombre del modelo.');
@@ -8268,6 +8347,7 @@ window.handleAdminSubmitNewModel = async function(e) {
       anios: years,
       motor: motor,
       combustible: fuel,
+      categoria: category,
       imagen: finalCarPhotoUrl
     });
 
@@ -8279,7 +8359,8 @@ window.handleAdminSubmitNewModel = async function(e) {
           nombre: brandName.toUpperCase(),
           marca: brandName.toUpperCase(),
           logo: getBrandLogoUrl(brandDocId),
-          combustible: fuel
+          combustible: fuel,
+          categoria: category
         }, { merge: true });
 
         await db.collection('diagramas').doc(brandDocId).collection('modelos').doc(modelDocId).set({
@@ -8287,6 +8368,7 @@ window.handleAdminSubmitNewModel = async function(e) {
           nombre: modelName.toUpperCase(),
           motor: motor,
           combustible: fuel,
+          categoria: category,
           imagen: finalCarPhotoUrl,
           anios: years
         }, { merge: true });
@@ -8313,6 +8395,7 @@ window.handleAdminSubmitNewModel = async function(e) {
         anios: years,
         motor: motor,
         combustible: fuel,
+        categoria: category,
         imagen: finalCarPhotoUrl
       };
 

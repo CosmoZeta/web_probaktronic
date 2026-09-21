@@ -298,6 +298,17 @@ switch ($action) {
         $motorClean = cleanSlug($motor, false);
         $marcaSlug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $nombreMarca));
         $modeloSlug = $modeloClean;
+        $categoria = trim($input['categoria'] ?? 'pickup');
+
+        // Crear carpetas físicas de almacenamiento para el nuevo modelo en SiteGround / Local
+        $dirModelPruebas = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaUpper . '/' . $modeloClean . '/' . $motorClean . '/ecu/imagen';
+        $dirModelConexion = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaUpper . '/' . $modeloClean . '/' . $motorClean . '/ecu/conexionado';
+        if (!is_dir($dirModelPruebas)) {
+            @mkdir($dirModelPruebas, 0755, true);
+        }
+        if (!is_dir($dirModelConexion)) {
+            @mkdir($dirModelConexion, 0755, true);
+        }
 
         if ($pdo) {
             try {
@@ -307,8 +318,8 @@ switch ($action) {
                 $marcaRow = $stmtMarca->fetch();
 
                 if (!$marcaRow) {
-                    $insertMarca = $pdo->prepare("INSERT INTO marcas (Slug, Nombre, Combustible, Categoria, Activo) VALUES (?, ?, ?, 'vehiculos', 1)");
-                    $insertMarca->execute([$marcaSlug, strtoupper($nombreMarca), $combustible]);
+                    $insertMarca = $pdo->prepare("INSERT INTO marcas (Slug, Nombre, Combustible, Categoria, Activo) VALUES (?, ?, ?, ?, 1)");
+                    $insertMarca->execute([$marcaSlug, strtoupper($nombreMarca), $combustible, $categoria]);
                     $marcaId = $pdo->lastInsertId();
                 } else {
                     $marcaId = $marcaRow['MarcaID'];
