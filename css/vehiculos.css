@@ -988,16 +988,27 @@
   justify-content: center;
 }
 
+.console-manual-buttons-row {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  flex-wrap: wrap !important;
+  gap: 16px !important;
+  max-width: 700px !important;
+  margin: 20px auto 0 auto !important;
+}
+
 .btn-console-action,
 .btn-console-splash-primary {
   background: #D32F2F !important;
   color: #FFFFFF !important;
   border: 2px solid #D32F2F !important;
-  border-radius: 8px;
-  padding: 13px 28px;
+  border-radius: 10px;
+  padding: 12px 22px;
   font-weight: 700;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.02rem;
+  font-size: 1.05rem;
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1006,6 +1017,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
+  flex: 1 1 260px;
+  max-width: 330px;
+  min-height: 54px;
+  line-height: 1.2;
+  white-space: normal;
 }
 
 .btn-console-splash-primary:hover {
@@ -1020,11 +1037,11 @@
   background: #FFFFFF !important;
   color: #D32F2F !important;
   border: 2px solid #D32F2F !important;
-  border-radius: 8px;
-  padding: 13px 28px;
+  border-radius: 10px;
+  padding: 12px 22px;
   font-weight: 700;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.02rem;
+  font-size: 1.05rem;
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1033,6 +1050,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
+  flex: 1 1 260px;
+  max-width: 330px;
+  min-height: 54px;
+  line-height: 1.2;
+  white-space: normal;
 }
 
 .btn-console-splash-secondary:hover {

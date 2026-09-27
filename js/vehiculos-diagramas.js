@@ -1387,6 +1387,28 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
       displayCardLabel = 'INMOVILIZADOR';
     } else if (compSlug === 'pedal_acelerador') {
       displayCardLabel = 'PEDAL ACELERADOR';
+    } else if (compSlug === 'ipdm_reles') {
+      displayCardLabel = 'IPDM / RELÉS';
+    } else if (compSlug === 'sensor_ckp_cmp') {
+      displayCardLabel = 'SENSOR CKP / CMP';
+    } else if (compSlug === 'sensor_maf_map') {
+      displayCardLabel = 'SENSOR MAF / MAP';
+    } else if (compSlug === 'sensor_temperatura_ect') {
+      displayCardLabel = 'SENSOR ECT';
+    } else if (compSlug === 'bobinas_encendido') {
+      displayCardLabel = 'BOBINAS COP';
+    } else if (compSlug === 'inyectores') {
+      displayCardLabel = 'INYECTORES';
+    } else if (compSlug === 'modulo_abs_esp') {
+      displayCardLabel = 'MÓDULO ABS / ESP';
+    } else if (compSlug === 'modulo_airbag_srs') {
+      displayCardLabel = 'AIRBAG / SRS';
+    } else if (compSlug === 'red_can_bus') {
+      displayCardLabel = 'RED CAN BUS';
+    } else if (compSlug === 'alternador_regulador') {
+      displayCardLabel = 'ALTERNADOR';
+    } else if (compSlug === 'valvula_egr_vvt') {
+      displayCardLabel = 'VÁLVULA EGR / VVT';
     } else if (compSlug === 'edu_dos_conectores') {
       displayCardLabel = 'EDU 2 CONECTORES';
     } else if (compSlug === 'edu_tres_conectores') {
@@ -1581,6 +1603,39 @@ window.deriveComponentSlug = function(rawTitle, rawBrand = '', rawModel = '', ra
   upper = upper.replace(/[^A-Z0-9áéíóúÁÉÍÓÚ]+/g, ' ').replace(/\s+/g, ' ').trim();
   upper = upper.replace(/\bE\s+D\s+U\b/g, 'EDU');
 
+  if (upper.includes('IPDM') || (upper.includes('MODULO') && upper.includes('RELE')) || (upper.includes('CAJA') && upper.includes('RELE')) || upper.includes('IPDM_RELES')) {
+    return 'ipdm_reles';
+  }
+  if (upper.includes('CKP') || upper.includes('CMP') || upper.includes('CIGUEÑAL') || upper.includes('CIGUENAL') || upper.includes('LEVAS')) {
+    return 'sensor_ckp_cmp';
+  }
+  if (upper.includes('MAF') || upper.includes('MAP')) {
+    return 'sensor_maf_map';
+  }
+  if (upper.includes('TEMPERATURA') || upper.includes('ECT') || upper.includes('COOLANT')) {
+    return 'sensor_temperatura_ect';
+  }
+  if (upper.includes('BOBINA') || upper.includes('COP') || upper.includes('ENCENDIDO')) {
+    return 'bobinas_encendido';
+  }
+  if (upper.includes('INYECTOR')) {
+    return 'inyectores';
+  }
+  if (upper.includes('ABS') || upper.includes('ESP') || upper.includes('FRENO')) {
+    return 'modulo_abs_esp';
+  }
+  if (upper.includes('AIRBAG') || upper.includes('SRS')) {
+    return 'modulo_airbag_srs';
+  }
+  if (upper.includes('CAN') || upper.includes('RED') || upper.includes('COMUNICACION')) {
+    return 'red_can_bus';
+  }
+  if (upper.includes('ALTERNADOR') || upper.includes('REGULADOR') || upper.includes('CARGA')) {
+    return 'alternador_regulador';
+  }
+  if (upper.includes('EGR') || upper.includes('VVT') || upper.includes('VALVULA')) {
+    return 'valvula_egr_vvt';
+  }
   if (upper.includes('INMOVILIZADOR') || upper.includes('LLAVE') || upper.includes('ANTENA')) {
     return 'inmovilizador_llave';
   }

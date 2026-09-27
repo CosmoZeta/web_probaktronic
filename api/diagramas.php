@@ -85,6 +85,17 @@ if (!function_exists('cleanSlug')) {
 if (!function_exists('normalizeComponente')) {
     function normalizeComponente($compRaw) {
         $upper = strtoupper(trim((string)$compRaw));
+        if (strpos($upper, 'IPDM') !== false || (strpos($upper, 'MODULO') !== false && strpos($upper, 'RELE') !== false) || (strpos($upper, 'CAJA') !== false && strpos($upper, 'RELE') !== false)) return 'ipdm_reles';
+        if (strpos($upper, 'CKP') !== false || strpos($upper, 'CMP') !== false || strpos($upper, 'CIGUEÑAL') !== false || strpos($upper, 'CIGUENAL') !== false || strpos($upper, 'LEVAS') !== false) return 'sensor_ckp_cmp';
+        if (strpos($upper, 'MAF') !== false || strpos($upper, 'MAP') !== false) return 'sensor_maf_map';
+        if (strpos($upper, 'TEMPERATURA') !== false || strpos($upper, 'ECT') !== false || strpos($upper, 'COOLANT') !== false) return 'sensor_temperatura_ect';
+        if (strpos($upper, 'BOBINA') !== false || strpos($upper, 'COP') !== false || strpos($upper, 'ENCENDIDO') !== false) return 'bobinas_encendido';
+        if (strpos($upper, 'INYECTOR') !== false) return 'inyectores';
+        if (strpos($upper, 'ABS') !== false || strpos($upper, 'ESP') !== false || strpos($upper, 'FRENO') !== false) return 'modulo_abs_esp';
+        if (strpos($upper, 'AIRBAG') !== false || strpos($upper, 'SRS') !== false) return 'modulo_airbag_srs';
+        if (strpos($upper, 'CAN') !== false || strpos($upper, 'RED') !== false || strpos($upper, 'COMUNICACION') !== false) return 'red_can_bus';
+        if (strpos($upper, 'ALTERNADOR') !== false || strpos($upper, 'REGULADOR') !== false || strpos($upper, 'CARGA') !== false) return 'alternador_regulador';
+        if (strpos($upper, 'EGR') !== false || strpos($upper, 'VVT') !== false || strpos($upper, 'VALVULA') !== false) return 'valvula_egr_vvt';
         if (strpos($upper, 'PEDAL') !== false) return 'pedal_acelerador';
         if (strpos($upper, 'INMOVILIZADOR') !== false || strpos($upper, 'LLAVE') !== false || strpos($upper, 'ANTENA') !== false) return 'inmovilizador_llave';
         if (strpos($upper, 'EDU') !== false && (strpos($upper, 'DOS') !== false || strpos($upper, '2') !== false)) return 'edu_dos_conectores';

@@ -47,18 +47,29 @@ function cleanSlug(str, toUpper = false) {
 
 function normalizeComponente(compRaw) {
   const upper = String(compRaw || '').toUpperCase();
+  if (upper.includes('IPDM') || (upper.includes('MODULO') && upper.includes('RELE')) || (upper.includes('CAJA') && upper.includes('RELE'))) return 'ipdm_reles';
+  if (upper.includes('CKP') || upper.includes('CMP') || upper.includes('CIGUENAL') || upper.includes('CIGÜEÑAL') || upper.includes('LEVAS')) return 'sensor_ckp_cmp';
+  if (upper.includes('MAF') || upper.includes('MAP')) return 'sensor_maf_map';
+  if (upper.includes('TEMPERATURA') || upper.includes('ECT') || upper.includes('COOLANT')) return 'sensor_temperatura_ect';
+  if (upper.includes('BOBINA') || upper.includes('COP') || upper.includes('ENCENDIDO')) return 'bobinas_encendido';
+  if (upper.includes('INYECTOR')) return 'inyectores';
+  if (upper.includes('ABS') || upper.includes('ESP') || upper.includes('FRENO')) return 'modulo_abs_esp';
+  if (upper.includes('AIRBAG') || upper.includes('SRS')) return 'modulo_airbag_srs';
+  if (upper.includes('CAN') || upper.includes('RED') || upper.includes('COMUNICACION')) return 'red_can_bus';
+  if (upper.includes('ALTERNADOR') || upper.includes('REGULADOR') || upper.includes('CARGA')) return 'alternador_regulador';
+  if (upper.includes('EGR') || upper.includes('VVT') || upper.includes('VALVULA')) return 'valvula_egr_vvt';
   if (upper.includes('PEDAL')) return 'pedal_acelerador';
   if (upper.includes('INMOVILIZADOR') || upper.includes('LLAVE') || upper.includes('ANTENA')) return 'inmovilizador_llave';
   if (upper.includes('EDU') && (upper.includes('DOS') || upper.includes('2'))) return 'edu_dos_conectores';
   if (upper.includes('EDU') && (upper.includes('TRES') || upper.includes('3'))) return 'edu_tres_conectores';
-  if (upper.includes('CUERPO')) return 'cuerpo_aceleracion';
+  if (upper.includes('CUERPO') || upper.includes('ACEL') || upper.includes('OBTURADOR') || upper.includes('MARIPOSA')) return 'cuerpo_aceleracion';
   if (upper.includes('DISTRIBUIDOR')) return 'distribuidor';
-  if (upper.includes('OXIGENO') || upper.includes('O2')) return 'sensor_oxigeno';
-  if (upper.includes('TABLERO') || upper.includes('CLUSTER') || upper.includes('CUADRO')) return 'tablero_instrumentos';
-  if (upper.includes('FUSIBLERA') || upper.includes('BCM') || upper.includes('FUSIBLE')) return 'fusiblera_bcm';
-  if (upper.includes('OBD')) return 'puerto_obd';
+  if (upper.includes('OXIGENO') || upper.includes('OXÍGENO') || upper.includes('O2') || upper.includes('LAMBDA')) return 'sensor_oxigeno';
+  if (upper.includes('TABLERO') || upper.includes('CLUSTER') || upper.includes('CUADRO') || upper.includes('INSTRUMENT')) return 'tablero_instrumentos';
+  if (upper.includes('FUSIBLERA') || upper.includes('BCM') || upper.includes('FUSIBLE') || upper.includes('SAM')) return 'fusiblera_bcm';
+  if (upper.includes('OBD') || upper.includes('DLC')) return 'puerto_obd';
   if (upper.includes('BOOT')) return 'modo_boot';
-  if (upper.includes('BENCH')) return 'modo_banco';
+  if (upper.includes('BENCH') || upper.includes('BANCO')) return 'modo_banco';
   if (upper.includes('ECU') || upper.includes('COMPUTADORA') || upper.includes('ECM') || upper.includes('PCM') || upper === 'PINOUT') return 'ecu';
   return cleanSlug(compRaw, false).replace(/_(imagen|conexionado)$/i, '');
 }
@@ -550,16 +561,24 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       let imgDir = path.join(modelPath, motorClean, componenteClean, 'imagen');
       let motorFolder = motorClean;
 
+      let finalCompFolder = componenteClean;
       if (!fs.existsSync(imgDir) && fs.existsSync(modelPath)) {
         const motorDirs = fs.readdirSync(modelPath).filter(d => {
           try { return fs.statSync(path.join(modelPath, d)).isDirectory() && !d.startsWith('.'); } catch { return false; }
         });
-        const found = motorDirs.find(d => fs.existsSync(path.join(modelPath, d, componenteClean, 'imagen')));
-        if (found) {
-          imgDir = path.join(modelPath, found, componenteClean, 'imagen');
-          motorFolder = found;
-        } else if (motorDirs.length === 1) {
-          imgDir = path.join(modelPath, motorDirs[0], componenteClean, 'imagen');
+        for (const md of motorDirs) {
+          const compDirs = fs.readdirSync(path.join(modelPath, md)).filter(d => {
+            try { return fs.statSync(path.join(modelPath, md, d)).isDirectory(); } catch { return false; }
+          });
+          const match = compDirs.find(cd => cd.toLowerCase() === componenteClean.toLowerCase() || normalizeComponente(cd) === componenteClean);
+          if (match && fs.existsSync(path.join(modelPath, md, match, 'imagen'))) {
+            imgDir = path.join(modelPath, md, match, 'imagen');
+            motorFolder = md;
+            finalCompFolder = match;
+            break;
+          }
+        }
+        if (!fs.existsSync(imgDir) && motorDirs.length === 1) {
           motorFolder = motorDirs[0];
         }
       }
@@ -568,7 +587,7 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       if (fs.existsSync(imgDir)) {
         const filesOnDisk = fs.readdirSync(imgDir).filter(f => /\.(jpg|jpeg|png|webp|svg|gif)$/i.test(f) && !f.startsWith('.')).sort();
         filesOnDisk.forEach(f => {
-          fotos.push(`archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorFolder}/${componenteClean}/imagen/${f}`);
+          fotos.push(`archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorFolder}/${finalCompFolder}/imagen/${f}`);
         });
       }
 
@@ -586,16 +605,24 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       let connDir = path.join(modelPath, motorClean, componenteClean, 'conexionado');
       let motorFolder = motorClean;
 
+      let finalCompFolder = componenteClean;
       if (!fs.existsSync(connDir) && fs.existsSync(modelPath)) {
         const motorDirs = fs.readdirSync(modelPath).filter(d => {
           try { return fs.statSync(path.join(modelPath, d)).isDirectory() && !d.startsWith('.'); } catch { return false; }
         });
-        const found = motorDirs.find(d => fs.existsSync(path.join(modelPath, d, componenteClean, 'conexionado')));
-        if (found) {
-          connDir = path.join(modelPath, found, componenteClean, 'conexionado');
-          motorFolder = found;
-        } else if (motorDirs.length === 1) {
-          connDir = path.join(modelPath, motorDirs[0], componenteClean, 'conexionado');
+        for (const md of motorDirs) {
+          const compDirs = fs.readdirSync(path.join(modelPath, md)).filter(d => {
+            try { return fs.statSync(path.join(modelPath, md, d)).isDirectory(); } catch { return false; }
+          });
+          const match = compDirs.find(cd => cd.toLowerCase() === componenteClean.toLowerCase() || normalizeComponente(cd) === componenteClean);
+          if (match && fs.existsSync(path.join(modelPath, md, match, 'conexionado'))) {
+            connDir = path.join(modelPath, md, match, 'conexionado');
+            motorFolder = md;
+            finalCompFolder = match;
+            break;
+          }
+        }
+        if (!fs.existsSync(connDir) && motorDirs.length === 1) {
           motorFolder = motorDirs[0];
         }
       }
@@ -604,7 +631,7 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       if (fs.existsSync(connDir)) {
         const filesOnDisk = fs.readdirSync(connDir).filter(f => /\.(pdf|jpg|jpeg|png|webp|svg)$/i.test(f) && !f.startsWith('.')).sort();
         filesOnDisk.forEach(f => {
-          filesList.push(`archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorFolder}/${componenteClean}/conexionado/${f}`);
+          filesList.push(`archivos_almacenamiento/diagramas_PRUEBAS/${marcaClean}/${modeloClean}/${motorFolder}/${finalCompFolder}/conexionado/${f}`);
         });
       }
 
@@ -853,7 +880,24 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       const motorClean = cleanSlug(motorRaw, false);
       const compSlug = normalizeComponente(tipo || titulo);
 
-      // 1. Eliminar del árbol JSON
+      // 1. Eliminar archivos y carpetas físicas del componente en disco duro
+      const possibleCompDirs = [
+        path.join(DIAGRAMAS_DIR, marcaClean, mSlug, motorClean, compSlug),
+        path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, compSlug),
+        path.join(DIAGRAMAS_DIR, marcaClean, mSlug, motorClean, 'ecu'),
+        path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, 'ecu')
+      ];
+      possibleCompDirs.forEach(dir => {
+        if (fs.existsSync(dir)) {
+          try {
+            fs.rmSync(dir, { recursive: true, force: true });
+          } catch (e) {
+            console.error('Error al borrar carpeta física del componente:', e.message);
+          }
+        }
+      });
+
+      // 2. Eliminar del árbol JSON
       Object.keys(tree).forEach(bKey => {
         if (!bSlug || bKey === bSlug || cleanSlug(bKey, false) === bSlug) {
           const models = tree[bKey].models || {};
@@ -878,7 +922,7 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       });
       saveVehiculosData(tree);
 
-      return res.end(JSON.stringify({ status: 'success', message: 'Tarjeta eliminada del catálogo exitosamente. Los archivos de respaldo se conservan seguros.' }));
+      return res.end(JSON.stringify({ status: 'success', message: 'Diagrama y carpetas físicas eliminadas correctamente del disco duro.' }));
     }
 
     default:
