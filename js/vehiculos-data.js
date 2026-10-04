@@ -77,26 +77,21 @@
     // Helper to extract year ranges or single years from strings
     extractYears: function(str) {
       if (!str || typeof str !== 'string') return [];
-      const years = [];
-      const rangeMatches = str.match(/\b(19\d{2}|20\d{2})\s*-\s*(19\d{2}|20\d{2})\b/g);
-      if (rangeMatches) {
-        rangeMatches.forEach(r => {
-          const parts = r.split('-').map(p => parseInt(p.trim(), 10)).filter(n => !isNaN(n));
-          if (parts.length === 2) {
-            years.push({ start: parts[0], end: parts[1], raw: r.replace(/\s+/g, ' ').trim() });
-          }
-        });
+      const numbers = (str.match(/\b(19\d{2}|20\d{2})\b/g) || []).map(n => parseInt(n, 10));
+      if (numbers.length >= 2) {
+        const min = Math.min(...numbers);
+        const max = Math.max(...numbers);
+        return [{ start: min, end: max, raw: `${min} - ${max}` }];
+      } else if (numbers.length === 1) {
+        return [{ start: numbers[0], end: numbers[0], raw: String(numbers[0]) }];
       }
-      const singleMatches = str.match(/\b(19\d{2}|20\d{2})\b/g);
-      if (singleMatches) {
-        singleMatches.forEach(s => {
-          const y = parseInt(s.trim(), 10);
-          if (!isNaN(y) && !years.some(yr => yr.start <= y && yr.end >= y)) {
-            years.push({ start: y, end: y, raw: s.trim() });
-          }
-        });
-      }
-      return years;
+      return [];
+    },
+
+    // Helper to check if two sets of year ranges overlap
+    yearsOverlap: function(yList1, yList2) {
+      if (!yList1 || !yList1.length || !yList2 || !yList2.length) return true;
+      return yList1.some(r1 => yList2.some(r2 => Math.max(r1.start, r2.start) <= Math.min(r1.end, r2.end)));
     },
 
     // Helper to get normalized core model name (stripping brand, years, and non-alphanumeric)
@@ -104,7 +99,9 @@
       if (!name) return '';
       let clean = name.toLowerCase();
       if (brand) clean = clean.replace(new RegExp(`\\b${brand.toLowerCase()}\\b`, 'g'), '');
-      clean = clean.replace(/\b(19\d{2}|20\d{2})\s*-\s*(19\d{2}|20\d{2})\b/g, '');
+      clean = clean.replace(/\([^)]*\)/g, ' ');
+      clean = clean.replace(/\b(motor|engine|version|edicion|gen|fase|ano|year|modelo|auto|car|sedan|hatchback|pickup|camioneta|suv)\b/gi, ' ');
+      clean = clean.replace(/\b(19\d{2}|20\d{2})\s*[-–/_\s]\s*(19\d{2}|20\d{2})\b/g, '');
       clean = clean.replace(/\b(19\d{2}|20\d{2})\b/g, '');
       clean = clean.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
       return clean;
@@ -121,7 +118,7 @@
       if (cleanTargetName && candidateNameClean && cleanTargetName === candidateNameClean) {
         return true;
       }
-      if (cleanTargetDoc && candidateKeyClean && cleanTargetDoc === candidateKeyClean && cleanTargetName === candidateNameClean) {
+      if (cleanTargetDoc && candidateKeyClean && (cleanTargetDoc === candidateKeyClean || cleanTargetDoc.replace(/_/g, '') === candidateKeyClean.replace(/_/g, ''))) {
         return true;
       }
 
@@ -134,22 +131,14 @@
         });
       }
 
-      // If both define years, they MUST match (different generations like 2011-2015 vs 2015-2020 must NOT match)
+      // If both define years, they MUST overlap
       if (targetYears.length > 0 && candidateYears.length > 0) {
-        const exactMatch = targetYears.some(ty =>
-          candidateYears.some(cy => (ty.raw === cy.raw || (ty.start === cy.start && ty.end === cy.end)))
-        );
-        if (!exactMatch) {
-          return false;
-        }
-      } else if (targetYears.length > 0 && candidateYears.length === 0) {
-        // Target specified a specific generation (e.g., 2015 - 2020), but candidate has no matching year
-        if (candidateKeyClean !== cleanTargetDoc && candidateNameClean !== cleanTargetName) {
+        if (!this.yearsOverlap(targetYears, candidateYears)) {
           return false;
         }
       }
 
-      // 3. Compare core model tokens (e.g., "hilux", "corolla", "accent")
+      // 3. Compare core model tokens (e.g., "hilux", "corolla", "tiida", "accent")
       const targetCore = this.normalizeCoreName(`${cleanTargetDoc} ${cleanTargetName}`, brandClean);
       const candidateCore = this.normalizeCoreName(`${candidateKeyClean} ${candidateNameClean}`, brandClean);
 
@@ -225,10 +214,7 @@
                   const targetYears = this.extractYears(`${cleanDoc} ${cleanModel}`);
                   const anioYears = this.extractYears(aKey);
                   if (targetYears.length > 0 && anioYears.length > 0) {
-                    const matchYear = targetYears.some(ty =>
-                      anioYears.some(ay => ty.raw === ay.raw || (ty.start === ay.start && ty.end === ay.end))
-                    );
-                    if (!matchYear) continue; // Saltar años no correspondientes
+                    if (!this.yearsOverlap(targetYears, anioYears)) continue; // Saltar años no correspondientes
                   }
 
                   const motores = aVal.motores || {};
