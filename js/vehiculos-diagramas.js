@@ -556,12 +556,12 @@ window.mergeModelEntries = mergeModelEntries;
 
 function matchesVehicleCategory(itemCat, targetCatKey) {
   if (!targetCatKey) return true;
-  if (!itemCat || itemCat === 'vehiculos' || itemCat === 'general') return true;
+  if (!itemCat || itemCat === 'vehiculos' || itemCat === 'general') return false;
 
   const iCat = String(itemCat).toLowerCase().trim().replace(/[^a-z0-9]/g, '');
   const tCat = String(targetCatKey).toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
-  if (!iCat) return true;
+  if (!iCat) return false;
   if (iCat === tCat) return true;
 
   const isSedan = (s) => s.includes('sedan') || s.includes('hatchback') || s.includes('auto');
