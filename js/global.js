@@ -513,57 +513,9 @@ window.createCenteredFirebaseLoader = function(container, subtitleText = 'Cargan
   };
 };
 
-// Remove solid/gray backgrounds from card illustrations and make them transparent
+// Remove solid/gray backgrounds from card illustrations seamlessly via CSS
 function cleanVehicleImageBackground(selector) {
-  const images = document.querySelectorAll(selector);
-  images.forEach(img => {
-    if (img.dataset.bgCleaned === 'true') return;
-
-    const process = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || img.width;
-        canvas.height = img.naturalHeight || img.height;
-        if (!canvas.width || !canvas.height) return;
-
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imgData.data;
-
-        // Sample background color near top-left
-        const bgR = data[0];
-        const bgG = data[1];
-        const bgB = data[2];
-
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-
-          // Check if pixel matches sampled background or is off-white / light gray / white background
-          const diff = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
-          const isLightNeutral = (r > 208 && g > 208 && b > 208 && Math.abs(r - g) < 16 && Math.abs(g - b) < 16);
-          if (diff < 42 || isLightNeutral) {
-            data[i + 3] = 0; // Transparent
-          }
-        }
-
-        ctx.putImageData(imgData, 0, 0);
-        img.src = canvas.toDataURL('image/png');
-        img.dataset.bgCleaned = 'true';
-      } catch (e) {
-        console.warn('Canvas background removal error:', e);
-      }
-    };
-
-    if (img.complete && (img.naturalWidth || img.width)) {
-      process();
-    } else {
-      img.addEventListener('load', process, { once: true });
-    }
-  });
+  // Manejado nativamente mediante CSS (mix-blend-mode: multiply) con aceleración por GPU sin parpadeos
 }
 
 // =========================================================================

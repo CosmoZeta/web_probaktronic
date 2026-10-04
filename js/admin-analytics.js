@@ -145,7 +145,7 @@
     } catch(e) {}
   };
 
-  // 3. Floating Admin Pill (Solo visible para Administradores)
+  // 3. Floating Admin Pill (Solo visible para Administradores con renderizado instantáneo)
   window.updateAdminFloatingBadge = function(onlineCount, totalIps, ipsHoy, visitasHoy) {
     if (!window.isProbaktronicAdmin()) {
       const existing = document.getElementById('adminLiveAnalyticsPill');
@@ -153,9 +153,22 @@
       return;
     }
 
-    const online = onlineCount || window._probakOnlineCount || 1;
-    const ipsToday = ipsHoy || window._probakIpsHoy || totalIps || window._probakTotalIps || 1;
-    const totalHitsToday = visitasHoy || window._probakVisitasHoy || 1;
+    let cached = {};
+    try {
+      cached = JSON.parse(localStorage.getItem('probak_cached_stats') || '{}');
+    } catch(e) {}
+
+    const online = onlineCount || window._probakOnlineCount || cached.online_now || 1;
+    const ipsToday = ipsHoy || window._probakIpsHoy || totalIps || window._probakTotalIps || cached.ips_hoy || 1;
+    const totalHitsToday = visitasHoy || window._probakVisitasHoy || cached.visitas_hoy || 1;
+
+    try {
+      localStorage.setItem('probak_cached_stats', JSON.stringify({
+        online_now: online,
+        ips_hoy: ipsToday,
+        visitas_hoy: totalHitsToday
+      }));
+    } catch(e) {}
 
     let pill = document.getElementById('adminLiveAnalyticsPill');
     if (!pill) {
@@ -164,7 +177,9 @@
       pill.className = 'admin-live-analytics-pill shadow-lg cursor-pointer';
       pill.title = 'Panel de Telemetría & Visitas en Vivo (Admin)';
       pill.onclick = () => window.openAdminAnalyticsModal();
-      document.body.appendChild(pill);
+      if (document.body) {
+        document.body.appendChild(pill);
+      }
     }
 
     pill.innerHTML = `
@@ -594,14 +609,23 @@
     document.head.appendChild(style);
   }
 
-  // Inicialización Automática
+  // Inicialización Automática e Instantánea
+  injectAnalyticsStyles();
+
+  if (window.isProbaktronicAdmin()) {
+    if (document.body) {
+      updateAdminFloatingBadge();
+    } else {
+      document.addEventListener('DOMContentLoaded', () => updateAdminFloatingBadge(), { once: true });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
-    injectAnalyticsStyles();
     window.registrarVisitaGlobal();
 
-    // Si es administrador, refrescar pill y permitir control
+    // Si es administrador, asegurar actualización con datos en vivo
     if (window.isProbaktronicAdmin()) {
-      updateAdminFloatingBadge(1, 1);
+      updateAdminFloatingBadge();
     }
   });
 

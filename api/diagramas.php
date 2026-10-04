@@ -93,11 +93,11 @@ if (!function_exists('normalizeComponente')) {
         if (strpos($upper, 'INYECTOR') !== false) return 'inyectores';
         if (strpos($upper, 'ABS') !== false || strpos($upper, 'ESP') !== false || strpos($upper, 'FRENO') !== false) return 'modulo_abs_esp';
         if (strpos($upper, 'AIRBAG') !== false || strpos($upper, 'SRS') !== false) return 'modulo_airbag_srs';
-        if (strpos($upper, 'CAN') !== false || strpos($upper, 'RED') !== false || strpos($upper, 'COMUNICACION') !== false) return 'red_can_bus';
         if (strpos($upper, 'ALTERNADOR') !== false || strpos($upper, 'REGULADOR') !== false || strpos($upper, 'CARGA') !== false) return 'alternador_regulador';
         if (strpos($upper, 'EGR') !== false || strpos($upper, 'VVT') !== false || strpos($upper, 'VALVULA') !== false) return 'valvula_egr_vvt';
         if (strpos($upper, 'PEDAL') !== false) return 'pedal_acelerador';
-        if (strpos($upper, 'INMOVILIZADOR') !== false || strpos($upper, 'LLAVE') !== false || strpos($upper, 'ANTENA') !== false) return 'inmovilizador_llave';
+        if (strpos($upper, 'ANTENA') !== false) return 'antena';
+        if (strpos($upper, 'INMOVILIZADOR') !== false || strpos($upper, 'LLAVE') !== false) return 'inmovilizador_llave';
         if (strpos($upper, 'EDU') !== false && (strpos($upper, 'DOS') !== false || strpos($upper, '2') !== false)) return 'edu_dos_conectores';
         if (strpos($upper, 'EDU') !== false && (strpos($upper, 'TRES') !== false || strpos($upper, '3') !== false)) return 'edu_tres_conectores';
         if (strpos($upper, 'CUERPO') !== false || strpos($upper, 'ACEL') !== false || strpos($upper, 'OBTURADOR') !== false || strpos($upper, 'MARIPOSA') !== false) return 'cuerpo_aceleracion';
@@ -108,7 +108,9 @@ if (!function_exists('normalizeComponente')) {
         if (strpos($upper, 'OBD') !== false || strpos($upper, 'DLC') !== false) return 'puerto_obd';
         if (strpos($upper, 'BOOT') !== false) return 'modo_boot';
         if (strpos($upper, 'BENCH') !== false || strpos($upper, 'BANCO') !== false) return 'modo_banco';
-        if (strpos($upper, 'ECU') !== false || strpos($upper, 'COMPUTADORA') !== false || strpos($upper, 'ECM') !== false || strpos($upper, 'PCM') !== false || $upper === 'PINOUT') return 'ecu';
+        if (strpos($upper, 'TCM') !== false || strpos($upper, 'TRANSMISION') !== false || strpos($upper, 'TRANSMISIÓN') !== false || strpos($upper, 'CAJA') !== false) return 'modulo_tcm_transmision';
+        if (preg_match('/\\b(CAN\\s*BUS|CANBUS|RED\\s*CAN|COMUNICACION\\s*CAN|TOPOLOGIA\\s*RED)\\b/i', $upper)) return 'red_can_bus';
+        if (strpos($upper, 'ECU') !== false || strpos($upper, 'COMPUTADORA') !== false || strpos($upper, 'ECM') !== false || strpos($upper, 'PCM') !== false || strpos($upper, 'PINOUT') !== false) return 'ecu';
         $slug = cleanSlug($compRaw, false);
         return preg_replace('/_(imagen|conexionado)$/i', '', $slug);
     }
@@ -808,6 +810,101 @@ switch ($action) {
         } else {
             echo json_encode(['status' => 'success', 'message' => 'Diagrama eliminado localmente.']);
         }
+        break;
+
+    
+    case 'guardar_galeria':
+    case 'guardar_orden_fotos':
+    case 'eliminar_foto_galeria':
+        $marcaRaw = trim($input['marca'] ?? $_POST['marca'] ?? $_GET['marca'] ?? '');
+        $modeloRaw = trim($input['modelo'] ?? $_POST['modelo'] ?? $_GET['modelo'] ?? '');
+        $motorRaw = trim($input['motor'] ?? $_POST['motor'] ?? $_GET['motor'] ?? '');
+        $compRaw = trim($input['componente'] ?? $_POST['componente'] ?? $_GET['componente'] ?? '');
+        $imagenes = is_array($input['imagenes'] ?? null) ? $input['imagenes'] : [];
+        $eliminadas = is_array($input['eliminadas'] ?? null) ? $input['eliminadas'] : [];
+
+        $marcaClean = cleanSlug($marcaRaw, true);
+        $modeloClean = cleanSlug($modeloRaw, false);
+        $motorClean = cleanSlug($motorRaw, false);
+        $componenteClean = normalizeComponente($compRaw);
+
+        // 1. Eliminar archivos físicos en la lista 'eliminadas'
+        foreach ($eliminadas as $relUrl) {
+            if (!empty($relUrl) && is_string($relUrl) && strpos($relUrl, 'data:') !== 0) {
+                $cleanRel = explode('?', str_replace('\\', '/', $relUrl))[0];
+                $diskPath = dirname(__DIR__) . '/' . ltrim($cleanRel, '/');
+                if (file_exists($diskPath) && strpos(realpath($diskPath), dirname(__DIR__)) === 0) {
+                    @unlink($diskPath);
+                }
+            }
+        }
+
+        // 2. Limpiar cualquier archivo en el directorio imagen que no esté en la lista final
+        $baseComponentDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorClean . '/' . $componenteClean . '/imagen';
+        if (is_dir($baseComponentDir)) {
+            $filesOnDisk = scandir($baseComponentDir);
+            $remainingBaseNames = array_map(function($u) {
+                return strtolower(basename(explode('?', $u)[0]));
+            }, $imagenes);
+
+            foreach ($filesOnDisk as $f) {
+                if ($f === '.' || $f === '..') continue;
+                if (!in_array(strtolower($f), $remainingBaseNames)) {
+                    $targetFile = $baseComponentDir . '/' . $f;
+                    if (is_file($targetFile)) {
+                        @unlink($targetFile);
+                    }
+                }
+            }
+        }
+
+        // 3. Actualizar data/vehiculos_diagramas.json
+        $jsonPath = dirname(__DIR__) . '/data/vehiculos_diagramas.json';
+        if (file_exists($jsonPath)) {
+            $raw = @file_get_contents($jsonPath);
+            if ($raw) {
+                $tree = json_decode($raw, true);
+                if (is_array($tree)) {
+                    $modified = false;
+                    foreach ($tree as $bKey => &$bVal) {
+                        if (!$marcaClean || strtolower($bKey) === strtolower($marcaClean) || cleanSlug($bKey, true) === $marcaClean) {
+                            foreach (($bVal['models'] ?? []) as $mKey => &$mVal) {
+                                if (!$modeloClean || strtolower($mKey) === strtolower($modeloClean) || cleanSlug($mKey, false) === $modeloClean) {
+                                    foreach (($mVal['anios'] ?? []) as $aKey => &$aVal) {
+                                        foreach (($aVal['motores'] ?? []) as $motKey => &$motVal) {
+                                            if (!$motorClean || strtolower($motKey) === strtolower($motorClean) || cleanSlug($motKey, false) === $motorClean) {
+                                                foreach (($motVal['archivos'] ?? []) as &$arc) {
+                                                    $arcTipo = strtolower($arc['tipo'] ?? '');
+                                                    $arcTitle = $arc['titulo'] ?? $arc['nombre'] ?? $arc['_id'] ?? '';
+                                                    if ($arcTipo === $componenteClean || normalizeComponente($arcTitle) === $componenteClean || ($compRaw && ($arc['_id'] === $compRaw || $arcTitle === $compRaw || $arcTipo === $compRaw))) {
+                                                        $arc['imagenes'] = $imagenes;
+                                                        $arc['allImages'] = $imagenes;
+                                                        $arc['fotos'] = $imagenes;
+                                                        if (!empty($imagenes)) {
+                                                            $arc['imageUrl'] = $imagenes[0];
+                                                        }
+                                                        $modified = true;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if ($modified) {
+                        @file_put_contents($jsonPath, json_encode($tree, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                    }
+                }
+            }
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Galería de fotos y orden actualizados correctamente en disco y base de datos.',
+            'data' => ['imagenes' => $imagenes, 'count' => count($imagenes)]
+        ]);
         break;
 
     case 'sync_json_to_mysql':

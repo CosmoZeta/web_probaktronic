@@ -196,10 +196,10 @@
                     "_id": "tiida_tiida_latio",
                     "nombre": "TIIDA / TIIDA LATIO",
                     "anios": "2004 -2012",
-                    "motor": "hitachi",
+                    "motor": "HR15",
                     "combustible": "gasolina",
                     "imagen": "imagenes autos/ic_car_toyota_hilux.JPG",
-                    "categoria": "sedan_hatchback"
+                    "categoria": "sedan"
                 },
                 "anios": {
                     "2004 -2012": {
@@ -207,70 +207,204 @@
                             "_id": "2004 -2012"
                         },
                         "motores": {
-                            "hitachi": {
+                            "HR15": {
                                 "motorData": {
-                                    "_id": "hitachi",
+                                    "_id": "HR15",
                                     "combustible": "gasolina",
                                     "imagenUrl": "imagenes autos/ic_car_toyota_hilux.JPG",
-                                    "titulo": "hitachi"
+                                    "titulo": "HR15"
                                 },
                                 "archivos": [
-                                    {
-                                        "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 hitachi ECU",
-                                        "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 PINOUT ECU",
-                                        "tipo": "ecu",
-                                        "pdfUrl": "",
-                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ecu/conexionado/tiida_tiida_latio_ecu_1.png",
-                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ecu/conexionado/tiida_tiida_latio_ecu_1.png",
-                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ecu/imagen/imagen_frontal_ecu_1790533488807.jpeg",
-                                        "descripcion": "",
-                                        "imagenes": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ecu/imagen/imagen_frontal_ecu_1790533488807.jpeg"
-                                        ],
-                                        "allImages": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ecu/imagen/imagen_frontal_ecu_1790533488807.jpeg"
-                                        ],
-                                        "fotos": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ecu/imagen/imagen_frontal_ecu_1790533488807.jpeg"
-                                        ]
-                                    },
                                     {
                                         "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 IPDM MODULO DE RELES",
                                         "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 IPDM MODULO DE RELES",
                                         "tipo": "ipdm_reles",
                                         "pdfUrl": "",
-                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ipdm_reles/conexionado/tiida_tiida_latio_ipdm_modulo_de_reles_1.png",
-                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ipdm_reles/conexionado/tiida_tiida_latio_ipdm_modulo_de_reles_1.png",
-                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ipdm_reles/imagen/imagen_ipdm_1790534268857.jpg",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/conexionado/tiida_tiida_latio_ipdm_reles_1.png",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/conexionado/tiida_tiida_latio_ipdm_reles_1.png",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/imagen/3_1790954057334.png",
                                         "descripcion": "",
                                         "imagenes": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ipdm_reles/imagen/imagen_ipdm_1790534268857.jpg"
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/imagen/3_1790954057334.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/imagen/tiida_tiida_latio_ipdm_reles_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/imagen/tiida_tiida_latio_ipdm_reles_3.png"
                                         ],
                                         "allImages": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ipdm_reles/imagen/imagen_ipdm_1790534268857.jpg"
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/imagen/3_1790954057334.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/imagen/tiida_tiida_latio_ipdm_reles_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/imagen/tiida_tiida_latio_ipdm_reles_3.png"
                                         ],
                                         "fotos": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/ipdm_reles/imagen/imagen_ipdm_1790534268857.jpg"
-                                        ]
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/imagen/3_1790954057334.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/imagen/tiida_tiida_latio_ipdm_reles_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ipdm_reles/imagen/tiida_tiida_latio_ipdm_reles_3.png"
+                                        ],
+                                        "icono": "bi-motherboard-fill"
                                     },
                                     {
                                         "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 FUSIBLERA BCM",
                                         "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 FUSIBLERA BCM",
                                         "tipo": "fusiblera_bcm",
                                         "pdfUrl": "",
-                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/fusiblera_bcm/conexionado/tiida_tiida_latio_fusiblera_bcm_1.png",
-                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/fusiblera_bcm/conexionado/tiida_tiida_latio_fusiblera_bcm_1.png",
-                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/fusiblera_bcm/imagen/bcm_foto_1790538736828.jpeg",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/conexionado/tiida_tiida_latio_fusiblera_bcm_1.png",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/conexionado/tiida_tiida_latio_fusiblera_bcm_1.png",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/9_1790988955899.png",
                                         "descripcion": "",
                                         "imagenes": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/fusiblera_bcm/imagen/bcm_foto_1790538736828.jpeg"
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/9_1790988955899.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/tiida_tiida_latio_fusiblera_bcm_4.webp",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/tiida_tiida_latio_fusiblera_bcm_5.webp",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/tiida_tiida_latio_fusiblera_bcm_3.webp"
                                         ],
                                         "allImages": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/fusiblera_bcm/imagen/bcm_foto_1790538736828.jpeg"
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/9_1790988955899.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/tiida_tiida_latio_fusiblera_bcm_4.webp",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/tiida_tiida_latio_fusiblera_bcm_5.webp",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/tiida_tiida_latio_fusiblera_bcm_3.webp"
                                         ],
                                         "fotos": [
-                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hitachi/fusiblera_bcm/imagen/bcm_foto_1790538736828.jpeg"
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/9_1790988955899.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/tiida_tiida_latio_fusiblera_bcm_4.webp",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/tiida_tiida_latio_fusiblera_bcm_5.webp",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/fusiblera_bcm/imagen/tiida_tiida_latio_fusiblera_bcm_3.webp"
+                                        ],
+                                        "icono": "bi-toggle-on"
+                                    },
+                                    {
+                                        "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 HR15 ECU",
+                                        "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 PINOUT ECU",
+                                        "tipo": "ecu",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/conexionado/tiida_tiida_latio_ecu_1.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/conexionado/tiida_tiida_latio_ecu_1.jpg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/16_1791136620631.png",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/2_1790992082803.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_3.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_4.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_5.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/16_1791136620631.png"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/2_1790992082803.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_3.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_4.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_5.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/16_1791136620631.png"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/2_1790992082803.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_3.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_4.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_5.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/16_1791136620631.png"
                                         ]
+                                    },
+                                    {
+                                        "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 MODULO TCM TRANSMISION",
+                                        "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 MODULO TCM TRANSMISION",
+                                        "tipo": "modulo_tcm_transmision",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/conexionado/tiida_tiida_latio_modulo_tcm_transmision_1.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/conexionado/tiida_tiida_latio_modulo_tcm_transmision_1.jpg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/imagen/11_1791129926889.png",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/imagen/11_1791129926889.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/imagen/tiida_tiida_latio_modulo_tcm_transmision_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/imagen/tiida_tiida_latio_modulo_tcm_transmision_3.png"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/imagen/11_1791129926889.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/imagen/tiida_tiida_latio_modulo_tcm_transmision_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/imagen/tiida_tiida_latio_modulo_tcm_transmision_3.png"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/imagen/11_1791129926889.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/imagen/tiida_tiida_latio_modulo_tcm_transmision_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/modulo_tcm_transmision/imagen/tiida_tiida_latio_modulo_tcm_transmision_3.png"
+                                        ],
+                                        "icono": "bi-gear-fill"
+                                    },
+                                    {
+                                        "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 MODULO TCM TRANSMISION (MECANICO M/T)",
+                                        "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 MODULO TCM TRANSMISION (MECANICO M/T)",
+                                        "tipo": "red_can_bus",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/red_can_bus/conexionado/tiida_tiida_latio_red_can_bus_1.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/red_can_bus/conexionado/tiida_tiida_latio_red_can_bus_1.jpg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/red_can_bus/imagen/16_1791136686952.png",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/red_can_bus/imagen/16_1791136686952.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/red_can_bus/imagen/tiida_tiida_latio_red_can_bus_2.png"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/red_can_bus/imagen/16_1791136686952.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/red_can_bus/imagen/tiida_tiida_latio_red_can_bus_2.png"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/red_can_bus/imagen/16_1791136686952.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/red_can_bus/imagen/tiida_tiida_latio_red_can_bus_2.png"
+                                        ],
+                                        "icono": "bi-layers-fill"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "hino": {
+        "brandData": {
+            "nombre": "HINO",
+            "logo": "logo_probaktronic_solo.png",
+            "combustible": "diesel",
+            "categoria": "camiones"
+        },
+        "models": {
+            "serie_500_700": {
+                "modelData": {
+                    "_id": "serie_500_700",
+                    "nombre": "SERIE 500 / 700",
+                    "anios": "2006 - 2015",
+                    "motor": "J08E / J05E",
+                    "combustible": "diesel",
+                    "imagen": "imagenes autos/ic_car_toyota_hilux.JPG",
+                    "categoria": "camiones"
+                },
+                "anios": {
+                    "2006 - 2015": {
+                        "anioData": {
+                            "_id": "2006 - 2015"
+                        },
+                        "motores": {
+                            "J08E / J05E": {
+                                "motorData": {
+                                    "_id": "J08E / J05E",
+                                    "combustible": "diesel",
+                                    "imagenUrl": "imagenes autos/ic_car_toyota_hilux.JPG",
+                                    "titulo": "J08E / J05E"
+                                },
+                                "archivos": [
+                                    {
+                                        "_id": "HINO SERIE 500 / 700 2006 - 2015 PINOUT ECU (MECANICO M/T)",
+                                        "titulo": "HINO SERIE 500 / 700 2006 - 2015 PINOUT ECU (MECANICO M/T)",
+                                        "tipo": "ecu",
+                                        "pdfUrl": "archivos_almacenamiento/diagramas_PRUEBAS/HINO/serie_500_700/j08e_j05e/ecu/conexionado/hino_500_ECU_1791139510290.jpg",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/HINO/serie_500_700/j08e_j05e/ecu/conexionado/hino_500_ECU_1791139510290.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/HINO/serie_500_700/j08e_j05e/ecu/conexionado/hino_500_ECU_1791139510290.jpg",
+                                        "imageUrl": "",
+                                        "descripcion": "",
+                                        "imagenes": [],
+                                        "allImages": [],
+                                        "fotos": []
                                     }
                                 ]
                             }

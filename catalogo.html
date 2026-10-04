@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Probaktronic - Tienda de Componentes</title>
+  <title>Probaktronic - Tienda y Catálogo</title>
   
   <!-- Favicon Oficial -->
   <link rel="icon" type="image/png" href="logo_probaktronic_solo.png">
   <link rel="apple-touch-icon" href="logo_probaktronic_solo.png">
 
   <!-- OpenGraph Meta Tags -->
-  <meta property="og:title" content="Probaktronic - Tienda de Componentes y Repuestos">
-  <meta property="og:description" content="Catálogo y tienda de repuestos electrónicos, microcontroladores, memorias y drivers para talleres automotrices.">
+  <meta property="og:title" content="Probaktronic - Tienda de Componentes y Computadoras Automotrices">
+  <meta property="og:description" content="Catálogo y tienda de integrados, drivers electrónicos y venta de computadoras automotrices (ECUs).">
   <meta property="og:image" content="logo_probaktronic_costado.png">
   <meta property="og:type" content="website">
 
   <!-- Google Fonts: Inter & Rajdhani -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
   
   <script>
     if (sessionStorage.getItem('sidebar_locked') === 'true') {
@@ -31,7 +31,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   
   <!-- Stylesheets -->
-  <link href="css/global.css?v=310.0" rel="stylesheet">
+  <link href="css/global.css?v=390.0" rel="stylesheet">
 </head>
 <body>
 
@@ -111,9 +111,9 @@
             <span class="menu-pill-text">MENÚ</span>
           </button>
           <div>
-            <div class="header-greeting">BIBLIOTECA TÉCNICA Y COMPONENTES (BASE DE DATOS MYSQL)</div>
-            <h1 class="page-title">TIENDA DE COMPONENTES</h1>
-            <div class="page-subtitle">Sincronizado directamente con la Base de Datos de Probaktronic</div>
+            <div class="header-greeting" id="storeHeaderGreeting">BIBLIOTECA TÉCNICA Y TIENDA (PROBAKTRONIC)</div>
+            <h1 class="page-title" id="storeHeaderTitle">TIENDA PROBAKTRONIC</h1>
+            <div class="page-subtitle" id="storeHeaderSubtitle">Seleccione la categoría de productos que desea explorar</div>
           </div>
         </div>
 
@@ -129,35 +129,193 @@
         </div>
       </header>
 
-      <!-- Search Bar -->
-      <section class="mb-4">
-        <div class="input-group">
-          <span class="input-group-text bg-white border-end-0 rounded-start-5 ps-4"><i class="bi bi-search text-muted fs-5"></i></span>
-          <input type="text" id="catalogSearchInput" class="form-control border-start-0 rounded-end-5 py-3 ps-0 shadow-sm" placeholder="Buscar componentes o repuestos por código...">
+      <!-- ====================================================================
+           1. VISTA PRINCIPAL: 2 GRANDES TARJETAS DE CATEGORÍA
+           ==================================================================== -->
+      <section id="storeCategoriesView" class="store-categories-section">
+        <div class="store-categories-container">
+          
+          <!-- Tarjeta 1: Venta de Integrados y Drivers Electrónicos -->
+          <div class="store-category-card" onclick="openStoreCategory('integrados')">
+            <div class="store-card-header">
+              <div class="store-card-icon">
+                <i class="bi bi-cpu-fill"></i>
+              </div>
+              <span class="store-card-badge badge-red">
+                <i class="bi bi-lightning-charge-fill"></i> Componentes SMD & DIP
+              </span>
+            </div>
+
+            <h2 class="store-card-title">VENTA DE INTEGRADOS Y DRIVERS ELECTRÓNICOS</h2>
+            <div class="store-card-line"></div>
+            
+            <p class="store-card-desc">
+              Gran catálogo de circuitos integrados, drivers de bobinas e inyectores, microcontroladores, memorias EEPROM, MOSFETs, reguladores y repuestos electrónicos para reparación de computadoras automotrices.
+            </p>
+
+            <div class="store-features-list">
+              <span class="store-feature-pill"><i class="bi bi-check2 text-danger me-1"></i>Drivers de Inyección</span>
+              <span class="store-feature-pill"><i class="bi bi-check2 text-danger me-1"></i>Microcontroladores</span>
+              <span class="store-feature-pill"><i class="bi bi-check2 text-danger me-1"></i>Memorias EEPROM</span>
+              <span class="store-feature-pill"><i class="bi bi-check2 text-danger me-1"></i>Transistores MOSFET</span>
+            </div>
+
+            <div class="store-card-illustration">
+              <img src="ic_fondo_horizontal.png" alt="Integrados y Drivers">
+            </div>
+
+            <div class="store-card-footer-btn">
+              <span>Ingresar a Integrados</span>
+              <div class="store-card-arrow-btn">
+                <i class="bi bi-arrow-right"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tarjeta 2: Venta de Computadoras Automotrices (ECUs) -->
+          <div class="store-category-card card-ecus" onclick="openStoreCategory('ecus')">
+            <div class="store-card-header">
+              <div class="store-card-icon">
+                <i class="bi bi-motherboard-fill"></i>
+              </div>
+              <span class="store-card-badge badge-gold">
+                <i class="bi bi-shield-check"></i> ECUs & Módulos
+              </span>
+            </div>
+
+            <h2 class="store-card-title">VENTA DE COMPUTADORAS AUTOMOTRICES (ECUs)</h2>
+            <div class="store-card-line"></div>
+            
+            <p class="store-card-desc">
+              Venta de computadoras de motor (ECU / ECM / PCM), módulos de carrocería (BCM), tableros digitales y unidades de control probadas y garantizadas para vehículos gasolina y diésel.
+            </p>
+
+            <div class="store-features-list">
+              <span class="store-feature-pill"><i class="bi bi-check2 text-warning me-1"></i>ECUs Gasolina y Diésel</span>
+              <span class="store-feature-pill"><i class="bi bi-check2 text-warning me-1"></i>Módulos BCM & ABS</span>
+              <span class="store-feature-pill"><i class="bi bi-check2 text-warning me-1"></i>Probadas en Banco</span>
+              <span class="store-feature-pill"><i class="bi bi-check2 text-warning me-1"></i>Garantía Probaktronic</span>
+            </div>
+
+            <div class="store-card-illustration">
+              <img src="ecu_demo_2kd.png" alt="Computadoras Automotrices ECUs">
+            </div>
+
+            <div class="store-card-footer-btn">
+              <span>Ingresar a Computadoras</span>
+              <div class="store-card-arrow-btn">
+                <i class="bi bi-arrow-right"></i>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
-      <!-- Centered Progress Loader (0% to 100%) in Middle of Screen -->
-      <div class="catalog-loader-container" id="catalogLoaderContainer">
-        <div class="loader-card">
-          <div class="loader-logo mb-3">
-            <img src="logo_probaktronic_solo.png" width="46" height="46" alt="Probaktronic" class="pulse-animation">
+      <!-- ====================================================================
+           2. VISTA 1: CATÁLOGO DE INTEGRADOS Y DRIVERS ELECTRÓNICOS
+           ==================================================================== -->
+      <section id="storeIntegradosView" class="d-none">
+        <!-- Breadcrumb / Return Navigation Bar -->
+        <div class="store-breadcrumb-bar">
+          <button class="btn-back-categories" onclick="showTiendaCategories()">
+            <i class="bi bi-arrow-left"></i> Volver a Categorías
+          </button>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-bold font-rajdhani fs-6">
+              <i class="bi bi-cpu-fill me-1"></i> Integrados & Drivers
+            </span>
           </div>
-          <h4 class="font-rajdhani fw-bold text-uppercase mb-1 fs-5">Cargando Catálogo</h4>
-          <p class="text-muted small mb-3">Conectando con Base de Datos MySQL de Probaktronic...</p>
-          
-          <!-- Progress Bar -->
-          <div class="progress mb-2 w-100" style="height: 10px; border-radius: 6px; background-color: #E2E8F0;">
-            <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger" id="catalogProgressBar" role="progressbar" style="width: 0%; transition: width 0.2s ease;"></div>
-          </div>
-          
-          <!-- Percentage Counter -->
-          <span class="fw-bold fs-4 text-danger font-rajdhani" id="catalogProgressPercent">0%</span>
         </div>
-      </div>
 
-      <!-- Product Cards Grid (Revealed after SQL fetch) -->
-      <section class="product-grid mb-5 d-none" id="productGridContainer"></section>
+        <!-- Search Bar -->
+        <section class="mb-4">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 rounded-start-5 ps-4"><i class="bi bi-search text-muted fs-5"></i></span>
+            <input type="text" id="catalogSearchInput" class="form-control border-start-0 rounded-end-5 py-3 ps-0 shadow-sm" placeholder="Buscar por código de integrado o driver (ej: 02B1, 14N36GVL, Bosch, etc.)...">
+          </div>
+        </section>
+
+        <!-- Centered Progress Loader (0% to 100%) in Middle of Screen -->
+        <div class="catalog-loader-container" id="catalogLoaderContainer">
+          <div class="loader-card">
+            <div class="loader-logo mb-3">
+              <img src="logo_probaktronic_solo.png" width="46" height="46" alt="Probaktronic" class="pulse-animation">
+            </div>
+            <h4 class="font-rajdhani fw-bold text-uppercase mb-1 fs-5">Cargando Catálogo de Integrados</h4>
+            <p class="text-muted small mb-3">Sincronizando base de datos de componentes...</p>
+            
+            <!-- Progress Bar -->
+            <div class="progress mb-2 w-100" style="height: 10px; border-radius: 6px; background-color: #E2E8F0;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger" id="catalogProgressBar" role="progressbar" style="width: 0%; transition: width 0.2s ease;"></div>
+            </div>
+            
+            <!-- Percentage Counter -->
+            <span class="fw-bold fs-4 text-danger font-rajdhani" id="catalogProgressPercent">0%</span>
+          </div>
+        </div>
+
+        <!-- Product Cards Grid (Revealed after SQL fetch) -->
+        <section class="product-grid mb-5 d-none" id="productGridContainer"></section>
+      </section>
+
+      <!-- ====================================================================
+           3. VISTA 2: VENTA DE COMPUTADORAS AUTOMOTRICES (ECUs)
+           ==================================================================== -->
+      <section id="storeEcusView" class="d-none">
+        <!-- Breadcrumb / Return Navigation Bar -->
+        <div class="store-breadcrumb-bar">
+          <button class="btn-back-categories" onclick="showTiendaCategories()">
+            <i class="bi bi-arrow-left"></i> Volver a Categorías
+          </button>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill fw-bold font-rajdhani fs-6">
+              <i class="bi bi-motherboard-fill me-1"></i> Computadoras Automotrices (ECUs)
+            </span>
+          </div>
+        </div>
+
+        <!-- Search Bar & Brand Filters -->
+        <section class="mb-4">
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-white border-end-0 rounded-start-5 ps-4"><i class="bi bi-search text-muted fs-5"></i></span>
+            <input type="text" id="ecuSearchInput" class="form-control border-start-0 rounded-end-5 py-3 ps-0 shadow-sm" placeholder="Buscar ECU por marca, modelo, motor o código (ej: Hilux, Tiida, 2KD, ME17.9.11)...">
+          </div>
+
+          <!-- Brand Filter Chips -->
+          <div class="d-flex flex-wrap gap-2 align-items-center" id="ecuBrandFilters">
+            <span class="text-muted small fw-bold me-1">Filtrar por marca:</span>
+            <button class="btn btn-sm btn-dark rounded-pill px-3 active-filter" onclick="filterEcusByBrand('all', this)">Todas</button>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="filterEcusByBrand('Toyota', this)">Toyota</button>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="filterEcusByBrand('Nissan', this)">Nissan</button>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="filterEcusByBrand('Hyundai', this)">Hyundai</button>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="filterEcusByBrand('Chevrolet', this)">Chevrolet</button>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="filterEcusByBrand('Kia', this)">Kia</button>
+          </div>
+        </section>
+
+        <!-- Custom Request WhatsApp Banner -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 p-4 text-white" style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border-left: 5px solid #25D366 !important;">
+          <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-whatsapp fs-4 text-success"></i>
+                <h5 class="fw-bold mb-0 font-rajdhani text-uppercase text-white">¿Buscas una ECU o módulo específico para tu vehículo?</h5>
+              </div>
+              <p class="text-light-50 small mb-0" style="color: #94A3B8;">
+                Si no encuentras tu modelo exacto en el catálogo, envíanos una foto de la etiqueta o código de tu computadora para verificar disponibilidad inmediata en almacén.
+              </p>
+            </div>
+            <a href="https://wa.me/51910697674?text=Hola%20Probaktronic,%20estoy%20buscando%20una%20computadora%20ECU%20espec%C3%ADfica" target="_blank" class="btn btn-success rounded-pill px-4 py-2 fw-bold text-nowrap align-self-start align-self-md-center shadow-sm">
+              <i class="bi bi-whatsapp me-1"></i> Consultar por WhatsApp
+            </a>
+          </div>
+        </div>
+
+        <!-- ECU Cards Grid Container -->
+        <section class="ecu-grid mb-5" id="ecuGridContainer"></section>
+      </section>
+
     </main>
   </div>
 
@@ -165,12 +323,14 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   
   <!-- App JS -->
-  <script src="js/global.js?v=372.0"></script>
-  <script src="js/auth.js?v=372.0"></script>
-  <!-- Probaktronic SQL Catalog Connector -->
-  <script src="js/catalog-sql.js?v=372.0"></script>
+  <script src="js/global.js?v=390.0"></script>
+  <script src="js/auth.js?v=390.0"></script>
+  <!-- Probaktronic SQL Catalog & ECU Controller -->
+  <script src="js/catalog-sql.js?v=390.0"></script>
+
+  <!-- Botón Flotante de WhatsApp Instantáneo -->
+  <a href="https://wa.me/51910697674?text=Hola%20Probaktronic,%20necesito%20asistencia%20t%C3%A9cnica%20en%20la%20plataforma" target="_blank" rel="noopener noreferrer" class="whatsapp-floating-btn" title="Soporte y Asistencia Técnica WhatsApp" aria-label="Contactar por WhatsApp">
+    <i class="bi bi-whatsapp"></i>
+  </a>
 </body>
 </html>
-
-
-

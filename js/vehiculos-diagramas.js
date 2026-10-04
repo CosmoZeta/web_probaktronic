@@ -1,3 +1,9 @@
+// Auto-redirección inteligente: Si el usuario abre desde Live Server (puerto 5500), redirigir al Servidor Probaktronic (puerto 3000)
+if (typeof window !== 'undefined' && window.location && (window.location.port === '5500' || window.location.port === '5501')) {
+  const targetUrl = 'http://localhost:3000' + window.location.pathname + window.location.search + window.location.hash;
+  window.location.replace(targetUrl);
+}
+
 
 function setupModelSearchFilter(inputId = 'modelSearchInput', clearBtnId = 'clearModelSearchBtn', gridId = 'modelsListGrid', noResultsId = 'noModelSearchResults') {
   const input = document.getElementById(inputId);
@@ -436,6 +442,24 @@ function normalizeCanonicalModelKey(rawName, brandName, rawId = '') {
 window.normalizeCanonicalModelKey = normalizeCanonicalModelKey;
 
 function isModelDeleted(docId, modelName, brandName) {
+  // Si el modelo existe en el árbol local/físico, está 100% activo
+  try {
+    const tree = window._cachedVehiculosDiagramasTree;
+    if (tree) {
+      const bKey = Object.keys(tree).find(k => k.toLowerCase() === (brandName || '').toLowerCase() || (brandName || '').toLowerCase().includes(k.toLowerCase()));
+      if (bKey && tree[bKey].models) {
+        const cleanId = String(docId || '').toLowerCase().trim();
+        const cleanName = String(modelName || '').toLowerCase().trim();
+        const existsInTree = Object.entries(tree[bKey].models).some(([mK, mV]) => {
+          const mKClean = mK.toLowerCase().trim();
+          const mNClean = (mV.modelData && mV.modelData.nombre ? mV.modelData.nombre : '').toLowerCase().trim();
+          return mKClean === cleanId || mKClean === cleanName || mNClean === cleanName || mNClean === cleanId;
+        });
+        if (existsInTree) return false;
+      }
+    }
+  } catch(e) {}
+
   const deletedList = getDeletedItemsList('models');
   if (!deletedList || deletedList.length === 0) return false;
 
@@ -1383,7 +1407,9 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
       ? window.deriveComponentSlug(rawTitle, brandName, modelName, motorCode)
       : 'ecu';
 
-    if (compSlug === 'inmovilizador_llave') {
+    if (compSlug === 'antena') {
+      displayCardLabel = 'ANTENA';
+    } else if (compSlug === 'inmovilizador_llave') {
       displayCardLabel = 'INMOVILIZADOR';
     } else if (compSlug === 'pedal_acelerador') {
       displayCardLabel = 'PEDAL ACELERADOR';
@@ -1429,8 +1455,10 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
       displayCardLabel = 'TABLERO / CLUSTER';
     } else if (compSlug === 'fusiblera_bcm') {
       displayCardLabel = 'FUSIBLERA / BCM';
-    } else if (compSlug === 'ecu') {
-      displayCardLabel = 'PINOUT ECU';
+    } else if (compSlug.startsWith('modulo_tcm')) {
+      displayCardLabel = 'MÓDULO TCM / TRANSMISIÓN';
+    } else if (compSlug.startsWith('ecu')) {
+      displayCardLabel = 'CONEXIONADO ECU';
     } else {
       let clean = rawTitle.toUpperCase();
       if (brandName) clean = clean.replace(new RegExp('\\b' + brandName.toUpperCase().trim() + '\\b', 'g'), '');
@@ -1443,6 +1471,20 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
       clean = clean.replace(/\b(19\d\d|20\d\d)\b/g, '');
       clean = clean.replace(/[^A-Z0-9áéíóúÁÉÍÓÚ\s]/g, ' ').replace(/\s+/g, ' ').trim();
       displayCardLabel = clean || rawTitle.toUpperCase();
+    }
+
+    // Agregar sufijo de transmision visual si el titulo o slug lo indica
+    const upperRawTitle = (rawTitle || '').toUpperCase();
+    let transSuffix = '';
+    if (upperRawTitle.includes('MECANICO') || upperRawTitle.includes('MANUAL') || upperRawTitle.includes('M/T') || compSlug.includes('mecanico')) {
+      transSuffix = ' (M/T)';
+    } else if (upperRawTitle.includes('AUTOMATICO') || upperRawTitle.includes('AUTOMATICA') || upperRawTitle.includes('A/T') || compSlug.includes('automatico')) {
+      transSuffix = ' (A/T)';
+    } else if (upperRawTitle.includes('CVT') || compSlug.includes('cvt')) {
+      transSuffix = ' (CVT)';
+    }
+    if (transSuffix && !displayCardLabel.includes(transSuffix) && !displayCardLabel.includes('(M/T)') && !displayCardLabel.includes('(A/T)') && !displayCardLabel.includes('(CVT)')) {
+      displayCardLabel += transSuffix;
     }
 
       // Check if Admin set a custom icon for this card key (Firestore first, then LocalStorage, then arch.icono)
@@ -1477,7 +1519,9 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
         iconHtml = '<i class="bi bi-motherboard-fill fs-1"></i>';
       } else if (rawTitle.includes('EDU') || rawTitle.includes('CONECTOR')) {
         iconHtml = '<i class="bi bi-diagram-3-fill fs-1"></i>';
-      } else if (rawTitle.includes('INMOVILIZADOR') || rawTitle.includes('LLAVE') || rawTitle.includes('ANTENA')) {
+      } else if (rawTitle.includes('ANTENA') || compSlug === 'antena') {
+        iconHtml = '<i class="bi bi-broadcast-pin fs-1"></i>';
+      } else if (rawTitle.includes('INMOVILIZADOR') || rawTitle.includes('LLAVE')) {
         iconHtml = '<i class="bi bi-key-fill fs-1"></i>';
       } else if (isPdf || rawTitle.includes('PDF') || rawTitle.includes('DOCUMENTO')) {
         iconHtml = '<i class="bi bi-file-earmark-pdf-fill fs-1 text-danger"></i>';
@@ -1627,7 +1671,7 @@ window.deriveComponentSlug = function(rawTitle, rawBrand = '', rawModel = '', ra
   if (upper.includes('AIRBAG') || upper.includes('SRS')) {
     return 'modulo_airbag_srs';
   }
-  if (upper.includes('CAN') || upper.includes('RED') || upper.includes('COMUNICACION')) {
+  if (/\b(CAN\s*BUS|CANBUS|RED\s*CAN|COMUNICACION\s*CAN|TOPOLOGIA\s*RED)\b/i.test(upper) || (upper.includes('RED') && upper.includes('CAN'))) {
     return 'red_can_bus';
   }
   if (upper.includes('ALTERNADOR') || upper.includes('REGULADOR') || upper.includes('CARGA')) {
@@ -1636,7 +1680,10 @@ window.deriveComponentSlug = function(rawTitle, rawBrand = '', rawModel = '', ra
   if (upper.includes('EGR') || upper.includes('VVT') || upper.includes('VALVULA')) {
     return 'valvula_egr_vvt';
   }
-  if (upper.includes('INMOVILIZADOR') || upper.includes('LLAVE') || upper.includes('ANTENA')) {
+  if (upper.includes('ANTENA')) {
+    return 'antena';
+  }
+  if (upper.includes('INMOVILIZADOR') || upper.includes('LLAVE')) {
     return 'inmovilizador_llave';
   }
   if (upper.includes('PEDAL')) {
@@ -1672,7 +1719,16 @@ window.deriveComponentSlug = function(rawTitle, rawBrand = '', rawModel = '', ra
   if (upper.includes('BENCH')) {
     return 'modo_banco';
   }
+  if (upper.includes('TCM') || upper.includes('TRANSMISION') || upper.includes('TRANSMISIÓN') || upper.includes('CAJA AUTOMATICA')) {
+    if (upper.includes('CVT')) return 'modulo_tcm_cvt';
+    if (upper.includes('MECANIC') || upper.includes('MANUAL') || upper.includes('M/T') || upper.includes(' MT')) return 'modulo_tcm_mecanico';
+    if (upper.includes('AUTO') || upper.includes('A/T') || upper.includes(' AT')) return 'modulo_tcm_automatico';
+    return 'modulo_tcm_transmision';
+  }
   if (upper.includes('ECU') || upper.includes('PINOUT') || upper.includes('COMPUTADORA') || upper.includes('ECM') || upper.includes('PCM')) {
+    if (upper.includes('CVT')) return 'ecu_cvt';
+    if (upper.includes('MECANIC') || upper.includes('MANUAL') || upper.includes('M/T') || upper.includes(' MT')) return 'ecu_mecanico';
+    if (upper.includes('AUTO') || upper.includes('A/T') || upper.includes(' AT')) return 'ecu_automatico';
     return 'ecu';
   }
 
@@ -3277,7 +3333,9 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
     ? window.deriveComponentSlug(connTitle, (typeof currentSelectedBrandName !== 'undefined' ? currentSelectedBrandName : ''), window.currentSelectedModelName, window.currentSelectedMotorCode)
     : 'ecu';
 
-  if (derivedSlug === 'inmovilizador_llave') {
+  if (derivedSlug === 'antena') {
+    cleanModeTitle = 'ANTENA';
+  } else if (derivedSlug === 'inmovilizador_llave') {
     cleanModeTitle = 'INMOVILIZADOR';
   } else if (derivedSlug === 'pedal_acelerador') {
     cleanModeTitle = 'PEDAL ACELERADOR';
@@ -3962,51 +4020,64 @@ function injectAdminMechanicalIconPickerModal() {
   if (document.getElementById('adminMechanicalIconPickerModal')) return;
 
   const mechanicalIcons = [
-    { title: 'Pedal Acelerador APP', icon: 'pedal_acelerador.png' },
-    { title: 'Pedal Freno', icon: 'pedal_acelerador.png' },
-    { title: 'ECU Computadora ECM', icon: 'bi-cpu-fill' },
-    { title: 'Pinout E.D.U Multipines', icon: 'bi-diagram-3-fill' },
-    { title: 'Inmovilizador / Llave', icon: 'bi-key-fill' },
-    { title: 'Drivers IGBT / Placa', icon: 'bi-motherboard-fill' },
-    { title: 'Surtidor Gasolina', icon: 'bi-fuel-pump-fill' },
-    { title: 'Gota Diésel / Aceite', icon: 'bi-droplet-fill' },
-    { title: 'Camioneta Pickup', icon: 'bi-truck-front-fill' },
-    { title: 'Furgón / Van Carga', icon: 'bi-box-seam-fill' },
-    { title: 'Camión Pesado', icon: 'bi-truck' },
-    { title: 'Maquinaria Pesada', icon: 'bi-gear-wide-connected' },
-    { title: 'Sedán / Auto Liviano', icon: 'bi-car-front-fill' },
-    { title: 'SUV / Crossover 4x4', icon: 'bi-shield-shaded' },
-    { title: 'Cuerpo Acelerador TPS', icon: 'bi-circle-half' },
-    { title: 'Bomba Inyección Diésel', icon: 'bi-fuel-pump' },
-    { title: 'Inyectores Common Rail', icon: 'bi-layers-fill' },
-    { title: 'Bobina / Chispa', icon: 'bi-lightning-charge-fill' },
-    { title: 'Batería 12V / 24V', icon: 'bi-battery-charging' },
-    { title: 'Bujía / Precalentador', icon: 'bi-lightning-fill' },
-    { title: 'Turbocompresor / Turbo', icon: 'bi-fan' },
-    { title: 'Válvula EGR / Emisiones', icon: 'bi-recycle' },
-    { title: 'Sensor MAF Flujómetro', icon: 'bi-wind' },
-    { title: 'Sensor MAP Presión', icon: 'bi-speedometer' },
-    { title: 'Sensor CKP / Cigüeñal', icon: 'bi-arrow-repeat' },
-    { title: 'Sensor CMP / Levas', icon: 'bi-arrow-clockwise' },
-    { title: 'Sensor Oxígeno / Lambda', icon: 'bi-activity' },
-    { title: 'Termostato / ECT Temp', icon: 'bi-thermometer-high' },
-    { title: 'Alternador & Generador', icon: 'bi-arrow-left-right' },
-    { title: 'Motor de Arranque', icon: 'bi-power' },
-    { title: 'Fusibles & Relés BCM', icon: 'bi-toggle-on' },
-    { title: 'Frenos ABS / Control ESP', icon: 'bi-record-circle' },
-    { title: 'Transmisión / Caja TCM', icon: 'bi-gear-fill' },
-    { title: 'Palanca de Cambios', icon: 'bi-diagram-2-fill' },
-    { title: 'Amortiguador / Suspensión', icon: 'bi-bounding-box-circles' },
-    { title: 'Aceitera & Lubricación', icon: 'bi-droplet-half' },
-    { title: 'Volante / Dirección EPS', icon: 'bi-disc-fill' },
-    { title: 'Velocímetro / Scanner', icon: 'bi-speedometer2' },
-    { title: 'Red OBD-II / CAN Bus', icon: 'bi-hdd-network-fill' },
-    { title: 'Herramientas Mecánico', icon: 'bi-wrench-adjustable' },
-    { title: 'Mecánico con Llave', icon: 'bi-person-gear' },
-    { title: 'Seguridad / Alarma', icon: 'bi-shield-lock-fill' },
-    { title: 'Documento / Esquema PDF', icon: 'bi-file-earmark-pdf-fill' },
-    { title: 'Estrella / Favorito', icon: 'bi-star-fill' },
-    { title: 'Escudo Probaktronic', icon: 'bi-shield-check' }
+    { title: 'Antena Inmovilizador', icon: 'bi-broadcast-pin', tags: 'antena inmovilizador immo transponder rf llave receptor emisor senal' },
+    { title: 'Antena Señal RF', icon: 'bi-broadcast', tags: 'antena emisor receptor radiofrecuencia signal rf senal transmision' },
+    { title: 'Antena Wifi / Red', icon: 'bi-wifi', tags: 'antena wifi red inalambrica modulo comunicacion wireless' },
+    { title: 'Llave Inmovilizador', icon: 'bi-key-fill', tags: 'inmovilizador llave transponder clave cerradura immo switch chip' },
+    { title: 'Chip Transponder', icon: 'bi-cpu', tags: 'chip transponder microchip integrado memoria pcf eprom eeprom' },
+    { title: 'Pedal Acelerador APP', icon: 'pedal_acelerador.png', tags: 'pedal acelerador app tps aceleracion potenciometro' },
+    { title: 'Pedal Freno', icon: 'pedal_acelerador.png', tags: 'pedal freno brake switch parada interruptor' },
+    { title: 'ECU Computadora ECM', icon: 'bi-cpu-fill', tags: 'ecu computadora ecm pcm motor modulo centralita' },
+    { title: 'Pinout E.D.U Pines', icon: 'bi-diagram-3-fill', tags: 'pinout edu diagrama pines conexionado multipines conector socket' },
+    { title: 'Drivers IGBT / Placa', icon: 'bi-motherboard-fill', tags: 'drivers igbt placa circuito mosfet potencia componente electronica' },
+    { title: 'Tablero / Cluster', icon: 'bi-speedometer2', tags: 'tablero cluster odometro tacometro velocimetro panel instrumental' },
+    { title: 'Fusibles & Relés BCM', icon: 'bi-toggle-on', tags: 'fusibles reles bcm ipdm caja fusilera fusiblera relay switch' },
+    { title: 'Batería 12V / 24V', icon: 'bi-battery-charging', tags: 'bateria acumulador 12v 24v carga energia acumulador borne' },
+    { title: 'Bobina / Chispa', icon: 'bi-lightning-charge-fill', tags: 'bobina chispa encendido coil cop coil pack alto voltaje' },
+    { title: 'Bujía / Calentador', icon: 'bi-lightning-fill', tags: 'bujia precalentador spark plug incandescencia diesel encendido' },
+    { title: 'Inyectores Common Rail', icon: 'bi-layers-fill', tags: 'inyectores inyector common rail toberas diesel gasolina pulverizador' },
+    { title: 'Surtidor Gasolina', icon: 'bi-fuel-pump-fill', tags: 'surtidor gasolina combustible tanque bomba flotador nafta' },
+    { title: 'Bomba Inyección Diésel', icon: 'bi-fuel-pump', tags: 'bomba inyeccion diesel presion petroleo transfer alta presion' },
+    { title: 'Sensor MAF Flujómetro', icon: 'bi-wind', tags: 'sensor maf flujometro aire caudal masa flujo admision' },
+    { title: 'Sensor MAP Presión', icon: 'bi-speedometer', tags: 'sensor map presion colector manifold absoluto barometrico vacio' },
+    { title: 'Sensor CKP Cigüeñal', icon: 'bi-arrow-repeat', tags: 'sensor ckp cigueñal rpm posicion motor inductivo hall' },
+    { title: 'Sensor CMP Levas', icon: 'bi-arrow-clockwise', tags: 'sensor cmp levas arbol posicion fase distribucion hall' },
+    { title: 'Sensor Oxígeno Lambda', icon: 'bi-activity', tags: 'sensor oxigeno lambda o2 sonda gases mezcla escape' },
+    { title: 'Sensor ECT Temperatura', icon: 'bi-thermometer-high', tags: 'sensor ect temperatura refrigerante agua termistor termostato calor' },
+    { title: 'Sensor Detonación KS', icon: 'bi-soundwave', tags: 'sensor detonacion ks cascabeleo knock piezoelectrico golpeteo' },
+    { title: 'Sensor TPS Mariposa', icon: 'bi-circle-half', tags: 'sensor tps mariposa acelerador posicion throttle cuerpo aceleracion' },
+    { title: 'Sensor ABS Rueda', icon: 'bi-record-circle', tags: 'sensor abs rueda velocidad frenos captador sensor velocidad' },
+    { title: 'Sensor Presión Riel', icon: 'bi-bar-chart-steps', tags: 'sensor presion riel rail fuel pressure diesel common rail' },
+    { title: 'Turbocompresor / Turbo', icon: 'bi-fan', tags: 'turbocompresor turbo intercooler presion aire turbina sobrealimentacion' },
+    { title: 'Válvula EGR Emisiones', icon: 'bi-recycle', tags: 'valvula egr emisiones recirculacion gases escape contaminacion euro' },
+    { title: 'Alternador & Carga', icon: 'bi-arrow-left-right', tags: 'alternador generador carga regulador diodos estator rotor' },
+    { title: 'Motor de Arranque', icon: 'bi-power', tags: 'motor arranque chapa start starter marcha bendix solenoide' },
+    { title: 'Transmisión / TCM', icon: 'bi-gear-fill', tags: 'transmision caja cambios tcm automatica sincronico engranaje cvt dsg' },
+    { title: 'Palanca de Cambios', icon: 'bi-diagram-2-fill', tags: 'palanca cambios selectora shifter marchas selectora velocidades' },
+    { title: 'Dirección EPS Eléctrica', icon: 'bi-disc-fill', tags: 'volante direccion asistida electroasistida eps columna caja direccion' },
+    { title: 'Amortiguador / Suspensión', icon: 'bi-bounding-box-circles', tags: 'amortiguador suspension espiral tren delantero struts espirales' },
+    { title: 'Frenos ABS / ESP', icon: 'bi-stoplights', tags: 'frenos abs control esp traccion caliper disco pastilla estabilidad' },
+    { title: 'Red OBD-II / CAN Bus', icon: 'bi-hdd-network-fill', tags: 'red obdii can bus comunicacion k-line lin gateway red bus datos' },
+    { title: 'Scanner Diagnóstico', icon: 'bi-laptop', tags: 'scanner escaner diagnostico obd2 diagnosis interfaz software dtc' },
+    { title: 'Airbag SRS Seguridad', icon: 'bi-shield-shaded', tags: 'airbag srs bolsa aire seguridad pretensores cortina impacto' },
+    { title: 'Seguridad / Alarma', icon: 'bi-shield-lock-fill', tags: 'seguridad alarma bloqueo central antirrobo sirena cierre' },
+    { title: 'Luces / Faros', icon: 'bi-lightbulb-fill', tags: 'luces faros iluminacion opticas bombillos led xenon neblineros' },
+    { title: 'Aire Acondicionado A/C', icon: 'bi-snow', tags: 'aire acondicionado clima compresor a/c gas enfriamiento climatizador' },
+    { title: 'Cámara / Sensores Reversa', icon: 'bi-camera-video-fill', tags: 'camara reversa sensores parqueo video retrovisor retroceso visual' },
+    { title: 'Gota Diésel / Aceite', icon: 'bi-droplet-fill', tags: 'diesel aceite lubricante combustible fluido gota liquido' },
+    { title: 'Aceitera & Lubricación', icon: 'bi-droplet-half', tags: 'aceitera lubricacion motor nivel presion aceite filtro carter' },
+    { title: 'Herramientas Mecánico', icon: 'bi-wrench-adjustable', tags: 'herramientas mecanico llave inglesa taller reparacion ajuste' },
+    { title: 'Mecánico Especialista', icon: 'bi-person-gear', tags: 'mecanico tecnico especialista electricista profesional persona' },
+    { title: 'Documento / PDF Eléctrico', icon: 'bi-file-earmark-pdf-fill', tags: 'documento esquema pdf plano manual guia instructivo texto' },
+    { title: 'Sedán / Auto Liviano', icon: 'bi-car-front-fill', tags: 'sedan auto liviano vehiculo carro coche automovil turismo' },
+    { title: 'Camioneta Pickup', icon: 'bi-truck-front-fill', tags: 'camioneta pickup pick up 4x4 doble cabina hilux ranger dmax' },
+    { title: 'SUV / Todo Terreno', icon: 'bi-shield-shaded', tags: 'suv crossover 4x4 todo terreno camioneta familiar' },
+    { title: 'Furgón / Van Carga', icon: 'bi-box-seam-fill', tags: 'furgon van carga utilitario furgoneta panel utilitaria' },
+    { title: 'Camión Pesado', icon: 'bi-truck', tags: 'camion pesado tracto trailer diesel hino isuzu volvo fuso' },
+    { title: 'Maquinaria Pesada', icon: 'bi-gear-wide-connected', tags: 'maquinaria pesada oruga tractor excavadora caterpillar komatsu retro' },
+    { title: 'Motocicleta / Moto', icon: 'bi-bicycle', tags: 'moto motocicleta scooter pulsar honda yamaha bajaj dos ruedas' },
+    { title: 'Estrella / Favorito', icon: 'bi-star-fill', tags: 'estrella favorito destacado principal premium gold star' },
+    { title: 'Escudo Probaktronic', icon: 'bi-shield-check', tags: 'escudo probaktronic garantia calidad verificado ok check seguro' }
   ];
 
   const iconChoicesHtml = mechanicalIcons.map(item => {
@@ -4015,8 +4086,14 @@ function injectAdminMechanicalIconPickerModal() {
       ? `<img src="${item.icon}" alt="${item.title}" style="max-height: 32px; max-width: 32px; object-fit: contain; margin-bottom: 2px;">`
       : `<i class="bi ${item.icon} fs-3"></i>`;
 
+    const searchStr = `${item.title} ${item.tags || ''} ${item.icon}`.toLowerCase();
+
     return `
-      <button type="button" class="btn btn-outline-dark btn-mech-icon-choice p-2 text-center" data-icon="${item.icon}" title="${item.title}" style="width: 82px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px;">
+      <button type="button" class="btn btn-outline-dark btn-mech-icon-choice p-2 text-center" 
+              data-icon="${item.icon}" 
+              data-search="${searchStr}" 
+              title="${item.title}" 
+              style="width: 82px; height: 82px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; transition: all 0.2s ease;">
         ${iconVisual}
         <span style="font-size: 8px; line-height: 1.1; margin-top: 4px; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.title}</span>
       </button>
@@ -4037,6 +4114,32 @@ function injectAdminMechanicalIconPickerModal() {
             <div class="alert alert-info border-0 mb-3 py-2 small">
               <i class="bi bi-info-circle-fill me-1"></i>
               Selecciona el nuevo ícono representativo para: <strong id="adminIconCardTitle" class="text-danger">TARJETA</strong>
+            </div>
+
+            <!-- Live Search Bar for Icons -->
+            <div class="card bg-light border-0 mb-3 shadow-sm" style="border-radius: 12px;">
+              <div class="card-body p-2">
+                <div class="row g-2 align-items-center">
+                  <div class="col-md-7 col-12">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text bg-white border-end-0 text-muted">
+                        <i class="bi bi-search text-danger"></i>
+                      </span>
+                      <input type="text" id="adminMechIconFilterInput" class="form-control border-start-0 ps-0" 
+                             placeholder="Buscar ícono (ej: antena, ecu, sensor, pedal, motor, llave)..." 
+                             oninput="window.filterMechIcons(this.value)" autocomplete="off">
+                      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.clearMechIconFilter()" title="Limpiar búsqueda">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-5 col-12 d-flex justify-content-md-end justify-content-between align-items-center">
+                    <span class="badge bg-dark rounded-pill px-2 py-1 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                      <i class="bi bi-grid-fill text-warning me-1"></i> <span id="mechIconCountBadge">${mechanicalIcons.length} íconos</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Mechanical & Electronic Icons Grid -->
@@ -4064,6 +4167,38 @@ function injectAdminMechanicalIconPickerModal() {
   `;
 
   document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  // Helper search functions
+  window.filterMechIcons = function(term) {
+    const q = (term || '').toLowerCase().trim();
+    const modal = document.getElementById('adminMechanicalIconPickerModal');
+    if (!modal) return;
+    const buttons = modal.querySelectorAll('.btn-mech-icon-choice');
+    let visibleCount = 0;
+    buttons.forEach(btn => {
+      const searchData = (btn.getAttribute('data-search') || '').toLowerCase();
+      const title = (btn.getAttribute('title') || '').toLowerCase();
+      if (!q || searchData.includes(q) || title.includes(q)) {
+        btn.style.setProperty('display', 'flex', 'important');
+        visibleCount++;
+      } else {
+        btn.style.setProperty('display', 'none', 'important');
+      }
+    });
+    const countBadge = document.getElementById('mechIconCountBadge');
+    if (countBadge) {
+      countBadge.textContent = q ? `${visibleCount} encontrados` : `${buttons.length} íconos`;
+    }
+  };
+
+  window.clearMechIconFilter = function() {
+    const input = document.getElementById('adminMechIconFilterInput');
+    if (input) {
+      input.value = '';
+      window.filterMechIcons('');
+      input.focus();
+    }
+  };
 
   const modalEl = document.getElementById('adminMechanicalIconPickerModal');
   if (!modalEl) return;
@@ -4275,19 +4410,63 @@ window.setAdminModalFuel = function(fuelType) {
   }
 };
 
+
+let currentSelectedTransmission = '';
+
+window.setDiagramTransmission = function(transType) {
+  if (currentSelectedTransmission === transType) {
+    currentSelectedTransmission = '';
+  } else {
+    currentSelectedTransmission = transType || '';
+  }
+  
+  const btnMt = document.getElementById('transOptMt');
+  const btnAt = document.getElementById('transOptAt');
+
+  if (btnMt) {
+    if (currentSelectedTransmission === 'MECANICO M/T') {
+      btnMt.className = 'btn btn-primary fw-bold font-rajdhani active';
+    } else {
+      btnMt.className = 'btn btn-outline-primary fw-bold font-rajdhani';
+    }
+  }
+
+  if (btnAt) {
+    if (currentSelectedTransmission === 'AUTOMATICO A/T') {
+      btnAt.className = 'btn btn-danger fw-bold font-rajdhani active';
+    } else {
+      btnAt.className = 'btn btn-outline-danger fw-bold font-rajdhani';
+    }
+  }
+
+  const titleInput = document.getElementById('adminModalDiagramTitleInput');
+  if (titleInput && titleInput.value) {
+    let val = titleInput.value;
+    val = val.replace(/\s*\((MECANICO\s*M\/T|AUTOMATICO\s*A\/T|CVT|M\/T|A\/T|MANUAL)\)/gi, '').trim();
+    if (currentSelectedTransmission) {
+      val += ' (' + currentSelectedTransmission + ')';
+    }
+    titleInput.value = val;
+  }
+};
+
 window.setDiagramTitlePreset = function(preset) {
   const brand = (document.getElementById('adminModalBrandInput')?.value || '').trim().toUpperCase();
   const model = (document.getElementById('adminModalModelInput')?.value || '').trim().toUpperCase();
   const year = (document.getElementById('adminModalYearInput')?.value || '').trim();
-  const motor = (document.getElementById('adminModalMotorInput')?.value || '').trim();
   const titleInput = document.getElementById('adminModalDiagramTitleInput');
 
   const parts = [brand, model, year].filter(Boolean);
   let base = parts.join(' ');
   if (!base) base = 'VEHÍCULO';
 
+  let fullPreset = preset;
+  if (currentSelectedTransmission && !preset.includes(currentSelectedTransmission)) {
+    fullPreset += ' (' + currentSelectedTransmission + ')';
+  }
+
   if (titleInput) {
-    titleInput.value = `${base} ${preset}`.trim();
+    titleInput.value = base + ' ' + fullPreset;
   }
 };
 
@@ -7408,51 +7587,120 @@ window.handleAdminUploadNewGalleryPhoto = function(input) {
   }
 };
 
+
+let originalGalleryListBeforeEdit = [];
+
+window.openAdminGalleryReorderModal = function(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const isAdmin = window.checkIsAdmin();
+  if (!isAdmin) return;
+
+  currentEditingGalleryList = [...(currentGalleryImages || [])];
+  originalGalleryListBeforeEdit = [...(currentGalleryImages || [])];
+  renderAdminGalleryReorderList();
+
+  const modalEl = document.getElementById('adminGalleryReorderModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    bsModal.show();
+  }
+};
+
+window.removeGalleryPhoto = function(idx) {
+  if (idx < 0 || idx >= currentEditingGalleryList.length) return;
+  if (confirm('¿Deseas quitar esta foto (Foto ' + (idx + 1) + ') de la galería?')) {
+    currentEditingGalleryList.splice(idx, 1);
+    renderAdminGalleryReorderList();
+  }
+};
+
 window.saveAdminGalleryOrder = async function() {
-  if (currentEditingGalleryList.length === 0) {
+  if (!currentEditingGalleryList || currentEditingGalleryList.length === 0) {
     alert('Debe haber al menos 1 imagen en la galería.');
     return;
   }
 
   const newOrder = [...currentEditingGalleryList];
+  const deletedPhotos = (originalGalleryListBeforeEdit || []).filter(p => !newOrder.includes(p));
   currentGalleryImages = newOrder;
 
+  const active = window._currentActiveDiagramData || {};
+  const archDoc = active._selectedArchDoc || {};
+
+  const curBrand = (typeof currentSelectedBrandName !== 'undefined' && currentSelectedBrandName ? currentSelectedBrandName : '') || archDoc.brandDocId || document.getElementById('selectedVehicleBrandText')?.textContent || 'NISSAN';
+  const curModel = window.currentSelectedModelName || archDoc.modelDocId || document.getElementById('selectedVehicleModelText')?.textContent || 'TIIDA / TIIDA LATIO';
+  const curMotor = window.currentSelectedMotorCode || archDoc.motorDocId || document.getElementById('selectedVehicleSpecText')?.textContent || 'HR15';
+  
+  const rawTitle = document.getElementById('consoleActiveDocTitle')?.textContent || active.titulo || active.nombre || active.id || active.tipo || 'ecu';
+  const compSlug = (typeof window.deriveComponentSlug === 'function') 
+    ? window.deriveComponentSlug(rawTitle, curBrand, curModel, curMotor)
+    : (active.tipo || 'ecu');
+
+  // Actualizar estado en memoria
   if (window._currentActiveDiagramData) {
     window._currentActiveDiagramData.allImages = newOrder;
     window._currentActiveDiagramData.imagenes = newOrder;
+    window._currentActiveDiagramData.fotos = newOrder;
     window._currentActiveDiagramData.imageUrl = newOrder[0];
-    if (!window._currentActiveDiagramData.url || !window._currentActiveDiagramData.url.toLowerCase().includes('.pdf')) {
-      window._currentActiveDiagramData.imageUrl = newOrder[0];
+    if (window._currentActiveDiagramData._selectedArchDoc) {
+      window._currentActiveDiagramData._selectedArchDoc.allImages = newOrder;
+      window._currentActiveDiagramData._selectedArchDoc.imagenes = newOrder;
+      window._currentActiveDiagramData._selectedArchDoc.fotos = newOrder;
+      window._currentActiveDiagramData._selectedArchDoc.imageUrl = newOrder[0];
     }
   }
 
-  // Update in Firestore
+  // 1. Sincronizar y eliminar físicamente en el servidor (Hosting PHP y Localhost Node)
   try {
-    const db = firebase.firestore();
-    const active = window._currentActiveDiagramData || {};
-    const archDoc = active._selectedArchDoc || {};
+    const payload = {
+      marca: curBrand,
+      modelo: curModel,
+      motor: curMotor,
+      componente: compSlug,
+      imagenes: newOrder,
+      eliminadas: deletedPhotos
+    };
 
-    if (archDoc.brandDocId && archDoc.modelDocId && archDoc.anioDocId && archDoc.motorDocId && archDoc.archDocId) {
-      const updateData = {
-        imagenes: newOrder,
-        allImages: newOrder,
-        imageUrl: newOrder[0]
-      };
-      await db.collection('diagramas').doc(archDoc.brandDocId.toLowerCase().trim())
-        .collection('modelos').doc(archDoc.modelDocId.toLowerCase().trim())
-        .collection('anios').doc(archDoc.anioDocId)
-        .collection('motores').doc(archDoc.motorDocId)
-        .collection('archivos').doc(archDoc.archDocId).set(updateData, { merge: true });
+    const srvRes = await fetch('api/diagramas.php?action=guardar_galeria', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(() => null);
+
+    if (srvRes && srvRes.ok) {
+      console.log('✅ Galería sincronizada y fotos borradas físicamente del servidor.');
+    }
+  } catch (err) {
+    console.warn('Error sincronizando galería con el servidor:', err);
+  }
+
+  // 2. Actualizar en Firestore si está conectado
+  try {
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      const db = firebase.firestore();
+      if (archDoc.brandDocId && archDoc.modelDocId && archDoc.anioDocId && archDoc.motorDocId && archDoc.archDocId) {
+        const updateData = {
+          imagenes: newOrder,
+          allImages: newOrder,
+          fotos: newOrder,
+          imageUrl: newOrder[0]
+        };
+        await db.collection('diagramas').doc(archDoc.brandDocId.toLowerCase().trim())
+          .collection('modelos').doc(archDoc.modelDocId.toLowerCase().trim())
+          .collection('anios').doc(archDoc.anioDocId)
+          .collection('motores').doc(archDoc.motorDocId)
+          .collection('archivos').doc(archDoc.archDocId).set(updateData, { merge: true });
+      }
     }
   } catch (e) {
     console.warn('Nota guardando orden en Firestore:', e);
   }
 
-  // Live reload on viewer
+  // 3. Live reload on viewer
   window.renderGalleryPagination(newOrder);
   window.showGalleryImageAtIndex(0);
 
-  // Close Modal
+  // 4. Close Modal
   const modalEl = document.getElementById('adminGalleryReorderModal');
   if (modalEl && typeof bootstrap !== 'undefined') {
     const bsModal = bootstrap.Modal.getInstance(modalEl);
@@ -7460,9 +7708,10 @@ window.saveAdminGalleryOrder = async function() {
   }
 
   if (typeof window.showGlobalToast === 'function') {
-    window.showGlobalToast('¡Orden de fotos actualizado y guardado correctamente!');
+    window.showGlobalToast('¡Fotos eliminadas del disco y nuevo orden guardado con éxito!');
   }
 };
+
 
 // --- ADMIN DIRECT PHOTO UPLOAD & FIREBASE HIERARCHICAL SYNC CONTROLLER ---
 

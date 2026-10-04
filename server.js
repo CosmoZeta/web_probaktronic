@@ -47,6 +47,17 @@ function cleanSlug(str, toUpper = false) {
 
 function normalizeComponente(compRaw) {
   const upper = String(compRaw || '').toUpperCase();
+  if (upper.includes('TCM') || upper.includes('TRANSMISION') || upper.includes('TRANSMISIÓN') || upper.includes('CAJA AUTOMATICA')) return 'modulo_tcm_transmision';
+  if (upper.includes('EPS') || upper.includes('DIRECCION') || upper.includes('DIRECCIÓN') || upper.includes('ELECTROASISTIDA')) return 'modulo_eps_direccion';
+  if (upper.includes('4WD') || upper.includes('AWD') || upper.includes('TRACCION') || upper.includes('TRACCIÓN') || upper.includes('4X4') || upper.includes('TRANSFER')) return 'modulo_4wd_traccion';
+  if (upper.includes('CLIMA') || upper.includes('CLIMATIZADOR') || upper.includes('HVAC') || upper.includes('AIRE ACONDICIONADO')) return 'modulo_clima_ac';
+  if (upper.includes('SMART') || upper.includes('KEYLESS') || upper.includes('START') || upper.includes('BOTON') || upper.includes('BOTÓN') || upper.includes('PUSH')) return 'modulo_smart_key';
+  if (upper.includes('GATEWAY') || upper.includes('GW') || upper.includes('PASARELA')) return 'modulo_gateway';
+  if (upper.includes('TPS') || (upper.includes('MARIPOSA') && upper.includes('POSICION'))) return 'sensor_tps';
+  if (upper.includes('KNOCK') || upper.includes('DETONACION') || upper.includes('DETONACIÓN') || upper.includes('CASCABEL')) return 'sensor_knock';
+  if (upper.includes('VSS') || upper.includes('VELOCIDAD')) return 'sensor_vss_velocidad';
+  if (upper.includes('RIEL') || upper.includes('FRP') || (upper.includes('PRESION') && upper.includes('COMBUSTIBLE')) || (upper.includes('PRESIÓN') && upper.includes('COMBUSTIBLE'))) return 'sensor_presion_riel';
+  if ((upper.includes('BOMBA') && upper.includes('COMBUSTIBLE')) || upper.includes('FPDM') || upper.includes('FLOTADOR')) return 'bomba_combustible_fpdm';
   if (upper.includes('IPDM') || (upper.includes('MODULO') && upper.includes('RELE')) || (upper.includes('CAJA') && upper.includes('RELE'))) return 'ipdm_reles';
   if (upper.includes('CKP') || upper.includes('CMP') || upper.includes('CIGUENAL') || upper.includes('CIGÜEÑAL') || upper.includes('LEVAS')) return 'sensor_ckp_cmp';
   if (upper.includes('MAF') || upper.includes('MAP')) return 'sensor_maf_map';
@@ -55,11 +66,11 @@ function normalizeComponente(compRaw) {
   if (upper.includes('INYECTOR')) return 'inyectores';
   if (upper.includes('ABS') || upper.includes('ESP') || upper.includes('FRENO')) return 'modulo_abs_esp';
   if (upper.includes('AIRBAG') || upper.includes('SRS')) return 'modulo_airbag_srs';
-  if (upper.includes('CAN') || upper.includes('RED') || upper.includes('COMUNICACION')) return 'red_can_bus';
   if (upper.includes('ALTERNADOR') || upper.includes('REGULADOR') || upper.includes('CARGA')) return 'alternador_regulador';
   if (upper.includes('EGR') || upper.includes('VVT') || upper.includes('VALVULA')) return 'valvula_egr_vvt';
   if (upper.includes('PEDAL')) return 'pedal_acelerador';
-  if (upper.includes('INMOVILIZADOR') || upper.includes('LLAVE') || upper.includes('ANTENA')) return 'inmovilizador_llave';
+  if (upper.includes('ANTENA')) return 'antena';
+  if (upper.includes('INMOVILIZADOR') || upper.includes('LLAVE')) return 'inmovilizador_llave';
   if (upper.includes('EDU') && (upper.includes('DOS') || upper.includes('2'))) return 'edu_dos_conectores';
   if (upper.includes('EDU') && (upper.includes('TRES') || upper.includes('3'))) return 'edu_tres_conectores';
   if (upper.includes('CUERPO') || upper.includes('ACEL') || upper.includes('OBTURADOR') || upper.includes('MARIPOSA')) return 'cuerpo_aceleracion';
@@ -70,7 +81,8 @@ function normalizeComponente(compRaw) {
   if (upper.includes('OBD') || upper.includes('DLC')) return 'puerto_obd';
   if (upper.includes('BOOT')) return 'modo_boot';
   if (upper.includes('BENCH') || upper.includes('BANCO')) return 'modo_banco';
-  if (upper.includes('ECU') || upper.includes('COMPUTADORA') || upper.includes('ECM') || upper.includes('PCM') || upper === 'PINOUT') return 'ecu';
+  if (/\b(CAN\s*BUS|CANBUS|RED\s*CAN|COMUNICACION\s*CAN|TOPOLOGIA\s*RED)\b/i.test(upper)) return 'red_can_bus';
+  if (upper.includes('ECU') || upper.includes('COMPUTADORA') || upper.includes('ECM') || upper.includes('PCM') || upper.includes('PINOUT')) return 'ecu';
   return cleanSlug(compRaw, false).replace(/_(imagen|conexionado)$/i, '');
 }
 
@@ -880,13 +892,11 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       const motorClean = cleanSlug(motorRaw, false);
       const compSlug = normalizeComponente(tipo || titulo);
 
-      // 1. Eliminar archivos y carpetas físicas del componente en disco duro
-      const possibleCompDirs = [
+      // 1. Eliminar archivos y carpetas físicas del componente específico en disco duro (NUNCA borrar otras carpetas como ecu)
+      const possibleCompDirs = compSlug ? [
         path.join(DIAGRAMAS_DIR, marcaClean, mSlug, motorClean, compSlug),
-        path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, compSlug),
-        path.join(DIAGRAMAS_DIR, marcaClean, mSlug, motorClean, 'ecu'),
-        path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, 'ecu')
-      ];
+        path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, compSlug)
+      ] : [];
       possibleCompDirs.forEach(dir => {
         if (fs.existsSync(dir)) {
           try {
@@ -923,6 +933,107 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       saveVehiculosData(tree);
 
       return res.end(JSON.stringify({ status: 'success', message: 'Diagrama y carpetas físicas eliminadas correctamente del disco duro.' }));
+    }
+
+    case 'guardar_galeria':
+    case 'guardar_orden_fotos':
+    case 'eliminar_foto_galeria': {
+      const marcaRaw = String(input.marca || query.marca || '');
+      const modeloRaw = String(input.modelo || query.modelo || '');
+      const motorRaw = String(input.motor || query.motor || '');
+      const compRaw = String(input.componente || query.componente || '');
+      const imagenes = Array.isArray(input.imagenes) ? input.imagenes : [];
+      const eliminadas = Array.isArray(input.eliminadas) ? input.eliminadas : [];
+
+      const marcaClean = cleanSlug(marcaRaw, true);
+      const modeloClean = cleanSlug(modeloRaw, false);
+      const motorClean = cleanSlug(motorRaw, false);
+      const compSlug = normalizeComponente(compRaw);
+
+      // 1. Eliminar archivos físicos solicitados en eliminadas
+      eliminadas.forEach(relUrl => {
+        if (relUrl && typeof relUrl === 'string' && !relUrl.startsWith('data:')) {
+          const cleanRel = relUrl.split('?')[0].replace(/\\/g, '/');
+          const diskPath = path.join(__dirname, cleanRel);
+          if (fs.existsSync(diskPath)) {
+            try {
+              fs.unlinkSync(diskPath);
+              console.log('🗑️ Foto eliminada físicamente de disco:', diskPath);
+            } catch (err) {
+              console.error('Error al borrar foto física:', err.message);
+            }
+          }
+        }
+      });
+
+      // 2. Limpiar cualquier archivo en la carpeta del componente que no esté en la lista final
+      const possibleDirs = [
+        path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, compSlug, 'imagen'),
+        path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, cleanSlug(compRaw, false), 'imagen')
+      ];
+
+      possibleDirs.forEach(compImgDir => {
+        if (fs.existsSync(compImgDir)) {
+          try {
+            const filesOnDisk = fs.readdirSync(compImgDir);
+            const remainingFileNames = imagenes.map(img => (img.split('?')[0].split('/').pop() || '').toLowerCase());
+            filesOnDisk.forEach(file => {
+              if (!remainingFileNames.includes(file.toLowerCase())) {
+                const fullFilePath = path.join(compImgDir, file);
+                try {
+                  fs.unlinkSync(fullFilePath);
+                  console.log('🗑️ Archivo no deseado eliminado físicamente de disco:', fullFilePath);
+                } catch (e) {}
+              }
+            });
+          } catch (e) {}
+        }
+      });
+
+      // 3. Actualizar árbol en vehiculos_diagramas.json
+      const tree = getVehiculosData();
+      let updated = false;
+
+      Object.keys(tree).forEach(bKey => {
+        if (!marcaClean || bKey === marcaClean.toLowerCase() || bKey === marcaClean || cleanSlug(bKey, true) === marcaClean) {
+          const models = tree[bKey].models || {};
+          Object.keys(models).forEach(mKey => {
+            if (!modeloClean || mKey === modeloClean || cleanSlug(mKey, false) === modeloClean) {
+              const mObj = models[mKey];
+              Object.keys(mObj.anios || {}).forEach(aKey => {
+                Object.keys(mObj.anios[aKey].motores || {}).forEach(motKey => {
+                  if (!motorClean || motKey.toLowerCase() === motorClean.toLowerCase() || cleanSlug(motKey, false) === motorClean) {
+                    const archivos = mObj.anios[aKey].motores[motKey].archivos || [];
+                    archivos.forEach(arc => {
+                      const arcTipo = String(arc.tipo || '').toLowerCase();
+                      const arcTitle = String(arc.titulo || arc.nombre || arc._id || '');
+                      if (arcTipo === compSlug || normalizeComponente(arcTitle) === compSlug || (compRaw && (arc._id === compRaw || arcTitle === compRaw || arcTipo === compRaw))) {
+                        arc.imagenes = imagenes;
+                        arc.allImages = imagenes;
+                        arc.fotos = imagenes;
+                        if (imagenes.length > 0) {
+                          arc.imageUrl = imagenes[0];
+                        }
+                        updated = true;
+                      }
+                    });
+                  }
+                });
+              });
+            }
+          });
+        }
+      });
+
+      if (updated) {
+        saveVehiculosData(tree);
+      }
+
+      return res.end(JSON.stringify({
+        status: 'success',
+        message: 'Galería de fotos y orden actualizados correctamente en disco y base de datos.',
+        data: { imagenes, count: imagenes.length }
+      }));
     }
 
     default:
@@ -1056,7 +1167,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log(`\n==================================================`);
   console.log(`🚀 PROBAKTRONIC - Servidor Local Seguro ACTIVO`);
-  console.log(`📍 Web Principal:      http://localhost:${PORT}/vehiculos.html`);
+  console.log(`📍 Web Principal:      http://localhost:${PORT}/index.html`);
   console.log(`📍 Dashboard:          http://localhost:${PORT}/dashboard.html`);
   console.log(`📂 Almacenamiento:     ${DIAGRAMAS_DIR}`);
   console.log(`🔒 Modo:               100% Localhost (Sin tocar el Hosting)`);

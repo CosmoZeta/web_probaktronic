@@ -1799,7 +1799,7 @@
                   <span>CÓDIGO DE MOTOR / PARTE</span>
                   <span class="small text-muted" style="font-size: 0.72rem;">(Carpeta organizadora)</span>
                 </label>
-                <input type="text" class="form-control fw-bold font-rajdhani" id="adminModalMotorInput" placeholder="Ej: hitachi, 2KD-FTV, 1GD, HR16DE" required>
+                <input type="text" class="form-control fw-bold font-rajdhani" id="adminModalMotorInput" placeholder="Ej: HR15, HR16DE, 2KD-FTV, 1GD" required>
               </div>
             </div>
 
@@ -1809,38 +1809,537 @@
                 <span>TÍTULO DEL DIAGRAMA / COMPONENTE</span>
                 <span class="badge bg-primary small font-rajdhani">Selecciona un componente rápido abajo</span>
               </label>
-              <input type="text" class="form-control form-control-lg fw-bold font-rajdhani" id="adminModalDiagramTitleInput" placeholder="Ej: NISSAN TIIDA 2004-2012 hitachi IPDM" required>
+              <input type="text" class="form-control form-control-lg fw-bold font-rajdhani" id="adminModalDiagramTitleInput" placeholder="Ej: NISSAN TIIDA 2004-2012 HR15 IPDM" required>
               
-              <div class="d-flex flex-wrap gap-1 mt-2">
-                <!-- Computadora y Módulos Principales -->
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('PINOUT ECU')"><i class="bi bi-cpu-fill text-danger me-1"></i> PINOUT ECU</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('IPDM MODULO DE RELES')"><i class="bi bi-grid-3x3-gap-fill text-warning me-1"></i> IPDM / RELÉS</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('FUSIBLERA BCM')"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> FUSIBLERA / BCM</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('INMOVILIZADOR')"><i class="bi bi-shield-lock-fill text-success me-1"></i> INMOVILIZADOR</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('MODULO ABS ESP')"><i class="bi bi-disc text-secondary me-1"></i> MÓDULO ABS / ESP</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('MODULO AIRBAG SRS')"><i class="bi bi-shield-shaded text-danger me-1"></i> AIRBAG SRS</span>
-
-                <!-- Sensores y Actuadores -->
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('CUERPO DE ACELERACION')"><i class="bi bi-speedometer text-warning me-1"></i> CUERPO ACEL.</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('PEDAL')"><i class="bi bi-sliders2 text-info me-1"></i> PEDAL APP</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('SENSOR CKP CMP')"><i class="bi bi-pulse text-danger me-1"></i> SENSOR CKP / CMP</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('SENSOR MAF MAP')"><i class="bi bi-wind text-primary me-1"></i> SENSOR MAF / MAP</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('SENSOR OXIGENO')"><i class="bi bi-activity text-danger me-1"></i> SENSOR OXÍGENO</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('SENSOR TEMPERATURA ECT')"><i class="bi bi-thermometer-half text-danger me-1"></i> TEMP. ECT</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('BOBINAS DE ENCENDIDO')"><i class="bi bi-lightning-fill text-warning me-1"></i> BOBINAS COP</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('INYECTORES')"><i class="bi bi-droplet-half text-info me-1"></i> INYECTORES</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('DISTRIBUIDOR')"><i class="bi bi-gear-wide-connected text-primary me-1"></i> DISTRIBUIDOR</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('VALVULA EGR VVT')"><i class="bi bi-arrow-repeat text-primary me-1"></i> VÁLVULA EGR / VVT</span>
-
-                <!-- Tablero, Red y Banco -->
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('TABLERO INSTRUMENTOS')"><i class="bi bi-speedometer2 text-primary me-1"></i> TABLERO / CLUSTER</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('RED CAN BUS')"><i class="bi bi-diagram-2 text-info me-1"></i> RED CAN BUS</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('PUERTO OBD2')"><i class="bi bi-plug-fill text-dark me-1"></i> PUERTO OBD2</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('ALTERNADOR REGULADOR')"><i class="bi bi-battery-charging text-success me-1"></i> ALTERNADOR</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('EDU DOS CONECTORES')"><i class="bi bi-diagram-3-fill me-1"></i> EDU 2 CONECTORES</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('EDU TRES CONECTORES')"><i class="bi bi-diagram-3-fill me-1"></i> EDU 3 CONECTORES</span>
-                <span class="badge bg-light text-dark border cursor-pointer py-2 px-3 fw-bold" onclick="setDiagramTitlePreset('MODO BENCH')"><i class="bi bi-terminal-fill text-dark me-1"></i> MODO BENCH / BOOT</span>
+              <!-- Selector Rápido de Transmisión (Mecánico / Automático) -->
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 p-2 bg-white border rounded-3 shadow-xs">
+                <span class="small fw-bold font-rajdhani text-dark d-flex align-items-center gap-1">
+                  <i class="bi bi-gear-wide-connected text-primary"></i> TRANSMISIÓN (Opcional):
+                </span>
+                <div class="btn-group btn-group-sm" role="group" id="adminTransTypeGroup">
+                  <button type="button" class="btn btn-outline-primary fw-bold font-rajdhani" id="transOptMt" onclick="setDiagramTransmission('MECANICO M/T')">
+                    🕹️ MECÁNICO / MANUAL (M/T)
+                  </button>
+                  <button type="button" class="btn btn-outline-danger fw-bold font-rajdhani" id="transOptAt" onclick="setDiagramTransmission('AUTOMATICO A/T')">
+                    🅰️ AUTOMÁTICO (A/T)
+                  </button>
+                </div>
               </div>
+
+              <!-- Contenedor con Buscador de Etiquetas y Cuadrícula Numerada (01 al 64 en Orden Alfabético A-Z) -->
+              <div class="mt-2 p-2 bg-light border rounded-3 shadow-xs">
+                <!-- Buscador de Etiquetas en Tiempo Real -->
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                  <div class="input-group input-group-sm flex-grow-1 shadow-xs">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" id="adminPresetFilterInput" class="form-control border-start-0 ps-0 fw-semibold font-rajdhani" placeholder="🔍 Filtrar componente... (ej: pedal, abs, ecu, sensor, tcm, bomba, clima)" oninput="filterDiagramPresets(this.value)">
+                    <button class="btn btn-outline-secondary btn-sm" type="button" onclick="clearPresetFilter()" title="Limpiar filtro"><i class="bi bi-x-lg"></i></button>
+                  </div>
+                  <span class="badge bg-dark font-rajdhani px-2 py-1" id="presetCountBadge" style="font-size: 0.75rem;">Total: 65</span>
+                </div>
+
+                <!-- Cuadrícula de 65 Componentes -->
+                <div id="presetButtonsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 6px; max-height: 240px; overflow-y: auto; padding: 2px;">
+                  <!-- 01 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="4wd traccion 4x4 doble traccion caja transferencia" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO 4WD TRACCION')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">01</span>
+                    <i class="bi bi-truck text-dark"></i>
+                    <span class="text-truncate">4WD / TRACCIÓN</span>
+                  </button>
+
+                  <!-- 02 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="adas radar crucero camara delantera frenado autonomo" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SISTEMA ADAS RADAR CRUCERO')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">02</span>
+                    <i class="bi bi-broadcast text-danger"></i>
+                    <span class="text-truncate">ADAS / RADAR</span>
+                  </button>
+
+                  <!-- 03 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="airbag srs bolsa de aire modulo airbag impacto" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO AIRBAG SRS')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">03</span>
+                    <i class="bi bi-shield-shaded text-danger"></i>
+                    <span class="text-truncate">AIRBAG SRS</span>
+                  </button>
+
+                  <!-- 04 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="alarma sirena antirrobo bocina seguridad" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO ALARMA ANTIRROBO')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">04</span>
+                    <i class="bi bi-bell-fill text-warning"></i>
+                    <span class="text-truncate">ALARMA / SIRENA</span>
+                  </button>
+
+                  <!-- 05 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="alternador regulador voltaje carga bateria generador" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('ALTERNADOR REGULADOR')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">05</span>
+                    <i class="bi bi-battery-charging text-success"></i>
+                    <span class="text-truncate">ALTERNADOR</span>
+                  </button>
+
+                  <!-- 06 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="antena inmovilizador immo transponder llave chip bobina lectora antena radio smart key receptor" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('ANTENA')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">06</span>
+                    <i class="bi bi-broadcast-pin text-primary"></i>
+                    <span class="text-truncate">ANTENA</span>
+                  </button>
+
+                  <!-- 07 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="bateria hibrida ev alta tension bms paquetes celdas" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('BATERIA HIBRIDA ALTA TENSION')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">07</span>
+                    <i class="bi bi-lightning-charge-fill text-success"></i>
+                    <span class="text-truncate">BATERÍA HÍBRIDA</span>
+                  </button>
+
+                  <!-- 08 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="bobinas cop encendido chispa transistor ignicion" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('BOBINAS DE ENCENDIDO')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">08</span>
+                    <i class="bi bi-lightning-fill text-warning"></i>
+                    <span class="text-truncate">BOBINAS COP</span>
+                  </button>
+
+                  <!-- 09 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="bomba combustible fpdm rele bomba gasolina aforador tanque" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('BOMBA DE COMBUSTIBLE')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">09</span>
+                    <i class="bi bi-fuel-pump-fill text-success"></i>
+                    <span class="text-truncate">BOMBA / FPDM</span>
+                  </button>
+
+                  <!-- 10 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="bomba secundaria aire emision smog pump" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('BOMBA AIRE SECUNDARIO')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">10</span>
+                    <i class="bi bi-wind text-info"></i>
+                    <span class="text-truncate">BOMBA SEC. AIRE</span>
+                  </button>
+
+                  <!-- 11 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="calefaccion asientos clima butacas confort" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO ASIENTOS CALEFACTABLES')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">11</span>
+                    <i class="bi bi-fire text-danger"></i>
+                    <span class="text-truncate">CALEFACCIÓN ASIENTOS</span>
+                  </button>
+
+                  <!-- 12 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="camara retroceso 360 vision trasera estacionamiento" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('CAMARA RETROCESO 360')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">12</span>
+                    <i class="bi bi-camera-video-fill text-primary"></i>
+                    <span class="text-truncate">CÁMARA RETROCESO</span>
+                  </button>
+
+                  <!-- 13 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="climatizador a/c aire acondicionado hvac compresor presostato" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO CLIMA AC')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">13</span>
+                    <i class="bi bi-snow text-info"></i>
+                    <span class="text-truncate">CLIMATIZADOR / A/C</span>
+                  </button>
+
+                  <!-- 14 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="convertidor dc dc hibrido ev convertidor 12v" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('CONVERTIDOR DC DC')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">14</span>
+                    <i class="bi bi-plug-fill text-warning"></i>
+                    <span class="text-truncate">CONVERTIDOR DC-DC</span>
+                  </button>
+
+                  <!-- 15 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="cuerpo aceleracion mariposa motorizada tac etc tps motor mariposa" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('CUERPO DE ACELERACION')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">15</span>
+                    <i class="bi bi-speedometer text-warning"></i>
+                    <span class="text-truncate">CUERPO ACEL.</span>
+                  </button>
+
+                  <!-- 16 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="direccion eps asistida columna motor direccion cremallera" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO EPS DIRECCION')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">16</span>
+                    <i class="bi bi-compass text-info"></i>
+                    <span class="text-truncate">DIRECCIÓN EPS</span>
+                  </button>
+
+                  <!-- 17 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="distribuidor encendido rotor platino delco captador optico" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('DISTRIBUIDOR')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">17</span>
+                    <i class="bi bi-gear-wide-connected text-primary"></i>
+                    <span class="text-truncate">DISTRIBUIDOR</span>
+                  </button>
+
+                  <!-- 18 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="dpf filtro particulas diesel fap regeneracion sensor presion diferencial" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SISTEMA DPF FILTRO PARTICULAS')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">18</span>
+                    <i class="bi bi-funnel-fill text-secondary"></i>
+                    <span class="text-truncate">DPF / PARTÍCULAS</span>
+                  </button>
+
+                  <!-- 19 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="edu dos conectores inyectores toyota hilux d4d driver inyeccion" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('EDU DOS CONECTORES')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">19</span>
+                    <i class="bi bi-diagram-3-fill text-primary"></i>
+                    <span class="text-truncate">EDU 2 CONECTORES</span>
+                  </button>
+
+                  <!-- 20 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="edu tres conectores inyectores toyota hilux d4d driver inyeccion" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('EDU TRES CONECTORES')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">20</span>
+                    <i class="bi bi-diagram-3-fill text-primary"></i>
+                    <span class="text-truncate">EDU 3 CONECTORES</span>
+                  </button>
+
+                  <!-- 21 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="faros luces automaticas bcm modulo iluminacion xenon led dlr" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SISTEMA DE ILUMINACION FAROS')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">21</span>
+                    <i class="bi bi-lightbulb-fill text-warning"></i>
+                    <span class="text-truncate">FAROS / LUCES</span>
+                  </button>
+
+                  <!-- 22 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="epb freno mano electrico estacionamiento actuador caliper boton freno" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO FRENO MANO EPB')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">22</span>
+                    <i class="bi bi-p-circle-fill text-danger"></i>
+                    <span class="text-truncate">FRENO MANO EPB</span>
+                  </button>
+
+                  <!-- 23 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="fusiblera bcm confort carroceria fusibles reles uch sam" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('FUSIBLERA BCM')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">23</span>
+                    <i class="bi bi-lightning-charge-fill text-warning"></i>
+                    <span class="text-truncate">FUSIBLERA / BCM</span>
+                  </button>
+
+                  <!-- 24 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="gateway gw modulo enlace centralita pasarela can lin flexray" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO GATEWAY')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">24</span>
+                    <i class="bi bi-router-fill text-secondary"></i>
+                    <span class="text-truncate">GATEWAY / GW</span>
+                  </button>
+
+                  <!-- 25 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="inmovilizador immo antena llave transponder chip bloqueo arranque" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('INMOVILIZADOR')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">25</span>
+                    <i class="bi bi-shield-lock-fill text-success"></i>
+                    <span class="text-truncate">INMOVILIZADOR</span>
+                  </button>
+
+                  <!-- 26 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="inversor hibrido ev inversor motor electrico igbt potencia" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('INVERSOR ELECTRICO HIBRIDO')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">26</span>
+                    <i class="bi bi-cpu-fill text-warning"></i>
+                    <span class="text-truncate">INVERSOR HÍBRIDO</span>
+                  </button>
+
+                  <!-- 27 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="inyectores gasolina diesel common rail piezoelectrico inductivo" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('INYECTORES')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">27</span>
+                    <i class="bi bi-droplet-half text-info"></i>
+                    <span class="text-truncate">INYECTORES</span>
+                  </button>
+
+                  <!-- 28 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="ipdm modulo de reles nissan fusiblera vano motor inteligente power distribution" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('IPDM MODULO DE RELES')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">28</span>
+                    <i class="bi bi-grid-3x3-gap-fill text-warning"></i>
+                    <span class="text-truncate">IPDM / RELÉS</span>
+                  </button>
+
+                  <!-- 29 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="modo bench boot pinout conexion lectura programacion ktag kess flex" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODO BENCH')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">29</span>
+                    <i class="bi bi-terminal-fill text-dark"></i>
+                    <span class="text-truncate">MODO BENCH / BOOT</span>
+                  </button>
+
+                  <!-- 30 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="modulo abs esp frenos bomba control estabilidad antibloqueo sensores rueda" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO ABS ESP')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">30</span>
+                    <i class="bi bi-disc text-secondary"></i>
+                    <span class="text-truncate">MÓDULO ABS / ESP</span>
+                  </button>
+
+                  <!-- 31 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="modulo puertas elevalunas lunas cierre centralizado espejos" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO PUERTAS ELEVALUNAS')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">31</span>
+                    <i class="bi bi-window-sidebar text-info"></i>
+                    <span class="text-truncate">MÓDULO PUERTAS</span>
+                  </button>
+
+                  <!-- 32 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="modulo tcm transmision caja automatica cvt dsg doble embrague solenoides" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO TCM TRANSMISION')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">32</span>
+                    <i class="bi bi-gear-fill text-primary"></i>
+                    <span class="text-truncate">MÓDULO TCM</span>
+                  </button>
+
+                  <!-- 33 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="navegacion gps antena modulo satelital localizador" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO NAVEGACION GPS')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">33</span>
+                    <i class="bi bi-geo-alt-fill text-danger"></i>
+                    <span class="text-truncate">NAVEGACIÓN GPS</span>
+                  </button>
+
+                  <!-- 34 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="pedal acelerador app aceleracion sensor pedal potenciometro" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('PEDAL')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">34</span>
+                    <i class="bi bi-sliders2 text-info"></i>
+                    <span class="text-truncate">PEDAL APP</span>
+                  </button>
+
+                  <!-- 35 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="pinout ecu ecm pcm computadora de motor inyeccion pines esquema diagrama" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('PINOUT ECU')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">35</span>
+                    <i class="bi bi-cpu-fill text-danger"></i>
+                    <span class="text-truncate">PINOUT ECU</span>
+                  </button>
+
+                  <!-- 36 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="presion riel sensor frp common rail riel inyeccion sensor presion combustible" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR PRESION RIEL')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">36</span>
+                    <i class="bi bi-fuel-pump text-info"></i>
+                    <span class="text-truncate">PRESIÓN RIEL (FRP)</span>
+                  </button>
+
+                  <!-- 37 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="puerto obd2 diagnostico conector dlc 16 pines escaner linea k can bus" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('PUERTO OBD2')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">37</span>
+                    <i class="bi bi-plug-fill text-dark"></i>
+                    <span class="text-truncate">PUERTO OBD2</span>
+                  </button>
+
+                  <!-- 38 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="radio multimedia pantalla estereo audio parlantes bluetooth android auto" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SISTEMA RADIO MULTIMEDIA AUDIO')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">38</span>
+                    <i class="bi bi-music-note-beamed text-primary"></i>
+                    <span class="text-truncate">RADIO / AUDIO</span>
+                  </button>
+
+                  <!-- 39 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="red can bus comunicacion can high can low topologia red multiplexado" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('RED CAN BUS')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">39</span>
+                    <i class="bi bi-diagram-2 text-info"></i>
+                    <span class="text-truncate">RED CAN BUS</span>
+                  </button>
+
+                  <!-- 40 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="red lin bus comunicacion unifilar lin confort alternador limpiaparabrisas" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('RED LIN BUS')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">40</span>
+                    <i class="bi bi-bezier2 text-secondary"></i>
+                    <span class="text-truncate">RED LIN BUS</span>
+                  </button>
+
+                  <!-- 41 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="retrovisores electricos espejos desempañador plegables" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('RETROVISORES ELECTRICOS')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">41</span>
+                    <i class="bi bi-arrows-angle-expand text-primary"></i>
+                    <span class="text-truncate">RETROVISORES</span>
+                  </button>
+
+                  <!-- 42 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor angulo direccion sas volante estabilidad esp" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR ANGULO DIRECCION SAS')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">42</span>
+                    <i class="bi bi-arrow-clockwise text-info"></i>
+                    <span class="text-truncate">SENSOR ÁNGULO (SAS)</span>
+                  </button>
+
+                  <!-- 43 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor aparcamiento pdc sensores retroceso proximidad ultrasonido" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR APARCAMIENTO PDC')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">43</span>
+                    <i class="bi bi-soundwave text-warning"></i>
+                    <span class="text-truncate">SENSOR APARC. (PDC)</span>
+                  </button>
+
+                  <!-- 44 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor ckp cmp cigueñal arbol de levas posicion hall inductivo sincro" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR CKP CMP')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">44</span>
+                    <i class="bi bi-pulse text-danger"></i>
+                    <span class="text-truncate">SENSOR CKP / CMP</span>
+                  </button>
+
+                  <!-- 45 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor detonacion knock cascabeleo picado piezoelectric sensor" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR KNOCK')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">45</span>
+                    <i class="bi bi-soundwave text-warning"></i>
+                    <span class="text-truncate">SENSOR DETONACIÓN</span>
+                  </button>
+
+                  <!-- 46 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor egt temperatura gases escape turbo dpf catalizador" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR TEMPERATURA ESCAPE EGT')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">46</span>
+                    <i class="bi bi-thermometer-sun text-danger"></i>
+                    <span class="text-truncate">SENSOR EGT (ESCAPE)</span>
+                  </button>
+
+                  <!-- 47 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor maf map caudalimetro flujo de aire presion absoluta admision vacio" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR MAF MAP')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">47</span>
+                    <i class="bi bi-wind text-primary"></i>
+                    <span class="text-truncate">SENSOR MAF / MAP</span>
+                  </button>
+
+                  <!-- 48 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor nox adblue urea emisiones scr diesel catalizador" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR NOX ADBLUE EMISIONES')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">48</span>
+                    <i class="bi bi-cloud-haze2-fill text-info"></i>
+                    <span class="text-truncate">SENSOR NOX / AD-BLUE</span>
+                  </button>
+
+                  <!-- 49 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor oxigeno sonda lambda o2 banco 1 banco 2 catalizador calefactado banda ancha" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR OXIGENO')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">49</span>
+                    <i class="bi bi-activity text-danger"></i>
+                    <span class="text-truncate">SENSOR OXÍGENO</span>
+                  </button>
+
+                  <!-- 50 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor presion aceite bulbo manocontacto lubricacion motor testigo aceite" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR PRESION ACEITE')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">50</span>
+                    <i class="bi bi-droplet-fill text-danger"></i>
+                    <span class="text-truncate">SENSOR PRESIÓN ACEITE</span>
+                  </button>
+
+                  <!-- 51 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor presion turbo boost sobrealimentacion map intercooler" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR PRESION TURBO BOOST')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">51</span>
+                    <i class="bi bi-speedometer2 text-danger"></i>
+                    <span class="text-truncate">SENSOR PRESIÓN TURBO</span>
+                  </button>
+
+                  <!-- 52 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor temperatura ect refrigerante agua motor sensor termistor ntc" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR TEMPERATURA ECT')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">52</span>
+                    <i class="bi bi-thermometer-half text-danger"></i>
+                    <span class="text-truncate">TEMP. ECT (AGUA)</span>
+                  </button>
+
+                  <!-- 53 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor temperatura iat aire admision intake air temperature" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR TEMPERATURA IAT AIRE')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">53</span>
+                    <i class="bi bi-thermometer-low text-info"></i>
+                    <span class="text-truncate">TEMP. IAT (AIRE)</span>
+                  </button>
+
+                  <!-- 54 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor tps posicion mariposa acelerador potenciometro throttle position" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR TPS')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">54</span>
+                    <i class="bi bi-dial text-primary"></i>
+                    <span class="text-truncate">SENSOR TPS</span>
+                  </button>
+
+                  <!-- 55 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sensor vss velocidad velocimetro sensor caja transmision speed sensor" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SENSOR VSS VELOCIDAD')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">55</span>
+                    <i class="bi bi-speedometer2 text-danger"></i>
+                    <span class="text-truncate">SENSOR VSS (VEL.)</span>
+                  </button>
+
+                  <!-- 56 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sistema start stop parada arranque automatico bateria agm" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('SISTEMA START STOP')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">56</span>
+                    <i class="bi bi-arrow-repeat text-success"></i>
+                    <span class="text-truncate">START & STOP</span>
+                  </button>
+
+                  <!-- 57 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="smart key start boton arranque llave inteligente keyless entry presencial" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO SMART KEY')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">57</span>
+                    <i class="bi bi-key-fill text-success"></i>
+                    <span class="text-truncate">SMART KEY / START</span>
+                  </button>
+
+                  <!-- 58 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="sunroof techo solar quemacocos cortina techo electrico" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO TECHO SOLAR SUNROOF')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">58</span>
+                    <i class="bi bi-sun-fill text-warning"></i>
+                    <span class="text-truncate">SUNROOF / TECHO</span>
+                  </button>
+
+                  <!-- 59 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="suspension electronica neumatica compresor amortiguadores adaptativa" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO SUSPENSION ELECTRONICA')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">59</span>
+                    <i class="bi bi-sliders text-secondary"></i>
+                    <span class="text-truncate">SUSPENSIÓN ELECT.</span>
+                  </button>
+
+                  <!-- 60 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="tablero cluster instrumentos odometro tacometro velocimetro cuadro relojes" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('TABLERO INSTRUMENTOS')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">60</span>
+                    <i class="bi bi-speedometer2 text-primary"></i>
+                    <span class="text-truncate">TABLERO / CLUSTER</span>
+                  </button>
+
+                  <!-- 61 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="turbo actuador electronico geometria variable vgt wastegate servomotor" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('ACTUADOR ELECTRONICO TURBO')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">61</span>
+                    <i class="bi bi-lightning-charge text-danger"></i>
+                    <span class="text-truncate">TURBO ACTUADOR</span>
+                  </button>
+
+                  <!-- 62 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="valvula canister evap purga gases tanque solenoide ventilacion" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('VALVULA CANISTER EVAP PURGA')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">62</span>
+                    <i class="bi bi-funnel text-secondary"></i>
+                    <span class="text-truncate">VÁLVULA CANISTER</span>
+                  </button>
+
+                  <!-- 63 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="valvula egr vvt recirculacion gases escape tiempo variable solenoide ocv" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('VALVULA EGR VVT')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">63</span>
+                    <i class="bi bi-arrow-repeat text-primary"></i>
+                    <span class="text-truncate">VÁLVULA EGR / VVT</span>
+                  </button>
+
+                  <!-- 64 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="valvula pcv control vacio gases carter ventilacion positiva" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('VALVULA PCV CONTROL VACIO')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">64</span>
+                    <i class="bi bi-vinyl-fill text-dark"></i>
+                    <span class="text-truncate">VÁLVULA PCV / VACÍO</span>
+                  </button>
+
+                  <!-- 65 -->
+                  <button type="button" class="btn btn-sm text-start d-flex align-items-center gap-2 fw-bold text-dark p-2 border bg-white shadow-sm preset-item-btn" data-search="ventilador electroventilador modulo control ventilador radiador enfriamiento refrigeracion" style="border-radius: 8px; font-size: 0.78rem;" onclick="setDiagramTitlePreset('MODULO CONTROL ELECTROVENTILADOR')">
+                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.65rem; min-width: 24px;">65</span>
+                    <i class="bi bi-fan text-info"></i>
+                    <span class="text-truncate">VENTILADOR / ELECTRO</span>
+                  </button>
+                </div>
+
+                <!-- Mensaje de no resultados al filtrar -->
+                <div id="noPresetMatchAlert" class="text-center py-3 text-muted d-none" style="font-size: 0.85rem;">
+                  <i class="bi bi-info-circle me-1"></i> No se encontraron componentes que coincidan con la búsqueda.
+                </div>
+              </div>
+
+              <script>
+                // Funciones de Filtrado Rápido de Etiquetas en el Modal Admin
+                window.filterDiagramPresets = function(query) {
+                  const q = (query || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                  const buttons = document.querySelectorAll('#presetButtonsGrid .preset-item-btn');
+                  let visibleCount = 0;
+                  buttons.forEach(function(btn) {
+                    const searchData = (btn.getAttribute('data-search') || btn.innerText || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    if (!q || searchData.indexOf(q) !== -1) {
+                      btn.style.setProperty('display', 'flex', 'important');
+                      visibleCount++;
+                    } else {
+                      btn.style.setProperty('display', 'none', 'important');
+                    }
+                  });
+                  const counter = document.getElementById('presetCountBadge');
+                  if (counter) {
+                    counter.textContent = q ? (visibleCount + ' de ' + buttons.length) : ('Total: ' + buttons.length);
+                  }
+                  const noMatch = document.getElementById('noPresetMatchAlert');
+                  if (noMatch) {
+                    if (visibleCount === 0) {
+                      noMatch.classList.remove('d-none');
+                    } else {
+                      noMatch.classList.add('d-none');
+                    }
+                  }
+                };
+
+                window.clearPresetFilter = function() {
+                  const input = document.getElementById('adminPresetFilterInput');
+                  if (input) {
+                    input.value = '';
+                    window.filterDiagramPresets('');
+                    input.focus();
+                  }
+                };
+              </script>
             </div>
 
             <!-- Paso 8: Tipo de Contenido / Carpeta Destino -->
