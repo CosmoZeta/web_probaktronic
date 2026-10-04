@@ -400,11 +400,11 @@ const defaultModelsMap = {
     { id: 'hilux', modelo: 'TOYOTA HILUX (2011 - 2015)', nombre: 'TOYOTA HILUX (2011 - 2015)', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel', categoria: 'pickup', anios: '2011 - 2015', imagen: 'archivos_almacenamiento/diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg' },
     { id: 'corolla', modelo: 'TOYOTA COROLLA (MOTOR 4E)', nombre: 'TOYOTA COROLLA (MOTOR 4E)', motor: '4E-FE 1.3L', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '1993 - 1997', imagen: 'archivos_almacenamiento/fotos_modelos/toyota.png' }
   ],
-  'ford': [
-    { id: 'focus', modelo: 'FORD FOCUS (2018-2022)', nombre: 'FORD FOCUS (2018-2022)', motor: '2.8', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '2018-2022', imagen: 'imagenes autos/ic_car_ford_focus.JPG' }
+  'nissan': [
+    { id: 'tiida_tiida_latio', modelo: 'NISSAN TIIDA / TIIDA LATIO (2007 - 2012)', nombre: 'NISSAN TIIDA / TIIDA LATIO (2007 - 2012)', motor: 'HR15DE 1.5L', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '2007 - 2012', imagen: 'archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_2.png' }
   ],
-  'hyundai': [
-    { id: 'accent', modelo: 'HYUNDAI ACCENT 2020', nombre: 'HYUNDAI ACCENT 2020', motor: '1.6 Gamma', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '2020', imagen: '' }
+  'hino': [
+    { id: 'serie_500_700', modelo: 'HINO SERIE 500 / 700', nombre: 'HINO SERIE 500 / 700', motor: 'J08E / J05E', combustible: 'diesel', categoria: 'camiones', anios: '2008 - 2020', imagen: 'logo_probaktronic_solo.png' }
   ]
 };
 
@@ -679,7 +679,9 @@ function hasBrandContent(brandId, fuelType, categoryKey, brandObj = null) {
 }
 
 const defaultDiagramBrands = [
-  { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') }
+  { id: 'toyota', name: 'Toyota', logo: getBrandLogoUrl('toyota') },
+  { id: 'nissan', name: 'Nissan', logo: getBrandLogoUrl('nissan') },
+  { id: 'hino', name: 'Hino', logo: getBrandLogoUrl('hino') }
 ];
 
 let cachedActiveBrands = null;
@@ -688,12 +690,33 @@ function getMergedBrandsList(extraList = null) {
   const deletedBrands = getDeletedItemsList('brands');
   const baseMap = new Map();
 
-  // 1. Agregar marcas por defecto
+  // 1. Agregar marcas desde vehiculos_diagramas.json si está cargado
+  const tree = window._cachedVehiculosDiagramasTree || {};
+  for (const [bKey, bVal] of Object.entries(tree)) {
+    const bId = bKey.toLowerCase().trim();
+    if (bId) {
+      const bData = bVal.brandData || {};
+      const logo = (bData.logo && !bData.logo.includes('logo_probaktronic')) ? bData.logo : getBrandLogoUrl(bId);
+      baseMap.set(bId, {
+        id: bId,
+        name: bData.nombre || bId.toUpperCase(),
+        logo: logo,
+        combustible: bData.combustible || '',
+        categoria: bData.categoria || '',
+        data: bData
+      });
+    }
+  }
+
+  // 2. Agregar marcas por defecto
   defaultDiagramBrands.forEach(b => {
-    baseMap.set(b.id.toLowerCase().trim(), { ...b });
+    const bId = b.id.toLowerCase().trim();
+    if (!baseMap.has(bId)) {
+      baseMap.set(bId, { ...b });
+    }
   });
 
-  // 2. Agregar marcas creadas localmente en LocalStorage
+  // 3. Agregar marcas creadas localmente en LocalStorage
   try {
     const customBrands = JSON.parse(localStorage.getItem('probak_custom_brands') || '[]');
     if (Array.isArray(customBrands)) {
@@ -714,7 +737,7 @@ function getMergedBrandsList(extraList = null) {
     }
   } catch(e) {}
 
-  // 3. Agregar marcas pasadas como parámetro (ej. de MySQL o server.js)
+  // 4. Agregar marcas pasadas como parámetro (ej. de MySQL o server.js)
   if (Array.isArray(extraList) && extraList.length > 0) {
     extraList.forEach(fb => {
       const fbId = (fb.id || fb.slug || fb.Slug || fb.nombre || fb.Nombre || '').toLowerCase().trim();
@@ -743,10 +766,20 @@ function getMergedBrandsList(extraList = null) {
   );
 }
 
-window.loadFirestoreDiagramasBrands = function(grid) {
+window.loadFirestoreDiagramasBrands = async function(grid) {
   if (!grid) {
     grid = document.getElementById('vehiculosBrandGrid');
     if (!grid) return;
+  }
+
+  // Asegurar que el árbol de vehículos JSON esté cargado en memoria para detección inmediata
+  if (!window._cachedVehiculosDiagramasTree) {
+    try {
+      const res = await fetch(`data/vehiculos_diagramas.json?_t=${Date.now()}`);
+      if (res.ok) {
+        window._cachedVehiculosDiagramasTree = await res.json();
+      }
+    } catch(e) {}
   }
 
   // Render inmediato con marcas locales y por defecto
