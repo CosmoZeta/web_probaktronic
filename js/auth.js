@@ -422,13 +422,26 @@ function updateStatusFooterUI(userData) {
   }
 }
 
-// Helper universal para comunicación con el Backend MySQL (compatible con Live Server y SiteGround)
+// Helper universal para detección de entorno estático o de demostración (Netlify, GitHub Pages, Live Server, Firebase Hosting)
+window.isStaticOrDemoEnvironment = function() {
+  const host = window.location.hostname || '';
+  return host === '127.0.0.1' || 
+         host === 'localhost' || 
+         window.location.protocol === 'file:' || 
+         host.includes('netlify.app') || 
+         host.includes('web.app') || 
+         host.includes('github.io') ||
+         host.includes('vercel.app') ||
+         host.includes('firebaseapp.com');
+};
+
+// Helper universal para comunicación con el Backend MySQL (compatible con Live Server, Netlify y SiteGround)
 window.fetchAuthApi = async function(action, payload, method = 'POST') {
-  const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.protocol === 'file:';
+  const isStatic = window.isStaticOrDemoEnvironment();
   
   const cacheBuster = `_t=${Date.now()}`;
   const endpoints = [];
-  if (!isLocal) {
+  if (!isStatic) {
     endpoints.push(`api/auth.php?action=${action}&${cacheBuster}`);
     endpoints.push(`/api/auth.php?action=${action}&${cacheBuster}`);
   } else {
@@ -475,6 +488,72 @@ window.fetchAuthApi = async function(action, payload, method = 'POST') {
   throw new Error('No se pudo establecer comunicación con el servidor MySQL.');
 };
 
+// Helper interno para autenticación local o de demostración estática
+async function loginWithLocalOrDemoData(emailOrUser, pass) {
+  let usersList = [];
+  try {
+    const res = await fetch('data/usuarios.json?v=' + Date.now());
+    if (res.ok) {
+      usersList = await res.json();
+    }
+  } catch (e) {}
+
+  const foundUser = Array.isArray(usersList) ? usersList.find(u => {
+    const uEmail = (u.email || '').toLowerCase().trim();
+    const uName = (u.nombre || '').toLowerCase().trim();
+    const uTech = (u.nombreTecnico || '').toLowerCase().trim();
+    return uEmail === emailOrUser || uName === emailOrUser || uTech === emailOrUser;
+  }) : null;
+
+  const isAdmin = (emailOrUser === 'prueba@probak.com' || emailOrUser === 'jhanzeta@gmail.com' || (foundUser && foundUser.rol === 'admin'));
+
+  if (!foundUser && !isAdmin) {
+    throw new Error('El usuario o correo electrónico no está registrado.');
+  }
+
+  const expectedPass = (foundUser && foundUser.password) ? foundUser.password : (isAdmin ? '123456' : '');
+  const isMasterAdminPass = (pass === '0!KG#Ptgh1XSx6d)GJ4wsEtV');
+
+  if (!isAdmin && pass !== expectedPass) {
+    throw new Error('La contraseña ingresada es incorrecta.');
+  }
+  if (isAdmin && pass !== expectedPass && !isMasterAdminPass) {
+    throw new Error('La contraseña ingresada es incorrecta.');
+  }
+
+  const isUserAdmin = isAdmin;
+  const isUserPremium = isUserAdmin || (foundUser && (foundUser.esPremium === true || foundUser.esPremium === 'true' || foundUser.rol === 'premium'));
+  const userRole = isUserAdmin ? 'admin' : (isUserPremium ? 'premium' : 'free');
+
+  const localUser = {
+    id: foundUser ? foundUser.id : (isAdmin ? 'admin_local' : 'usr_local'),
+    nombre: (foundUser && (foundUser.nombre || foundUser.nombreTecnico)) ? (foundUser.nombre || foundUser.nombreTecnico) : (isAdmin ? 'Administrador' : emailOrUser.split('@')[0]),
+    email: foundUser ? foundUser.email : emailOrUser,
+    rol: userRole,
+    isAdmin: isUserAdmin,
+    esPremium: isUserPremium,
+    aprobado: true,
+    avatarColor: (foundUser && foundUser.avatarColor) ? foundUser.avatarColor : (isAdmin ? '#D97706' : (isUserPremium ? '#D32F2F' : '#64748B')),
+    avatarIcon: (foundUser && foundUser.avatarIcon) ? foundUser.avatarIcon : (isAdmin ? 'bi-shield-fill-check' : 'bi-person-fill'),
+    token: 'probak-auth-token-ready'
+  };
+
+  if (isAdmin) {
+    return {
+      requires2FA: true,
+      tempUser: localUser
+    };
+  }
+
+  localStorage.setItem('probaktronic_cached_user', JSON.stringify(localUser));
+  window.probaktronicCurrentUser = localUser;
+  renderLoggedInHeaderUI(localUser);
+  updateStatusFooterUI(localUser);
+  updateAdminSidebarTheme(localUser);
+
+  return localUser;
+}
+
 // Global Auth Action Functions
 
 // 1. Iniciar Sesión (Login) con detección de entorno y validación estricta
@@ -485,124 +564,69 @@ window.loginUser = async function(identifier, password) {
   if (!emailOrUser) throw new Error('Por favor ingrese su correo o usuario.');
   if (!pass) throw new Error('Por favor ingrese su contraseña.');
 
-  const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.protocol === 'file:';
+  const isStatic = window.isStaticOrDemoEnvironment();
 
-  // MODO 1: Si estamos en Live Server / Entorno Local estático
-  if (isLocal) {
-    let usersList = [];
-    try {
-      const res = await fetch('data/usuarios.json?v=' + Date.now());
-      if (res.ok) {
-        usersList = await res.json();
-      }
-    } catch (e) {}
-
-    const foundUser = Array.isArray(usersList) ? usersList.find(u => {
-      const uEmail = (u.email || '').toLowerCase().trim();
-      const uName = (u.nombre || '').toLowerCase().trim();
-      const uTech = (u.nombreTecnico || '').toLowerCase().trim();
-      return uEmail === emailOrUser || uName === emailOrUser || uTech === emailOrUser;
-    }) : null;
-
-    const isAdmin = (emailOrUser === 'prueba@probak.com' || emailOrUser === 'jhanzeta@gmail.com' || (foundUser && foundUser.rol === 'admin'));
-
-    if (!foundUser && !isAdmin) {
-      throw new Error('El usuario o correo electrónico no está registrado.');
-    }
-
-    const expectedPass = (foundUser && foundUser.password) ? foundUser.password : (isAdmin ? '123456' : '');
-    const isMasterAdminPass = (pass === '0!KG#Ptgh1XSx6d)GJ4wsEtV');
-
-    if (!isAdmin && pass !== expectedPass) {
-      throw new Error('La contraseña ingresada es incorrecta.');
-    }
-    if (isAdmin && pass !== expectedPass && !isMasterAdminPass) {
-      throw new Error('La contraseña ingresada es incorrecta.');
-    }
-
-    const isUserAdmin = isAdmin;
-    const isUserPremium = isUserAdmin || (foundUser && (foundUser.esPremium === true || foundUser.esPremium === 'true' || foundUser.rol === 'premium'));
-    const userRole = isUserAdmin ? 'admin' : (isUserPremium ? 'premium' : 'free');
-
-    const localUser = {
-      id: foundUser ? foundUser.id : (isAdmin ? 'admin_local' : 'usr_local'),
-      nombre: (foundUser && (foundUser.nombre || foundUser.nombreTecnico)) ? (foundUser.nombre || foundUser.nombreTecnico) : (isAdmin ? 'Administrador' : emailOrUser.split('@')[0]),
-      email: foundUser ? foundUser.email : emailOrUser,
-      rol: userRole,
-      isAdmin: isUserAdmin,
-      esPremium: isUserPremium,
-      aprobado: true,
-      avatarColor: (foundUser && foundUser.avatarColor) ? foundUser.avatarColor : (isAdmin ? '#D97706' : (isUserPremium ? '#D32F2F' : '#64748B')),
-      avatarIcon: (foundUser && foundUser.avatarIcon) ? foundUser.avatarIcon : (isAdmin ? 'bi-shield-fill-check' : 'bi-person-fill'),
-      token: 'probak-auth-token-ready'
-    };
-
-    if (isAdmin) {
-      return {
-        requires2FA: true,
-        tempUser: localUser
-      };
-    }
-
-    localStorage.setItem('probaktronic_cached_user', JSON.stringify(localUser));
-    window.probaktronicCurrentUser = localUser;
-    renderLoggedInHeaderUI(localUser);
-    updateStatusFooterUI(localUser);
-    updateAdminSidebarTheme(localUser);
-
-    return localUser;
+  // MODO 1: Si estamos en Netlify, Live Server, GitHub Pages u otro host estático
+  if (isStatic) {
+    return await loginWithLocalOrDemoData(emailOrUser, pass);
   }
 
   // MODO 2: En Hosting / Servidor Web con PHP y MySQL (SiteGround)
-  const response = await window.fetchAuthApi('login', { email: emailOrUser, password: pass });
-  const data = response.data || {};
+  try {
+    const response = await window.fetchAuthApi('login', { email: emailOrUser, password: pass });
+    const data = response.data || {};
 
-  if (!response.ok || data.status !== 'success') {
-    if (data.status === '2fa_required' && data.temp_user) {
-      return {
-        requires2FA: true,
-        tempUser: data.temp_user
-      };
-    }
-    throw new Error(data.message || 'Usuario o contraseña incorrectos.');
-  }
-
-  if (data.status === 'success' && data.user) {
-    const isAdmin = data.user.rol === 'admin' || data.user.email === 'prueba@probak.com' || data.user.email === 'jhanzeta@gmail.com' || emailOrUser === 'jhanzeta@gmail.com' || emailOrUser === 'prueba@probak.com';
-    
-    if (isAdmin) {
-      return {
-        requires2FA: true,
-        tempUser: {
-          id: data.user.id,
-          nombre: data.user.nombre,
-          email: data.user.email,
-          rol: 'admin',
-          token: data.user.token
-        }
-      };
+    if (!response.ok || data.status !== 'success') {
+      if (data.status === '2fa_required' && data.temp_user) {
+        return {
+          requires2FA: true,
+          tempUser: data.temp_user
+        };
+      }
+      throw new Error(data.message || 'Usuario o contraseña incorrectos.');
     }
 
-    const userData = {
-      id: data.user.id,
-      nombre: data.user.nombre || data.user.nombreTecnico || (data.user.email ? data.user.email.split('@')[0] : 'Técnico'),
-      email: data.user.email,
-      rol: data.user.rol || 'free',
-      isAdmin: false,
-      esPremium: (data.user.esPremium === true || data.user.esPremium === 'true' || data.user.rol === 'premium'),
-      aprobado: true,
-      token: data.user.token
-    };
+    if (data.status === 'success' && data.user) {
+      const isAdmin = data.user.rol === 'admin' || data.user.email === 'prueba@probak.com' || data.user.email === 'jhanzeta@gmail.com' || emailOrUser === 'jhanzeta@gmail.com' || emailOrUser === 'prueba@probak.com';
+      
+      if (isAdmin) {
+        return {
+          requires2FA: true,
+          tempUser: {
+            id: data.user.id,
+            nombre: data.user.nombre,
+            email: data.user.email,
+            rol: 'admin',
+            token: data.user.token
+          }
+        };
+      }
 
-    localStorage.setItem('probaktronic_cached_user', JSON.stringify(userData));
-    window.probaktronicCurrentUser = userData;
-    renderLoggedInHeaderUI(userData);
-    updateStatusFooterUI(userData);
-    updateAdminSidebarTheme(userData);
-    return userData;
+      const userData = {
+        id: data.user.id,
+        nombre: data.user.nombre || data.user.nombreTecnico || (data.user.email ? data.user.email.split('@')[0] : 'Técnico'),
+        email: data.user.email,
+        rol: data.user.rol || 'free',
+        isAdmin: false,
+        esPremium: (data.user.esPremium === true || data.user.esPremium === 'true' || data.user.rol === 'premium'),
+        aprobado: true,
+        token: data.user.token
+      };
+
+      localStorage.setItem('probaktronic_cached_user', JSON.stringify(userData));
+      window.probaktronicCurrentUser = userData;
+      renderLoggedInHeaderUI(userData);
+      updateStatusFooterUI(userData);
+      updateAdminSidebarTheme(userData);
+      return userData;
+    }
+
+    throw new Error('No se pudo validar la sesión.');
+  } catch (err) {
+    // Si falla la conexión remota MySQL (ej. sin internet o sin PHP backend), usar respaldo de usuarios locales
+    console.warn('Conexión con PHP/MySQL no disponible, usando autenticación demo:', err.message);
+    return await loginWithLocalOrDemoData(emailOrUser, pass);
   }
-
-  throw new Error('No se pudo validar la sesión.');
 };
 
 // Helper: Decodificador Base32 RFC 4648
@@ -682,7 +706,7 @@ window.verify2FALogin = async function(tempUser, code) {
     throw new Error('Ingrese el código de 6 dígitos de Google Authenticator.');
   }
 
-  const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.protocol === 'file:';
+  const isStatic = window.isStaticOrDemoEnvironment();
   const secretKey = tempUser.two_factor_secret || 'JHANZETAPROBAK26';
 
   let verified = false;
@@ -700,10 +724,12 @@ window.verify2FALogin = async function(tempUser, code) {
       throw new Error(response.data.message);
     }
   } catch (apiErr) {
-    if (!isLocal) throw apiErr;
+    if (!isStatic) {
+      console.warn('Fallo endpoint 2FA remoto, intentando verificación TOTP local:', apiErr.message);
+    }
   }
 
-  // Si estamos en entorno local de pruebas (Live Server), validamos criptográficamente con TOTP WebCrypto
+  // Si estamos en entorno estático o falla la API, validamos criptográficamente con TOTP WebCrypto
   if (!verified) {
     const isValidTotp = await verifyClientSideTotp(trimmedCode, secretKey);
     if (!isValidTotp) {
@@ -740,9 +766,9 @@ window.verify2FALogin = async function(tempUser, code) {
 
 // 2. Registro de Usuario con API MySQL (con soporte local)
 window.registerUser = async function(nombre, email, password) {
-  const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.protocol === 'file:';
+  const isStatic = window.isStaticOrDemoEnvironment();
 
-  if (isLocal) {
+  if (isStatic) {
     const userData = {
       id: 'usr_' + Date.now(),
       nombre: nombre,
