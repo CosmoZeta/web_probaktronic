@@ -64,14 +64,15 @@
         for (const single of candidates) {
           if (single && typeof single === 'string') {
             const lower = single.toLowerCase();
-            if (!lower.includes('.pdf') && !lower.includes('%2epdf') && !lower.includes('/conexionado/') && !lower.includes('diagrama_')) {
+            const isSchematic = lower.includes('.pdf') || lower.includes('%2epdf') || lower.includes('/conexionado/') || lower.split('/').pop().startsWith('diagrama_');
+            if (!isSchematic) {
               photos.push(single);
               break;
             }
           }
         }
       }
-      return photos.filter(p => typeof p === 'string' && p.trim() && !p.toLowerCase().includes('/conexionado/') && !p.toLowerCase().includes('diagrama_'));
+      return photos.filter(p => typeof p === 'string' && p.trim() && !p.toLowerCase().includes('/conexionado/') && !p.toLowerCase().split('/').pop().startsWith('diagrama_'));
     },
 
     // Helper to extract year ranges or single years from strings
@@ -380,7 +381,7 @@
           const newPhotos = VehiculosData.extractPhotos(a);
 
           const combinedPhotos = [...new Set([...existingPhotos, ...newPhotos, existing.imageUrl, a.imageUrl].filter(Boolean))];
-          const isDiagUrl = (u) => u && typeof u === 'string' && (u.includes('.pdf') || u.includes('%2epdf') || u.includes('/conexionado/') || u.includes('diagrama_'));
+          const isDiagUrl = (u) => u && typeof u === 'string' && (u.includes('.pdf') || u.includes('%2epdf') || u.includes('/conexionado/') || u.split('/').pop().startsWith('diagrama_'));
           const bestPdf = a.pdfUrl || a.diagramaUrl || existing.pdfUrl || existing.diagramaUrl || (isDiagUrl(a.url) ? a.url : '') || (isDiagUrl(existing.url) ? existing.url : '');
           const bestImageUrl = a.imageUrl || existing.imageUrl || (combinedPhotos.length > 0 ? combinedPhotos[0] : '');
 

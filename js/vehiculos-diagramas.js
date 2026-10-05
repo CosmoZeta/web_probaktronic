@@ -1363,7 +1363,7 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
       const newPhotos = (Array.isArray(a.allImages) && a.allImages.length > 0) ? a.allImages : ((Array.isArray(a.imagenes) && a.imagenes.length > 0) ? a.imagenes : ((Array.isArray(a.fotos) && a.fotos.length > 0) ? a.fotos : []));
       
       const combinedPhotos = [...new Set([...existingPhotos, ...newPhotos, existing.imageUrl, a.imageUrl].filter(Boolean))];
-      const isDiagUrl = (u) => u && typeof u === 'string' && (u.includes('.pdf') || u.includes('%2epdf') || u.includes('/conexionado/') || u.includes('diagrama_'));
+      const isDiagUrl = (u) => u && typeof u === 'string' && (u.includes('.pdf') || u.includes('%2epdf') || u.includes('/conexionado/') || u.split('/').pop().startsWith('diagrama_'));
       const bestPdf = a.pdfUrl || a.diagramaUrl || existing.pdfUrl || existing.diagramaUrl || (isDiagUrl(a.url) ? a.url : '') || (isDiagUrl(existing.url) ? existing.url : '');
       const bestImage = a.imageUrl || existing.imageUrl || (combinedPhotos.length > 0 ? combinedPhotos[0] : '');
 
@@ -2489,7 +2489,7 @@ window.loadSpecificDiagramSection = async function(type) {
         for (const dc of directCandidates) {
           if (dc && typeof dc === 'string' && dc.length > 5) {
             const lower = dc.toLowerCase();
-            const isSchematic = lower.includes('.pdf') || lower.includes('%2epdf') || lower.includes('/conexionado/') || lower.includes('diagrama_');
+            const isSchematic = lower.includes('.pdf') || lower.includes('%2epdf') || lower.includes('/conexionado/') || lower.split('/').pop().startsWith('diagrama_');
             if (!isSchematic) {
               photos.push(dc);
               break;
@@ -2517,7 +2517,6 @@ window.loadSpecificDiagramSection = async function(type) {
       }
 
       // No inyectar fotos viejas de localStorage
-
 
       const extractPhotosFromDoc = (d) => {
         if (!d) return null;
@@ -2571,12 +2570,6 @@ window.loadSpecificDiagramSection = async function(type) {
             );
           }
 
-          // Global config fallback
-          photoQueries.push(
-            db.collection('app_config').doc('diagramas_imagenes').get()
-              .then(s => (s && s.exists && Array.isArray(s.data()[storageKey])) ? s.data()[storageKey] : null).catch(() => null)
-          );
-
           const photoResults = await Promise.all(photoQueries);
           const foundPhotos = photoResults.find(r => Array.isArray(r) && r.length > 0);
           if (foundPhotos) {
@@ -2589,9 +2582,6 @@ window.loadSpecificDiagramSection = async function(type) {
               active._selectedArchDoc.allImages = photos;
               active._selectedArchDoc.imageUrl = photos[0];
             }
-            try {
-              localStorage.setItem(storageKey + '_photos', JSON.stringify(photos));
-            } catch(e) {}
           }
         } catch (errP) {
           console.warn('Firestore photos lookup notice:', errP);
@@ -2600,12 +2590,12 @@ window.loadSpecificDiagramSection = async function(type) {
 
       // Resolve all photos if they are gs:// or storage paths
       const resolvedPhotos = await Promise.all(photos.map(p => window.resolveFirebaseStorageUrl(p)));
-      let validPhotos = resolvedPhotos.filter(p => typeof p === 'string' && p.trim() && !p.toLowerCase().includes('/conexionado/') && !p.toLowerCase().includes('diagrama_'));
+      let validPhotos = resolvedPhotos.filter(p => typeof p === 'string' && p.trim() && !p.toLowerCase().includes('/conexionado/') && !p.toLowerCase().split('/').pop().startsWith('diagrama_'));
 
       if (validPhotos.length === 0) {
         const fallbackCandidates = [active.imageUrl, arch.imageUrl, active.foto, arch.foto, active.imagen, arch.imagen];
         for (const fc of fallbackCandidates) {
-          if (fc && typeof fc === 'string' && !fc.toLowerCase().includes('.pdf') && !fc.toLowerCase().includes('/conexionado/') && !fc.toLowerCase().includes('diagrama_') && fc.length > 5) {
+          if (fc && typeof fc === 'string' && !fc.toLowerCase().includes('.pdf') && !fc.toLowerCase().includes('/conexionado/') && !fc.toLowerCase().split('/').pop().startsWith('diagrama_') && fc.length > 5) {
             const resolvedFallback = await window.resolveFirebaseStorageUrl(fc);
             if (resolvedFallback) {
               validPhotos.push(resolvedFallback);
@@ -2615,8 +2605,7 @@ window.loadSpecificDiagramSection = async function(type) {
         }
       }
 
-      // Auto-descubrimiento en SiteGround (archivos físicos en disco para todos los usuarios)
-      // Auto-descubrimiento en SiteGround (archivos físicos en disco para todos los componentes)
+      // Auto-descubrimiento en SiteGround / Servidor Local (archivos físicos en disco)
       try {
         const brandQ = (arch.brandDocId || currentSelectedBrandId || currentSelectedBrandName || 'TOYOTA').trim();
         const modelQ = (arch.modelDocId || currentSelectedModelDocId || currentSelectedModelId || currentSelectedModelName || 'corolla').trim();
@@ -2654,6 +2643,78 @@ window.loadSpecificDiagramSection = async function(type) {
           } catch(e) {}
         }
       } catch (errApi) {}
+
+      // Fallback Estático Directo en data/vehiculos_diagramas.json para Hosting Estático (Netlify / GitHub Pages)
+      if (validPhotos.length === 0) {
+        try {
+          if (!window._cachedVehiculosDiagramasTree) {
+            const rTree = await fetch(`data/vehiculos_diagramas.json?_t=${Date.now()}`);
+            if (rTree.ok) {
+              window._cachedVehiculosDiagramasTree = await rTree.json();
+            }
+          }
+          const tree = window._cachedVehiculosDiagramasTree || {};
+          const brandKey = (arch.brandDocId || currentSelectedBrandId || currentSelectedBrandName || '').toLowerCase().trim();
+          const modelKey = (arch.modelDocId || currentSelectedModelDocId || currentSelectedModelId || currentSelectedModelName || '').toLowerCase().trim();
+          const compSlug = (typeof window.deriveComponentSlug === 'function')
+            ? window.deriveComponentSlug((arch.archDocId || arch.id || active.tituloArchivo || arch.titulo || 'ecu'), brandKey, modelKey)
+            : 'ecu';
+
+          for (const [bK, bV] of Object.entries(tree)) {
+            if (bK.toLowerCase().includes(brandKey) || brandKey.includes(bK.toLowerCase())) {
+              const models = bV.models || {};
+              for (const [mK, mV] of Object.entries(models)) {
+                if (mV.archivos && Array.isArray(mV.archivos)) {
+                  for (const a of mV.archivos) {
+                    const aSlug = window.deriveComponentSlug ? window.deriveComponentSlug(a.titulo || a.id || '', bK, mK) : '';
+                    if (aSlug === compSlug) {
+                      const pFromTree = window.VehiculosData ? window.VehiculosData.extractPhotos(a) : (a.allImages || a.imagenes || []);
+                      if (pFromTree && pFromTree.length > 0) {
+                        validPhotos = pFromTree;
+                        break;
+                      }
+                    }
+                  }
+                }
+                if (validPhotos.length === 0 && mV.anios) {
+                  for (const [, aV] of Object.entries(mV.anios)) {
+                    if (aV.motores) {
+                      for (const [, motV] of Object.entries(aV.motores)) {
+                        if (Array.isArray(motV.archivos)) {
+                          for (const a of motV.archivos) {
+                            const aSlug = window.deriveComponentSlug ? window.deriveComponentSlug(a.titulo || a.id || '', bK, mK) : '';
+                            if (aSlug === compSlug) {
+                              const pFromTree = window.VehiculosData ? window.VehiculosData.extractPhotos(a) : (a.allImages || a.imagenes || []);
+                              if (pFromTree && pFromTree.length > 0) {
+                                validPhotos = pFromTree;
+                                break;
+                              }
+                            }
+                          }
+                        }
+                        if (validPhotos.length > 0) break;
+                      }
+                    }
+                    if (validPhotos.length > 0) break;
+                  }
+                }
+                if (validPhotos.length > 0) break;
+              }
+            }
+            if (validPhotos.length > 0) break;
+          }
+          if (validPhotos.length > 0) {
+            active.imagenes = validPhotos;
+            active.allImages = validPhotos;
+            active.imageUrl = validPhotos[0];
+            if (active._selectedArchDoc) {
+              active._selectedArchDoc.imagenes = validPhotos;
+              active._selectedArchDoc.allImages = validPhotos;
+              active._selectedArchDoc.imageUrl = validPhotos[0];
+            }
+          }
+        } catch (treeErr) {}
+      }
 
       if (validPhotos.length === 0) {
         if (stageLoader) stageLoader.classList.add('d-none');
@@ -2739,7 +2800,7 @@ window.loadSpecificDiagramSection = async function(type) {
     const isPcbPhoto = (url) => {
       if (!url || typeof url !== 'string') return false;
       if (url.includes('/imagen/')) return true;
-      if (url.includes('/conexionado/') || url.includes('diagrama_') || url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('%2epdf')) return false;
+      if (url.includes('/conexionado/') || url.split('/').pop().startsWith('diagrama_') || url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('%2epdf')) return false;
       return pcbPhotosList.includes(url);
     };
 
@@ -3452,7 +3513,7 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
       activeData.imageUrl = selectedArchDoc.fotoComponente;
       activeData.allImages = [selectedArchDoc.fotoComponente];
       activeData.imagenes = [selectedArchDoc.fotoComponente];
-    } else if (selectedArchDoc.url && (selectedArchDoc.url.includes('/imagen/') || (!selectedArchDoc.url.toLowerCase().includes('.pdf') && !selectedArchDoc.url.includes('/conexionado/') && !selectedArchDoc.url.includes('diagrama_')))) {
+    } else if (selectedArchDoc.url && (selectedArchDoc.url.includes('/imagen/') || (!selectedArchDoc.url.toLowerCase().includes('.pdf') && !selectedArchDoc.url.includes('/conexionado/') && !selectedArchDoc.url.split('/').pop().startsWith('diagrama_')))) {
       activeData.imageUrl = selectedArchDoc.url;
       activeData.allImages = [selectedArchDoc.url];
       activeData.imagenes = [selectedArchDoc.url];
