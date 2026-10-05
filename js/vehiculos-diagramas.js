@@ -2605,44 +2605,46 @@ window.loadSpecificDiagramSection = async function(type) {
         }
       }
 
-      // Auto-descubrimiento en SiteGround / Servidor Local (archivos físicos en disco)
-      try {
-        const brandQ = (arch.brandDocId || currentSelectedBrandId || currentSelectedBrandName || 'TOYOTA').trim();
-        const modelQ = (arch.modelDocId || currentSelectedModelDocId || currentSelectedModelId || currentSelectedModelName || 'corolla').trim();
-        const motorQ = (arch.motorDocId || currentSelectedMotorDocId || active.motor || 'motor_4e').trim();
-        const compRaw = (arch.archDocId || arch.id || active.id || active.tituloArchivo || arch.titulo || 'ecu').trim();
-        const compQ = (typeof window.deriveComponentSlug === 'function')
-          ? window.deriveComponentSlug(compRaw, brandQ, modelQ, motorQ)
-          : compRaw;
+      // Auto-descubrimiento en Servidor Local / SiteGround únicamente si no se encontraron fotos
+      if (validPhotos.length === 0) {
+        try {
+          const brandQ = (arch.brandDocId || currentSelectedBrandId || currentSelectedBrandName || 'TOYOTA').trim();
+          const modelQ = (arch.modelDocId || currentSelectedModelDocId || currentSelectedModelId || currentSelectedModelName || 'corolla').trim();
+          const motorQ = (arch.motorDocId || currentSelectedMotorDocId || active.motor || 'motor_4e').trim();
+          const compRaw = (arch.archDocId || arch.id || active.id || active.tituloArchivo || arch.titulo || 'ecu').trim();
+          const compQ = (typeof window.deriveComponentSlug === 'function')
+            ? window.deriveComponentSlug(compRaw, brandQ, modelQ, motorQ)
+            : compRaw;
 
-        const apiEndpoints = (typeof window.getApiEndpoints === 'function')
-          ? window.getApiEndpoints('listar_fotos', `marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`)
-          : [`api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`];
+          const apiEndpoints = (typeof window.getApiEndpoints === 'function')
+            ? window.getApiEndpoints('listar_fotos', `marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`)
+            : [`api/diagramas.php?action=listar_fotos&marca=${encodeURIComponent(brandQ)}&modelo=${encodeURIComponent(modelQ)}&motor=${encodeURIComponent(motorQ)}&componente=${encodeURIComponent(compQ)}`];
 
-        for (const ep of apiEndpoints) {
-          try {
-            const controller = new AbortController();
-            const tId = setTimeout(() => controller.abort(), 2500);
-            const resp = await fetch(ep, { signal: controller.signal });
-            clearTimeout(tId);
-            if (resp.ok) {
-              const json = await resp.json();
-              if (json && json.status === 'success' && Array.isArray(json.fotos) && json.fotos.length > 0) {
-                validPhotos = json.fotos;
-                active.imagenes = validPhotos;
-                active.allImages = validPhotos;
-                active.imageUrl = validPhotos[0];
-                if (active._selectedArchDoc) {
-                  active._selectedArchDoc.imagenes = validPhotos;
-                  active._selectedArchDoc.allImages = validPhotos;
-                  active._selectedArchDoc.imageUrl = validPhotos[0];
+          for (const ep of apiEndpoints) {
+            try {
+              const controller = new AbortController();
+              const tId = setTimeout(() => controller.abort(), 2500);
+              const resp = await fetch(ep, { signal: controller.signal });
+              clearTimeout(tId);
+              if (resp.ok) {
+                const json = await resp.json();
+                if (json && json.status === 'success' && Array.isArray(json.fotos) && json.fotos.length > 0) {
+                  validPhotos = json.fotos;
+                  active.imagenes = validPhotos;
+                  active.allImages = validPhotos;
+                  active.imageUrl = validPhotos[0];
+                  if (active._selectedArchDoc) {
+                    active._selectedArchDoc.imagenes = validPhotos;
+                    active._selectedArchDoc.allImages = validPhotos;
+                    active._selectedArchDoc.imageUrl = validPhotos[0];
+                  }
+                  break;
                 }
-                break;
               }
-            }
-          } catch(e) {}
-        }
-      } catch (errApi) {}
+            } catch(e) {}
+          }
+        } catch (errApi) {}
+      }
 
       // Fallback Estático Directo en data/vehiculos_diagramas.json para Hosting Estático (Netlify / GitHub Pages)
       if (validPhotos.length === 0) {
@@ -8490,6 +8492,7 @@ window.uploadFileToHost = async function(file, category = 'diagramas', subcarpet
 
 window.getApiEndpoints = function(action, queryStr = '') {
   const isLocal = typeof window !== 'undefined' && (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost');
+  const isStaticDemo = typeof window !== 'undefined' && (window.location.hostname.includes('netlify.app') || window.location.hostname.includes('github.io'));
   const q = queryStr ? `&${queryStr}` : '';
   const endpoints = [];
   if (isLocal) {
@@ -8498,7 +8501,9 @@ window.getApiEndpoints = function(action, queryStr = '') {
   }
   endpoints.push(`api/diagramas.php?action=${action}${q}`);
   endpoints.push(`/api/diagramas.php?action=${action}${q}`);
-  endpoints.push(`https://probaktronic.com/api/diagramas.php?action=${action}${q}`);
+  if (!isStaticDemo) {
+    endpoints.push(`https://probaktronic.com/api/diagramas.php?action=${action}${q}`);
+  }
   return endpoints;
 };
 
