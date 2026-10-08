@@ -593,7 +593,7 @@ function markItemAsDeleted(type, id) {
 const defaultModelsMap = {
   'toyota': [
     { id: 'hilux', modelo: 'TOYOTA HILUX (2011 - 2015)', nombre: 'TOYOTA HILUX (2011 - 2015)', motor: '2KD-FTV (2011 - 2015)', combustible: 'diesel', categoria: 'pickup', anios: '2011 - 2015', imagen: 'archivos_almacenamiento/diagramas_PRUEBAS/TOYOTA/hilux/2011-2015/ecu/imagen/ecu_frontal.jpg' },
-    { id: 'corolla', modelo: 'TOYOTA COROLLA (MOTOR 4E)', nombre: 'TOYOTA COROLLA (MOTOR 4E)', motor: '4E-FE 1.3L', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '1993 - 1997', imagen: 'archivos_almacenamiento/fotos_modelos/toyota.png' }
+    { id: 'corolla', modelo: 'TOYOTA COROLLA (MOTOR 4E)', nombre: 'TOYOTA COROLLA (MOTOR 4E)', motor: '4E-FE 1.3L', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '1993 - 1997', imagen: 'imagenes autos/ic_car_toyota_corolla_2000.JPG' }
   ],
   'nissan': [
     { id: 'tiida_tiida_latio', modelo: 'NISSAN TIIDA / TIIDA LATIO (2007 - 2012)', nombre: 'NISSAN TIIDA / TIIDA LATIO (2007 - 2012)', motor: 'HR15DE 1.5L', combustible: 'gasolina', categoria: 'sedan_hatchback', anios: '2007 - 2012', imagen: 'archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/ecu/imagen/tiida_tiida_latio_ecu_2.png' }
@@ -1224,8 +1224,8 @@ window.loadSitegroundModelsForBrand = async function(brandDocId, brandName, mode
       }
     } catch(e) {}
 
-    // 4. Fallback a defaultModelsMap solo si no hay ninguno
-    if (rawList.length === 0 && defaultModelsMap[brandKey]) {
+    // 4. Default models map (asegura que modelos base como Corolla o Hilux siempre existan y se unifiquen)
+    if (defaultModelsMap[brandKey]) {
       defaultModelsMap[brandKey].forEach(m => {
         rawList.push({
           id: m.id,
@@ -1403,9 +1403,9 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
     const safeModelName = String(modelName || '').replace(/'/g, "\\'");
     const safeBrandName = String(brandName || '').replace(/'/g, "\\'");
     const safeMotor = String(motor || '').replace(/'/g, "\\'");
-    const safePhoto = String(carPhotoUrl || '').replace(/'/g, "\\'");
+    const safeCategory = String(data.categoria || 'sedan_hatchback').replace(/'/g, "\\'");
     const editModelBtn = isAdmin ? `
-      <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${docId}', name: '${safeModelName}', brand: '${safeBrandName}', motor: '${safeMotor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}', photo: '${safePhoto}' })">
+      <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${docId}', name: '${safeModelName}', brand: '${safeBrandName}', motor: '${safeMotor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}', photo: '${safePhoto}', category: '${safeCategory}' })">
         <i class="bi bi-pencil-fill" style="font-size: 11px;"></i>
       </button>
     ` : '';
@@ -5648,6 +5648,7 @@ window.handleAdminSaveItemChanges = async function(e) {
         const storedModelsKey = `probak_custom_models_${cleanBrand}`;
         const stored = JSON.parse(localStorage.getItem(storedModelsKey) || '[]');
         const idx = stored.findIndex(m => (m.slug || m.id || '').toLowerCase() === cleanModel || (m.nombre && m.nombre.toUpperCase() === newName.toUpperCase()));
+        const preservedCat = (idx >= 0 && stored[idx].categoria) ? stored[idx].categoria : (currentEditingItemContext?.category || window.currentSelectedCategoryKey || 'sedan_hatchback');
         const mObj = {
           slug: cleanModel,
           id: cleanModel,
@@ -5655,6 +5656,7 @@ window.handleAdminSaveItemChanges = async function(e) {
           modelo: newName,
           motor: motorVal || 'Estándar',
           combustible: fuelVal || 'gasolina',
+          categoria: preservedCat,
           imagen: selectedPhoto,
           fotoAuto: selectedPhoto
         };

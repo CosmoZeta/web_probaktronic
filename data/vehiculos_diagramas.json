@@ -2,9 +2,9 @@
     "toyota": {
         "brandData": {
             "nombre": "TOYOTA",
-            "logo": "archivos_almacenamiento/fotos_modelos/toyota.png",
+            "logo": "imagenes svg/ico_logo_toyota.svg",
             "combustible": "diesel",
-            "categoria": "pickup"
+            "categoria": "vehiculos"
         },
         "models": {
             "hilux": {
@@ -142,10 +142,11 @@
                 "modelData": {
                     "_id": "corolla",
                     "nombre": "Corolla (Motor 4E)",
+                    "modelo": "TOYOTA COROLLA (MOTOR 4E)",
                     "anios": "1993 - 1997",
                     "motor": "4E-FE 1.3L",
                     "combustible": "gasolina",
-                    "imagen": "archivos_almacenamiento/fotos_modelos/toyota.png",
+                    "imagen": "imagenes autos/ic_car_toyota_corolla_2000.JPG",
                     "categoria": "sedan_hatchback"
                 },
                 "anios": {
@@ -158,7 +159,7 @@
                                 "motorData": {
                                     "_id": "4E-FE (1993 - 1997)",
                                     "combustible": "gasolina",
-                                    "imagenUrl": "archivos_almacenamiento/fotos_modelos/toyota.png",
+                                    "imagenUrl": "imagenes autos/ic_car_toyota_corolla_2000.JPG",
                                     "titulo": "4E-FE (1993 - 1997)"
                                 },
                                 "archivos": [
@@ -169,10 +170,14 @@
                                         "tipo": "ecu",
                                         "pdfUrl": "archivos_almacenamiento/diagramas_PRUEBAS/TOYOTA/corolla/motor_4e/ecu/conexionado/diagrama_ecu_corolla_4e.pdf",
                                         "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/TOYOTA/corolla/motor_4e/ecu/conexionado/diagrama_ecu_corolla_4e.pdf",
-                                        "url": "",
-                                        "imageUrl": "",
-                                        "imagenes": [],
-                                        "allImages": [],
+                                        "url": "imagenes autos/ic_car_toyota_corolla_2000.JPG",
+                                        "imageUrl": "imagenes autos/ic_car_toyota_corolla_2000.JPG",
+                                        "imagenes": [
+                                            "imagenes autos/ic_car_toyota_corolla_2000.JPG"
+                                        ],
+                                        "allImages": [
+                                            "imagenes autos/ic_car_toyota_corolla_2000.JPG"
+                                        ],
                                         "componentes_ecu": []
                                     }
                                 ]
