@@ -5423,13 +5423,13 @@ window.handleAdminSaveItemChanges = async function(e) {
 
   const type = document.getElementById('adminEditItemType').value;
   const id = document.getElementById('adminEditItemId').value;
-  const newName = document.getElementById('adminEditItemNameInput').value.trim();
-  const parentBrand = document.getElementById('adminEditItemParentBrand').value;
-  const parentModel = document.getElementById('adminEditItemParentModel').value;
-  const parentAnio = document.getElementById('adminEditItemParentAnio').value;
-  const parentMotor = document.getElementById('adminEditItemParentMotor').value;
-  const motorVal = document.getElementById('adminEditItemMotorInput')?.value.trim();
-  const fuelVal = document.getElementById('adminEditItemFuelSelect')?.value;
+  const newName = (document.getElementById('adminEditItemNameInput')?.value || '').trim();
+  const parentBrand = document.getElementById('adminEditItemParentBrand')?.value || '';
+  const parentModel = document.getElementById('adminEditItemParentModel')?.value || '';
+  const parentAnio = document.getElementById('adminEditItemParentAnio')?.value || '';
+  const parentMotor = document.getElementById('adminEditItemParentMotor')?.value || '';
+  const motorVal = (document.getElementById('adminEditItemMotorInput')?.value || '').trim();
+  const fuelVal = document.getElementById('adminEditItemFuelSelect')?.value || 'gasolina';
   const statusMsg = document.getElementById('adminEditItemStatusMsg');
 
   if (!newName) {
@@ -5438,84 +5438,152 @@ window.handleAdminSaveItemChanges = async function(e) {
   }
 
   try {
-    ensureFirebaseInitialized();
-    const db = firebase.firestore();
     if (statusMsg) {
-      statusMsg.className = 'small text-center fw-bold text-danger mb-2';
-      statusMsg.textContent = 'Guardando cambios en Firestore...';
+      statusMsg.className = 'small text-center fw-bold text-primary mb-2';
+      statusMsg.textContent = 'Guardando cambios...';
     }
 
     if (type === 'brand') {
-      const cleanBrand = id.toLowerCase().trim();
+      const cleanBrand = (id || newName).toLowerCase().trim();
       const selectedLogo = document.getElementById('adminEditItemLogoInput')?.value.trim() || getBrandLogoUrl(cleanBrand);
 
-      // 1. Guardar en Firestore
-      await db.collection('diagramas').doc(cleanBrand).set({
-        nombre: newName.toUpperCase(),
-        marca: newName.toUpperCase(),
-        logo: selectedLogo,
-        logoUrl: selectedLogo,
-        LogoUrl: selectedLogo
-      }, { merge: true });
+      // 1. Guardar en Base de Datos MySQL SiteGround
+      try {
+        await window.callDiagramasApi('save_marca', {
+          marca: newName,
+          slug: cleanBrand,
+          logo: selectedLogo
+        });
+      } catch (apiErr) {}
 
-      // 2. Guardar en LocalStorage para renderizado instantáneo offline/local
+      // 2. Guardar en LocalStorage para renderizado instantáneo
       try {
         const customBrandLogos = JSON.parse(localStorage.getItem('probaktronic_custom_brand_logos') || '{}');
         customBrandLogos[cleanBrand] = selectedLogo;
         customBrandLogos[newName.toLowerCase().trim()] = selectedLogo;
         localStorage.setItem('probaktronic_custom_brand_logos', JSON.stringify(customBrandLogos));
+
+        const customBrands = JSON.parse(localStorage.getItem('probak_custom_brands') || '[]');
+        const idx = customBrands.findIndex(b => (b.id || b.slug || '').toLowerCase() === cleanBrand);
+        const bObj = {
+          id: cleanBrand,
+          slug: cleanBrand,
+          name: newName.toUpperCase(),
+          nombre: newName.toUpperCase(),
+          logo: selectedLogo
+        };
+        if (idx >= 0) {
+          customBrands[idx] = { ...customBrands[idx], ...bObj };
+        } else {
+          customBrands.push(bObj);
+        }
+        localStorage.setItem('probak_custom_brands', JSON.stringify(customBrands));
       } catch(e) {}
 
       // 3. Actualizar memoria local
       localBrandLogoMap[cleanBrand] = selectedLogo;
       localBrandLogoMap[newName.toLowerCase().trim()] = selectedLogo;
 
+      // 4. Guardar opcionalmente en Firebase solo si estuviese disponible
+      if (typeof firebase !== 'undefined' && firebase.firestore) {
+        try {
+          await firebase.firestore().collection('diagramas').doc(cleanBrand).set({
+            nombre: newName.toUpperCase(),
+            marca: newName.toUpperCase(),
+            logo: selectedLogo,
+            logoUrl: selectedLogo,
+            LogoUrl: selectedLogo
+          }, { merge: true });
+        } catch (fbErr) {}
+      }
+
       if (typeof window.showGlobalToast === 'function') {
         window.showGlobalToast(`Marca "${newName}" y logo actualizados con éxito.`);
       }
       setTimeout(() => {
         bootstrap.Modal.getInstance(document.getElementById('adminEditItemModal'))?.hide();
+        cachedActiveBrands = null;
         const grid = document.getElementById('vehiculosBrandGrid');
-        if (grid) loadFirestoreDiagramasBrands(grid);
-      }, 500);
+        if (grid && typeof loadFirestoreDiagramasBrands === 'function') {
+          loadFirestoreDiagramasBrands(grid);
+        }
+      }, 400);
 
     } else if (type === 'model') {
-      const cleanBrand = (parentBrand || currentSelectedBrandId || '').toLowerCase().trim();
+      const cleanBrand = (parentBrand || currentSelectedBrandId || 'toyota').toLowerCase().trim();
       const cleanModel = id.toLowerCase().trim();
 
-      await db.collection('diagramas').doc(cleanBrand).collection('modelos').doc(cleanModel).set({
-        nombre: `${parentBrand} ${newName}`.toUpperCase(),
-        modelo: newName,
-        motor: motorVal || 'Estándar',
-        combustible: fuelVal || 'gasolina'
-      }, { merge: true });
+      // 1. Guardar en Base de Datos MySQL SiteGround
+      try {
+        await window.callDiagramasApi('save_modelo', {
+          marca: cleanBrand,
+          modelo: newName,
+          slug: cleanModel,
+          motor: motorVal || 'Estándar',
+          combustible: fuelVal || 'gasolina'
+        });
+      } catch (apiErr) {}
+
+      // 2. Guardar en LocalStorage
+      try {
+        const storedModelsKey = `probak_custom_models_${cleanBrand}`;
+        const stored = JSON.parse(localStorage.getItem(storedModelsKey) || '[]');
+        const idx = stored.findIndex(m => (m.slug || m.id || '').toLowerCase() === cleanModel || (m.nombre && m.nombre.toUpperCase() === newName.toUpperCase()));
+        const mObj = {
+          slug: cleanModel,
+          id: cleanModel,
+          nombre: newName,
+          modelo: newName,
+          motor: motorVal || 'Estándar',
+          combustible: fuelVal || 'gasolina'
+        };
+        if (idx >= 0) {
+          stored[idx] = { ...stored[idx], ...mObj };
+        } else {
+          stored.push(mObj);
+        }
+        localStorage.setItem(storedModelsKey, JSON.stringify(stored));
+      } catch(e) {}
+
+      // 3. Guardar opcionalmente en Firebase solo si estuviese disponible
+      if (typeof firebase !== 'undefined' && firebase.firestore) {
+        try {
+          await firebase.firestore().collection('diagramas').doc(cleanBrand).collection('modelos').doc(cleanModel).set({
+            nombre: `${parentBrand} ${newName}`.toUpperCase(),
+            modelo: newName,
+            motor: motorVal || 'Estándar',
+            combustible: fuelVal || 'gasolina'
+          }, { merge: true });
+        } catch (fbErr) {}
+      }
 
       if (typeof window.showGlobalToast === 'function') {
         window.showGlobalToast(`Modelo "${newName}" actualizado con éxito.`);
       }
       setTimeout(() => {
         bootstrap.Modal.getInstance(document.getElementById('adminEditItemModal'))?.hide();
-        const modelsListGrid = document.getElementById('brandModelsListGrid');
-        if (modelsListGrid) {
-          const loader = safeCreateCenteredLoader(modelsListGrid, 'Actualizando lista de modelos...');
-          db.collection('diagramas').doc(cleanBrand).collection('modelos').get()
-            .then(snap => renderModelCardsFromSnapshot(snap, parentBrand, modelsListGrid, loader))
-            .catch(() => renderFallbackModelsForBrand(cleanBrand, parentBrand, modelsListGrid, loader));
+        window._modelsCacheByBrand = {};
+        const modelsListGrid = document.getElementById('modelsListGrid') || document.getElementById('brandModelsListGrid');
+        if (modelsListGrid && typeof window.loadSitegroundModelsForBrand === 'function') {
+          window.loadSitegroundModelsForBrand(cleanBrand, parentBrand || cleanBrand, modelsListGrid, null);
         }
-      }, 600);
+      }, 400);
 
     } else if (type === 'diagram') {
       const cleanBrand = (parentBrand || '').toLowerCase().trim();
       const cleanModel = (parentModel || '').toLowerCase().trim();
 
-      if (cleanBrand && cleanModel && parentAnio && parentMotor && id) {
-        await db.collection('diagramas').doc(cleanBrand)
-          .collection('modelos').doc(cleanModel)
-          .collection('anios').doc(parentAnio)
-          .collection('motores').doc(parentMotor)
-          .collection('archivos').doc(id).set({
-            titulo: newName
-          }, { merge: true });
+      // Guardar opcionalmente en Firebase si estuviese disponible
+      if (cleanBrand && cleanModel && parentAnio && parentMotor && id && typeof firebase !== 'undefined' && firebase.firestore) {
+        try {
+          await firebase.firestore().collection('diagramas').doc(cleanBrand)
+            .collection('modelos').doc(cleanModel)
+            .collection('anios').doc(parentAnio)
+            .collection('motores').doc(parentMotor)
+            .collection('archivos').doc(id).set({
+              titulo: newName
+            }, { merge: true });
+        } catch(fbErr) {}
       }
 
       if (typeof window.showGlobalToast === 'function') {
@@ -5523,10 +5591,10 @@ window.handleAdminSaveItemChanges = async function(e) {
       }
       setTimeout(() => {
         bootstrap.Modal.getInstance(document.getElementById('adminEditItemModal'))?.hide();
-        if (cleanModel) {
+        if (cleanModel && typeof window.openModelEcuInfo === 'function') {
           window.openModelEcuInfo(cleanModel, cleanModel, parentMotor);
         }
-      }, 600);
+      }, 400);
     }
 
   } catch (err) {
