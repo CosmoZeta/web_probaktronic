@@ -235,8 +235,20 @@ window.handleAdminEditBrandLogoFileSelect = function(input) {
 const localCarPhotoLibrary = [{"file":"imagenes autos/ic_car_audia3.JPG","brand":"audi","model":"a3","modelNoSpaces":"a3","year":null},{"file":"imagenes autos/ic_car_audi_a4.JPG","brand":"audi","model":"a4","modelNoSpaces":"a4","year":null},{"file":"imagenes autos/ic_car_audi_q7.JPG","brand":"audi","model":"q7","modelNoSpaces":"q7","year":null},{"file":"imagenes autos/ic_car_audi_tiguan.JPG","brand":"audi","model":"tiguan","modelNoSpaces":"tiguan","year":null},{"file":"imagenes autos/ic_car_audi_tt.JPG","brand":"audi","model":"tt","modelNoSpaces":"tt","year":null},{"file":"imagenes autos/ic_car_bmw_118_2007.JPG","brand":"bmw","model":"118","modelNoSpaces":"118","year":2007},{"file":"imagenes autos/ic_car_chevrolet_captiva_2011.JPG","brand":"chevrolet","model":"captiva","modelNoSpaces":"captiva","year":2011},{"file":"imagenes autos/ic_car_chevrolet_chevy.JPG","brand":"chevrolet","model":"chevy","modelNoSpaces":"chevy","year":null},{"file":"imagenes autos/ic_car_chevrolet_colorado_2006.JPG","brand":"chevrolet","model":"colorado","modelNoSpaces":"colorado","year":2006},{"file":"imagenes autos/ic_car_chevrolet_sail_2010.JPG","brand":"chevrolet","model":"sail","modelNoSpaces":"sail","year":2010},{"file":"imagenes autos/ic_car_chevrolet_trailblazer_2002.JPG","brand":"chevrolet","model":"trailblazer","modelNoSpaces":"trailblazer","year":2002},{"file":"imagenes autos/ic_car_Citroen_Berlingo_2015.JPG","brand":"citroen","model":"berlingo","modelNoSpaces":"berlingo","year":2015},{"file":"imagenes autos/ic_car_citroen_c3_aircross.JPG","brand":"citroen","model":"c3 aircross","modelNoSpaces":"c3aircross","year":null},{"file":"imagenes autos/ic_car_citroen_c3_mk3.JPG","brand":"citroen","model":"c3 mk3","modelNoSpaces":"c3mk3","year":null},{"file":"imagenes autos/ic_car_citroen_c3_tercera_generacion.jpg","brand":"citroen","model":"c3 tercera generacion","modelNoSpaces":"c3tercerageneracion","year":null},{"file":"imagenes autos/ic_car_citroen_cactus.JPG","brand":"citroen","model":"cactus","modelNoSpaces":"cactus","year":null},{"file":"imagenes autos/ic_car_Citroen_Citroen_C3_mk3.JPG","brand":"citroen","model":"citroen c3 mk3","modelNoSpaces":"citroenc3mk3","year":null},{"file":"imagenes autos/ic_car_Citroen_Citroen_C3_tercera_generacion.JPG","brand":"citroen","model":"citroen c3 tercera generacion","modelNoSpaces":"citroenc3tercerageneracion","year":null},{"file":"imagenes autos/ic_car_citroen_picasso.JPG","brand":"citroen","model":"picasso","modelNoSpaces":"picasso","year":null},{"file":"imagenes autos/ic_car_citroen_saxo.JPG","brand":"citroen","model":"saxo","modelNoSpaces":"saxo","year":null},{"file":"imagenes autos/ic_car_citroen_xsara.JPG","brand":"citroen","model":"xsara","modelNoSpaces":"xsara","year":null},{"file":"imagenes autos/ic_car_dacia_duster.JPG","brand":"dacia","model":"duster","modelNoSpaces":"duster","year":null},{"file":"imagenes autos/ic_car_dacia_lodgy.JPG","brand":"dacia","model":"lodgy","modelNoSpaces":"lodgy","year":null},{"file":"imagenes autos/ic_car_daihatsu_copen.JPG","brand":"daihatsu","model":"copen","modelNoSpaces":"copen","year":null},{"file":"imagenes autos/ic_car_daihatsu_materia.JPG","brand":"daihatsu","model":"materia","modelNoSpaces":"materia","year":null},{"file":"imagenes autos/ic_car_daihatsu_sirion.JPG","brand":"daihatsu","model":"sirion","modelNoSpaces":"sirion","year":null},{"file":"imagenes autos/ic_car_daihatsu_terios.JPG","brand":"daihatsu","model":"terios","modelNoSpaces":"terios","year":null},{"file":"imagenes autos/ic_car_fiat_abarth.JPG","brand":"fiat","model":"abarth","modelNoSpaces":"abarth","year":null},{"file":"imagenes autos/ic_car_fiat_brava.JPG","brand":"fiat","model":"brava","modelNoSpaces":"brava","year":null},{"file":"imagenes autos/ic_car_fiat_coupe.JPG","brand":"fiat","model":"coupe","modelNoSpaces":"coupe","year":null},{"file":"imagenes autos/ic_car_fiat_coupe_2000.JPG","brand":"fiat","model":"coupe","modelNoSpaces":"coupe","year":2000},{"file":"imagenes autos/ic_car_fiat_doblo.JPG","brand":"fiat","model":"doblo","modelNoSpaces":"doblo","year":null},{"file":"imagenes autos/ic_car_fiat_marea.JPG","brand":"fiat","model":"marea","modelNoSpaces":"marea","year":null},{"file":"imagenes autos/ic_car_fiat_marea_1999.JPG","brand":"fiat","model":"marea","modelNoSpaces":"marea","year":1999},{"file":"imagenes autos/ic_car_fiat_multipla.JPG","brand":"fiat","model":"multipla","modelNoSpaces":"multipla","year":null},{"file":"imagenes autos/ic_car_fiat_palio_weekend.JPG","brand":"fiat","model":"palio weekend","modelNoSpaces":"palioweekend","year":null},{"file":"imagenes autos/ic_car_fiat_sedici.JPG","brand":"fiat","model":"sedici","modelNoSpaces":"sedici","year":null},{"file":"imagenes autos/ic_car_fiat_stilo.JPG","brand":"fiat","model":"stilo","modelNoSpaces":"stilo","year":null},{"file":"imagenes autos/ic_car_ford_ecosport.JPG","brand":"ford","model":"ecosport","modelNoSpaces":"ecosport","year":null},{"file":"imagenes autos/ic_car_ford_expedition.JPG","brand":"ford","model":"expedition","modelNoSpaces":"expedition","year":null},{"file":"imagenes autos/ic_car_ford_explorer.JPG","brand":"ford","model":"explorer","modelNoSpaces":"explorer","year":null},{"file":"imagenes autos/ic_car_ford_f150.JPG","brand":"ford","model":"f150","modelNoSpaces":"f150","year":null},{"file":"imagenes autos/ic_car_ford_fiesta.JPG","brand":"ford","model":"fiesta","modelNoSpaces":"fiesta","year":null},{"file":"imagenes autos/ic_car_ford_focus.JPG","brand":"ford","model":"focus","modelNoSpaces":"focus","year":null},{"file":"imagenes autos/ic_car_ford_mustang.JPG","brand":"ford","model":"mustang","modelNoSpaces":"mustang","year":null},{"file":"imagenes autos/ic_car_honda_airwave.jpg","brand":"honda","model":"airwave","modelNoSpaces":"airwave","year":null},{"file":"imagenes autos/ic_car_honda_city.jpg","brand":"honda","model":"city","modelNoSpaces":"city","year":null},{"file":"imagenes autos/ic_car_honda_civic.jpg","brand":"honda","model":"civic","modelNoSpaces":"civic","year":null},{"file":"imagenes autos/ic_car_honda_fit.jpg","brand":"honda","model":"fit","modelNoSpaces":"fit","year":null},{"file":"imagenes autos/ic_car_honda_fit_2002.jpg","brand":"honda","model":"fit","modelNoSpaces":"fit","year":2002},{"file":"imagenes autos/ic_car_honda_jazz.jpg","brand":"honda","model":"jazz","modelNoSpaces":"jazz","year":null},{"file":"imagenes autos/ic_car_honda_mobilo.jpg","brand":"honda","model":"mobilo","modelNoSpaces":"mobilo","year":null},{"file":"imagenes autos/ic_car_hummer_h3.jpg","brand":"hummer","model":"h3","modelNoSpaces":"h3","year":null},{"file":"imagenes autos/ic_car_hyundai_accent.jpg","brand":"hyundai","model":"accent","modelNoSpaces":"accent","year":null},{"file":"imagenes autos/ic_car_hyundai_atos.jpg","brand":"hyundai","model":"atos","modelNoSpaces":"atos","year":null},{"file":"imagenes autos/ic_car_hyundai_elantra.jpg","brand":"hyundai","model":"elantra","modelNoSpaces":"elantra","year":null},{"file":"imagenes autos/ic_car_hyundai_elantra_2020.jpg","brand":"hyundai","model":"elantra","modelNoSpaces":"elantra","year":2020},{"file":"imagenes autos/ic_car_hyundai_i10_2007.JPG","brand":"hyundai","model":"i10","modelNoSpaces":"i10","year":2007},{"file":"imagenes autos/ic_car_hyundai_i30_2007.JPG","brand":"hyundai","model":"i30","modelNoSpaces":"i30","year":2007},{"file":"imagenes autos/ic_car_hyundai_i30_2012.JPG","brand":"hyundai","model":"i30","modelNoSpaces":"i30","year":2012},{"file":"imagenes autos/ic_car_hyundai_santafe_2003.JPG","brand":"hyundai","model":"santafe","modelNoSpaces":"santafe","year":2003},{"file":"imagenes autos/ic_car_hyundai_santafe_2006.jpg","brand":"hyundai","model":"santafe","modelNoSpaces":"santafe","year":2006},{"file":"imagenes autos/ic_car_hyundai_santro_2014.jpg","brand":"hyundai","model":"santro","modelNoSpaces":"santro","year":2014},{"file":"imagenes autos/ic_car_hyundai_sonata_2005.jpg","brand":"hyundai","model":"sonata","modelNoSpaces":"sonata","year":2005},{"file":"imagenes autos/ic_car_hyundai_terracan_2001.JPG","brand":"hyundai","model":"terracan","modelNoSpaces":"terracan","year":2001},{"file":"imagenes autos/ic_car_hyundai_tucson_2015.JPG","brand":"hyundai","model":"tucson","modelNoSpaces":"tucson","year":2015},{"file":"imagenes autos/ic_car_hyundai_xg350_2005.JPG","brand":"hyundai","model":"xg350","modelNoSpaces":"xg350","year":2005},{"file":"imagenes autos/ic_car_infiniti_i30_2004.JPG","brand":"infiniti","model":"i30","modelNoSpaces":"i30","year":2004},{"file":"imagenes autos/ic_car_infiniti_qx4_2003.JPG","brand":"infiniti","model":"qx4","modelNoSpaces":"qx4","year":2003},{"file":"imagenes autos/ic_car_isuzu_290_2007.JPG","brand":"isuzu","model":"290","modelNoSpaces":"290","year":2007},{"file":"imagenes autos/ic_car_isuzu_ascender_2003.JPG","brand":"isuzu","model":"ascender","modelNoSpaces":"ascender","year":2003},{"file":"imagenes autos/ic_car_isuzu_i280_2006.JPG","brand":"isuzu","model":"i280","modelNoSpaces":"i280","year":2006},{"file":"imagenes autos/ic_car_kia_amanti_2004.JPG","brand":"kia","model":"amanti","modelNoSpaces":"amanti","year":2004},{"file":"imagenes autos/ic_car_kia_carnival_2005.JPG","brand":"kia","model":"carnival","modelNoSpaces":"carnival","year":2005},{"file":"imagenes autos/ic_car_kia_cerato_2008.JPG","brand":"kia","model":"cerato","modelNoSpaces":"cerato","year":2008},{"file":"imagenes autos/ic_car_kia_opirus_2004.JPG","brand":"kia","model":"opirus","modelNoSpaces":"opirus","year":2004},{"file":"imagenes autos/ic_car_kia_opirus_2006.JPG","brand":"kia","model":"opirus","modelNoSpaces":"opirus","year":2006},{"file":"imagenes autos/ic_car_kia_optima_2006.JPG","brand":"kia","model":"optima","modelNoSpaces":"optima","year":2006},{"file":"imagenes autos/ic_car_kia_optima_2019.JPG","brand":"kia","model":"optima","modelNoSpaces":"optima","year":2019},{"file":"imagenes autos/ic_car_kia_picanto_2004.JPG","brand":"kia","model":"picanto","modelNoSpaces":"picanto","year":2004},{"file":"imagenes autos/ic_car_kia_rio_2011.JPG","brand":"kia","model":"rio","modelNoSpaces":"rio","year":2011},{"file":"imagenes autos/ic_car_kia_sedona_2005.JPG","brand":"kia","model":"sedona","modelNoSpaces":"sedona","year":2005},{"file":"imagenes autos/ic_car_kia_sorento_2006.JPG","brand":"kia","model":"sorento","modelNoSpaces":"sorento","year":2006},{"file":"imagenes autos/ic_car_kia_soul_2011.JPG","brand":"kia","model":"soul","modelNoSpaces":"soul","year":2011},{"file":"imagenes autos/ic_car_kia_soul_2019.JPG","brand":"kia","model":"soul","modelNoSpaces":"soul","year":2019},{"file":"imagenes autos/ic_car_kia_sportage_2021.JPG","brand":"kia","model":"sportage","modelNoSpaces":"sportage","year":2021},{"file":"imagenes autos/ic_car_lacia_kappa_2001.jpg","brand":"lacia","model":"kappa","modelNoSpaces":"kappa","year":2001},{"file":"imagenes autos/ic_car_lada_110_2012.jpg","brand":"lada","model":"110","modelNoSpaces":"110","year":2012},{"file":"imagenes autos/ic_car_lada_111_2009.jpg","brand":"lada","model":"111","modelNoSpaces":"111","year":2009},{"file":"imagenes autos/ic_car_lada_112_2008.jpg","brand":"lada","model":"112","modelNoSpaces":"112","year":2008},{"file":"imagenes autos/ic_car_lada_granta_2021.jpg","brand":"lada","model":"granta","modelNoSpaces":"granta","year":2021},{"file":"imagenes autos/ic_car_lada_kalina_2013.jpg","brand":"lada","model":"kalina","modelNoSpaces":"kalina","year":2013},{"file":"imagenes autos/ic_car_lada_niva_2020.jpg","brand":"lada","model":"niva","modelNoSpaces":"niva","year":2020},{"file":"imagenes autos/ic_car_lada_priora_2007.jpg","brand":"lada","model":"priora","modelNoSpaces":"priora","year":2007},{"file":"imagenes autos/ic_car_lancia_2005.jpg","brand":"lancia","model":"","modelNoSpaces":"","year":2005},{"file":"imagenes autos/ic_car_lancia_lybra_1999.jpg","brand":"lancia","model":"lybra","modelNoSpaces":"lybra","year":1999},{"file":"imagenes autos/ic_car_lancia_thesis_2009.jpg","brand":"lancia","model":"thesis","modelNoSpaces":"thesis","year":2009},{"file":"imagenes autos/ic_car_lotus_elise_2011.jpg","brand":"lotus","model":"elise","modelNoSpaces":"elise","year":2011},{"file":"imagenes autos/ic_car_mahindra_scorpio_2014.jpg","brand":"mahindra","model":"scorpio","modelNoSpaces":"scorpio","year":2014},{"file":"imagenes autos/ic_car_maruti_suzuki_2022.jpg","brand":"maruti","model":"suzuki","modelNoSpaces":"suzuki","year":2022},{"file":"imagenes autos/ic_car_mazda_323_2001.jpg","brand":"mazda","model":"323","modelNoSpaces":"323","year":2001},{"file":"imagenes autos/ic_car_mazda_323_2003.jpg","brand":"mazda","model":"323","modelNoSpaces":"323","year":2003},{"file":"imagenes autos/ic_car_mazda_3_2009.jpg","brand":"mazda","model":"3","modelNoSpaces":"3","year":2009},{"file":"imagenes autos/ic_car_mazda_3_2018.jpg","brand":"mazda","model":"3","modelNoSpaces":"3","year":2018},{"file":"imagenes autos/ic_car_mazda_5_2010.jpg","brand":"mazda","model":"5","modelNoSpaces":"5","year":2010},{"file":"imagenes autos/ic_car_mazda_626_2002.jpg","brand":"mazda","model":"626","modelNoSpaces":"626","year":2002},{"file":"imagenes autos/ic_car_mazda_6_2008.jpg","brand":"mazda","model":"6","modelNoSpaces":"6","year":2008},{"file":"imagenes autos/ic_car_mazda_6_2018.jpg","brand":"mazda","model":"6","modelNoSpaces":"6","year":2018},{"file":"imagenes autos/ic_car_mazda_allegro_2001.jpg","brand":"mazda","model":"allegro","modelNoSpaces":"allegro","year":2001},{"file":"imagenes autos/ic_car_mazda_allegro_2004.jpg","brand":"mazda","model":"allegro","modelNoSpaces":"allegro","year":2004},{"file":"imagenes autos/ic_car_mazda_cx5_2018.jpg","brand":"mazda","model":"cx5","modelNoSpaces":"cx5","year":2018},{"file":"imagenes autos/ic_car_mazda_premacy_2005.jpg","brand":"mazda","model":"premacy","modelNoSpaces":"premacy","year":2005},{"file":"imagenes autos/ic_car_mercedes_clase_a_2024.JPG","brand":"mercedes","model":"clase a","modelNoSpaces":"clasea","year":2024},{"file":"imagenes autos/ic_car_mini_cooper_2013.JPG","brand":"mini","model":"cooper","modelNoSpaces":"cooper","year":2013},{"file":"imagenes autos/ic_car_mitsubishi_galant_1992.JPG","brand":"mitsubishi","model":"galant","modelNoSpaces":"galant","year":1992},{"file":"imagenes autos/ic_car_mitsubishi_lancer_1990.JPG","brand":"mitsubishi","model":"lancer","modelNoSpaces":"lancer","year":1990},{"file":"imagenes autos/ic_car_mitsubishi_lancer_2009.JPG","brand":"mitsubishi","model":"lancer","modelNoSpaces":"lancer","year":2009},{"file":"imagenes autos/ic_car_mitsubishi_mirage_1996.JPG","brand":"mitsubishi","model":"mirage","modelNoSpaces":"mirage","year":1996},{"file":"imagenes autos/ic_car_mitsubishi_spacestar_2005.JPG","brand":"mitsubishi","model":"spacestar","modelNoSpaces":"spacestar","year":2005},{"file":"imagenes autos/ic_car_nissan_maxima_2000.JPG","brand":"nissan","model":"maxima","modelNoSpaces":"maxima","year":2000},{"file":"imagenes autos/ic_car_nissan_maxima_2003.JPG","brand":"nissan","model":"maxima","modelNoSpaces":"maxima","year":2003},{"file":"imagenes autos/ic_car_nissan_murano_2003.JPG","brand":"nissan","model":"murano","modelNoSpaces":"murano","year":2003},{"file":"imagenes autos/ic_car_nissan_murano_2007.JPG","brand":"nissan","model":"murano","modelNoSpaces":"murano","year":2007},{"file":"imagenes autos/ic_car_nissan_pathfinder_2001.JPG","brand":"nissan","model":"pathfinder","modelNoSpaces":"pathfinder","year":2001},{"file":"imagenes autos/ic_car_nissan_pathfinder_2004.JPG","brand":"nissan","model":"pathfinder","modelNoSpaces":"pathfinder","year":2004},{"file":"imagenes autos/ic_car_nissan_pixo_2009.JPG","brand":"nissan","model":"pixo","modelNoSpaces":"pixo","year":2009},{"file":"imagenes autos/ic_car_nissan_qashqai_2024.JPG","brand":"nissan","model":"qashqai","modelNoSpaces":"qashqai","year":2024},{"file":"imagenes autos/ic_car_nissan_qg15_2006.JPG","brand":"nissan","model":"qg15","modelNoSpaces":"qg15","year":2006},{"file":"imagenes autos/ic_car_nissan_xtrail_2024.JPG","brand":"nissan","model":"xtrail","modelNoSpaces":"xtrail","year":2024},{"file":"imagenes autos/ic_car_opel_agila_2014.JPG","brand":"opel","model":"agila","modelNoSpaces":"agila","year":2014},{"file":"imagenes autos/ic_car_opel_corsa_2024.JPG","brand":"opel","model":"corsa","modelNoSpaces":"corsa","year":2024},{"file":"imagenes autos/ic_car_opel_crossland_x_2017.JPG","brand":"opel","model":"crossland x","modelNoSpaces":"crosslandx","year":2017},{"file":"imagenes autos/ic_car_peugeot_106_2004.JPG","brand":"peugeot","model":"106","modelNoSpaces":"106","year":2004},{"file":"imagenes autos/ic_car_peugeot_2008_2003.JPG","brand":"peugeot","model":"","modelNoSpaces":"","year":2008},{"file":"imagenes autos/ic_car_peugeot_2008_2015.JPG","brand":"peugeot","model":"","modelNoSpaces":"","year":2008},{"file":"imagenes autos/ic_car_peugeot_206_1998.JPG","brand":"peugeot","model":"206","modelNoSpaces":"206","year":1998},{"file":"imagenes autos/ic_car_peugeot_208_2012.JPG","brand":"peugeot","model":"208","modelNoSpaces":"208","year":2012},{"file":"imagenes autos/ic_car_peugeot_208_2015.JPG","brand":"peugeot","model":"208","modelNoSpaces":"208","year":2015},{"file":"imagenes autos/ic_car_peugeot_208_2018.JPG","brand":"peugeot","model":"208","modelNoSpaces":"208","year":2018},{"file":"imagenes autos/ic_car_peugeot_3008_2016.JPG","brand":"peugeot","model":"3008","modelNoSpaces":"3008","year":2016},{"file":"imagenes autos/ic_car_peugeot_3008_2020.JPG","brand":"peugeot","model":"3008","modelNoSpaces":"3008","year":2020},{"file":"imagenes autos/ic_car_peugeot_306_2002.JPG","brand":"peugeot","model":"306","modelNoSpaces":"306","year":2002},{"file":"imagenes autos/ic_car_peugeot_308_2008.JPG","brand":"peugeot","model":"308","modelNoSpaces":"308","year":2008},{"file":"imagenes autos/ic_car_peugeot_308_2013.JPG","brand":"peugeot","model":"308","modelNoSpaces":"308","year":2013},{"file":"imagenes autos/ic_car_peugeot_308_2014.JPG","brand":"peugeot","model":"308","modelNoSpaces":"308","year":2014},{"file":"imagenes autos/ic_car_peugeot_406_2004.JPG","brand":"peugeot","model":"406","modelNoSpaces":"406","year":2004},{"file":"imagenes autos/ic_car_peugeot_408_2010.JPG","brand":"peugeot","model":"408","modelNoSpaces":"408","year":2010},{"file":"imagenes autos/ic_car_peugeot_partner_2008.JPG","brand":"peugeot","model":"partner","modelNoSpaces":"partner","year":2008},{"file":"imagenes autos/ic_car_peugeot_partner_rifter_2015.JPG","brand":"peugeot","model":"partner rifter","modelNoSpaces":"partnerrifter","year":2015},{"file":"imagenes autos/ic_car_porsche_cayenne_2003.JPG","brand":"porsche","model":"cayenne","modelNoSpaces":"cayenne","year":2003},{"file":"imagenes autos/ic_car_porsche_cayenne_2010.JPG","brand":"porsche","model":"cayenne","modelNoSpaces":"cayenne","year":2010},{"file":"imagenes autos/ic_car_porsche_panamera_2009.JPG","brand":"porsche","model":"panamera","modelNoSpaces":"panamera","year":2009},{"file":"imagenes autos/ic_car_renault_arkana_2019.JPG","brand":"renault","model":"arkana","modelNoSpaces":"arkana","year":2019},{"file":"imagenes autos/ic_car_renault_captur_2024.JPG","brand":"renault","model":"captur","modelNoSpaces":"captur","year":2024},{"file":"imagenes autos/ic_car_renault_clioll_2009.JPG","brand":"renault","model":"clioll","modelNoSpaces":"clioll","year":2009},{"file":"imagenes autos/ic_car_renault_clio_2019.JPG","brand":"renault","model":"clio","modelNoSpaces":"clio","year":2019},{"file":"imagenes autos/ic_car_renault_duster_2020.JPG","brand":"renault","model":"duster","modelNoSpaces":"duster","year":2020},{"file":"imagenes autos/ic_car_renault_kadja_2018.JPG","brand":"renault","model":"kadja","modelNoSpaces":"kadja","year":2018},{"file":"imagenes autos/ic_car_renault_kangoo_2012.JPG","brand":"renault","model":"kangoo","modelNoSpaces":"kangoo","year":2012},{"file":"imagenes autos/ic_car_renault_logan_2013.JPG","brand":"renault","model":"logan","modelNoSpaces":"logan","year":2013},{"file":"imagenes autos/ic_car_renault_megane_2009.JPG","brand":"renault","model":"megane","modelNoSpaces":"megane","year":2009},{"file":"imagenes autos/ic_car_renault_sandero_2007.JPG","brand":"renault","model":"sandero","modelNoSpaces":"sandero","year":2007},{"file":"imagenes autos/ic_car_renault_scenic_2009.JPG","brand":"renault","model":"scenic","modelNoSpaces":"scenic","year":2009},{"file":"imagenes autos/ic_car_seat_cordoba_2009.JPG","brand":"seat","model":"cordoba","modelNoSpaces":"cordoba","year":2009},{"file":"imagenes autos/ic_car_seat_ibiza_2015.JPG","brand":"seat","model":"ibiza","modelNoSpaces":"ibiza","year":2015},{"file":"imagenes autos/ic_car_skoda_fabia_2014.JPG","brand":"skoda","model":"fabia","modelNoSpaces":"fabia","year":2014},{"file":"imagenes autos/ic_car_subaru_forester_2010.JPG","brand":"subaru","model":"forester","modelNoSpaces":"forester","year":2010},{"file":"imagenes autos/ic_car_subaru_impreza_2011.JPG","brand":"subaru","model":"impreza","modelNoSpaces":"impreza","year":2011},{"file":"imagenes autos/ic_car_subaru_legacy_2009.JPG","brand":"subaru","model":"legacy","modelNoSpaces":"legacy","year":2009},{"file":"imagenes autos/ic_car_subaru_outback_2009.JPG","brand":"subaru","model":"outback","modelNoSpaces":"outback","year":2009},{"file":"imagenes autos/ic_car_suzuki_alto_2005.JPG","brand":"suzuki","model":"alto","modelNoSpaces":"alto","year":2005},{"file":"imagenes autos/ic_car_suzuki_alto_2009.JPG","brand":"suzuki","model":"alto","modelNoSpaces":"alto","year":2009},{"file":"imagenes autos/ic_car_suzuki_celerio_2021.JPG","brand":"suzuki","model":"celerio","modelNoSpaces":"celerio","year":2021},{"file":"imagenes autos/ic_car_suzuki_grandnomade_2005.JPG","brand":"suzuki","model":"grandnomade","modelNoSpaces":"grandnomade","year":2005},{"file":"imagenes autos/ic_car_suzuki_grandvitara_2005.JPG","brand":"suzuki","model":"grandvitara","modelNoSpaces":"grandvitara","year":2005},{"file":"imagenes autos/ic_car_suzuki_jummy_2008.JPG","brand":"suzuki","model":"jummy","modelNoSpaces":"jummy","year":2008},{"file":"imagenes autos/ic_car_suzuki_splash_2008.JPG","brand":"suzuki","model":"splash","modelNoSpaces":"splash","year":2008},{"file":"imagenes autos/ic_car_suzuki_swift_2010.JPG","brand":"suzuki","model":"swift","modelNoSpaces":"swift","year":2010},{"file":"imagenes autos/ic_car_suzuki_wagon_r_2014.JPG","brand":"suzuki","model":"wagon r","modelNoSpaces":"wagonr","year":2014},{"file":"imagenes autos/ic_car_suzuki_xl7_2009.JPG","brand":"suzuki","model":"xl7","modelNoSpaces":"xl7","year":2009},{"file":"imagenes autos/ic_car_toyota_avanza_2015.JPG","brand":"toyota","model":"avanza","modelNoSpaces":"avanza","year":2015},{"file":"imagenes autos/ic_car_toyota_celica_2006.JPG","brand":"toyota","model":"celica","modelNoSpaces":"celica","year":2006},{"file":"imagenes autos/ic_car_toyota_corolla_2000.JPG","brand":"toyota","model":"corolla","modelNoSpaces":"corolla","year":2000},{"file":"imagenes autos/ic_car_toyota_corolla_2007.JPG","brand":"toyota","model":"corolla","modelNoSpaces":"corolla","year":2007},{"file":"imagenes autos/ic_car_toyota_corolla_2009.JPG","brand":"toyota","model":"corolla","modelNoSpaces":"corolla","year":2009},{"file":"imagenes autos/ic_car_toyota_echo_2005.JPG","brand":"toyota","model":"echo","modelNoSpaces":"echo","year":2005},{"file":"imagenes autos/ic_car_toyota_hilux_2011.JPG","brand":"toyota","model":"hilux","modelNoSpaces":"hilux","year":2011},{"file":"imagenes autos/ic_car_toyota_matrix_2008.JPG","brand":"toyota","model":"matrix","modelNoSpaces":"matrix","year":2008},{"file":"imagenes autos/ic_car_toyota_matrix_2009.JPG","brand":"toyota","model":"matrix","modelNoSpaces":"matrix","year":2009},{"file":"imagenes autos/ic_car_toyota_mrs_spyder_2007.JPG","brand":"toyota","model":"mrs spyder","modelNoSpaces":"mrsspyder","year":2007},{"file":"imagenes autos/ic_car_toyota_prius_2010.JPG","brand":"toyota","model":"prius","modelNoSpaces":"prius","year":2010},{"file":"imagenes autos/ic_car_toyota_probo_2005.JPG","brand":"toyota","model":"probo","modelNoSpaces":"probo","year":2005},{"file":"imagenes autos/ic_car_toyota_rav4_2005.JPG","brand":"toyota","model":"rav4","modelNoSpaces":"rav4","year":2005},{"file":"imagenes autos/ic_car_toyota_rush_2017.JPG","brand":"toyota","model":"rush","modelNoSpaces":"rush","year":2017},{"file":"imagenes autos/ic_car_toyota_yaris_2005.JPG","brand":"toyota","model":"yaris","modelNoSpaces":"yaris","year":2005},{"file":"imagenes autos/ic_car_volkswagen_bora_2005.JPG","brand":"volkswagen","model":"bora","modelNoSpaces":"bora","year":2005},{"file":"imagenes autos/ic_car_volkswagen_fox_2011.JPG","brand":"volkswagen","model":"fox","modelNoSpaces":"fox","year":2011},{"file":"imagenes autos/ic_car_volkswagen_golf_2008.JPG","brand":"volkswagen","model":"golf","modelNoSpaces":"golf","year":2008},{"file":"imagenes autos/ic_car_volkswagen_gol_2012.JPG","brand":"volkswagen","model":"gol","modelNoSpaces":"gol","year":2012},{"file":"imagenes autos/ic_car_volkswagen_passat_2015.JPG","brand":"volkswagen","model":"passat","modelNoSpaces":"passat","year":2015},{"file":"imagenes autos/ic_car_volkswagen_phateon_2016.JPG","brand":"volkswagen","model":"phateon","modelNoSpaces":"phateon","year":2016},{"file":"imagenes autos/ic_car_volkswagen_polo_2014.JPG","brand":"volkswagen","model":"polo","modelNoSpaces":"polo","year":2014},{"file":"imagenes autos/ic_car_volkswagen_tiguan_2008.JPG","brand":"volkswagen","model":"tiguan","modelNoSpaces":"tiguan","year":2008},{"file":"imagenes autos/ic_car_volkswagen_touareg_2018.JPG","brand":"volkswagen","model":"touareg","modelNoSpaces":"touareg","year":2018}];
 
 function getVehicleCarPhotoUrl(brandName, modelName, docId) {
-  const query = ((brandName || '') + ' ' + (modelName || '') + ' ' + (docId || '')).toLowerCase().replace(/[^a-z0-9]/g, ' ');
   const cleanBrand = (brandName || '').toLowerCase().trim();
+  const cleanModel = (modelName || '').toLowerCase().trim();
+  const cleanDocId = (docId || '').toLowerCase().trim();
+
+  // 1. Check custom saved model photos in localStorage
+  try {
+    const customPhotos = JSON.parse(localStorage.getItem('probaktronic_custom_model_photos') || '{}');
+    if (customPhotos[`${cleanBrand}_${cleanDocId}`]) return customPhotos[`${cleanBrand}_${cleanDocId}`];
+    if (customPhotos[`${cleanBrand}_${cleanModel}`]) return customPhotos[`${cleanBrand}_${cleanModel}`];
+    if (customPhotos[cleanDocId]) return customPhotos[cleanDocId];
+    if (customPhotos[cleanModel]) return customPhotos[cleanModel];
+  } catch(e) {}
+
+  const query = ((brandName || '') + ' ' + (modelName || '') + ' ' + (docId || '')).toLowerCase().replace(/[^a-z0-9]/g, ' ');
   const candidates = localCarPhotoLibrary.filter(c => c.brand === cleanBrand || query.includes(c.brand));
   if (candidates.length === 0) return null;
 
@@ -281,6 +293,77 @@ function getVehicleCarPhotoUrl(brandName, modelName, docId) {
   }
   return (bestScore >= 12 && best) ? best.file : null;
 }
+
+window.renderModelPhotosGrid = function(selectedPhotoUrl = '', filterBrand = '') {
+  const grid = document.getElementById('adminModelPhotosGrid');
+  if (!grid) return;
+
+  const currentVal = (selectedPhotoUrl || document.getElementById('adminEditItemPhotoInput')?.value || '').trim();
+  const cleanBrand = (filterBrand || currentSelectedBrandName || currentSelectedBrandId || '').toLowerCase().trim();
+
+  // Sort photos: Brand matching first, then others alphabetically
+  const list = [...localCarPhotoLibrary];
+  if (cleanBrand) {
+    list.sort((a, b) => {
+      const aMatch = (a.brand === cleanBrand || a.brand.includes(cleanBrand) || cleanBrand.includes(a.brand)) ? 1 : 0;
+      const bMatch = (b.brand === cleanBrand || b.brand.includes(cleanBrand) || cleanBrand.includes(b.brand)) ? 1 : 0;
+      return bMatch - aMatch;
+    });
+  }
+
+  grid.innerHTML = list.map(item => {
+    const isSelected = (currentVal && (currentVal === item.file || currentVal.includes(item.file) || item.file.includes(currentVal)));
+    const isBrandMatch = cleanBrand && (item.brand === cleanBrand || item.brand.includes(cleanBrand) || cleanBrand.includes(item.brand));
+    const title = `${item.brand.toUpperCase()} ${(item.model || '').toUpperCase()} ${item.year || ''}`.trim();
+    return `
+      <div class="admin-model-photo-tile text-center p-2 rounded-3 border bg-white cursor-pointer position-relative ${isSelected ? 'border-danger shadow-sm bg-danger-subtle' : ''}" 
+           style="transition: all 0.15s ease; border-color: ${isSelected ? '#DC2626 !important; border-width: 2px !important;' : '#E2E8F0'};" 
+           data-search="${(item.brand + ' ' + (item.model || '') + ' ' + (item.year || '')).toLowerCase()}" 
+           onclick="selectAdminModelPhotoOption('${item.file}')" 
+           title="${title}">
+        ${isSelected ? '<span class="position-absolute top-0 end-0 bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 16px; height: 16px; font-size: 10px; margin: 2px; z-index: 2;"><i class="bi bi-check"></i></span>' : ''}
+        ${isBrandMatch ? '<span class="position-absolute top-0 start-0 badge bg-danger text-white font-rajdhani" style="font-size: 8px; margin: 2px; padding: 2px 4px; z-index: 2;">' + item.brand.toUpperCase() + '</span>' : ''}
+        <img src="${item.file}" alt="${title}" style="height: 46px; max-width: 100%; width: 100%; object-fit: contain; display: block; margin: 0 auto 4px auto; border-radius: 4px;" onerror="this.src='logo_probaktronic_solo.png'">
+        <div class="font-rajdhani fw-bold text-dark text-truncate" style="font-size: 0.68rem; line-height: 1.1;">${(item.model || item.brand).toUpperCase()}</div>
+        ${item.year ? `<div class="text-muted font-monospace" style="font-size: 0.62rem;">${item.year}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+};
+
+window.filterModelPhotosGrid = function(query) {
+  const q = (query || '').toLowerCase().trim();
+  const tiles = document.querySelectorAll('#adminModelPhotosGrid .admin-model-photo-tile');
+  tiles.forEach(tile => {
+    const searchVal = tile.getAttribute('data-search') || '';
+    tile.style.display = (!q || searchVal.includes(q)) ? 'block' : 'none';
+  });
+};
+
+window.selectAdminModelPhotoOption = function(photoUrl) {
+  const input = document.getElementById('adminEditItemPhotoInput');
+  const preview = document.getElementById('adminEditItemPhotoPreview');
+  if (input) input.value = photoUrl;
+  if (preview) preview.src = photoUrl;
+  const brand = document.getElementById('adminEditItemParentBrand')?.value || '';
+  window.renderModelPhotosGrid(photoUrl, brand);
+};
+
+window.handleAdminEditModelPhotoFileSelect = function(input) {
+  if (!input || !input.files || input.files.length === 0) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    const photoInput = document.getElementById('adminEditItemPhotoInput');
+    const preview = document.getElementById('adminEditItemPhotoPreview');
+    if (photoInput) photoInput.value = dataUrl;
+    if (preview) preview.src = dataUrl;
+    const brand = document.getElementById('adminEditItemParentBrand')?.value || '';
+    window.renderModelPhotosGrid(dataUrl, brand);
+  };
+  reader.readAsDataURL(file);
+};
 
 function getBrandLogoUrl(brandKey) {
   if (!brandKey) return 'logo_probaktronic_solo.png';
@@ -1317,8 +1400,12 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
     `;
 
     const isAdmin = window.checkIsAdmin();
+    const safeModelName = String(modelName || '').replace(/'/g, "\\'");
+    const safeBrandName = String(brandName || '').replace(/'/g, "\\'");
+    const safeMotor = String(motor || '').replace(/'/g, "\\'");
+    const safePhoto = String(carPhotoUrl || '').replace(/'/g, "\\'");
     const editModelBtn = isAdmin ? `
-      <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${docId}', name: '${modelName}', brand: '${brandName}', motor: '${motor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}' })">
+      <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${docId}', name: '${safeModelName}', brand: '${safeBrandName}', motor: '${safeMotor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}', photo: '${safePhoto}' })">
         <i class="bi bi-pencil-fill" style="font-size: 11px;"></i>
       </button>
     ` : '';
@@ -5348,6 +5435,10 @@ window.openAdminEditItemModal = function(e, type, itemData) {
   const logoInput = document.getElementById('adminEditItemLogoInput');
   const logoPreview = document.getElementById('adminEditItemLogoPreview');
   const logoFilterInput = document.getElementById('adminBrandLogoFilterInput');
+  const photoWrap = document.getElementById('adminEditItemPhotoWrap');
+  const photoInput = document.getElementById('adminEditItemPhotoInput');
+  const photoPreview = document.getElementById('adminEditItemPhotoPreview');
+  const photoFilterInput = document.getElementById('adminModelPhotoFilterInput');
   const motorWrap = document.getElementById('adminEditItemMotorWrap');
   const motorInput = document.getElementById('adminEditItemMotorInput');
   const fuelWrap = document.getElementById('adminEditItemFuelWrap');
@@ -5369,6 +5460,7 @@ window.openAdminEditItemModal = function(e, type, itemData) {
     if (subtitleEl) subtitleEl.textContent = 'Edita el nombre y el logo oficial de la marca o elimínala';
     if (nameLabel) nameLabel.textContent = 'NOMBRE DE LA MARCA';
     if (nameInput) nameInput.value = itemData.name || itemData.id;
+    if (photoWrap) photoWrap.classList.add('d-none');
     if (motorWrap) motorWrap.classList.add('d-none');
     if (fuelWrap) fuelWrap.classList.add('d-none');
 
@@ -5385,10 +5477,24 @@ window.openAdminEditItemModal = function(e, type, itemData) {
     }
   } else if (type === 'model') {
     if (titleEl) titleEl.textContent = `GESTIONAR MODELO: ${itemData.name}`;
-    if (subtitleEl) subtitleEl.textContent = 'Edita los datos del modelo o elimínalo';
+    if (subtitleEl) subtitleEl.textContent = 'Edita los datos del modelo, asigna su foto oficial o elimínalo';
     if (nameLabel) nameLabel.textContent = 'NOMBRE DEL MODELO';
     if (nameInput) nameInput.value = itemData.name || itemData.id;
     if (logoWrap) logoWrap.classList.add('d-none');
+    
+    if (photoWrap) {
+      photoWrap.classList.remove('d-none');
+      const cleanBrand = (itemData.brand || currentSelectedBrandName || currentSelectedBrandId || '').toLowerCase().trim();
+      const cleanModel = (itemData.name || itemData.id || '').toLowerCase().trim();
+      const currentPhoto = itemData.photo || itemData.imagen || itemData.fotoAuto || getVehicleCarPhotoUrl(cleanBrand, cleanModel, itemData.id) || 'imagenes autos/ic_car_toyota_hilux.JPG';
+      if (photoInput) photoInput.value = currentPhoto;
+      if (photoPreview) photoPreview.src = currentPhoto;
+      if (photoFilterInput) photoFilterInput.value = '';
+      if (typeof window.renderModelPhotosGrid === 'function') {
+        window.renderModelPhotosGrid(currentPhoto, cleanBrand);
+      }
+    }
+
     if (motorWrap) {
       motorWrap.classList.remove('d-none');
       if (motorInput) motorInput.value = itemData.motor || '';
@@ -5403,6 +5509,7 @@ window.openAdminEditItemModal = function(e, type, itemData) {
     if (nameLabel) nameLabel.textContent = 'TÍTULO DEL DIAGRAMA';
     if (nameInput) nameInput.value = itemData.name || itemData.id;
     if (logoWrap) logoWrap.classList.add('d-none');
+    if (photoWrap) photoWrap.classList.add('d-none');
     if (motorWrap) motorWrap.classList.add('d-none');
     if (fuelWrap) fuelWrap.classList.add('d-none');
   }
@@ -5512,6 +5619,7 @@ window.handleAdminSaveItemChanges = async function(e) {
     } else if (type === 'model') {
       const cleanBrand = (parentBrand || currentSelectedBrandId || 'toyota').toLowerCase().trim();
       const cleanModel = id.toLowerCase().trim();
+      const selectedPhoto = document.getElementById('adminEditItemPhotoInput')?.value.trim() || getVehicleCarPhotoUrl(cleanBrand, newName, cleanModel) || 'imagenes autos/ic_car_toyota_hilux.JPG';
 
       // 1. Guardar en Base de Datos MySQL SiteGround
       try {
@@ -5520,12 +5628,23 @@ window.handleAdminSaveItemChanges = async function(e) {
           modelo: newName,
           slug: cleanModel,
           motor: motorVal || 'Estándar',
-          combustible: fuelVal || 'gasolina'
+          combustible: fuelVal || 'gasolina',
+          imagen: selectedPhoto,
+          fotoAuto: selectedPhoto
         });
       } catch (apiErr) {}
 
-      // 2. Guardar en LocalStorage
+      // 2. Guardar foto y datos en LocalStorage
       try {
+        const customModelPhotos = JSON.parse(localStorage.getItem('probaktronic_custom_model_photos') || '{}');
+        if (selectedPhoto) {
+          customModelPhotos[`${cleanBrand}_${cleanModel}`] = selectedPhoto;
+          customModelPhotos[`${cleanBrand}_${newName.toLowerCase().trim()}`] = selectedPhoto;
+          customModelPhotos[cleanModel] = selectedPhoto;
+          customModelPhotos[newName.toLowerCase().trim()] = selectedPhoto;
+          localStorage.setItem('probaktronic_custom_model_photos', JSON.stringify(customModelPhotos));
+        }
+
         const storedModelsKey = `probak_custom_models_${cleanBrand}`;
         const stored = JSON.parse(localStorage.getItem(storedModelsKey) || '[]');
         const idx = stored.findIndex(m => (m.slug || m.id || '').toLowerCase() === cleanModel || (m.nombre && m.nombre.toUpperCase() === newName.toUpperCase()));
@@ -5535,7 +5654,9 @@ window.handleAdminSaveItemChanges = async function(e) {
           nombre: newName,
           modelo: newName,
           motor: motorVal || 'Estándar',
-          combustible: fuelVal || 'gasolina'
+          combustible: fuelVal || 'gasolina',
+          imagen: selectedPhoto,
+          fotoAuto: selectedPhoto
         };
         if (idx >= 0) {
           stored[idx] = { ...stored[idx], ...mObj };
@@ -5552,13 +5673,15 @@ window.handleAdminSaveItemChanges = async function(e) {
             nombre: `${parentBrand} ${newName}`.toUpperCase(),
             modelo: newName,
             motor: motorVal || 'Estándar',
-            combustible: fuelVal || 'gasolina'
+            combustible: fuelVal || 'gasolina',
+            imagen: selectedPhoto,
+            fotoAuto: selectedPhoto
           }, { merge: true });
         } catch (fbErr) {}
       }
 
       if (typeof window.showGlobalToast === 'function') {
-        window.showGlobalToast(`Modelo "${newName}" actualizado con éxito.`);
+        window.showGlobalToast(`Modelo "${newName}" y foto actualizados con éxito.`);
       }
       setTimeout(() => {
         bootstrap.Modal.getInstance(document.getElementById('adminEditItemModal'))?.hide();

@@ -2466,6 +2466,41 @@
               </div>
             </div>
 
+            <!-- Campo Foto del Modelo / Vehículo (Solo para tipo 'model') -->
+            <div class="mb-3 d-none" id="adminEditItemPhotoWrap">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
+                <span>FOTO DEL VEHÍCULO / MODELO</span>
+                <span class="badge bg-danger small font-rajdhani">Selecciona una de las opciones</span>
+              </label>
+              
+              <!-- Vista previa de la foto actualmente seleccionada -->
+              <div class="d-flex align-items-center gap-3 p-3 bg-light border rounded-3 mb-2">
+                <div class="p-1 bg-white rounded-3 border d-flex align-items-center justify-content-center shadow-xs" style="width: 90px; height: 68px; min-width: 90px;">
+                  <img id="adminEditItemPhotoPreview" src="imagenes autos/ic_car_toyota_hilux.JPG" alt="Car preview" style="max-height: 100%; max-width: 100%; object-fit: contain; border-radius: 4px;" onerror="this.src='logo_probaktronic_solo.png'">
+                </div>
+                <div class="flex-grow-1">
+                  <input type="text" class="form-control form-control-sm font-monospace" id="adminEditItemPhotoInput" placeholder="Ruta o URL de la foto del auto">
+                  <div class="d-flex gap-2 mt-2 align-items-center flex-wrap">
+                    <label class="btn btn-danger btn-sm py-1 px-3 fw-bold font-rajdhani cursor-pointer shadow-xs" style="font-size: 0.78rem;">
+                      <i class="bi bi-camera-fill me-1"></i> Subir Foto Propia
+                      <input type="file" id="adminEditItemPhotoFileInput" class="d-none" accept="image/*,.svg" onchange="handleAdminEditModelPhotoFileSelect(this)">
+                    </label>
+                    <span class="text-muted small" style="font-size: 0.72rem;">o elige de los modelos de abajo:</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Galería de Selección Rápida de Fotos de Autos Disponibles -->
+              <div class="p-2 bg-light border rounded-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <input type="text" id="adminModelPhotoFilterInput" class="form-control form-control-sm font-rajdhani" placeholder="🔍 Filtrar autos disponibles... (ej: Tiida, Sentra, Versa, Corolla, Hilux, Yaris, Swift)" oninput="filterModelPhotosGrid(this.value)">
+                </div>
+                <div id="adminModelPhotosGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 8px; max-height: 200px; overflow-y: auto; padding: 4px;">
+                  <!-- Se genera dinámicamente con todas las opciones disponibles -->
+                </div>
+              </div>
+            </div>
+
             <!-- Campo Motor / Código (Opcional según tipo) -->
             <div class="mb-3 d-none" id="adminEditItemMotorWrap">
               <label for="adminEditItemMotorInput" class="form-label font-rajdhani fw-bold text-dark mb-1">CÓDIGO DE MOTOR / PARTE</label>
@@ -3075,10 +3110,10 @@
 
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/global.js?v=20261008_1110"></script>
-  <script src="js/auth.js?v=20261008_1110"></script>
-  <script src="js/admin-analytics.js?v=20261008_1110"></script>
-  <script src="js/vehiculos-data.js?v=20261008_1110"></script>
-  <script src="js/vehiculos-diagramas.js?v=20261008_1110"></script>
+  <script src="js/global.js?v=20261008_1120"></script>
+  <script src="js/auth.js?v=20261008_1120"></script>
+  <script src="js/admin-analytics.js?v=20261008_1120"></script>
+  <script src="js/vehiculos-data.js?v=20261008_1120"></script>
+  <script src="js/vehiculos-diagramas.js?v=20261008_1120"></script>
 </body>
 </html>
