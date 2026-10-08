@@ -2431,6 +2431,41 @@
               <input type="text" class="form-control" id="adminEditItemNameInput" required>
             </div>
 
+            <!-- Campo Logo de la Marca (Solo para tipo 'brand') -->
+            <div class="mb-3 d-none" id="adminEditItemLogoWrap">
+              <label class="form-label font-rajdhani fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
+                <span>LOGO DE LA MARCA</span>
+                <span class="badge bg-danger small font-rajdhani">Selecciona una de las opciones</span>
+              </label>
+              
+              <!-- Vista previa del logo actualmente seleccionado -->
+              <div class="d-flex align-items-center gap-3 p-3 bg-light border rounded-3 mb-2">
+                <div class="p-2 bg-white rounded-3 border d-flex align-items-center justify-content-center shadow-xs" style="width: 80px; height: 60px; min-width: 80px;">
+                  <img id="adminEditItemLogoPreview" src="imagenes svg/ico_logo_toyota.svg" alt="Logo preview" style="max-height: 48px; max-width: 70px; object-fit: contain;" onerror="this.src='logo_probaktronic_solo.png'">
+                </div>
+                <div class="flex-grow-1">
+                  <input type="text" class="form-control form-control-sm font-monospace" id="adminEditItemLogoInput" placeholder="Ruta o URL del logo (ej: imagenes svg/ico_logo_toyota.svg)">
+                  <div class="d-flex gap-2 mt-2 align-items-center flex-wrap">
+                    <label class="btn btn-danger btn-sm py-1 px-3 fw-bold font-rajdhani cursor-pointer shadow-xs" style="font-size: 0.78rem;">
+                      <i class="bi bi-upload me-1"></i> Subir Imagen
+                      <input type="file" id="adminEditItemLogoFileInput" class="d-none" accept="image/*,.svg" onchange="handleAdminEditBrandLogoFileSelect(this)">
+                    </label>
+                    <span class="text-muted small" style="font-size: 0.72rem;">o elige de las opciones de abajo:</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Galería de Selección Rápida de Logos Disponibles -->
+              <div class="p-2 bg-light border rounded-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <input type="text" id="adminBrandLogoFilterInput" class="form-control form-control-sm font-rajdhani" placeholder="🔍 Filtrar logos disponibles... (ej: Toyota, Nissan, Ford, BMW, Hyundai)" oninput="filterBrandLogosGrid(this.value)">
+                </div>
+                <div id="adminBrandLogosGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; max-height: 180px; overflow-y: auto; padding: 4px;">
+                  <!-- Se genera dinámicamente con todas las opciones disponibles -->
+                </div>
+              </div>
+            </div>
+
             <!-- Campo Motor / Código (Opcional según tipo) -->
             <div class="mb-3 d-none" id="adminEditItemMotorWrap">
               <label for="adminEditItemMotorInput" class="form-label font-rajdhani fw-bold text-dark mb-1">CÓDIGO DE MOTOR / PARTE</label>
