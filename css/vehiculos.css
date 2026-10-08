@@ -1094,17 +1094,18 @@
 .console-img-viewer-wrap {
   position: relative;
   width: 100%;
-  min-height: 650px;
-  height: 82vh;
-  overflow: hidden;
+  min-height: 600px;
+  height: 80vh;
+  overflow: hidden !important;
   background: #0B0E14;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   padding: 8px;
-  cursor: grab;
+  cursor: default;
   user-select: none;
+  contain: layout paint;
 }
 
 :fullscreen .console-diagram-content,

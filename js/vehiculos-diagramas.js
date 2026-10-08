@@ -2355,11 +2355,71 @@ window.navigateGalleryImage = function(delta) {
 let currentPanX = 0;
 let currentPanY = 0;
 
+window.clampConsolePanCoordinates = function() {
+  if (currentConsoleZoom <= 1.01) {
+    currentPanX = 0;
+    currentPanY = 0;
+    return;
+  }
+
+  const wrap = document.getElementById('consoleImgViewerWrap');
+  if (!wrap) return;
+
+  const wrapW = wrap.clientWidth || 800;
+  const wrapH = wrap.clientHeight || 600;
+
+  let contentW = wrapW * 0.9;
+  let contentH = wrapH * 0.9;
+
+  const canvasEl = document.getElementById('consolePdfCanvas');
+  const imgWrapper = document.getElementById('consoleImageLayerWrapper');
+  const imgEl = document.getElementById('consoleMainDiagramImg');
+
+  if (canvasEl && !canvasEl.classList.contains('d-none') && canvasEl.offsetWidth > 20) {
+    contentW = canvasEl.offsetWidth;
+    contentH = canvasEl.offsetHeight;
+  } else if (imgWrapper && imgWrapper.offsetWidth > 20) {
+    contentW = imgWrapper.offsetWidth;
+    contentH = imgWrapper.offsetHeight;
+  } else if (imgEl && !imgEl.classList.contains('d-none') && imgEl.offsetWidth > 20) {
+    contentW = imgEl.offsetWidth;
+    contentH = imgEl.offsetHeight;
+  }
+
+  const scaledW = contentW * currentConsoleZoom;
+  const scaledH = contentH * currentConsoleZoom;
+
+  let maxPanX = 0;
+  if (scaledW > wrapW) {
+    maxPanX = (scaledW - wrapW) / 2 + 25;
+  } else {
+    maxPanX = Math.max(0, (wrapW - scaledW) * 0.08);
+  }
+
+  let maxPanY = 0;
+  if (scaledH > wrapH) {
+    maxPanY = (scaledH - wrapH) / 2 + 25;
+  } else {
+    maxPanY = Math.max(0, (wrapH - scaledH) * 0.08);
+  }
+
+  currentPanX = Math.max(-maxPanX, Math.min(maxPanX, currentPanX));
+  currentPanY = Math.max(-maxPanY, Math.min(maxPanY, currentPanY));
+};
+
 window.updateStageTransform = function(animate = true) {
   const stageEl = document.getElementById('consoleDiagramStage');
   if (!stageEl) return;
+
+  window.clampConsolePanCoordinates();
+
   stageEl.style.transition = animate ? 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
   stageEl.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentConsoleZoom}) rotate(${currentConsoleRotation || 0}deg)`;
+
+  const wrap = document.getElementById('consoleImgViewerWrap');
+  if (wrap && !wrap.classList.contains('grabbing')) {
+    wrap.style.cursor = currentConsoleZoom > 1.01 ? (isEcuEditorMode ? 'crosshair' : 'grab') : (isEcuEditorMode ? 'crosshair' : 'default');
+  }
 
   if (activeEcuComponentId && typeof window.positionActiveEcuDrawerAndLine === 'function') {
     const comp = currentEcuHotspots.find(c => c.id === activeEcuComponentId);
@@ -2378,11 +2438,12 @@ window.toggleHandZoom = function() {
     zoomText.textContent = `ZOOM (${currentConsoleZoom.toFixed(1)}x)`;
   }
 
-  if (currentConsoleZoom === 1.0) {
+  if (currentConsoleZoom <= 1.01) {
     currentPanX = 0;
     currentPanY = 0;
   }
 
+  window.clampConsolePanCoordinates();
   window.updateStageTransform(true);
 };
 
@@ -3244,6 +3305,7 @@ function setupViewerDragPan() {
     }
     currentPanX = initialPanX + dx;
     currentPanY = initialPanY + dy;
+    window.clampConsolePanCoordinates();
     window.updateStageTransform(false);
   });
 
@@ -3269,6 +3331,7 @@ function setupViewerDragPan() {
     }
     currentPanX = initialPanX + dx;
     currentPanY = initialPanY + dy;
+    window.clampConsolePanCoordinates();
     window.updateStageTransform(false);
   }, { passive: true });
 
@@ -3278,6 +3341,7 @@ function setupViewerDragPan() {
       wrap.classList.remove('grabbing');
       if (hasMoved) {
         lastViewerPanTime = Date.now();
+        window.clampConsolePanCoordinates();
         window.updateStageTransform(true);
       }
     }
@@ -3286,36 +3350,54 @@ function setupViewerDragPan() {
   // Mouse Wheel Zoom
   wrap.addEventListener('wheel', (e) => {
     e.preventDefault();
-    const zoomStep = e.deltaY < 0 ? 0.2 : -0.2;
-    let newZoom = Math.round((currentConsoleZoom + zoomStep) * 10) / 10;
-    if (newZoom < 1.0) {
-      newZoom = 1.0;
+    const prevZoom = currentConsoleZoom;
+    const zoomStep = e.deltaY < 0 ? 0.25 : -0.25;
+    let newZoom = Math.round((currentConsoleZoom + zoomStep) * 100) / 100;
+    if (newZoom < 1.0) newZoom = 1.0;
+    if (newZoom > 4.0) newZoom = 4.0;
+
+    if (newZoom === prevZoom) return;
+
+    // Focal point zoom towards mouse position
+    const rect = wrap.getBoundingClientRect();
+    const mouseX = e.clientX - (rect.left + rect.width / 2);
+    const mouseY = e.clientY - (rect.top + rect.height / 2);
+
+    if (newZoom <= 1.01) {
       currentPanX = 0;
       currentPanY = 0;
+    } else {
+      const zoomRatio = newZoom / prevZoom;
+      currentPanX = mouseX - (mouseX - currentPanX) * zoomRatio;
+      currentPanY = mouseY - (mouseY - currentPanY) * zoomRatio;
     }
-    if (newZoom > 3.5) newZoom = 3.5;
+
     currentConsoleZoom = newZoom;
+    window.clampConsolePanCoordinates();
+
     const zoomText = document.getElementById('zoomModeText');
     if (zoomText) zoomText.textContent = `ZOOM (${currentConsoleZoom.toFixed(1)}x)`;
-    window.updateStageTransform(true);
+    window.updateStageTransform(false);
   }, { passive: false });
 }
 
 window.zoomConsoleDiagram = function(factor) {
   let newZoom = Math.round((currentConsoleZoom * factor) * 10) / 10;
-  if (newZoom < 1.0) {
-    newZoom = 1.0;
+  if (newZoom < 1.0) newZoom = 1.0;
+  if (newZoom > 4.0) newZoom = 4.0;
+
+  if (newZoom <= 1.01) {
     currentPanX = 0;
     currentPanY = 0;
   }
-  if (newZoom > 3.5) newZoom = 3.5;
-  currentConsoleZoom = newZoom;
 
+  currentConsoleZoom = newZoom;
   const zoomText = document.getElementById('zoomModeText');
   if (zoomText) {
     zoomText.textContent = `ZOOM (${currentConsoleZoom.toFixed(1)}x)`;
   }
 
+  window.clampConsolePanCoordinates();
   window.updateStageTransform(true);
 };
 
