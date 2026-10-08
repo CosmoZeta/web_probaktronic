@@ -1463,6 +1463,7 @@ function renderModelEntries(modelEntries, brandName, modelsListGrid) {
     const safeModelName = String(modelName || '').replace(/'/g, "\\'");
     const safeBrandName = String(brandName || '').replace(/'/g, "\\'");
     const safeMotor = String(motor || '').replace(/'/g, "\\'");
+    const safePhoto = String(carPhotoUrl || '').replace(/'/g, "\\'");
     const safeCategory = String(data.categoria || 'sedan_hatchback').replace(/'/g, "\\'");
     const editModelBtn = isAdmin ? `
       <button class="btn btn-sm btn-light rounded-circle border shadow-sm p-1 d-flex align-items-center justify-content-center text-danger position-absolute top-0 end-0 m-2" style="width: 28px; height: 28px; z-index: 15;" title="Editar o Gestionar Modelo (Admin)" onclick="openAdminEditItemModal(event, 'model', { id: '${docId}', name: '${safeModelName}', brand: '${safeBrandName}', motor: '${safeMotor}', fuel: '${fuelInfo.isDiesel ? 'diesel' : 'gasolina'}', photo: '${safePhoto}', category: '${safeCategory}' })">
