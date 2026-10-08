@@ -390,11 +390,9 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       const mSlug = cleanSlug(nombreModelo, false);
       const motorClean = cleanSlug(motor, false);
 
-      // Crear carpetas físicas de almacenamiento para el modelo
-      const dirModelPruebas = path.join(DIAGRAMAS_DIR, marcaUpper, mSlug, motorClean, 'ecu', 'imagen');
-      const dirModelConexion = path.join(DIAGRAMAS_DIR, marcaUpper, mSlug, motorClean, 'ecu', 'conexionado');
-      fs.mkdirSync(dirModelPruebas, { recursive: true });
-      fs.mkdirSync(dirModelConexion, { recursive: true });
+      // Asegurar que exista la carpeta base del modelo/motor
+      const dirModelBase = path.join(DIAGRAMAS_DIR, marcaUpper, mSlug, motorClean);
+      fs.mkdirSync(dirModelBase, { recursive: true });
 
       if (!tree[bSlug]) {
         tree[bSlug] = { brandData: { nombre: marcaUpper, logo: '', combustible, categoria }, models: {} };
@@ -471,8 +469,6 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
 
       const targetDir = path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorFolder, componenteClean, tipoClean);
       fs.mkdirSync(targetDir, { recursive: true });
-      fs.mkdirSync(path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorFolder, componenteClean, 'conexionado'), { recursive: true });
-      fs.mkdirSync(path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorFolder, componenteClean, 'imagen'), { recursive: true });
 
       const existingFiles = fs.readdirSync(targetDir).filter(f => !f.startsWith('.'));
       const ext = path.extname(file.filename || 'foto.jpg').toLowerCase() || '.jpg';
@@ -668,14 +664,10 @@ async function handleDiagramasApi(req, res, query, bodyBuffer) {
       const motorClean = cleanSlug(motorRaw, false);
       const compSlug = normalizeComponente(tipo || titulo);
 
-      // Crear carpetas físicas estrictamente para el componente que se está subiendo
+      // Crear la carpeta física estrictamente para la subcarpeta que se está subiendo
       const compDir = path.join(DIAGRAMAS_DIR, marcaClean, modeloClean, motorClean, compSlug);
-      const conxDir = path.join(compDir, 'conexionado');
-      const imgDir = path.join(compDir, 'imagen');
-      fs.mkdirSync(conxDir, { recursive: true });
-      fs.mkdirSync(imgDir, { recursive: true });
-
-      const destDir = (tipoCarpeta === 'imagen') ? imgDir : conxDir;
+      const destDir = (tipoCarpeta === 'imagen') ? path.join(compDir, 'imagen') : path.join(compDir, 'conexionado');
+      fs.mkdirSync(destDir, { recursive: true });
 
       // Si se envió un archivo en base64 (data:...), guardarlo físicamente como archivo real en la carpeta destino seleccionada
       if (urlArchivo.startsWith('data:')) {

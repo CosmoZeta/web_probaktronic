@@ -357,6 +357,203 @@
                                             "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/red_can_bus/imagen/tiida_tiida_latio_red_can_bus_2.png"
                                         ],
                                         "icono": "bi-layers-fill"
+                                    },
+                                    {
+                                        "_id": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 ANTENA (MECANICO M/T)",
+                                        "titulo": "NISSAN TIIDA / TIIDA LATIO 2004 -2012 ANTENA (MECANICO M/T)",
+                                        "tipo": "antena",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/conexionado/tiida_tiida_latio_antena_1.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/conexionado/tiida_tiida_latio_antena_1.jpg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/imagen/18_1791478612441.png",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/imagen/18_1791478612441.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/imagen/tiida_tiida_latio_antena_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/imagen/tiida_tiida_latio_antena_3.png"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/imagen/18_1791478612441.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/imagen/tiida_tiida_latio_antena_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/imagen/tiida_tiida_latio_antena_3.png"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/imagen/18_1791478612441.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/imagen/tiida_tiida_latio_antena_2.png",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/tiida_tiida_latio/hr15/antena/imagen/tiida_tiida_latio_antena_3.png"
+                                        ],
+                                        "icono": "bi-broadcast-pin"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "march": {
+                "modelData": {
+                    "_id": "march",
+                    "nombre": "MARCH",
+                    "anios": "2002 - 2010",
+                    "motor": "CR12",
+                    "combustible": "gasolina",
+                    "imagen": "imagenes autos/ic_car_nissan_maxima_2000.JPG",
+                    "categoria": "sedan"
+                },
+                "anios": {
+                    "2002 - 2010": {
+                        "anioData": {
+                            "_id": "2002 - 2010"
+                        },
+                        "motores": {
+                            "CR12": {
+                                "motorData": {
+                                    "_id": "CR12",
+                                    "combustible": "gasolina",
+                                    "imagenUrl": "imagenes autos/ic_car_nissan_maxima_2000.JPG",
+                                    "titulo": "CR12"
+                                },
+                                "archivos": [
+                                    {
+                                        "_id": "NISSAN MARCH 2002 - 2010 FUSIBLERA BCM (MECANICO M/T)",
+                                        "titulo": "NISSAN MARCH 2002 - 2010 FUSIBLERA BCM (MECANICO M/T)",
+                                        "tipo": "fusiblera_bcm",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/fusiblera_bcm/conexionado/march_fusiblera_bcm_1.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/fusiblera_bcm/conexionado/march_fusiblera_bcm_1.jpg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/fusiblera_bcm/imagen/MARCH_IMAGEN_BCM_1791480310937.jpg",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/fusiblera_bcm/imagen/MARCH_IMAGEN_BCM_1791480310937.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/fusiblera_bcm/imagen/march_fusiblera_bcm_2.jpg"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/fusiblera_bcm/imagen/MARCH_IMAGEN_BCM_1791480310937.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/fusiblera_bcm/imagen/march_fusiblera_bcm_2.jpg"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/fusiblera_bcm/imagen/MARCH_IMAGEN_BCM_1791480310937.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/fusiblera_bcm/imagen/march_fusiblera_bcm_2.jpg"
+                                        ],
+                                        "icono": "bi-toggle-on"
+                                    },
+                                    {
+                                        "_id": "NISSAN MARCH 2002 - 2010 PINOUT ECU",
+                                        "titulo": "NISSAN MARCH 2002 - 2010 PINOUT ECU",
+                                        "tipo": "ecu",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/conexionado/march_ecu_1.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/conexionado/march_ecu_1.jpg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/imagen/MARCH_IMAGEN_1791480920231.jpg",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/imagen/MARCH_IMAGEN_1791480920231.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/imagen/march_ecu_2.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/imagen/march_ecu_3.jpg"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/imagen/MARCH_IMAGEN_1791480920231.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/imagen/march_ecu_2.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/imagen/march_ecu_3.jpg"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/imagen/MARCH_IMAGEN_1791480920231.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/imagen/march_ecu_2.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ecu/imagen/march_ecu_3.jpg"
+                                        ],
+                                        "icono": "bi-cpu-fill"
+                                    },
+                                    {
+                                        "_id": "NISSAN MARCH 2002 - 2010 IPDM MODULO DE RELES (MECANICO M/T)",
+                                        "titulo": "NISSAN MARCH 2002 - 2010 IPDM MODULO DE RELES (MECANICO M/T)",
+                                        "tipo": "ipdm_reles",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ipdm_reles/conexionado/march_ipdm_reles_1.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ipdm_reles/conexionado/march_ipdm_reles_1.jpg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ipdm_reles/imagen/s-l1600__1__1791481291327.webp",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ipdm_reles/imagen/s-l1600__1__1791481291327.webp",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ipdm_reles/imagen/march_ipdm_reles_2.webp"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ipdm_reles/imagen/s-l1600__1__1791481291327.webp",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ipdm_reles/imagen/march_ipdm_reles_2.webp"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ipdm_reles/imagen/s-l1600__1__1791481291327.webp",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/ipdm_reles/imagen/march_ipdm_reles_2.webp"
+                                        ],
+                                        "icono": "bi-diagram-2-fill"
+                                    },
+                                    {
+                                        "_id": "NISSAN MARCH 2002 - 2010 OBTURADOR CUERPO DE ACELERACION",
+                                        "titulo": "NISSAN MARCH 2002 - 2010 OBTURADOR CUERPO DE ACELERACION",
+                                        "tipo": "cuerpo_aceleracion",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/cuerpo_aceleracion/conexionado/march_cuerpo_aceleracion_1.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/cuerpo_aceleracion/conexionado/march_cuerpo_aceleracion_1.jpg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/cuerpo_aceleracion/imagen/nissan_march_2_1791489454855.jpg",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/cuerpo_aceleracion/imagen/nissan_march_2_1791489454855.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/cuerpo_aceleracion/imagen/march_cuerpo_aceleracion_2.jpg"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/cuerpo_aceleracion/imagen/nissan_march_2_1791489454855.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/cuerpo_aceleracion/imagen/march_cuerpo_aceleracion_2.jpg"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/cuerpo_aceleracion/imagen/nissan_march_2_1791489454855.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/cuerpo_aceleracion/imagen/march_cuerpo_aceleracion_2.jpg"
+                                        ],
+                                        "icono": "bi-bounding-box-circles"
+                                    },
+                                    {
+                                        "_id": "NISSAN MARCH 2002 - 2010 PEDAL",
+                                        "titulo": "NISSAN MARCH 2002 - 2010 PEDAL",
+                                        "tipo": "pedal_acelerador",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/pedal_acelerador/conexionado/march_pedal_acelerador_1.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/pedal_acelerador/conexionado/march_pedal_acelerador_1.jpg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/pedal_acelerador/imagen/2_1791489636716.jpg",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/pedal_acelerador/imagen/2_1791489636716.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/pedal_acelerador/imagen/march_pedal_acelerador_2.jpg"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/pedal_acelerador/imagen/2_1791489636716.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/pedal_acelerador/imagen/march_pedal_acelerador_2.jpg"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/pedal_acelerador/imagen/2_1791489636716.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/pedal_acelerador/imagen/march_pedal_acelerador_2.jpg"
+                                        ],
+                                        "icono": "pedal_acelerador.png"
+                                    },
+                                    {
+                                        "_id": "NISSAN MARCH 2002 - 2010 TABLERO INSTRUMENTOS",
+                                        "titulo": "NISSAN MARCH 2002 - 2010 TABLERO INSTRUMENTOS",
+                                        "tipo": "tablero_instrumentos",
+                                        "pdfUrl": "",
+                                        "diagramaUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/tablero_instrumentos/conexionado/march_tablero_instrumentos_1.jpg",
+                                        "url": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/tablero_instrumentos/conexionado/march_tablero_instrumentos_1.jpg",
+                                        "imageUrl": "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/tablero_instrumentos/imagen/nissan_march_tablero_1791489866417.jpg",
+                                        "descripcion": "",
+                                        "imagenes": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/tablero_instrumentos/imagen/nissan_march_tablero_1791489866417.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/tablero_instrumentos/imagen/march_tablero_instrumentos_2.png"
+                                        ],
+                                        "allImages": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/tablero_instrumentos/imagen/nissan_march_tablero_1791489866417.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/tablero_instrumentos/imagen/march_tablero_instrumentos_2.png"
+                                        ],
+                                        "fotos": [
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/tablero_instrumentos/imagen/nissan_march_tablero_1791489866417.jpg",
+                                            "archivos_almacenamiento/diagramas_PRUEBAS/NISSAN/march/cr12/tablero_instrumentos/imagen/march_tablero_instrumentos_2.png"
+                                        ],
+                                        "icono": "bi-speedometer2"
                                     }
                                 ]
                             }

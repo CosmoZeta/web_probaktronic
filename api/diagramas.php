@@ -313,14 +313,10 @@ switch ($action) {
         $modeloSlug = $modeloClean;
         $categoria = trim($input['categoria'] ?? 'pickup');
 
-        // Crear carpetas físicas de almacenamiento para el nuevo modelo en SiteGround / Local
-        $dirModelPruebas = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaUpper . '/' . $modeloClean . '/' . $motorClean . '/ecu/imagen';
-        $dirModelConexion = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaUpper . '/' . $modeloClean . '/' . $motorClean . '/ecu/conexionado';
-        if (!is_dir($dirModelPruebas)) {
-            @mkdir($dirModelPruebas, 0755, true);
-        }
-        if (!is_dir($dirModelConexion)) {
-            @mkdir($dirModelConexion, 0755, true);
+        // Crear carpeta base de almacenamiento para el nuevo modelo en SiteGround / Local
+        $dirModelBase = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaUpper . '/' . $modeloClean . '/' . $motorClean;
+        if (!is_dir($dirModelBase)) {
+            @mkdir($dirModelBase, 0755, true);
         }
 
         if ($pdo) {
@@ -551,12 +547,9 @@ switch ($action) {
         $baseComponentDir = dirname(__DIR__) . '/archivos_almacenamiento/diagramas_PRUEBAS/' . $marcaClean . '/' . $modeloClean . '/' . $motorFolder . '/' . $componenteClean;
         $baseStorageDir = $baseComponentDir . '/' . $tipoClean;
 
-        // Asegurar que ambas subcarpetas (imagen y conexionado) existan automáticamente
-        if (!is_dir($baseComponentDir . '/imagen')) {
-            @mkdir($baseComponentDir . '/imagen', 0755, true);
-        }
-        if (!is_dir($baseComponentDir . '/conexionado')) {
-            @mkdir($baseComponentDir . '/conexionado', 0755, true);
+        // Asegurar que la subcarpeta destino exista
+        if (!is_dir($baseStorageDir)) {
+            @mkdir($baseStorageDir, 0755, true);
         }
 
         // Extensión original y nombre limpio profesional

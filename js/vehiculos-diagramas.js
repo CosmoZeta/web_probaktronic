@@ -1703,6 +1703,16 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
       displayCardLabel = 'ALTERNADOR';
     } else if (compSlug === 'valvula_egr_vvt') {
       displayCardLabel = 'VÁLVULA EGR / VVT';
+    } else if (compSlug === 'valvula_iac') {
+      displayCardLabel = 'VÁLVULA IAC (RALENTÍ)';
+    } else if (compSlug === 'bomba_alta_presion') {
+      displayCardLabel = 'BOMBA ALTA PRESIÓN';
+    } else if (compSlug === 'motor_arranque') {
+      displayCardLabel = 'MOTOR DE ARRANQUE';
+    } else if (compSlug === 'turbo_valvula_alivio') {
+      displayCardLabel = 'SISTEMA TURBO / VÁLVULA';
+    } else if (compSlug === 'bomba_combustible') {
+      displayCardLabel = 'BOMBA DE COMBUSTIBLE';
     } else if (compSlug === 'edu_dos_conectores') {
       displayCardLabel = 'EDU 2 CONECTORES';
     } else if (compSlug === 'edu_tres_conectores') {
@@ -1714,7 +1724,7 @@ window.openModelEcuInfo = async function(docId, modelName, motorCode) {
     } else if (compSlug === 'modo_banco') {
       displayCardLabel = 'MODO BANCO';
     } else if (compSlug === 'cuerpo_aceleracion') {
-      displayCardLabel = 'CUERPO DE ACELERACIÓN';
+      displayCardLabel = 'OBTURADOR / CUERPO ACEL.';
     } else if (compSlug === 'distribuidor') {
       displayCardLabel = 'DISTRIBUIDOR';
     } else if (compSlug === 'sensor_oxigeno') {
@@ -1918,6 +1928,21 @@ window.deriveComponentSlug = function(rawTitle, rawBrand = '', rawModel = '', ra
   if (upper.includes('IPDM') || (upper.includes('MODULO') && upper.includes('RELE')) || (upper.includes('CAJA') && upper.includes('RELE')) || upper.includes('IPDM_RELES')) {
     return 'ipdm_reles';
   }
+  if (upper.includes('OBTURAD') || upper.includes('CUERPO') || upper.includes('MARIPOSA') || upper.includes('THROTTLE')) {
+    return 'cuerpo_aceleracion';
+  }
+  if (upper.includes('IAC') || upper.includes('RALENTI') || upper.includes('RALENTÍ') || upper.includes('IDLE')) {
+    return 'valvula_iac';
+  }
+  if (upper.includes('ARRANQUE') || upper.includes('STARTER') || (upper.includes('MOTOR') && upper.includes('ARRANQ'))) {
+    return 'motor_arranque';
+  }
+  if (upper.includes('ALTA PRESION') || upper.includes('ALTA PRESIÓN') || upper.includes('HPFP') || (upper.includes('BOMBA') && upper.includes('ALTA'))) {
+    return 'bomba_alta_presion';
+  }
+  if (upper.includes('TURBO') || upper.includes('WASTEGATE') || upper.includes('VALVULA ALIVIO') || upper.includes('VALVULA DE ALIVIO')) {
+    return 'turbo_valvula_alivio';
+  }
   if (upper.includes('CKP') || upper.includes('CMP') || upper.includes('CIGUEÑAL') || upper.includes('CIGUENAL') || upper.includes('LEVAS')) {
     return 'sensor_ckp_cmp';
   }
@@ -1963,13 +1988,10 @@ window.deriveComponentSlug = function(rawTitle, rawBrand = '', rawModel = '', ra
   if (upper.includes('EDU') && (upper.includes('TRES') || upper.includes('3'))) {
     return 'edu_tres_conectores';
   }
-  if (upper.includes('CUERPO')) {
-    return 'cuerpo_aceleracion';
-  }
   if (upper.includes('DISTRIBUIDOR')) {
     return 'distribuidor';
   }
-  if (upper.includes('OXIGENO') || upper.includes('O2')) {
+  if (upper.includes('OXIGENO') || upper.includes('O2') || upper.includes('LAMBDA')) {
     return 'sensor_oxigeno';
   }
   if (upper.includes('TABLERO') || upper.includes('CLUSTER') || upper.includes('CUADRO')) {
@@ -2010,7 +2032,11 @@ function extractDynamicComponentName(rawTitle) {
   if (!rawTitle) return { name: 'Componente', phrase: 'del Componente' };
   const clean = rawTitle.toUpperCase();
   if (clean.includes('PEDAL')) return { name: 'Pedal', phrase: 'del Pedal' };
-  if (clean.includes('CUERPO')) return { name: 'Cuerpo de Aceleración', phrase: 'del Cuerpo de Aceleración' };
+  if (clean.includes('OBTURAD') || clean.includes('CUERPO') || clean.includes('MARIPOSA') || clean.includes('THROTTLE')) return { name: 'Obturador / Cuerpo de Aceleración', phrase: 'del Obturador' };
+  if (clean.includes('IAC') || clean.includes('RALENTI')) return { name: 'Válvula IAC', phrase: 'de la Válvula IAC' };
+  if (clean.includes('ARRANQUE') || clean.includes('STARTER')) return { name: 'Motor de Arranque', phrase: 'del Motor de Arranque' };
+  if (clean.includes('ALTA PRESI') || clean.includes('HPFP')) return { name: 'Bomba de Alta Presión', phrase: 'de la Bomba de Alta Presión' };
+  if (clean.includes('TURBO') || clean.includes('WASTEGATE')) return { name: 'Turbo / Válvula de Alivio', phrase: 'del Sistema Turbo' };
   if (clean.includes('ECU') || clean.includes('PINOUT') || clean.includes('COMPUTADORA')) return { name: 'la ECU', phrase: 'de la ECU' };
   if (clean.includes('ANTENA') || clean.includes('INMOVILIZADOR') || clean.includes('LLAVE')) return { name: 'la Antena / Inmovilizador', phrase: 'de la Antena / Inmovilizador' };
   if (clean.includes('EDU') || clean.includes('E.D.U')) {
@@ -2242,9 +2268,11 @@ window.toggleFitWidthMode = function() {
         img.style.maxHeight = 'none';
       } else {
         stage.classList.remove('fit-width');
-        img.style.width = '';
-        img.style.height = '';
-        img.style.maxHeight = '80vh';
+        img.style.width = 'auto';
+        img.style.height = 'auto';
+        img.style.maxWidth = 'calc(100vw - 32px)';
+        img.style.maxHeight = 'calc(100vh - 180px)';
+        img.style.objectFit = 'contain';
       }
     }
     window.resetConsoleDiagramZoom();
@@ -3324,10 +3352,10 @@ window.loadSpecificDiagramSection = async function(type) {
         if (stageEl) {
           stageEl.classList.remove('d-none');
           stageEl.style.display = 'flex';
-          stageEl.style.width = '100%';
+          stageEl.style.width = 'auto';
           stageEl.style.height = 'auto';
           stageEl.style.maxWidth = '100%';
-          stageEl.style.maxHeight = 'none';
+          stageEl.style.maxHeight = '100%';
           if (window.isFitWidthActive) stageEl.classList.add('fit-width');
         }
         const wrapEl = document.getElementById('consoleImgViewerWrap');
@@ -3381,10 +3409,10 @@ window.loadSpecificDiagramSection = async function(type) {
         imgEl.classList.remove('d-none');
         imgEl.style.display = 'block';
         imgEl.src = candidateFallbacks[0] || targetPdfOrImg;
-        imgEl.style.width = '100%';
+        imgEl.style.width = window.isFitWidthActive ? '100%' : 'auto';
         imgEl.style.height = 'auto';
-        imgEl.style.maxWidth = '100%';
-        imgEl.style.maxHeight = window.isFitWidthActive ? 'none' : '82vh';
+        imgEl.style.maxWidth = 'calc(100vw - 32px)';
+        imgEl.style.maxHeight = window.isFitWidthActive ? 'none' : 'calc(100vh - 180px)';
         imgEl.style.objectFit = 'contain';
 
         // Handle already-cached images instantly
@@ -3757,7 +3785,15 @@ window.openDiagramViewer = async function(docId, selectedArchDoc = null) {
   } else if (derivedSlug === 'edu_tres_conectores') {
     cleanModeTitle = 'EDU 3 CONECTORES';
   } else if (derivedSlug === 'cuerpo_aceleracion') {
-    cleanModeTitle = 'CUERPO DE ACELERACIÓN';
+    cleanModeTitle = 'OBTURADOR / CUERPO ACEL.';
+  } else if (derivedSlug === 'valvula_iac') {
+    cleanModeTitle = 'VÁLVULA IAC (RALENTÍ)';
+  } else if (derivedSlug === 'motor_arranque') {
+    cleanModeTitle = 'MOTOR DE ARRANQUE';
+  } else if (derivedSlug === 'bomba_alta_presion') {
+    cleanModeTitle = 'BOMBA ALTA PRESIÓN';
+  } else if (derivedSlug === 'turbo_valvula_alivio') {
+    cleanModeTitle = 'SISTEMA TURBO';
   } else if (derivedSlug === 'puerto_obd') {
     cleanModeTitle = 'PUERTO OBD';
   } else if (derivedSlug === 'modo_boot') {
@@ -4976,7 +5012,8 @@ window.handleAdminSubmitNewDiagram = async function(e) {
     // 1. Subir archivo a diagramas_PRUEBAS/[MARCA]/[MODELO]/[MOTOR]/[COMPONENTE]/[imagen|conexionado]
     if (progressBar) progressBar.style.width = '40%';
     try {
-      const cleanModelSlug = rawModel.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      const modelWithoutYears = rawModel.replace(/\(?\b(19|20)\d{2}\s*-\s*(19|20)\d{2}\b\)?/g, '').replace(/\(?\b(19|20)\d{2}\b\)?/g, '').trim();
+      const cleanModelSlug = (modelWithoutYears || rawModel).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
       const cleanMotorSlug = rawMotor.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
       const subpath = `${brandUpper}/${cleanModelSlug}/${cleanMotorSlug}/${compSlug}/${destType}`;
       const uploadedPath = await window.uploadFileToHost(adminSelectedDiagramFile, 'diagramas_PRUEBAS', subpath);
@@ -9093,16 +9130,95 @@ window.handleAdminSubmitNewBrand = async function(e) {
 // --- ADMIN ADD MODEL CONTROLLER ---
 let adminNewModelCustomPhotoData = null;
 
+window.renderNewModelPhotosGrid = function(selectedPhotoUrl = '', filterBrand = '') {
+  const grid = document.getElementById('adminNewModelPhotosGrid');
+  if (!grid) return;
+
+  const currentVal = (selectedPhotoUrl || document.getElementById('adminNewModelPhotoInput')?.value || '').trim();
+  const cleanBrand = (filterBrand || document.getElementById('adminNewModelParentBrandText')?.textContent || currentSelectedBrandName || currentSelectedBrandId || '').toLowerCase().trim();
+
+  // Sort photos: Brand matching first, then others alphabetically
+  const list = [...localCarPhotoLibrary];
+  if (cleanBrand) {
+    list.sort((a, b) => {
+      const aMatch = (a.brand === cleanBrand || a.brand.includes(cleanBrand) || cleanBrand.includes(a.brand)) ? 1 : 0;
+      const bMatch = (b.brand === cleanBrand || b.brand.includes(cleanBrand) || cleanBrand.includes(b.brand)) ? 1 : 0;
+      return bMatch - aMatch;
+    });
+  }
+
+  grid.innerHTML = list.map(item => {
+    const isSelected = (currentVal && (currentVal === item.file || currentVal.includes(item.file) || item.file.includes(currentVal)));
+    const isBrandMatch = cleanBrand && (item.brand === cleanBrand || item.brand.includes(cleanBrand) || cleanBrand.includes(item.brand));
+    const title = `${item.brand.toUpperCase()} ${(item.model || '').toUpperCase()} ${item.year || ''}`.trim();
+    return `
+      <div class="admin-new-model-photo-tile text-center p-2 rounded-3 border bg-white cursor-pointer position-relative ${isSelected ? 'border-danger shadow-sm bg-danger-subtle' : ''}" 
+           style="transition: all 0.15s ease; border-color: ${isSelected ? '#DC2626 !important; border-width: 2px !important;' : '#E2E8F0'};" 
+           data-search="${(item.brand + ' ' + (item.model || '') + ' ' + (item.year || '')).toLowerCase()}" 
+           onclick="selectAdminNewModelPhotoOption('${item.file}')" 
+           title="${title}">
+        ${isSelected ? '<span class="position-absolute top-0 end-0 bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 16px; height: 16px; font-size: 10px; margin: 2px; z-index: 2;"><i class="bi bi-check"></i></span>' : ''}
+        ${isBrandMatch ? '<span class="position-absolute top-0 start-0 badge bg-danger text-white font-rajdhani" style="font-size: 8px; margin: 2px; padding: 2px 4px; z-index: 2;">' + item.brand.toUpperCase() + '</span>' : ''}
+        <img src="${item.file}" alt="${title}" style="height: 46px; max-width: 100%; width: 100%; object-fit: contain; display: block; margin: 0 auto 4px auto; border-radius: 4px;" onerror="this.src='logo_probaktronic_solo.png'">
+        <div class="font-rajdhani fw-bold text-dark text-truncate" style="font-size: 0.68rem; line-height: 1.1;">${(item.model || item.brand).toUpperCase()}</div>
+        ${item.year ? `<div class="text-muted font-monospace" style="font-size: 0.62rem;">${item.year}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+};
+
+window.filterNewModelPhotosGrid = function(query) {
+  const q = (query || '').toLowerCase().trim();
+  const tiles = document.querySelectorAll('#adminNewModelPhotosGrid .admin-new-model-photo-tile');
+  tiles.forEach(tile => {
+    const searchVal = tile.getAttribute('data-search') || '';
+    tile.style.display = (!q || searchVal.includes(q)) ? 'block' : 'none';
+  });
+};
+
+window.selectAdminNewModelPhotoOption = function(photoUrl) {
+  const input = document.getElementById('adminNewModelPhotoInput');
+  const preview = document.getElementById('adminNewModelPhotoPreview');
+  const statusBadge = document.getElementById('adminNewModelPhotoStatusBadge');
+  const sourceText = document.getElementById('adminNewModelPhotoSourceText');
+  const fileInput = document.getElementById('adminNewModelCarFileInput');
+  if (fileInput) fileInput.value = '';
+
+  adminNewModelCustomPhotoData = null;
+  if (input) input.value = photoUrl;
+  if (preview) preview.src = photoUrl;
+  if (statusBadge) {
+    statusBadge.className = 'badge bg-success small font-rajdhani';
+    statusBadge.textContent = '✓ Foto seleccionada';
+  }
+  if (sourceText) {
+    sourceText.textContent = 'Foto seleccionada del catálogo';
+  }
+  const brand = document.getElementById('adminNewModelParentBrandText')?.textContent || '';
+  window.renderNewModelPhotosGrid(photoUrl, brand);
+};
+
+window.handleAdminNewModelPhotoInputManual = function(val) {
+  const photoUrl = (val || '').trim();
+  const preview = document.getElementById('adminNewModelPhotoPreview');
+  if (preview && photoUrl) preview.src = photoUrl;
+  const brand = document.getElementById('adminNewModelParentBrandText')?.textContent || '';
+  window.renderNewModelPhotosGrid(photoUrl, brand);
+};
+
 window.openAdminAddModelModal = function(brandName) {
   const form = document.getElementById('formAdminAddModel');
   const brandText = document.getElementById('adminNewModelParentBrandText');
   const fuelSelect = document.getElementById('adminNewModelFuelSelect');
   const preview = document.getElementById('adminNewModelPhotoPreview');
+  const photoInput = document.getElementById('adminNewModelPhotoInput');
+  const filterInput = document.getElementById('adminNewModelPhotoFilterInput');
   const statusBadge = document.getElementById('adminNewModelPhotoStatusBadge');
   const sourceText = document.getElementById('adminNewModelPhotoSourceText');
 
   if (form) form.reset();
   adminNewModelCustomPhotoData = null;
+  if (filterInput) filterInput.value = '';
 
   const targetBrand = brandName || currentSelectedBrandName || 'TOYOTA';
   if (brandText) brandText.textContent = targetBrand.toUpperCase();
@@ -9115,11 +9231,14 @@ window.openAdminAddModelModal = function(brandName) {
     fuelModelDisplay.className = `form-control bg-light fw-bold font-rajdhani text-uppercase ${currentFuel === 'diesel' ? 'text-success' : 'text-danger'} border-start-0`;
   }
 
-  // Set default photo
+  // Set default photo and render grid
   const detectedPhoto = getVehicleCarPhotoUrl(targetBrand, '', '') || 'imagenes autos/ic_car_toyota_hilux.JPG';
   if (preview) preview.src = detectedPhoto;
+  if (photoInput) photoInput.value = detectedPhoto;
   if (statusBadge) { statusBadge.className = 'badge bg-success small font-rajdhani'; statusBadge.textContent = 'Foto sugerida lista'; }
   if (sourceText) sourceText.textContent = 'Foto sugerida para la marca';
+
+  window.renderNewModelPhotosGrid(detectedPhoto, targetBrand);
 
   const modalEl = document.getElementById('adminAddModelModal');
   if (modalEl && typeof bootstrap !== 'undefined') {
@@ -9133,19 +9252,23 @@ window.handleAdminModelNameLiveSearch = function(modelName) {
   const targetBrand = (document.getElementById('adminNewModelParentBrandText')?.textContent || currentSelectedBrandName || 'TOYOTA').trim();
   const years = (document.getElementById('adminNewModelYearsInput')?.value || '').trim();
   const preview = document.getElementById('adminNewModelPhotoPreview');
+  const photoInput = document.getElementById('adminNewModelPhotoInput');
   const statusBadge = document.getElementById('adminNewModelPhotoStatusBadge');
   const sourceText = document.getElementById('adminNewModelPhotoSourceText');
 
   const detectedPhoto = getVehicleCarPhotoUrl(targetBrand, `${modelName} ${years}`, modelName);
   if (detectedPhoto) {
     if (preview) preview.src = detectedPhoto;
+    if (photoInput) photoInput.value = detectedPhoto;
     if (statusBadge) { statusBadge.className = 'badge bg-success small font-rajdhani'; statusBadge.textContent = '✓ Foto oficial detectada'; }
     if (sourceText) sourceText.textContent = `Foto oficial encontrada para ${modelName.toUpperCase()}`;
+    window.renderNewModelPhotosGrid(detectedPhoto, targetBrand);
   }
 };
 
 window.handleAdminNewModelCarFileChange = function(input) {
   const preview = document.getElementById('adminNewModelPhotoPreview');
+  const photoInput = document.getElementById('adminNewModelPhotoInput');
   const statusBadge = document.getElementById('adminNewModelPhotoStatusBadge');
   const sourceText = document.getElementById('adminNewModelPhotoSourceText');
 
@@ -9155,8 +9278,11 @@ window.handleAdminNewModelCarFileChange = function(input) {
     reader.onload = (e) => {
       adminNewModelCustomPhotoData = e.target.result;
       if (preview) preview.src = adminNewModelCustomPhotoData;
+      if (photoInput) photoInput.value = adminNewModelCustomPhotoData;
       if (statusBadge) { statusBadge.className = 'badge bg-primary small font-rajdhani'; statusBadge.textContent = '★ Foto personalizada cargada'; }
       if (sourceText) sourceText.textContent = `Archivo: ${file.name}`;
+      const brand = document.getElementById('adminNewModelParentBrandText')?.textContent || '';
+      window.renderNewModelPhotosGrid('', brand);
     };
     reader.readAsDataURL(file);
   }
@@ -9191,7 +9317,7 @@ window.handleAdminSubmitNewModel = async function(e) {
     const modelDocId = uniqueSlug;
     const fullModelTitle = `${brandName.toUpperCase()} ${modelName.toUpperCase()} ${years}`.trim();
 
-    let finalCarPhotoUrl = adminNewModelCustomPhotoData || getVehicleCarPhotoUrl(brandName, `${modelName} ${years}`, modelDocId) || 'imagenes autos/ic_car_toyota_hilux.JPG';
+    let finalCarPhotoUrl = adminNewModelCustomPhotoData || document.getElementById('adminNewModelPhotoInput')?.value || getVehicleCarPhotoUrl(brandName, `${modelName} ${years}`, modelDocId) || 'imagenes autos/ic_car_toyota_hilux.JPG';
 
     // Subir foto personalizada al hosting si fue cargada
     const fileInput = document.getElementById('adminNewModelCarFileInput');
