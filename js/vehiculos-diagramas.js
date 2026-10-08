@@ -1268,6 +1268,31 @@ window.loadSitegroundModelsForBrand = async function(brandDocId, brandName, mode
       });
     }
 
+    // 5. Catálogo completo de biblioteca de modelos locales para la marca (Toyota, Nissan, Hyundai, Kia, Chevrolet, etc.)
+    if (typeof localCarPhotoLibrary !== 'undefined' && Array.isArray(localCarPhotoLibrary)) {
+      localCarPhotoLibrary.forEach(item => {
+        const itemBrand = (item.brand || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (itemBrand === brandKey || itemBrand.includes(brandKey) || brandKey.includes(itemBrand)) {
+          const modName = item.model ? (item.model.charAt(0).toUpperCase() + item.model.slice(1)) : (brandName || 'Modelo');
+          const fullTitle = `${(brandName || item.brand || '').toUpperCase()} ${modName.toUpperCase()}${item.year ? ' (' + item.year + ')' : ''}`;
+          const mSlug = (item.modelNoSpaces || item.model || 'modelo').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cat = getVehicleCategory({ nombre: fullTitle, modelo: modName }, modName);
+          const fuel = getFuelTypeInfo({ nombre: fullTitle }, modName, 'Estándar').isDiesel ? 'diesel' : 'gasolina';
+          rawList.push({
+            id: mSlug,
+            docId: mSlug,
+            modelo: fullTitle,
+            nombre: fullTitle,
+            anios: item.year ? String(item.year) : '',
+            motor: 'Estándar',
+            combustible: fuel,
+            categoria: cat,
+            imagen: item.file
+          });
+        }
+      });
+    }
+
     // Unificar, combinar datos y deduplicar a EXACTAMENTE UN modelo único
     return mergeModelEntries(rawList, brandName || brandDocId);
   };
