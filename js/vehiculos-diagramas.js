@@ -637,8 +637,13 @@ function normalizeCanonicalModelKey(rawName, brandName, rawId = '') {
 window.normalizeCanonicalModelKey = normalizeCanonicalModelKey;
 
 function isModelDeleted(docId, modelName, brandName) {
-  // Si el modelo existe en el árbol local/físico, está 100% activo
+  // Si el modelo existe en el árbol local/físico o defaultModelsMap, está 100% activo
   try {
+    const bClean = String(brandName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (defaultModelsMap[bClean]) {
+      const isDef = defaultModelsMap[bClean].some(dm => dm.id === docId || dm.modelo === modelName || dm.nombre === modelName);
+      if (isDef) return false;
+    }
     const tree = window._cachedVehiculosDiagramasTree;
     if (tree) {
       const bKey = Object.keys(tree).find(k => k.toLowerCase() === (brandName || '').toLowerCase() || (brandName || '').toLowerCase().includes(k.toLowerCase()));
@@ -670,6 +675,32 @@ function isModelDeleted(docId, modelName, brandName) {
 }
 window.isModelDeleted = isModelDeleted;
 
+function getVehicleCategory(data, modelName) {
+  const explicitCat = (data && (data.categoria || data.category || data.tipo_vehiculo)) || '';
+  if (explicitCat && explicitCat !== 'vehiculos' && explicitCat !== 'general') {
+    return explicitCat;
+  }
+  const name = ((modelName || '') + ' ' + (data?.nombre || '') + ' ' + (data?.modelo || '') + ' ' + (data?.id || '')).toLowerCase();
+  
+  if (/\b(corolla|yaris|tiida|sentra|civic|city|fit|jazz|accent|elantra|i10|i30|rio|cerato|picanto|optima|golf|polo|bora|passat|sail|aveo|onix|clio|megane|logan|sandero|323|allegro|mazda 3|mazda 6|swift|alto|celerio|corsa|astra|ibiza|cordoba|fabia)\b/i.test(name)) {
+    return 'sedan_hatchback';
+  }
+  if (/\b(hilux|ranger|d-max|dmax|l200|triton|frontier|navara|bt-50|bt50|amarok|colorado|f150|f-150|silverado|ram|poer|wingle)\b/i.test(name)) {
+    return 'pickup';
+  }
+  if (/\b(rav4|rav 4|cr-v|crv|hr-v|hrv|tucson|santa fe|santafe|sportage|sorento|duster|kaptur|captur|tracker|ecosport|explorer|cx-5|cx5|qashqai|xtrail|x-trail|grand vitara|terios|rush)\b/i.test(name)) {
+    return 'suv';
+  }
+  if (/\b(hiace|h1|h-1|h100|porter|urvan|nv350|partner|berlingo|kangoo|combo|transit|boxer|ducato|master|sprinter)\b/i.test(name)) {
+    return 'furgon';
+  }
+  if (/\b(serie 500|serie 700|canter|fuso|hino|isuzu npr|nqr|fh|fm|actros|tgs|tgx|constellation|cargo)\b/i.test(name)) {
+    return 'camiones';
+  }
+  return 'sedan_hatchback';
+}
+window.getVehicleCategory = getVehicleCategory;
+
 function mergeModelEntries(entries, brandName) {
   if (!Array.isArray(entries)) return [];
   const mergedMap = new Map();
@@ -696,8 +727,8 @@ function mergeModelEntries(entries, brandName) {
           nombre: data.nombre || modelName,
           anios: data.anios || data.anio || '',
           motor: data.motor || 'Estándar',
-          combustible: data.combustible || 'gasolina',
-          categoria: data.categoria || 'sedan_hatchback',
+          combustible: data.combustible || (getFuelTypeInfo(data, modelName, data.motor).isDiesel ? 'diesel' : 'gasolina'),
+          categoria: getVehicleCategory(data, modelName),
           imagen: data.imagen || data.fotoAuto || data.carPhoto || '',
           fotoAuto: data.fotoAuto || data.imagen || data.carPhoto || ''
         }
@@ -719,11 +750,11 @@ function mergeModelEntries(entries, brandName) {
         exData.imagen = data.imagen || data.fotoAuto;
         exData.fotoAuto = data.imagen || data.fotoAuto;
       }
-      if (data.categoria && exData.categoria === 'sedan_hatchback' && data.categoria !== 'sedan_hatchback') {
-        exData.categoria = data.categoria;
+      if (!exData.categoria || exData.categoria === 'vehiculos' || exData.categoria === 'general') {
+        exData.categoria = getVehicleCategory(data, modelName);
       }
-      if (data.combustible && data.combustible !== 'gasolina') {
-        exData.combustible = data.combustible;
+      if (!exData.combustible) {
+        exData.combustible = getFuelTypeInfo(data, modelName, data.motor || exData.motor).isDiesel ? 'diesel' : 'gasolina';
       }
       if (data.nombre && (!exData.nombre || (data.nombre.length > exData.nombre.length && !exData.nombre.includes('(')))) {
         exData.nombre = data.nombre;
@@ -751,12 +782,14 @@ window.mergeModelEntries = mergeModelEntries;
 
 function matchesVehicleCategory(itemCat, targetCatKey) {
   if (!targetCatKey) return true;
-  if (!itemCat || itemCat === 'vehiculos' || itemCat === 'general') return false;
+  if (!itemCat || itemCat === 'vehiculos' || itemCat === 'general') {
+    return targetCatKey === 'sedan_hatchback';
+  }
 
   const iCat = String(itemCat).toLowerCase().trim().replace(/[^a-z0-9]/g, '');
   const tCat = String(targetCatKey).toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
-  if (!iCat) return false;
+  if (!iCat) return targetCatKey === 'sedan_hatchback';
   if (iCat === tCat) return true;
 
   const isSedan = (s) => s.includes('sedan') || s.includes('hatchback') || s.includes('auto');
@@ -1251,9 +1284,11 @@ window.loadSitegroundModelsForBrand = async function(brandDocId, brandName, mode
   // Consulta API
   let apiData = null;
   try {
-    const apiRes = await (window.callDiagramasApi ? window.callDiagramasApi('modelos', { marca: brandName }) : fetch(`api/diagramas.php?action=modelos&marca=${encodeURIComponent(brandName)}&_t=${Date.now()}`).then(r => r.json())).catch(() => null);
-    if (apiRes && apiRes.data && Array.isArray(apiRes.data)) {
-      apiData = apiRes.data;
+    if (typeof window.callDiagramasApi === 'function') {
+      const apiRes = await window.callDiagramasApi('modelos', { marca: brandName }).catch(() => null);
+      if (apiRes && apiRes.data && Array.isArray(apiRes.data)) {
+        apiData = apiRes.data;
+      }
     }
   } catch (e) {}
 
